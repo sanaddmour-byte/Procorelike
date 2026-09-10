@@ -1,4 +1,4 @@
-# Roadmap — ProcoreLike (SiteOps)
+# Roadmap — SiteOps
 
 ## Status
 
@@ -87,8 +87,8 @@ telematics.
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
-1. **App name**: "ProcoreLike" (from the repository name). Easy to rename
-   later — not load-bearing on any architecture decision.
+1. **App name**: "SiteOps" (repository name `procorelike` is just the
+   Git remote and unrelated to the product name).
 2. **Company / brand**: not specified in the brief (the `{{COMPANY}}`
    placeholder was left unfilled). Treated as a generic multi-tenant
    platform with no hardcoded company branding; a real company name/logo

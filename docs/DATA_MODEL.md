@@ -1,4 +1,4 @@
-# Data Model — ProcoreLike (SiteOps)
+# Data Model — SiteOps
 
 Design-level schema for approval before Phase 1 (actual Drizzle schema +
 migrations are written in Phase 1 from this document). Column lists are the

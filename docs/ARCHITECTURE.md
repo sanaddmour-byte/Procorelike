@@ -1,4 +1,4 @@
-# Architecture — ProcoreLike (SiteOps)
+# Architecture — SiteOps
 
 ## 1. Monorepo shape
 

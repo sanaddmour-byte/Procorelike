@@ -1,4 +1,4 @@
-# CLAUDE.md — ProcoreLike (SiteOps)
+# CLAUDE.md — SiteOps
 
 > Orientation for any Claude Code session (or human) resuming this build.
 > Read this file, then `docs/ROADMAP.md` (current phase + status), then
@@ -6,7 +6,7 @@
 
 ## 1. What this is
 
-**ProcoreLike** ("SiteOps") is a mobile-first construction project management
+**SiteOps** is a mobile-first construction project management
 platform, functionally modeled on Procore's core project-management,
 quality-and-safety, and financial-controls product lines. Target users:
 general contractors, subcontractors, consultants, and owners. Field users
