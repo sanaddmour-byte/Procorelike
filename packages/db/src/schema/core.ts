@@ -1,0 +1,312 @@
+import {
+  boolean,
+  integer,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
+import { auditColumns, idColumn } from "./columns";
+
+export const companyTypeEnum = pgEnum("company_type", ["gc", "sub", "consultant", "owner"]);
+
+export const projectRoleEnum = pgEnum("project_role", [
+  "owner_admin",
+  "project_manager",
+  "project_engineer",
+  "superintendent",
+  "foreman",
+  "qa_qc",
+  "safety_officer",
+  "subcontractor",
+  "consultant",
+  "client_viewer",
+]);
+
+export const permissionModuleEnum = pgEnum("permission_module", [
+  "directory",
+  "documents",
+  "drawings",
+  "rfis",
+  "submittals",
+  "daily_log",
+  "punch_list",
+  "photos",
+  "inspections",
+  "budget",
+  "commitments",
+  "change_management",
+  "progress_billing",
+  "meetings",
+  "schedule",
+  "safety",
+  "tm_tickets",
+  "reports",
+  "correspondence",
+]);
+
+export const permissionLevelEnum = pgEnum("permission_level", ["none", "read", "standard", "admin"]);
+
+export const locationLevelTypeEnum = pgEnum("location_level_type", [
+  "building",
+  "level",
+  "zone",
+  "room",
+]);
+
+// ---------------------------------------------------------------------------
+// Tenancy
+// ---------------------------------------------------------------------------
+
+export const companies = pgTable("companies", {
+  id: idColumn(),
+  name: varchar("name", { length: 200 }).notNull(),
+  type: companyTypeEnum("type").notNull(),
+  ...auditColumns(),
+});
+
+export const users = pgTable(
+  "users",
+  {
+    id: idColumn(),
+    email: varchar("email", { length: 320 }).notNull(),
+    passwordHash: text("password_hash").notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    localePref: varchar("locale_pref", { length: 5 }).notNull().default("en"),
+    totpSecret: text("totp_secret"),
+    totpEnabled: boolean("totp_enabled").notNull().default(false),
+    ...auditColumns(),
+  },
+  (table) => [uniqueIndex("users_email_unique").on(table.email)],
+);
+
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: idColumn(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  tokenHash: text("token_hash").notNull(),
+  deviceLabel: varchar("device_label", { length: 200 }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const invites = pgTable("invites", {
+  id: idColumn(),
+  email: varchar("email", { length: 320 }).notNull(),
+  companyId: uuid("company_id")
+    .notNull()
+    .references(() => companies.id),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id),
+  role: projectRoleEnum("role").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  invitedBy: uuid("invited_by")
+    .notNull()
+    .references(() => users.id),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userCompanies = pgTable("user_companies", {
+  id: idColumn(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  companyId: uuid("company_id")
+    .notNull()
+    .references(() => companies.id),
+  title: varchar("title", { length: 200 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const projects = pgTable("projects", {
+  id: idColumn(),
+  name: varchar("name", { length: 200 }).notNull(),
+  address: text("address"),
+  lat: numeric("lat", { precision: 9, scale: 6 }),
+  lng: numeric("lng", { precision: 9, scale: 6 }),
+  localeDefault: varchar("locale_default", { length: 5 }).notNull().default("en"),
+  timezone: varchar("timezone", { length: 100 }).notNull().default("Asia/Amman"),
+  status: varchar("status", { length: 50 }).notNull().default("active"),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id),
+  ...auditColumns(),
+});
+
+export const projectCompanies = pgTable("project_companies", {
+  id: idColumn(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id),
+  companyId: uuid("company_id")
+    .notNull()
+    .references(() => companies.id),
+  roleOnProject: varchar("role_on_project", { length: 100 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const projectUsers = pgTable(
+  "project_users",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => companies.id),
+    role: projectRoleEnum("role").notNull(),
+    permissionTemplateId: uuid("permission_template_id").references(() => permissionTemplates.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("project_users_project_user_unique").on(table.projectId, table.userId)],
+);
+
+export const permissionTemplates = pgTable("permission_templates", {
+  id: idColumn(),
+  name: varchar("name", { length: 200 }).notNull(),
+  /** Record<Module, PermissionLevel> — see @siteops/shared ModuleLevels. */
+  levels: jsonb("levels").notNull().$type<Record<string, string>>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const projectUserPermissions = pgTable(
+  "project_user_permissions",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    module: permissionModuleEnum("module").notNull(),
+    level: permissionLevelEnum("level").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("project_user_permissions_unique").on(
+      table.projectId,
+      table.userId,
+      table.module,
+    ),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Shared reference data
+// ---------------------------------------------------------------------------
+
+export const costCodes = pgTable("cost_codes", {
+  id: idColumn(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id),
+  code: varchar("code", { length: 50 }).notNull(),
+  description: text("description").notNull(),
+  wbsParentId: uuid("wbs_parent_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const locations = pgTable("locations", {
+  id: idColumn(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id),
+  parentId: uuid("parent_id"),
+  levelType: locationLevelTypeEnum("level_type").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const trades = pgTable("trades", {
+  id: idColumn(),
+  name: varchar("name", { length: 200 }).notNull(),
+});
+
+export const specificationsSections = pgTable("specifications_sections", {
+  id: idColumn(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id),
+  csiCode: varchar("csi_code", { length: 20 }).notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+});
+
+export const attachments = pgTable("attachments", {
+  id: idColumn(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id),
+  ownerType: varchar("owner_type", { length: 50 }).notNull(),
+  ownerId: uuid("owner_id").notNull(),
+  storageKey: text("storage_key").notNull(),
+  filename: varchar("filename", { length: 500 }).notNull(),
+  mime: varchar("mime", { length: 200 }).notNull(),
+  size: integer("size").notNull(),
+  uploadedBy: uuid("uploaded_by")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const auditLog = pgTable("audit_log", {
+  id: idColumn(),
+  actorId: uuid("actor_id").references(() => users.id),
+  entityType: varchar("entity_type", { length: 100 }).notNull(),
+  entityId: uuid("entity_id").notNull(),
+  action: varchar("action", { length: 50 }).notNull(),
+  before: jsonb("before"),
+  after: jsonb("after"),
+  ip: varchar("ip", { length: 64 }),
+  correlationId: varchar("correlation_id", { length: 100 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: idColumn(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  type: varchar("type", { length: 100 }).notNull(),
+  payload: jsonb("payload").notNull(),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const numberSequences = pgTable(
+  "number_sequences",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    sequenceKey: varchar("sequence_key", { length: 100 }).notNull(),
+    nextValue: integer("next_value").notNull().default(1),
+  },
+  (table) => [
+    uniqueIndex("number_sequences_project_key_unique").on(table.projectId, table.sequenceKey),
+  ],
+);
+
+export const recordLinks = pgTable("record_links", {
+  id: idColumn(),
+  sourceType: varchar("source_type", { length: 100 }).notNull(),
+  sourceId: uuid("source_id").notNull(),
+  targetType: varchar("target_type", { length: 100 }).notNull(),
+  targetId: uuid("target_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

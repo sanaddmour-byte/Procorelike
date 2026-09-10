@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+/*
+ * System font stacks rather than next/font/google: this build must not
+ * depend on live network access to Google Fonts (docs/ROADMAP.md notes this
+ * as a deliberate Phase 1 choice, not a placeholder). Every OS/browser combo
+ * in this stack ships decent Arabic glyph coverage in its default UI font,
+ * satisfying the "Arabic-safe font" requirement without an external fetch.
+ * Self-hosted Arabic display faces (e.g. Noto Sans Arabic .woff2) can be
+ * added later once a CDN/hosting decision is made.
+ */
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+[dir="rtl"] body {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Tahoma,
+    "Noto Sans Arabic",
+    "Geeza Pro",
+    sans-serif;
+}

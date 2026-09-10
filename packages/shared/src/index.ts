@@ -1,0 +1,23 @@
+export * from "./constants/roles";
+export * from "./constants/modules";
+export * from "./constants/permission-levels";
+export * from "./constants/locales";
+
+export * from "./permissions/engine";
+export * from "./permissions/default-templates";
+
+export * from "./business-rules/numbering";
+export * from "./business-rules/approval-threshold";
+
+export * from "./schemas/auth.schema";
+export * from "./schemas/company.schema";
+export * from "./schemas/project.schema";
+export * from "./schemas/permission.schema";
+export * from "./schemas/attachment.schema";
+
+export * from "./types/index";
+
+// Server-only code (native argon2 binding) is deliberately NOT re-exported
+// here — this barrel must stay safe for client bundles (apps/web "use
+// client" components import from it). Server code imports hashing from
+// "@siteops/shared/server" instead (see src/server.ts).

@@ -54,6 +54,17 @@ in application-layer scoping cannot leak cross-tenant data.
 - Every request carries a correlation ID (generated at the edge if absent),
   logged on both the request and any resulting audit_log/error entry, so a
   user-visible error can be traced server-side.
+- **Two DB connections, on purpose** (`apps/api/src/db.ts`): `appDb` connects
+  as the RLS-enforced `siteops_app` role and is used for everything once a
+  caller is authenticated. `authDb` connects as the migration superuser and
+  bypasses RLS — used *only* for the handful of lookups that have no tenant
+  context yet to scope by: finding a user by email at login, an invite by
+  its token hash, a refresh token by its hash. Each of those substitutes its
+  own strong check (password verify, invite expiry/single-use, hash match)
+  for RLS at that moment; every other read/write, including inserting the
+  resulting `users`/`project_users`/`refresh_tokens` rows once the caller is
+  known, goes through `appDb` with `app.user_id` set to that now-verified
+  identity.
 
 ## 4. Permission enforcement — three layers, all required
 

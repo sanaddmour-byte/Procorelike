@@ -1,0 +1,34 @@
+{
+  "Common": {
+    "appName": "SiteOps",
+    "loading": "Loading…",
+    "logout": "Log out",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "Login": {
+    "title": "Sign in to SiteOps",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalidCredentials": "Invalid email or password.",
+    "totpLabel": "Authentication code",
+    "totpRequired": "Enter the 6-digit code from your authenticator app."
+  },
+  "Projects": {
+    "title": "Your projects",
+    "empty": "You are not assigned to any projects yet.",
+    "viewDirectory": "View directory"
+  },
+  "Directory": {
+    "title": "Project directory",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "company": "Company",
+    "back": "Back to projects"
+  },
+  "Language": {
+    "english": "English",
+    "arabic": "العربية"
+  }
+}

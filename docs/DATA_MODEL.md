@@ -1,8 +1,16 @@
 # Data Model — SiteOps
 
-Design-level schema for approval before Phase 1 (actual Drizzle schema +
-migrations are written in Phase 1 from this document). Column lists are the
-fields that matter for business logic and review, not exhaustive DDL.
+Design-level schema, implemented in full in Phase 1 as a 55-table Drizzle
+schema (`packages/db/src/schema/`) — see `docs/ROADMAP.md`'s Phase 1 gate
+report for what was verified. Column lists here are the fields that matter
+for business logic and review, not exhaustive DDL; the Drizzle source is
+the authoritative column-level reference now that it exists.
+
+Two auth-infrastructure tables exist in the implementation but weren't
+called out in the original design pass: `refresh_tokens` (per-device
+refresh token hashes, `docs/ARCHITECTURE.md` §3) and `invites`
+(pending email invitations, token hash + expiry). Both are Core/tenancy
+tables, unsurprising additions once auth was actually built.
 
 ## 0. Cross-cutting columns (every business entity, not repeated per table below)
 
@@ -122,30 +130,68 @@ structured incident record earlier.
 | `meetings` | project_id, title, occurred_at, attendees jsonb | — | |
 | `meeting_items` | meeting_id, description, owner_user_id, status, carried_forward_from_item_id?, converted_to_type/id? | fk meetings | Self-link for carry-forward; polymorphic convert-to-task/RFI |
 
-## 10. Row-Level Security approach
+## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
-Every tenant-scoped table gets an RLS policy of the shape:
+Every tenant-scoped table with a direct `project_id` column gets an RLS
+policy of the shape:
 
 ```sql
 USING (project_id IN (
-  SELECT project_id FROM project_users WHERE user_id = current_setting('app.user_id')::uuid
+  SELECT project_id FROM project_users WHERE user_id = current_setting('app.user_id', true)::uuid
 ))
 ```
 
-with module-specific tightening for the two hard rules from the brief:
+Child tables without their own `project_id` (e.g. `drawing_revisions`,
+`rfi_responses`, `daily_log_manpower`) are scoped via their parent instead:
+`USING (parent_fk IN (SELECT id FROM parent_table))` — since the subquery
+against the parent table runs under the same RLS-restricted role, the
+parent's own policy filters it automatically; one line per child table
+rather than re-deriving the project-membership predicate everywhere.
 
-- **Subcontractor scoping**: an additional policy branch restricting
-  `subcontractor`-role sessions to rows where their company is the
-  assignee/ball-in-court/distribution recipient (per-module — RFIs check
-  `rfi_distribution`, Punch Items check `assignee_company_id`, etc.).
-- **Client financial exclusion**: `client_viewer` role is denied at the
-  RLS layer on all T2 tables outright (`USING (current_setting('app.role') <> 'client_viewer')`
-  combined with the project-membership check), in addition to the API-layer
-  rejection — belt and suspenders per the brief's explicit requirement.
+**Self-referencing policy hazard (found and fixed during Phase 1)**: a
+table whose own policy needs to query itself — `project_users` checking
+"is the caller a member of this project?", which requires querying
+`project_users` — cannot do so with a plain subquery: Postgres raises
+"infinite recursion detected in policy" (42P17), since evaluating the
+policy re-triggers the same policy on the subquery, forever. The fix is a
+`SECURITY DEFINER` helper function (`is_project_member(project_id)`, and
+the equivalent `is_company_visible(company_id)` for the `companies` ↔
+`user_companies` mutual reference), which runs with the privileges of its
+superuser owner and so bypasses RLS internally, breaking the cycle. Any
+future table whose policy needs to query itself (or two tables whose
+policies query each other) needs the same treatment.
 
-`app.user_id` / `app.role` are set via `SET LOCAL` at the start of each
-API request's transaction, derived from the verified JWT — never trusted
-from a client-supplied header.
+Two hard rules from the brief, both enforced at RLS *and* the permission
+engine (`packages/shared`) as defense-in-depth:
+
+- **Subcontractor scoping**: `subcontractorCanSeeRecord()` in
+  `packages/shared/src/permissions/engine.ts` is unit-tested; the
+  corresponding per-module RLS branches (RFIs via `rfi_distribution`,
+  Punch Items via `assignee_company_id`, etc.) land with each module in
+  its own phase — Phase 1 didn't build RFIs/Punch Items yet, so this is
+  implemented and tested at the engine level now, RLS-enforced per table
+  as each module ships.
+- **Client financial exclusion**: `client_viewer` is denied via a
+  `RESTRICTIVE` policy on every T2 financial table
+  (`current_setting('app.role', true) IS DISTINCT FROM 'client_viewer'`,
+  which Postgres ANDs against the permissive membership policy) *and*
+  forced to `"none"` in `resolveEffectiveLevel()` regardless of what a
+  template/override says — both layers tested.
+
+`app.user_id` / `app.role` are set via `SELECT set_config(..., true)`
+(transaction-local) at the start of each API transaction
+(`withRequestContext` in `packages/db/src/request-context.ts`), derived
+from the verified JWT — never trusted from a client-supplied header. Two
+narrow exceptions run on a separate, RLS-bypassing superuser connection
+instead, because they have no tenant context to scope by yet: login-by-
+email, invite-token lookup, and refresh-token lookup (see
+`apps/api/src/db.ts`) — each has its own strong check (password verify,
+token expiry/hash match) standing in for RLS at that moment.
+
+**Open**: `record_links` (polymorphic) has no RLS policy yet — scoping it
+generically would need a per-source/target-type join; left to the
+application layer until enough polymorphic-link consumers exist to justify
+the SQL (tracked in §13).
 
 ## 11. Full-text search
 
@@ -165,13 +211,21 @@ per type.
 | Punch Item | `PI-0123` | per project |
 | Drawing revision | free-text (owner-supplied, e.g. `A`, `1`, `Rev-2`) | not sequence-generated — revision codes are often contractually specified upstream, not ours to assign |
 
-## 13. Open items carried into Phase 1
+## 13. Open items carried forward from Phase 1
 
-- Finalize exact `permission_templates` default rows per role × module
-  (a full matrix — drafted in Phase 1, not invented here to avoid
-  churn before the module list is locked by phase).
+- `record_links` has no RLS policy yet (§10) — add one per polymorphic
+  type pair as modules that use it (Photos↔RFIs, Punch Items↔Inspections,
+  etc.) actually ship, rather than guessing the shape now.
+- Subcontractor-scoping RLS branches per module (RFIs, Submittals, Punch
+  Items, Daily Log) land alongside each module's own phase — the rule
+  itself is implemented and tested at the permission-engine level today.
+- `permission_templates` default rows exist for all 10 roles
+  (`packages/shared/src/permissions/default-templates.ts`, seeded by
+  `packages/db/src/seed.ts`) but are a first draft, not a reviewed matrix —
+  revisit per-role defaults as real usage surfaces gaps, especially once
+  T2 financial modules (Phase 6) are live.
 - Confirm Hijri-calendar display is out of scope for v1 (Gregorian +
   `ar-JO` number formatting only) — see Assumptions.
-- Decide whether a minimal structured `safety_incidents` table is needed
-  in T1 (Daily Log) ahead of the full T3 Safety module, or free-text is
-  acceptable until then — see Assumptions.
+- Decide whether the minimal structured `daily_log_safety_incidents` table
+  (already implemented per Assumption #9) is the right shape ahead of the
+  full T3 Safety module, or should be simplified back to free text.

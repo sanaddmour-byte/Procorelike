@@ -63,25 +63,35 @@ This is a multi-session build executed phase-by-phase (see `docs/ROADMAP.md`).
 | Testing | Vitest, Supertest, Playwright, Maestro |
 | Local dev | docker-compose: Postgres + MinIO + MailHog |
 
-## 4. Repo layout (created in Phase 1)
+## 4. Repo layout
 
 ```
-apps/web        Next.js 15 App Router
-apps/mobile     Expo (React Native)
-apps/api        Express 5 REST API
-packages/db     Drizzle schema + migrations + seed
-packages/shared Types, zod schemas, permission logic, business rules
-packages/ui     Design tokens + shadcn/ui components
+apps/web        Next.js 15 App Router — login, projects, directory (next-intl EN/AR)
+apps/mobile     Expo (React Native) + expo-router — minimal scaffold; field modules start Phase 2
+apps/api        Express 5 REST API — auth, companies, projects, directory, attachments
+packages/db     Drizzle schema (55 tables), migrations, RLS + numbering SQL, seed
+packages/shared Types, zod schemas, permission engine, business rules (+ /server subpath for argon2)
+packages/ui     Not created yet — Phase 1 kept styling inline in apps/web; extract once
+                there's enough shared UI across web to justify it
 docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 ```
 
-Nothing under `apps/` or `packages/` exists yet — Phase 0 is documentation only.
-
 ## 5. Where things stand
 
-See `docs/ROADMAP.md` for the authoritative phase checklist and current status.
-As of this writing: **Phase 0 (Plan) is complete, awaiting approval to start
-Phase 1 (Foundation).**
+See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
+status table, and the Phase 1 gate report (what was verified, known gaps,
+mid-build corrections). As of this writing: **Phase 1 (Foundation) is
+complete and gate-verified in a real browser; Phase 2 (Field core) is next.**
+
+Two things worth knowing before touching
+`packages/db/src/sql/001_rls_and_functions.sql`: a table's RLS policy must
+never subquery itself (or another table whose policy subqueries it back)
+without going through a `SECURITY DEFINER` helper first — see
+`is_project_member`/`is_company_visible` and the comment above them in that
+file. And the API deliberately holds two DB connections
+(`authDb`/`appDb`, see `apps/api/src/db.ts`) — only the three genuinely
+pre-authentication lookups (login-by-email, invite-token, refresh-token) use
+the RLS-bypassing one.
 
 ## 6. Key conventions to hold the line on
 
@@ -105,5 +115,5 @@ Phase 1 (Foundation).**
 
 ## 7. Assumptions on record
 
-See the numbered assumptions list delivered with Phase 0 (repeated and kept
-current in `docs/ROADMAP.md` §"Assumptions"). Revisit before Phase 1 starts.
+See the numbered assumptions list in `docs/ROADMAP.md` §"Assumptions",
+kept current there as the source of truth.

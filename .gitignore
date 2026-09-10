@@ -1,0 +1,17 @@
+node_modules/
+.pnpm-store/
+dist/
+build/
+.next/
+.turbo/
+.expo/
+coverage/
+*.log
+*.tsbuildinfo
+.env
+.env.local
+.DS_Store
+apps/mobile/.expo/
+apps/web/.next/
+apps/api/dist/
+packages/*/dist/
