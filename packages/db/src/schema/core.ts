@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   numeric,
@@ -145,17 +146,21 @@ export const projects = pgTable("projects", {
   ...auditColumns(),
 });
 
-export const projectCompanies = pgTable("project_companies", {
-  id: idColumn(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id),
-  companyId: uuid("company_id")
-    .notNull()
-    .references(() => companies.id),
-  roleOnProject: varchar("role_on_project", { length: 100 }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const projectCompanies = pgTable(
+  "project_companies",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => companies.id),
+    roleOnProject: varchar("role_on_project", { length: 100 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("project_companies_project_id_idx").on(table.projectId)],
+);
 
 export const projectUsers = pgTable(
   "project_users",
@@ -174,7 +179,15 @@ export const projectUsers = pgTable(
     permissionTemplateId: uuid("permission_template_id").references(() => permissionTemplates.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("project_users_project_user_unique").on(table.projectId, table.userId)],
+  (table) => [
+    uniqueIndex("project_users_project_user_unique").on(table.projectId, table.userId),
+    // Every RLS policy in the system subqueries this table by user_id alone
+    // (`WHERE user_id = current_setting('app.user_id')`) -- the unique
+    // index above is (project_id, user_id) and can't serve a user_id-only
+    // lookup, so without this every authenticated request would seq-scan
+    // project_users. The single highest-leverage index in the schema.
+    index("project_users_user_id_idx").on(table.userId),
+  ],
 );
 
 export const permissionTemplates = pgTable("permission_templates", {
@@ -231,58 +244,80 @@ export const savedViews = pgTable(
 // Shared reference data
 // ---------------------------------------------------------------------------
 
-export const costCodes = pgTable("cost_codes", {
-  id: idColumn(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id),
-  code: varchar("code", { length: 50 }).notNull(),
-  description: text("description").notNull(),
-  wbsParentId: uuid("wbs_parent_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const costCodes = pgTable(
+  "cost_codes",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    code: varchar("code", { length: 50 }).notNull(),
+    description: text("description").notNull(),
+    wbsParentId: uuid("wbs_parent_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("cost_codes_project_id_idx").on(table.projectId)],
+);
 
-export const locations = pgTable("locations", {
-  id: idColumn(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id),
-  parentId: uuid("parent_id"),
-  levelType: locationLevelTypeEnum("level_type").notNull(),
-  name: varchar("name", { length: 200 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const locations = pgTable(
+  "locations",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    parentId: uuid("parent_id"),
+    levelType: locationLevelTypeEnum("level_type").notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("locations_project_id_idx").on(table.projectId)],
+);
 
 export const trades = pgTable("trades", {
   id: idColumn(),
   name: varchar("name", { length: 200 }).notNull(),
 });
 
-export const specificationsSections = pgTable("specifications_sections", {
-  id: idColumn(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id),
-  csiCode: varchar("csi_code", { length: 20 }).notNull(),
-  title: varchar("title", { length: 300 }).notNull(),
-});
+export const specificationsSections = pgTable(
+  "specifications_sections",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    csiCode: varchar("csi_code", { length: 20 }).notNull(),
+    title: varchar("title", { length: 300 }).notNull(),
+  },
+  (table) => [index("specifications_sections_project_id_idx").on(table.projectId)],
+);
 
-export const attachments = pgTable("attachments", {
-  id: idColumn(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id),
-  ownerType: varchar("owner_type", { length: 50 }).notNull(),
-  ownerId: uuid("owner_id").notNull(),
-  storageKey: text("storage_key").notNull(),
-  filename: varchar("filename", { length: 500 }).notNull(),
-  mime: varchar("mime", { length: 200 }).notNull(),
-  size: integer("size").notNull(),
-  uploadedBy: uuid("uploaded_by")
-    .notNull()
-    .references(() => users.id),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const attachments = pgTable(
+  "attachments",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    ownerType: varchar("owner_type", { length: 50 }).notNull(),
+    ownerId: uuid("owner_id").notNull(),
+    storageKey: text("storage_key").notNull(),
+    filename: varchar("filename", { length: 500 }).notNull(),
+    mime: varchar("mime", { length: 200 }).notNull(),
+    size: integer("size").notNull(),
+    uploadedBy: uuid("uploaded_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("attachments_project_id_idx").on(table.projectId),
+    // Every module's "get attachments for this record" query filters on
+    // this pair (owner_type is fixed per call site, owner_id is the
+    // record's own id) -- the hottest access pattern on this table.
+    index("attachments_owner_idx").on(table.ownerType, table.ownerId),
+  ],
+);
 
 export const auditLog = pgTable("audit_log", {
   id: idColumn(),

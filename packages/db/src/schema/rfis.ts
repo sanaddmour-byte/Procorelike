@@ -29,30 +29,39 @@ export const rfis = pgTable(
     ...auditColumns(),
   },
   (table) => [
+    index("rfis_project_id_idx").on(table.projectId),
     index("rfis_ball_in_court_user_idx").on(table.ballInCourtUserId),
     index("rfis_status_due_date_idx").on(table.status, table.dueDate),
   ],
 );
 
-export const rfiResponses = pgTable("rfi_responses", {
-  id: idColumn(),
-  rfiId: uuid("rfi_id")
-    .notNull()
-    .references(() => rfis.id),
-  respondedBy: uuid("responded_by")
-    .notNull()
-    .references(() => users.id),
-  responseText: text("response_text").notNull(),
-  isOfficial: boolean("is_official").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const rfiResponses = pgTable(
+  "rfi_responses",
+  {
+    id: idColumn(),
+    rfiId: uuid("rfi_id")
+      .notNull()
+      .references(() => rfis.id),
+    respondedBy: uuid("responded_by")
+      .notNull()
+      .references(() => users.id),
+    responseText: text("response_text").notNull(),
+    isOfficial: boolean("is_official").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("rfi_responses_rfi_id_idx").on(table.rfiId)],
+);
 
-export const rfiDistribution = pgTable("rfi_distribution", {
-  id: idColumn(),
-  rfiId: uuid("rfi_id")
-    .notNull()
-    .references(() => rfis.id),
-  userId: uuid("user_id").references(() => users.id),
-  companyId: uuid("company_id").references(() => companies.id),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const rfiDistribution = pgTable(
+  "rfi_distribution",
+  {
+    id: idColumn(),
+    rfiId: uuid("rfi_id")
+      .notNull()
+      .references(() => rfis.id),
+    userId: uuid("user_id").references(() => users.id),
+    companyId: uuid("company_id").references(() => companies.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("rfi_distribution_rfi_id_idx").on(table.rfiId)],
+);
