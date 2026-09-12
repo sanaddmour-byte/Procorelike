@@ -9,7 +9,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { auditColumns, idColumn } from "./columns";
+import { auditColumns, idColumn, syncColumns } from "./columns";
 import { companies, projects, trades, users } from "./core";
 
 export const dailyLogs = pgTable(
@@ -27,7 +27,9 @@ export const dailyLogs = pgTable(
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
     ...auditColumns(),
+    ...syncColumns(),
   },
   (table) => [uniqueIndex("daily_logs_project_date_unique").on(table.projectId, table.logDate)],
 );

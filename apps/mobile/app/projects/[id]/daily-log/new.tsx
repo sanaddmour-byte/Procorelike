@@ -1,0 +1,61 @@
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { createDailyLog } from "@/lib/db/daily-log-repo";
+import { i18n } from "@/lib/i18n";
+import { useRequireAuth } from "@/lib/use-require-auth";
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export default function NewDailyLogScreen() {
+  useRequireAuth();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+
+  const [logDate, setLogDate] = useState(todayIso());
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave(): Promise<void> {
+    setSaving(true);
+    try {
+      const log = await createDailyLog({ projectId: id, logDate, notes: notes || undefined });
+      router.replace(`/projects/${id}/daily-log/${log.id}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      <Stack.Screen options={{ title: i18n.t("dailyLog.newButton") }} />
+      <Text style={styles.label}>{i18n.t("dailyLog.logDate")}</Text>
+      <TextInput style={styles.input} value={logDate} onChangeText={setLogDate} placeholder="YYYY-MM-DD" />
+
+      <Text style={styles.label}>{i18n.t("dailyLog.notes")}</Text>
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        value={notes}
+        onChangeText={setNotes}
+        placeholder={i18n.t("dailyLog.notesPlaceholder")}
+        multiline
+      />
+
+      <Pressable style={[styles.button, saving && styles.buttonDisabled]} onPress={() => void handleSave()} disabled={saving}>
+        {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{i18n.t("common.save")}</Text>}
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff", padding: 16, gap: 6 },
+  label: { fontSize: 13, color: "#334155", marginTop: 8 },
+  input: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
+  textArea: { minHeight: 120, textAlignVertical: "top" },
+  button: { marginTop: 20, backgroundColor: "#0f172a", borderRadius: 8, paddingVertical: 12, alignItems: "center" },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+});

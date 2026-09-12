@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canEditOwnedRecord,
   hasPermission,
   PermissionDeniedError,
   requirePermission,
@@ -104,5 +105,27 @@ describe("subcontractorCanSeeRecord", () => {
         distributionCompanyIds: [companyB],
       }),
     ).toBe(false);
+  });
+});
+
+describe("canEditOwnedRecord", () => {
+  it("lets an admin-level caller edit a record they did not create", () => {
+    const c = ctx({ templateLevels: { daily_log: "admin" } });
+    expect(canEditOwnedRecord(c, "daily_log", { createdBy: "someone-else" }, "me")).toBe(true);
+  });
+
+  it("lets a standard-level caller edit their own record", () => {
+    const c = ctx({ templateLevels: { daily_log: "standard" } });
+    expect(canEditOwnedRecord(c, "daily_log", { createdBy: "me" }, "me")).toBe(true);
+  });
+
+  it("denies a standard-level caller editing someone else's record", () => {
+    const c = ctx({ templateLevels: { daily_log: "standard" } });
+    expect(canEditOwnedRecord(c, "daily_log", { createdBy: "someone-else" }, "me")).toBe(false);
+  });
+
+  it("denies a read-level caller regardless of ownership", () => {
+    const c = ctx({ templateLevels: { daily_log: "read" } });
+    expect(canEditOwnedRecord(c, "daily_log", { createdBy: "me" }, "me")).toBe(false);
   });
 });

@@ -2,6 +2,7 @@ import { createProjectSchema } from "@siteops/shared";
 import { Router, type Request, type Response, type NextFunction } from "express";
 import type { Database } from "@siteops/db";
 import type { Env } from "../env";
+import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import * as projectService from "../services/project.service";
@@ -42,8 +43,7 @@ export function projectsRouter(appDb: Database, env: Env): Router {
     try {
       const authUser = req.authUser;
       if (!authUser) throw new Error("requireAuth did not populate req.authUser");
-      const rawId = req.params.id;
-      const projectId = Array.isArray(rawId) ? rawId[0] : rawId;
+      const projectId = paramAsString(req.params.id);
       if (!projectId) throw new Error("missing :id param");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const members = await listProjectMembers(appDb, authUser.id, ctx, projectId);

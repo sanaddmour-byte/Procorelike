@@ -59,6 +59,23 @@ export function requirePermission(
   }
 }
 
+/**
+ * "standard" is defined in docs/DATA_MODEL.md §3 as "create + edit own";
+ * "admin" as "edit all + delete + configure". This is the shared rule for
+ * "can this caller edit this specific record" once you already know who
+ * created it — used by every module's update/delete handler so the
+ * standard-vs-admin distinction isn't reimplemented per module.
+ */
+export function canEditOwnedRecord(
+  ctx: PermissionContext,
+  module: Module,
+  record: { createdBy: string },
+  userId: string,
+): boolean {
+  if (hasPermission(ctx, module, "admin")) return true;
+  return hasPermission(ctx, module, "standard") && record.createdBy === userId;
+}
+
 export interface SubcontractorScopeRecord {
   assigneeCompanyId?: string | null;
   ballInCourtCompanyId?: string | null;

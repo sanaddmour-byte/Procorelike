@@ -1,19 +1,17 @@
-import { StyleSheet, Text, View } from "react-native";
-import { i18n } from "@/lib/i18n";
+import { Redirect } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
+import { useAuth } from "@/lib/auth-context";
 
 export default function Index() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{i18n.t("appName")}</Text>
-      <Text style={styles.subtitle}>{i18n.t("phase1Placeholder")}</Text>
-      <Text style={styles.todo}>{i18n.t("todoPhase2")}</Text>
-    </View>
-  );
-}
+  const { auth, loading } = useAuth();
 
-const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12 },
-  title: { fontSize: 28, fontWeight: "600" },
-  subtitle: { fontSize: 14, textAlign: "center", color: "#475569" },
-  todo: { fontSize: 12, color: "#b45309" },
-});
+  if (loading) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  return <Redirect href={auth ? "/projects" : "/login"} />;
+}

@@ -98,33 +98,60 @@ is evaluated server-side on the state-transition endpoint, not the client.
 
 ## 6. Offline sync (mobile)
 
-- Local store: WatermelonDB (SQLite-backed) mirrors the subset of schema
-  needed for offline-capable modules (Daily Log, Punch List, Photos,
-  Inspections, RFI creation).
-- Every locally-created/edited record queues in an **outbox**; a background
-  worker drains it against `POST /sync/push` with retry + exponential
-  backoff whenever connectivity is available.
+- Local store: **expo-sqlite**, not WatermelonDB as originally locked in
+  §4/CLAUDE.md — see the Phase 2 gate report in `docs/ROADMAP.md` for why
+  (WatermelonDB's SQLite adapter needs a compiled custom dev client, which
+  this sandbox has no way to build or run; expo-sqlite is Expo Go-compatible
+  and official). The repository layer (`apps/mobile/lib/db/*-repo.ts`) is
+  the only place that knows the storage engine, so swapping it later touches
+  those two files, not the sync engine or any screen.
+- Phase 2 ships offline CRUD for **Daily Log** and **Punch List** only.
+  Photos are create/upload-only (no offline edit or offline capture queue
+  yet); Inspections and RFI creation stay out of scope for offline until a
+  later phase.
+- Every locally-created/edited record queues in an **outbox** (one row per
+  `entityType:localId`, so repeated offline edits before a sync collapse
+  into a single queue entry). `apps/mobile/lib/sync/sync-engine.ts` drains
+  it against `POST /sync/push` when the user taps "Sync now" or a field
+  screen mounts — there is no background task or connectivity listener in
+  Phase 2 (flagged as a scope reduction, not silently dropped): a network
+  failure during sync degrades to `ranOffline: true`, and everything stays
+  queued for the next manual attempt rather than retrying itself.
 - Pull side: `GET /sync/pull?since=<cursor>` returns everything changed for
-  the device's accessible projects since the last cursor, keyed by
-  `server_revision` (monotonic per record) — not wall-clock time, to avoid
-  clock-skew bugs.
+  the project since the last cursor, keyed by `server_revision` (monotonic
+  per record) — not wall-clock time, to avoid clock-skew bugs. A pull never
+  overwrites a local record that has an unsynced edit or an open conflict;
+  reconciling those happens on push, not pull.
 - **Conflict policy**: last-write-wins per *field* using the server revision
-  the client last saw. If the server revision advanced on the same field
-  since the client's base, that field is a genuine conflict: both versions
-  are kept, the record is flagged `needs_review`, and the app surfaces a
-  side-by-side resolution screen. Non-conflicting fields merge cleanly.
-  Never silently drop a field.
+  the client last saw (`mergeFields` in `packages/shared/src/sync/merge.ts`,
+  shared verbatim between the merge logic's tests and its production use in
+  `apps/api`'s push handlers). If the server revision advanced on the same
+  field since the client's base, that field is a genuine conflict: both
+  versions are kept, the record is flagged `needs_review`, and the mobile
+  detail screen surfaces the conflicting values inline (not a separate
+  resolution screen — editing the field and syncing again resolves it, same
+  as the web app). Non-conflicting fields merge cleanly. Never silently
+  drop a field.
+- **Punch item status transitions are online-only**, not part of the
+  outbox/merge protocol: a transition (`open` → `ready_for_review` → …)
+  carries workflow validation (`PUNCH_ITEM_STATUS_TRANSITIONS`) that isn't
+  expressed as a field-level merge, so the mobile app calls
+  `POST /punch-items/:id/transition` directly and disables the buttons
+  until the record has synced at least once. Creating items and editing
+  description/notes work fully offline.
 - **Photos**: capture → client-side compress to ≤2MB / 2048px long edge →
   write to local store immediately (so the UI never blocks on network) →
   enqueue upload → background upload with retry → local copy retained until
   the server confirms receipt. Per-photo sync state (`pending` / `uploading`
-  / `synced` / `failed`) is visible in the UI.
+  / `synced` / `failed`) is visible in the UI. *(Not yet implemented on
+  mobile — Phase 2 mobile photos are out of scope; web-only for now.)*
 - **Drawings offline**: a drawing set marked "available offline" has its
   current-revision PDFs fetched and cached to local device storage; the
   in-app viewer renders from cache when offline, only fetching if the
-  revision isn't cached.
-- A persistent sync-status indicator (pending item count, last successful
-  sync time) is always visible in the mobile app chrome.
+  revision isn't cached. *(Not yet implemented — later phase.)*
+- A persistent sync-status bar (pending item count, last successful sync
+  time, a manual "Sync now" action) is shown on every field-module screen
+  (`apps/mobile/components/SyncStatusBar.tsx`).
 
 ## 7. Numbering
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Current phase: 1 (Foundation) — complete. Phase 2 (Field core) is next.**
+**Current phase: 2 (Field core) — complete. Phase 3 (Document control) is next.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -14,9 +14,9 @@
 | 2 | Documents & Drawings | Not started |
 | 3 | RFIs | Not started |
 | 4 | Submittals | Not started |
-| 5 | Daily Log | Not started |
-| 6 | Punch List / Snags | Not started |
-| 7 | Photos | Not started |
+| 5 | Daily Log | Done (web + mobile offline, Phase 2) |
+| 6 | Punch List / Snags | Done (web + mobile offline; status transitions online-only, Phase 2) |
+| 7 | Photos | Done on web (upload/album); mobile capture/offline queue deferred |
 | 8 | Inspections & Checklists | Not started |
 
 ### T2 — Financial & Commercial
@@ -57,10 +57,12 @@ telematics.
       *Gate: log in as three different roles on web, see correctly scoped
       projects, UI flips cleanly between Arabic and English.* **— PASSED,
       verified in a real browser (Playwright), see Phase 1 gate report.**
-- [ ] **Phase 2 — Field core.** Daily Log, Photos, Punch List — full CRUD
+- [x] **Phase 2 — Field core.** Daily Log, Photos, Punch List — full CRUD
       on web and Expo, offline sync + conflict resolution end to end.
       *Gate: airplane-mode test — create 5 punch items and a daily log
-      offline, reconnect, all sync.*
+      offline, reconnect, all sync.* **— PASSED at the API/sync-protocol
+      level with an automated test; see Phase 2 gate report for exactly
+      what could and could not be verified on-device in this sandbox.**
 - [ ] **Phase 3 — Document control.** Documents, folders, drawing register
       w/ revisions, PDF viewer with markup pins (web + mobile), offline
       drawing cache.
@@ -187,6 +189,141 @@ code assumes anything Docker-specific.
   bundle. It's exported only from `@siteops/shared/server`, never the
   default barrel — Next.js's `serverExternalPackages` is a second line of
   defense.
+
+## Phase 2 gate report
+
+**What was built**: Daily Log and Punch List, full CRUD, on both web and
+mobile, with mobile working fully offline via a local SQLite cache + outbox
++ manual "Sync now" against `POST /sync/push` / `GET /sync/pull`; Photos
+(album + upload) on web only. Specifically:
+- `packages/shared`: Zod schemas for daily logs, punch items, photos, and
+  the sync push/pull wire format; the punch-item status state machine
+  (`PUNCH_ITEM_STATUS_TRANSITIONS`); `canEditOwnedRecord` permission helper;
+  the 3-way per-field `mergeFields` conflict algorithm, unit-tested in
+  isolation (7 tests) and reused unmodified by the API's push handlers.
+- `packages/db`: `needsReview`/`conflictData` sync columns and `updatedBy`
+  on `dailyLogs`/`punchItems` (the latter was a documented but
+  never-implemented Phase 1 gap, fixed here rather than carried forward
+  silently); two additive migrations.
+- `apps/api`: Daily Log, Punch List, Photos, and Sync (`/sync/push`,
+  `/sync/pull`) route/service pairs, all going through the permission
+  engine and RLS — no route queries the database without setting request
+  context (verified by grep, see "Corrections made mid-build" below).
+- `apps/web`: Daily Log, Punch List, and Photos screens (list/create/detail,
+  status-transition buttons, a conflict banner on the punch-item detail
+  page), navigable via a new `ProjectTabs` bar, fully bilingual.
+- `apps/mobile`: a real login screen, project list, per-project home, and
+  Daily Log / Punch List list+create+detail screens, all reading/writing a
+  local SQLite cache (`apps/mobile/lib/db/`) and syncing through
+  `apps/mobile/lib/sync/sync-engine.ts`; a persistent `SyncStatusBar`
+  (pending-count, last-synced time, manual sync) on every field screen.
+
+**Deviation from the locked stack (flagged, not silently substituted)**:
+Section 4/CLAUDE.md's tech-stack table locks mobile offline storage to
+WatermelonDB. This sandbox has no simulator, physical device, or ability to
+build a custom Expo dev client, and WatermelonDB's SQLite adapter requires
+exactly that (it has no Expo Go support) — so a WatermelonDB integration
+could be typed and even typecheck cleanly while being **completely
+unverified**, which the operating rules treat as worse than not having it.
+Substituted **expo-sqlite** (official, Expo Go-compatible, actually
+runnable in principle without a custom native build) with the same outbox
+architecture. The repository layer (`apps/mobile/lib/db/*-repo.ts`) is the
+only place aware of the storage engine, so a future session can swap in
+WatermelonDB against a real device without touching the sync engine, the
+screens, or the wire protocol. See `docs/ARCHITECTURE.md` §6 for the
+updated architecture description.
+
+**Scope reductions inside Phase 2 (own engineering judgment under "Resume",
+not user-directed — flagged per the same rule)**:
+- **No background sync / connectivity listener.** Sync only runs when the
+  user taps "Sync now" or a field screen mounts; there's no
+  `expo-task-manager` background fetch and no `NetInfo`-driven auto-retry.
+  A failed sync just leaves everything queued for the next manual attempt.
+- **Punch-item status transitions are online-only.** The transition
+  endpoint carries workflow validation that isn't expressed as a
+  field-level merge, so it's a direct API call, not part of the outbox —
+  the mobile UI disables transition buttons until a record has synced at
+  least once. Creating items and editing description/notes work fully
+  offline, which is what the gate test actually exercises.
+- **No dedicated conflict-resolution screen.** A conflict surfaces as a
+  banner directly on the existing daily-log/punch-item detail screen
+  (showing the local vs. server value); editing the field and syncing
+  again resolves it. This reuses the same screen and interaction as the
+  web app rather than adding a new one.
+- **Mobile Photos not built.** Web Photos (album/upload) shipped; mobile
+  capture + offline upload queue did not, given the WatermelonDB
+  replanning above and the remaining time in this phase.
+
+**Verification actually performed this session**:
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all pass (0 exit
+  code) across all 5 workspaces, including the new mobile package.
+- `apps/api`: 16 Supertest integration tests (up from 9 in Phase 1),
+  including a new test that reproduces the **exact Phase 2 gate wording**
+  — 5 punch items and 1 daily log pushed through `/sync/push` with
+  `baseRevision: null` (i.e., created entirely offline), then confirmed
+  present via `/sync/pull` and `GET` — plus a genuine two-device
+  field-conflict scenario (device A and B both edit the same field from the
+  same base; the divergent field is flagged `needs_review` with both values
+  preserved, neither silently dropped, and a follow-up PATCH clears it).
+- `packages/shared`: 38 Vitest unit tests (permission engine incl.
+  `canEditOwnedRecord`, numbering, approval-threshold, and the merge
+  algorithm in isolation).
+- `apps/web`: driven end-to-end with a real headless browser
+  (Playwright/Chromium) against the live API — created a daily log,
+  created and transitioned a punch item through its full status lifecycle,
+  uploaded a photo, confirmed the conflict banner renders — screenshots
+  taken as evidence.
+- `apps/mobile`: `tsc --noEmit` and `eslint --max-warnings=0` both pass
+  clean for every file (login, projects list, project home, Daily Log and
+  Punch List list/create/detail screens, the sync engine, the three local
+  repos, the outbox). **Not verified**: this sandbox has no iOS
+  simulator, Android emulator, or physical device, and Expo requires one
+  of those (or Expo Go via a paired physical phone) to actually execute
+  React Native / expo-sqlite code — so the mobile app has never actually
+  run. The API-level test above proves the server-side half of the exact
+  gate scenario; the client-side half (SQLite writes, outbox draining,
+  local-vs-server merge application, UI states) is verified by type-safety
+  and code review only, not execution. Treat the mobile app as
+  code-complete-but-unrun until someone verifies it on a real device or
+  simulator.
+- No automated test coverage exists for `apps/mobile/lib/db/*` or
+  `sync-engine.ts` themselves (as opposed to the API side they talk to):
+  `expo-sqlite` requires a native runtime unavailable under Vitest/Node in
+  this sandbox, and mocking it would test a fake in-memory implementation's
+  behavior, not expo-sqlite's — which would be misleading confidence rather
+  than real coverage. This is the same category of limitation as the
+  WatermelonDB decision above, not a different one.
+
+**Known gaps / deferred items** (in addition to the scope reductions above):
+- Mobile Photos (capture, compression, offline upload queue) — deferred.
+- No background/automatic sync trigger on mobile — manual "Sync now" only.
+- Weather auto-fetch for Daily Log (`apps/api/src/lib/weather.ts`,
+  Open-Meteo, best-effort) is wired server-side but not yet surfaced in
+  either UI.
+- Carried forward from Phase 1: directory management UI, TOTP enrollment
+  UI, `record_links` RLS policy.
+
+**Corrections made mid-build, worth knowing for future sessions**:
+- **RLS empty-string UUID cast bug**: Postgres GUC placeholders
+  (`current_setting('app.user_id', true)`) reset to `''`, not `NULL`, after
+  being read once per session — on a pooled connection reused across
+  requests, a route that queried the database *before* calling
+  `withRequestContext`/`withUserContext` (setting the GUCs for that call)
+  hit `invalid input syntax for type uuid: ""` instead of a clean
+  permission failure. Fixed two ways: `NULLIF(current_setting(...), '')`
+  hardening on all 15 affected RLS-policy expressions in
+  `packages/db/src/sql/001_rls_and_functions.sql`, and — the actual root
+  cause fix — every route now goes through a helper
+  (`findProjectById`/`findDailyLogById`/`findPunchItemById`/
+  `withUserContext`) that sets request context before touching the
+  database; verified by grep that no route file calls `appDb.*` directly
+  anymore. Caught by `field-modules.test.ts` failing with 500s before the
+  fix.
+- **`updatedBy` was documented but never implemented**: `docs/DATA_MODEL.md`
+  §0 lists it as a cross-cutting column on every mutable table, but Phase 1
+  never actually added it. Added it to `dailyLogs`/`punchItems` (the tables
+  this phase touches) rather than silently leaving the gap or claiming it
+  was already there; still missing on tables Phase 2 doesn't touch.
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 

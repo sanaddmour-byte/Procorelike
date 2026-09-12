@@ -56,7 +56,7 @@ This is a multi-session build executed phase-by-phase (see `docs/ROADMAP.md`).
 | DB | PostgreSQL 16, Drizzle ORM, Row-Level Security |
 | Auth | JWT access+refresh, argon2, email invite, per-device refresh tokens, optional TOTP 2FA |
 | Storage | S3-compatible (MinIO dev), pre-signed URLs only |
-| Offline (mobile) | WatermelonDB + outbox queue, `/sync/pull` + `/sync/push` |
+| Offline (mobile) | expo-sqlite + outbox queue, `/sync/pull` + `/sync/push` (was WatermelonDB per this table's original lock — see `docs/ROADMAP.md` Phase 2 gate report for the deviation and why) |
 | Web data/state | TanStack Query + Zustand (UI state only) |
 | PDF | pdf-lib (generate), pdf.js (view/markup) |
 | i18n | next-intl (web), i18n-js (mobile); logical CSS properties only |

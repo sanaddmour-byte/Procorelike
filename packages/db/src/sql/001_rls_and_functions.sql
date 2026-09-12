@@ -84,7 +84,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
     SELECT 1 FROM project_users
     WHERE project_id = p_project_id
-      AND user_id = current_setting('app.user_id', true)::uuid
+      AND user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
   );
 $$;
 
@@ -99,11 +99,11 @@ RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
     SELECT 1 FROM user_companies
-    WHERE company_id = p_company_id AND user_id = current_setting('app.user_id', true)::uuid
+    WHERE company_id = p_company_id AND user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
   ) OR EXISTS (
     SELECT 1 FROM project_companies pc
     JOIN project_users pu ON pu.project_id = pc.project_id
-    WHERE pc.company_id = p_company_id AND pu.user_id = current_setting('app.user_id', true)::uuid
+    WHERE pc.company_id = p_company_id AND pu.user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
   );
 $$;
 
@@ -116,7 +116,19 @@ GRANT EXECUTE ON FUNCTION is_company_visible(uuid) TO siteops_app;
 --   SELECT set_config('app.role', $2, true);
 -- before touching tenant data, so the policies below can key off
 -- current_setting('app.user_id', true) / current_setting('app.role', true).
--- `true` = missing_ok, so an unset value reads as NULL (default-deny).
+-- `true` = missing_ok, so a *truly never-set* value reads as NULL. But a
+-- custom GUC placeholder that has been set at least once on a given
+-- connection (via set_config with is_local=true, i.e. SET LOCAL semantics)
+-- resets to an EMPTY STRING — not NULL — once its owning transaction ends,
+-- because the placeholder now exists on that session with no prior value to
+-- restore. A pooled connection is reused across requests, so any query that
+-- runs *without* a fresh withRequestContext call on such a connection would
+-- see '' and blow up '' ::uuid casts (Postgres error 22P02) instead of
+-- getting a clean default-deny empty result. Every user_id comparison below
+-- therefore wraps the read in NULLIF(..., '') to fold that empty-string
+-- reset back to NULL before casting — but the real fix is upstream: never
+-- query a tenant-scoped table without going through withRequestContext
+-- first (see apps/api's route handlers for the pattern).
 -- ---------------------------------------------------------------------------
 
 -- ---------------------------------------------------------------------------
@@ -143,19 +155,19 @@ DROP POLICY IF EXISTS projects_member_rw ON projects;
 CREATE POLICY projects_member_rw ON projects FOR SELECT USING (
   id IN (
     SELECT project_id FROM project_users
-    WHERE user_id = current_setting('app.user_id', true)::uuid
+    WHERE user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
   )
 );
 DROP POLICY IF EXISTS projects_member_update ON projects;
 CREATE POLICY projects_member_update ON projects FOR UPDATE USING (
   id IN (
     SELECT project_id FROM project_users
-    WHERE user_id = current_setting('app.user_id', true)::uuid
+    WHERE user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
   )
 );
 DROP POLICY IF EXISTS projects_creator_insert ON projects;
 CREATE POLICY projects_creator_insert ON projects FOR INSERT WITH CHECK (
-  created_by = current_setting('app.user_id', true)::uuid
+  created_by = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
@@ -173,17 +185,17 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS users_self_or_shared_project_select ON users;
 CREATE POLICY users_self_or_shared_project_select ON users FOR SELECT USING (
-  id = current_setting('app.user_id', true)::uuid
+  id = NULLIF(current_setting('app.user_id', true), '')::uuid
   OR id IN (
     SELECT pu2.user_id FROM project_users pu2
     WHERE pu2.project_id IN (
-      SELECT project_id FROM project_users WHERE user_id = current_setting('app.user_id', true)::uuid
+      SELECT project_id FROM project_users WHERE user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
     )
   )
 );
 DROP POLICY IF EXISTS users_self_update ON users;
 CREATE POLICY users_self_update ON users FOR UPDATE USING (
-  id = current_setting('app.user_id', true)::uuid
+  id = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 -- Registration (invite-accept) creates a users row before that user has a
 -- session; the invite token itself (validated at the API layer against
@@ -207,14 +219,14 @@ CREATE POLICY project_users_member_update ON project_users FOR UPDATE USING (
 -- for that transaction in both cases — see apps/api auth service).
 DROP POLICY IF EXISTS project_users_self_insert ON project_users;
 CREATE POLICY project_users_self_insert ON project_users FOR INSERT WITH CHECK (
-  user_id = current_setting('app.user_id', true)::uuid
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 
 ALTER TABLE user_companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_companies FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS user_companies_self_or_company_select ON user_companies;
 CREATE POLICY user_companies_self_or_company_select ON user_companies FOR ALL USING (
-  user_id = current_setting('app.user_id', true)::uuid
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
   OR is_company_visible(company_id)
 );
 
@@ -222,7 +234,7 @@ ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE refresh_tokens FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS refresh_tokens_self ON refresh_tokens;
 CREATE POLICY refresh_tokens_self ON refresh_tokens FOR ALL USING (
-  user_id = current_setting('app.user_id', true)::uuid
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 
 ALTER TABLE invites ENABLE ROW LEVEL SECURITY;
@@ -250,14 +262,14 @@ ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS notifications_self ON notifications;
 CREATE POLICY notifications_self ON notifications FOR ALL USING (
-  user_id = current_setting('app.user_id', true)::uuid
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS audit_log_actor_insert ON audit_log;
 CREATE POLICY audit_log_actor_insert ON audit_log FOR INSERT WITH CHECK (
-  actor_id IS NULL OR actor_id = current_setting('app.user_id', true)::uuid
+  actor_id IS NULL OR actor_id = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 DROP POLICY IF EXISTS audit_log_no_update_delete ON audit_log;
 CREATE POLICY audit_log_no_update_delete ON audit_log FOR UPDATE USING (false);
@@ -307,7 +319,7 @@ ALTER TABLE checklist_templates FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS checklist_templates_global_or_project_member ON checklist_templates;
 CREATE POLICY checklist_templates_global_or_project_member ON checklist_templates FOR ALL USING (
   project_id IS NULL
-  OR project_id IN (SELECT project_id FROM project_users WHERE user_id = current_setting('app.user_id', true)::uuid)
+  OR project_id IN (SELECT project_id FROM project_users WHERE user_id = NULLIF(current_setting('app.user_id', true), '')::uuid)
 );
 
 -- Hard rule: client_viewer never sees financial modules, enforced again at

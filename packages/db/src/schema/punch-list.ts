@@ -1,5 +1,5 @@
 import { pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
-import { auditColumns, idColumn } from "./columns";
+import { auditColumns, idColumn, syncColumns } from "./columns";
 import { companies, locations, projects, trades, users } from "./core";
 import { drawingRevisions, markups } from "./documents";
 
@@ -31,7 +31,9 @@ export const punchItems = pgTable("punch_items", {
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
   ...auditColumns(),
+  ...syncColumns(),
 });
 
 export const punchItemHistory = pgTable("punch_item_history", {

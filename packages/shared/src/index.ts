@@ -14,6 +14,12 @@ export * from "./schemas/company.schema";
 export * from "./schemas/project.schema";
 export * from "./schemas/permission.schema";
 export * from "./schemas/attachment.schema";
+export * from "./schemas/daily-log.schema";
+export * from "./schemas/punch-item.schema";
+export * from "./schemas/photo.schema";
+export * from "./schemas/sync.schema";
+
+export * from "./sync/merge";
 
 export * from "./types/index";
 

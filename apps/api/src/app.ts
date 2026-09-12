@@ -8,8 +8,12 @@ import { errorHandler } from "./lib/errors";
 import { attachmentsRouter } from "./routes/attachments.routes";
 import { authRouter } from "./routes/auth.routes";
 import { companiesRouter } from "./routes/companies.routes";
+import { dailyLogsRouter } from "./routes/daily-logs.routes";
 import { healthRouter } from "./routes/health.routes";
+import { photosRouter } from "./routes/photos.routes";
 import { projectsRouter } from "./routes/projects.routes";
+import { punchItemsRouter } from "./routes/punch-items.routes";
+import { syncRouter } from "./routes/sync.routes";
 import { createS3Client } from "./lib/s3";
 
 export function createApp(env: Env, clients: ApiDbClients): Express {
@@ -27,6 +31,10 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/projects", projectsRouter(clients.appDb.db, env));
   app.use("/companies", companiesRouter(clients.appDb.db, env));
   app.use("/attachments", attachmentsRouter(clients.appDb.db, s3, env));
+  app.use("/daily-logs", dailyLogsRouter(clients.appDb.db, env));
+  app.use("/punch-items", punchItemsRouter(clients.appDb.db, env));
+  app.use("/photos", photosRouter(clients.appDb.db, env));
+  app.use("/sync", syncRouter(clients.appDb.db, env));
 
   app.use(errorHandler);
   return app;
