@@ -84,18 +84,18 @@ export default function DailyLogDetailPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-lg px-4 py-8">
-        <Link href={backHref} className="text-sm text-slate-600 underline">
+        <Link href={backHref} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
         {!log && !error && <p className="mt-4">{tc("loading")}</p>}
-        {error && <p className="mt-4 text-red-600">{error}</p>}
+        {error && <p className="mt-4 text-maroon-700">{error}</p>}
         {log && (
           <>
             <div className="mb-4 mt-2 flex items-center justify-between">
-              <h1 className="text-2xl font-semibold">{log.logDate}</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{log.logDate}</h1>
               <span
                 className={`rounded px-2 py-0.5 text-xs ${
-                  log.lockedAt ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+                  log.lockedAt ? "bg-navy-900 text-white" : "bg-orange-100 text-navy-800"
                 }`}
               >
                 {log.lockedAt ? t("locked") : t("open")}
@@ -109,7 +109,7 @@ export default function DailyLogDetailPage() {
                 value={notes}
                 disabled={!!log.lockedAt}
                 onChange={(e) => setNotes(e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2 disabled:bg-slate-50"
+                className="rounded-lg border-3 border-ink px-3 py-2 disabled:bg-orange-50"
               />
             </label>
 
@@ -119,7 +119,7 @@ export default function DailyLogDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => void saveNotes()}
-                  className="rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+                  className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
                 >
                   {t("save")}
                 </button>
@@ -129,7 +129,7 @@ export default function DailyLogDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => void toggleLock(true)}
-                  className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700"
+                  className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800"
                 >
                   {t("lockButton")}
                 </button>
@@ -138,7 +138,7 @@ export default function DailyLogDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => void toggleLock(false)}
-                  className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700"
+                  className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800"
                 >
                   {t("reopenButton")}
                 </button>
@@ -147,10 +147,10 @@ export default function DailyLogDetailPage() {
 
             {log.manpower.length > 0 && (
               <section className="mt-6">
-                <h2 className="mb-2 text-sm font-medium text-slate-700">{t("manpowerSection")}</h2>
+                <h2 className="mb-2 text-sm font-medium text-navy-800">{t("manpowerSection")}</h2>
                 <ul className="flex flex-col gap-2">
                   {log.manpower.map((row) => (
-                    <li key={row.id} className="rounded border border-slate-200 p-2 text-sm">
+                    <li key={row.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-2 text-sm">
                       {t("headcount")}: {row.headcount} · {t("hours")}: {row.hours}
                     </li>
                   ))}

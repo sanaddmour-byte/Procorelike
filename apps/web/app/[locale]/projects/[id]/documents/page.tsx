@@ -144,18 +144,18 @@ export default function DocumentsPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-semibold">{t("title")}</h1>
-        {error && <p className="text-red-600">{error}</p>}
+        <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        {error && <p className="text-maroon-700">{error}</p>}
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
           <aside>
-            <h2 className="mb-2 text-sm font-medium text-slate-500">{t("foldersTitle")}</h2>
+            <h2 className="mb-2 text-sm font-medium text-navy-600">{t("foldersTitle")}</h2>
             <ul className="flex flex-col gap-1">
               <li>
                 <button
                   onClick={() => selectFolder(null)}
                   className={`w-full rounded px-2 py-1.5 text-left text-sm ${
-                    activeFolderId === null ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
+                    activeFolderId === null ? "bg-navy-900 text-white" : "text-navy-800 hover:bg-orange-100"
                   }`}
                 >
                   {t("allDocuments")}
@@ -166,7 +166,7 @@ export default function DocumentsPage() {
                   <button
                     onClick={() => selectFolder(folder.id)}
                     className={`w-full rounded px-2 py-1.5 text-left text-sm ${
-                      activeFolderId === folder.id ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
+                      activeFolderId === folder.id ? "bg-navy-900 text-white" : "text-navy-800 hover:bg-orange-100"
                     }`}
                   >
                     {folder.name}
@@ -180,12 +180,12 @@ export default function DocumentsPage() {
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder={t("folderName")}
-                className="rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
               />
               <button
                 onClick={() => void handleCreateFolder()}
                 disabled={!newFolderName.trim()}
-                className="rounded border border-slate-300 px-2 py-1.5 text-sm text-slate-700 disabled:opacity-50"
+                className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm text-navy-800 disabled:opacity-50"
               >
                 {t("newFolder")}
               </button>
@@ -194,7 +194,7 @@ export default function DocumentsPage() {
 
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <label className="cursor-pointer rounded bg-slate-900 px-3 py-2 text-sm text-white">
+              <label className="cursor-pointer rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
                 {uploading ? t("uploading") : t("uploadButton")}
                 <input
                   ref={uploadInputRef}
@@ -209,19 +209,19 @@ export default function DocumentsPage() {
               </label>
             </div>
             {!documents && <p>{tc("loading")}</p>}
-            {documents && documents.length === 0 && <p className="text-slate-500">{t("empty")}</p>}
+            {documents && documents.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
             <ul className="flex flex-col gap-2">
               {documents?.map((doc) => (
-                <li key={doc.id} className="flex items-center justify-between gap-2 rounded border border-slate-200 p-3">
+                <li key={doc.id} className="flex items-center justify-between gap-2 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
                   <span className="truncate font-medium">{doc.title}</span>
                   <div className="flex shrink-0 items-center gap-2">
                     <button
                       onClick={() => void handleDownload(doc.currentAttachmentId)}
-                      className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                      className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800"
                     >
                       {t("download")}
                     </button>
-                    <label className="cursor-pointer rounded border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                    <label className="cursor-pointer rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800">
                       {replacingId === doc.id ? t("uploading") : t("replaceFile")}
                       <input
                         ref={replaceInputRef}

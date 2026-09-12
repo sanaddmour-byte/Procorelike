@@ -21,15 +21,18 @@ export function Header() {
   }
 
   return (
-    <header className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-      <span className="text-lg font-semibold">{t("appName")}</span>
+    <header className="flex items-center justify-between border-b-3 border-ink bg-navy-900 px-6 py-4 text-white">
+      <span className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
+        <span className="inline-block h-3 w-3 rounded-sm border-2 border-white bg-orange-500" aria-hidden="true" />
+        {t("appName")}
+      </span>
       <div className="flex items-center gap-4">
         <LanguageToggle />
         {authed && (
           <button
             type="button"
             onClick={handleLogout}
-            className="text-sm text-slate-600 hover:underline"
+            className="rounded-lg border-3 border-white bg-maroon-600 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive"
           >
             {t("logout")}
           </button>

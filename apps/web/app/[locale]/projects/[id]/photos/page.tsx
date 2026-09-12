@@ -106,8 +106,8 @@ export default function PhotosPage() {
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
-          <label className="cursor-pointer rounded bg-slate-900 px-3 py-2 text-sm text-white">
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+          <label className="cursor-pointer rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
             {uploading ? t("uploading") : t("uploadButton")}
             <input
               ref={fileInputRef}
@@ -122,12 +122,12 @@ export default function PhotosPage() {
             />
           </label>
         </div>
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-maroon-700">{error}</p>}
         {!photos && !error && <p>{tc("loading")}</p>}
         {photos && photos.length === 0 && <p>{t("empty")}</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {photos?.map((photo) => (
-            <div key={photo.id} className="flex aspect-square items-center justify-center rounded border border-slate-200 bg-slate-50 p-2 text-center text-xs text-slate-500">
+            <div key={photo.id} className="flex aspect-square items-center justify-center rounded-xl border-3 border-ink bg-white shadow-brutal-sm bg-orange-50 p-2 text-center text-xs text-navy-600">
               {photo.attachmentId.slice(0, 8)}
             </div>
           ))}

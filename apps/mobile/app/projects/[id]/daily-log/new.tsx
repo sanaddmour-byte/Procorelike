@@ -51,11 +51,11 @@ export default function NewDailyLogScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 16, gap: 6 },
-  label: { fontSize: 13, color: "#334155", marginTop: 8 },
-  input: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
+  container: { flex: 1, backgroundColor: "#ffffff", padding: 16, gap: 6 },
+  label: { fontSize: 13, color: "#13213f", marginTop: 8 },
+  input: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
   textArea: { minHeight: 120, textAlignVertical: "top" },
-  button: { marginTop: 20, backgroundColor: "#0f172a", borderRadius: 8, paddingVertical: 12, alignItems: "center" },
+  button: { marginTop: 20, backgroundColor: "#182a51", borderRadius: 8, paddingVertical: 12, alignItems: "center" },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
 });

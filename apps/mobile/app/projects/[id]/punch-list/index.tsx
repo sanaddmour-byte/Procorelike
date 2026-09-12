@@ -84,15 +84,15 @@ export default function PunchListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   list: { padding: 16, gap: 12 },
-  card: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, padding: 16, gap: 6 },
+  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 16, gap: 6 },
   cardRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  cardTitle: { fontSize: 15, fontWeight: "600", flex: 1 },
-  status: { fontSize: 12, color: "#334155" },
-  badge: { fontSize: 11, backgroundColor: "#e2e8f0", color: "#334155", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  badgePending: { backgroundColor: "#fef3c7", color: "#92400e" },
-  badgeConflict: { backgroundColor: "#fee2e2", color: "#991b1b" },
-  empty: { padding: 16, color: "#64748b" },
-  headerButton: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  cardTitle: { fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold", flex: 1 },
+  status: { fontSize: 12, color: "#13213f" },
+  badge: { fontSize: 11, fontFamily: "Poppins_600SemiBold", backgroundColor: "#ffe4bf", color: "#7c2d12", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  badgePending: { backgroundColor: "#fff4e6", color: "#9a3412" },
+  badgeConflict: { backgroundColor: "#fbebec", color: "#5c1620" },
+  empty: { padding: 16, color: "#182a51" },
+  headerButton: { color: "#fff", fontSize: 14, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
 });

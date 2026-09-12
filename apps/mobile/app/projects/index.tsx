@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { apiJson } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { i18n } from "@/lib/i18n";
+import { brutalShadow, colors } from "@/lib/theme";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
 interface Project {
@@ -54,8 +55,11 @@ export default function ProjectsScreen() {
         renderItem={({ item }) => (
           <Link href={`/projects/${item.id}`} asChild>
             <Pressable style={styles.card}>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              {item.address && <Text style={styles.cardSubtitle}>{item.address}</Text>}
+              <View style={styles.accentStripe} />
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                {item.address && <Text style={styles.cardSubtitle}>{item.address}</Text>}
+              </View>
             </Pressable>
           </Link>
         )}
@@ -65,12 +69,22 @@ export default function ProjectsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  list: { padding: 16, gap: 12 },
-  card: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, padding: 16, gap: 4 },
-  cardTitle: { fontSize: 16, fontWeight: "600" },
-  cardSubtitle: { fontSize: 13, color: "#64748b" },
-  empty: { padding: 16, color: "#64748b" },
-  error: { padding: 16, color: "#dc2626" },
-  logout: { color: "#fff", fontSize: 14, marginRight: 4 },
+  container: { flex: 1, backgroundColor: colors.cream },
+  list: { padding: 16, gap: 14 },
+  card: {
+    flexDirection: "row",
+    borderWidth: 3,
+    borderColor: colors.ink,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    overflow: "hidden",
+    ...brutalShadow(3),
+  },
+  accentStripe: { width: 10, backgroundColor: colors.orange500 },
+  cardBody: { flex: 1, padding: 16, gap: 4 },
+  cardTitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", color: colors.navy900 },
+  cardSubtitle: { fontSize: 13, color: colors.navy600 },
+  empty: { padding: 16, color: colors.navy600 },
+  error: { padding: 16, color: colors.maroon700 },
+  logout: { color: colors.white, fontSize: 14, marginRight: 4, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
 });

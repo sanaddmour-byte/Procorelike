@@ -91,17 +91,17 @@ export default function ChecklistTemplatesPage() {
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{t("manageTemplates")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded bg-slate-900 px-3 py-2 text-sm text-white">
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("manageTemplates")}</h1>
+          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
             {t("newTemplate")}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded border border-slate-200 p-4">
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
             <label className="flex flex-col gap-1 text-sm">
               {t("templateTitle")}
-              <input required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded border border-slate-300 px-3 py-2" />
+              <input required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
 
             <span className="text-sm font-medium">{t("items")}</span>
@@ -111,12 +111,12 @@ export default function ChecklistTemplatesPage() {
                   value={item.prompt}
                   onChange={(e) => updateItem(i, { prompt: e.target.value })}
                   placeholder={t("prompt")}
-                  className="min-w-[220px] flex-1 rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  className="min-w-[220px] flex-1 rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
                 />
                 <select
                   value={item.responseType}
                   onChange={(e) => updateItem(i, { responseType: e.target.value as ChecklistResponseType })}
-                  className="rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
                 >
                   {RESPONSE_TYPES.map((rt) => (
                     <option key={rt} value={rt}>
@@ -129,23 +129,23 @@ export default function ChecklistTemplatesPage() {
             <button
               type="button"
               onClick={() => setItems((prev) => [...prev, { prompt: "", responseType: "pass_fail", order: prev.length + 1 }])}
-              className="self-start text-xs text-slate-600 underline"
+              className="self-start text-xs text-navy-700 underline"
             >
               {t("addItem")}
             </button>
 
-            <button type="submit" disabled={creating || !title.trim()} className="self-start rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50">
+            <button type="submit" disabled={creating || !title.trim()} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
             </button>
           </form>
         )}
 
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-maroon-700">{error}</p>}
         {!templates && !error && <p>{tc("loading")}</p>}
-        {templates && templates.length === 0 && <p className="text-slate-500">{t("noTemplates")}</p>}
+        {templates && templates.length === 0 && <p className="text-navy-600">{t("noTemplates")}</p>}
         <ul className="flex flex-col gap-2">
           {templates?.map((tpl) => (
-            <li key={tpl.id} className="rounded border border-slate-200 p-3 text-sm font-medium">
+            <li key={tpl.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3 text-sm font-medium">
               {tpl.title}
             </li>
           ))}

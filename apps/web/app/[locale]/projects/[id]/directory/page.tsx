@@ -43,17 +43,17 @@ export default function DirectoryPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <Link href={`/${locale}/projects`} className="text-sm text-slate-600 underline">
+        <Link href={`/${locale}/projects`} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
-        <h1 className="mb-4 mt-2 text-2xl font-semibold">{t("title")}</h1>
-        {error && <p className="text-red-600">{error}</p>}
+        <h1 className="mb-4 mt-2 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        {error && <p className="text-maroon-700">{error}</p>}
         {!members && !error && <p>{tc("loading")}</p>}
         {members && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200">
+                <tr className="border-b border-ink">
                   <th className="py-2 text-start">{t("name")}</th>
                   <th className="py-2 text-start">{t("email")}</th>
                   <th className="py-2 text-start">{t("role")}</th>
@@ -62,7 +62,7 @@ export default function DirectoryPage() {
               </thead>
               <tbody>
                 {members.map((m) => (
-                  <tr key={m.userId} className="border-b border-slate-100">
+                  <tr key={m.userId} className="border-b border-orange-200">
                     <td className="py-2">{m.name}</td>
                     <td className="py-2">{m.email}</td>
                     <td className="py-2">{m.role}</td>

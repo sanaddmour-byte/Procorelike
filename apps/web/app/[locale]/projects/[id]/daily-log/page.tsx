@@ -42,15 +42,15 @@ export default function DailyLogListPage() {
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <Link
             href={`/${locale}/projects/${params.id}/daily-log/new`}
-            className="rounded bg-slate-900 px-3 py-2 text-sm text-white"
+            className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white"
           >
             {t("newButton")}
           </Link>
         </div>
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-maroon-700">{error}</p>}
         {!logs && !error && <p>{tc("loading")}</p>}
         {logs && logs.length === 0 && <p>{t("empty")}</p>}
         <ul className="flex flex-col gap-3">
@@ -58,19 +58,19 @@ export default function DailyLogListPage() {
             <li key={log.id}>
               <Link
                 href={`/${locale}/projects/${params.id}/daily-log/${log.id}`}
-                className="block rounded border border-slate-200 p-4 hover:border-slate-400"
+                className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{log.logDate}</span>
                   <span
                     className={`rounded px-2 py-0.5 text-xs ${
-                      log.lockedAt ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+                      log.lockedAt ? "bg-navy-900 text-white" : "bg-orange-100 text-navy-800"
                     }`}
                   >
                     {log.lockedAt ? t("locked") : t("open")}
                   </span>
                 </div>
-                {log.notes && <p className="mt-1 truncate text-sm text-slate-500">{log.notes}</p>}
+                {log.notes && <p className="mt-1 truncate text-sm text-navy-600">{log.notes}</p>}
               </Link>
             </li>
           ))}

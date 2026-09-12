@@ -186,7 +186,7 @@ export default function SubmittalDetailScreen() {
       <>
         <Header />
         <ProjectTabs projectId={params.id} />
-        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-red-600">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
       </>
     );
   }
@@ -196,49 +196,49 @@ export default function SubmittalDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <Link href={`/${locale}/projects/${params.id}/submittals`} className="mb-4 inline-block text-sm text-slate-500 underline">
+        <Link href={`/${locale}/projects/${params.id}/submittals`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}
         </Link>
 
         <div className="mb-1 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
             {submittal.number} — {submittal.title}
           </h1>
           {submittal.status === "approved" && (
-            <button onClick={() => void handleClose()} disabled={busy} className="rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50">
+            <button onClick={() => void handleClose()} disabled={busy} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("close")}
             </button>
           )}
         </div>
-        <p className="mb-4 text-sm text-slate-500">
+        <p className="mb-4 text-sm text-navy-600">
           {statusLabel(submittal.status, t)} · {t("ballInCourt")}: {memberName(submittal.ballInCourtUserId)}
         </p>
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-maroon-700">{error}</p>}
 
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-medium">{t("packages")}</h2>
-          <button onClick={() => void handleNewPackage()} disabled={busy} className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700">
+          <button onClick={() => void handleNewPackage()} disabled={busy} className="rounded-lg border-3 border-ink px-3 py-1.5 text-sm text-navy-800">
             {t("newPackage")}
           </button>
         </div>
 
         <div className="flex flex-col gap-6">
           {submittal.packages.map((pkg) => (
-            <div key={pkg.id} className="rounded border border-slate-200 p-4">
+            <div key={pkg.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="font-medium">
                   {t("package")} #{pkg.packageNumber}
                 </h3>
                 <button
                   onClick={() => setRevisionFormPackageId((cur) => (cur === pkg.id ? null : pkg.id))}
-                  className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                  className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800"
                 >
                   {t("uploadRevision")}
                 </button>
               </div>
 
               {revisionFormPackageId === pkg.id && (
-                <form onSubmit={(e) => void handleUploadRevision(e, pkg.id)} className="mb-4 flex flex-col gap-3 rounded bg-slate-50 p-3">
+                <form onSubmit={(e) => void handleUploadRevision(e, pkg.id)} className="mb-4 flex flex-col gap-3 rounded bg-orange-50 p-3">
                   <label className="flex flex-col gap-1 text-sm">
                     {t("submittedDate")}
                     <input
@@ -246,7 +246,7 @@ export default function SubmittalDetailScreen() {
                       required
                       value={submittedDate}
                       onChange={(e) => setSubmittedDate(e.target.value)}
-                      className="rounded border border-slate-300 px-3 py-2"
+                      className="rounded-lg border-3 border-ink px-3 py-2"
                     />
                   </label>
                   <input required type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
@@ -258,7 +258,7 @@ export default function SubmittalDetailScreen() {
                         <select
                           value={r.reviewerUserId}
                           onChange={(e) => updateReviewer(i, { reviewerUserId: e.target.value })}
-                          className="rounded border border-slate-300 px-2 py-1 text-sm"
+                          className="rounded-lg border-3 border-ink px-2 py-1 text-sm"
                         >
                           <option value="">{t("reviewer")}</option>
                           {members.map((m) => (
@@ -272,10 +272,10 @@ export default function SubmittalDetailScreen() {
                           min={1}
                           value={r.sequenceOrder}
                           onChange={(e) => updateReviewer(i, { sequenceOrder: Number(e.target.value) })}
-                          className="w-16 rounded border border-slate-300 px-2 py-1 text-sm"
+                          className="w-16 rounded-lg border-3 border-ink px-2 py-1 text-sm"
                           title={t("sequenceOrder")}
                         />
-                        <label className="flex items-center gap-1 text-xs text-slate-600">
+                        <label className="flex items-center gap-1 text-xs text-navy-700">
                           <input type="checkbox" checked={r.isParallel} onChange={(e) => updateReviewer(i, { isParallel: e.target.checked })} />
                           {t("parallel")}
                         </label>
@@ -284,13 +284,13 @@ export default function SubmittalDetailScreen() {
                     <button
                       type="button"
                       onClick={() => setReviewers((prev) => [...prev, { reviewerUserId: "", sequenceOrder: prev.length + 1, isParallel: false }])}
-                      className="self-start text-xs text-slate-600 underline"
+                      className="self-start text-xs text-navy-700 underline"
                     >
                       {t("addReviewer")}
                     </button>
                   </div>
 
-                  <button type="submit" disabled={busy || !file} className="self-start rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50">
+                  <button type="submit" disabled={busy || !file} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                     {busy ? t("uploading") : t("uploadRevision")}
                   </button>
                 </form>
@@ -298,7 +298,7 @@ export default function SubmittalDetailScreen() {
 
               <ul className="flex flex-col gap-3">
                 {pkg.revisions.map((rev) => (
-                  <li key={rev.id} className="rounded border border-slate-100 p-3">
+                  <li key={rev.id} className="rounded border border-orange-200 p-3">
                     <p className="mb-2 text-sm font-medium">
                       {t("revisions")} #{rev.revisionNumber} — {rev.submittedDate.slice(0, 10)}
                     </p>
@@ -316,14 +316,14 @@ export default function SubmittalDetailScreen() {
                                   key={code}
                                   onClick={() => void handleSubmitReview(rev.id, code)}
                                   disabled={busy}
-                                  className="rounded border border-slate-300 px-2 py-0.5 text-xs text-slate-700 disabled:opacity-50"
+                                  className="rounded-lg border-3 border-ink px-2 py-0.5 text-xs text-navy-800 disabled:opacity-50"
                                 >
                                   {responseCodeLabel(code, t)}
                                 </button>
                               ))}
                             </div>
                           ) : (
-                            <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                            <span className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
                               {responseCodeLabel(review.responseCode, t)}
                             </span>
                           )}

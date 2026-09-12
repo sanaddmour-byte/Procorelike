@@ -176,7 +176,7 @@ export default function InspectionDetailScreen() {
       <>
         <Header />
         <ProjectTabs projectId={params.id} />
-        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-red-600">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
       </>
     );
   }
@@ -188,19 +188,19 @@ export default function InspectionDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <Link href={`/${locale}/projects/${params.id}/inspections`} className="mb-4 inline-block text-sm text-slate-500 underline">
+        <Link href={`/${locale}/projects/${params.id}/inspections`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}
         </Link>
 
         <div className="mb-1 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{inspection.templateTitle}</h1>
-          <span className="whitespace-nowrap rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{statusLabel(inspection.status, t)}</span>
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{inspection.templateTitle}</h1>
+          <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(inspection.status, t)}</span>
         </div>
-        {inspection.scheduledAt && <p className="mb-4 text-sm text-slate-500">{inspection.scheduledAt.slice(0, 10)}</p>}
-        {error && <p className="text-red-600">{error}</p>}
+        {inspection.scheduledAt && <p className="mb-4 text-sm text-navy-600">{inspection.scheduledAt.slice(0, 10)}</p>}
+        {error && <p className="text-maroon-700">{error}</p>}
 
         {inspection.status === "scheduled" && (
-          <button onClick={() => void handleStart()} disabled={busy} className="mb-6 rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50">
+          <button onClick={() => void handleStart()} disabled={busy} className="mb-6 rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
             {t("start")}
           </button>
         )}
@@ -213,10 +213,10 @@ export default function InspectionDetailScreen() {
                 const draft = drafts[item.id];
                 const response = responseByItem(item.id);
                 return (
-                  <li key={item.id} className="rounded border border-slate-200 p-3">
+                  <li key={item.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <span className="text-sm font-medium">{item.prompt}</span>
-                      <span className="text-xs text-slate-400">{responseTypeLabel(item.responseType)}</span>
+                      <span className="text-xs text-navy-500">{responseTypeLabel(item.responseType)}</span>
                     </div>
 
                     {item.responseType === "pass_fail" && (
@@ -226,7 +226,7 @@ export default function InspectionDetailScreen() {
                           disabled={!editable}
                           onClick={() => setDraft(item.id, { type: "pass_fail", passed: true })}
                           className={`rounded px-3 py-1 text-sm ${
-                            draft?.type === "pass_fail" && draft.passed ? "bg-emerald-600 text-white" : "border border-slate-300 text-slate-700"
+                            draft?.type === "pass_fail" && draft.passed ? "bg-emerald-600 text-white" : "border border-ink text-navy-800"
                           }`}
                         >
                           {t("pass")}
@@ -236,7 +236,7 @@ export default function InspectionDetailScreen() {
                           disabled={!editable}
                           onClick={() => setDraft(item.id, { type: "pass_fail", passed: false })}
                           className={`rounded px-3 py-1 text-sm ${
-                            draft?.type === "pass_fail" && !draft.passed ? "bg-red-600 text-white" : "border border-slate-300 text-slate-700"
+                            draft?.type === "pass_fail" && !draft.passed ? "bg-maroon-600 text-white" : "border border-ink text-navy-800"
                           }`}
                         >
                           {t("fail")}
@@ -249,7 +249,7 @@ export default function InspectionDetailScreen() {
                         type="button"
                         disabled={!editable}
                         onClick={() => setDraft(item.id, { type: "na" })}
-                        className={`rounded px-3 py-1 text-sm ${draft?.type === "na" ? "bg-slate-900 text-white" : "border border-slate-300 text-slate-700"}`}
+                        className={`rounded px-3 py-1 text-sm ${draft?.type === "na" ? "bg-navy-900 text-white" : "border border-ink text-navy-800"}`}
                       >
                         {t("na")}
                       </button>
@@ -262,13 +262,13 @@ export default function InspectionDetailScreen() {
                         value={draft?.type === "numeric" ? draft.number : ""}
                         onChange={(e) => setDraft(item.id, { type: "numeric", number: Number(e.target.value) })}
                         placeholder={t("numberPlaceholder")}
-                        className="w-40 rounded border border-slate-300 px-2 py-1 text-sm"
+                        className="w-40 rounded-lg border-3 border-ink px-2 py-1 text-sm"
                       />
                     )}
 
                     {item.responseType === "photo" && (
                       <div className="flex items-center gap-2">
-                        <label className={`cursor-pointer rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 ${!editable ? "opacity-50" : ""}`}>
+                        <label className={`cursor-pointer rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800 ${!editable ? "opacity-50" : ""}`}>
                           {uploadingItemId === item.id ? t("uploading") : t("photoUpload")}
                           <input
                             type="file"
@@ -292,14 +292,14 @@ export default function InspectionDetailScreen() {
                         value={draft?.type === "signature" ? draft.signedByName : ""}
                         onChange={(e) => setDraft(item.id, { type: "signature", signedByName: e.target.value })}
                         placeholder={t("signaturePlaceholder")}
-                        className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                        className="w-full rounded-lg border-3 border-ink px-2 py-1 text-sm"
                       />
                     )}
 
                     {response?.generatedPunchItemId && (
                       <Link
                         href={`/${locale}/projects/${params.id}/punch-list/${response.generatedPunchItemId}`}
-                        className="mt-2 inline-block text-xs font-medium text-amber-700 underline"
+                        className="mt-2 inline-block text-xs font-medium text-orange-800 underline"
                       >
                         {t("punchItemCreated")}
                       </Link>
@@ -310,26 +310,26 @@ export default function InspectionDetailScreen() {
             </ul>
 
             {editable && (
-              <button onClick={() => void handleSaveAnswers()} disabled={busy} className="mb-8 rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50">
+              <button onClick={() => void handleSaveAnswers()} disabled={busy} className="mb-8 rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                 {t("saveAnswers")}
               </button>
             )}
 
             {editable && (
-              <div className="mb-6 rounded border border-slate-200 p-4">
+              <div className="mb-6 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
                 <label className="mb-2 flex flex-col gap-1 text-sm">
                   {t("signedByName")}
                   <input
                     type="text"
                     value={signedByName}
                     onChange={(e) => setSignedByName(e.target.value)}
-                    className="rounded border border-slate-300 px-3 py-2"
+                    className="rounded-lg border-3 border-ink px-3 py-2"
                   />
                 </label>
                 <button
                   onClick={() => void handleComplete()}
                   disabled={busy || !signedByName.trim()}
-                  className="rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+                  className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
                 >
                   {t("completeInspection")}
                 </button>
@@ -338,11 +338,11 @@ export default function InspectionDetailScreen() {
 
             {inspection.status === "completed" && (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-navy-700">
                   {t("signedOffBy")}: <span className="font-medium">{inspection.signedByName}</span>
                   {inspection.signedAt && ` — ${inspection.signedAt.replace("T", " ").slice(0, 16)}`}
                 </p>
-                <button onClick={() => void handleDownloadReport()} className="self-start rounded bg-slate-900 px-3 py-2 text-sm text-white">
+                <button onClick={() => void handleDownloadReport()} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
                   {t("downloadReport")}
                 </button>
               </div>

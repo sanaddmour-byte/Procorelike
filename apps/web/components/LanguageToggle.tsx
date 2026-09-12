@@ -24,8 +24,8 @@ export function LanguageToggle() {
           type="button"
           onClick={() => switchTo(l)}
           aria-current={l === locale}
-          className={`rounded px-2 py-1 ${
-            l === locale ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+          className={`rounded-md border-2 px-2 py-1 font-semibold ${
+            l === locale ? "border-white bg-orange-500 text-ink" : "border-white/40 bg-navy-800 text-white hover:border-white"
           }`}
         >
           {l === "en" ? t("english") : t("arabic")}

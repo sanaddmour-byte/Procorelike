@@ -84,16 +84,16 @@ export default function MobileRfiDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   content: { padding: 16, gap: 8 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 20, fontWeight: "700" },
-  subtitle: { fontSize: 13, color: "#64748b" },
-  viewOnlyNote: { fontSize: 12, color: "#92400e", backgroundColor: "#fef3c7", padding: 10, borderRadius: 8, marginVertical: 8 },
-  card: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, padding: 12, gap: 4, marginBottom: 4 },
-  cardText: { fontSize: 14, color: "#0f172a" },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginTop: 12, marginBottom: 4 },
-  hint: { fontSize: 13, color: "#64748b" },
-  officialBadge: { alignSelf: "flex-start", fontSize: 11, backgroundColor: "#0f172a", color: "#fff", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  error: { fontSize: 13, color: "#dc2626" },
+  title: { fontSize: 20, fontWeight: "700", fontFamily: "Poppins_700Bold" },
+  subtitle: { fontSize: 13, color: "#182a51" },
+  viewOnlyNote: { fontSize: 12, color: "#9a3412", backgroundColor: "#fff4e6", padding: 10, borderRadius: 8, marginVertical: 8 },
+  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 12, gap: 4, marginBottom: 4 },
+  cardText: { fontSize: 14, color: "#080f1c" },
+  sectionTitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", marginTop: 12, marginBottom: 4 },
+  hint: { fontSize: 13, color: "#182a51" },
+  officialBadge: { alignSelf: "flex-start", fontSize: 11, backgroundColor: "#182a51", color: "#fff", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  error: { fontSize: 13, color: "#731c29" },
 });

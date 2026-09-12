@@ -2,55 +2,55 @@ import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
 import { i18n } from "@/lib/i18n";
+import { brutalShadow, colors } from "@/lib/theme";
 import { useRequireAuth } from "@/lib/use-require-auth";
+
+const ACCENTS = [colors.orange500, colors.maroon600, colors.navy600];
 
 export default function ProjectHomeScreen() {
   useRequireAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
+
+  const links = [
+    { href: `/projects/${id}/daily-log`, label: i18n.t("dailyLog.title") },
+    { href: `/projects/${id}/punch-list`, label: i18n.t("punchList.title") },
+    { href: `/projects/${id}/drawings`, label: i18n.t("drawings.title") },
+    { href: `/projects/${id}/rfis`, label: i18n.t("rfis.title") },
+    { href: `/projects/${id}/submittals`, label: i18n.t("submittals.title") },
+    { href: `/projects/${id}/inspections`, label: i18n.t("inspections.title") },
+  ];
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: i18n.t("projects.title") }} />
       <SyncStatusBar projectId={id} />
       <View style={styles.links}>
-        <Link href={`/projects/${id}/daily-log`} asChild>
-          <Pressable style={styles.card}>
-            <Text style={styles.cardTitle}>{i18n.t("dailyLog.title")}</Text>
-          </Pressable>
-        </Link>
-        <Link href={`/projects/${id}/punch-list`} asChild>
-          <Pressable style={styles.card}>
-            <Text style={styles.cardTitle}>{i18n.t("punchList.title")}</Text>
-          </Pressable>
-        </Link>
-        <Link href={`/projects/${id}/drawings`} asChild>
-          <Pressable style={styles.card}>
-            <Text style={styles.cardTitle}>{i18n.t("drawings.title")}</Text>
-          </Pressable>
-        </Link>
-        <Link href={`/projects/${id}/rfis`} asChild>
-          <Pressable style={styles.card}>
-            <Text style={styles.cardTitle}>{i18n.t("rfis.title")}</Text>
-          </Pressable>
-        </Link>
-        <Link href={`/projects/${id}/submittals`} asChild>
-          <Pressable style={styles.card}>
-            <Text style={styles.cardTitle}>{i18n.t("submittals.title")}</Text>
-          </Pressable>
-        </Link>
-        <Link href={`/projects/${id}/inspections`} asChild>
-          <Pressable style={styles.card}>
-            <Text style={styles.cardTitle}>{i18n.t("inspections.title")}</Text>
-          </Pressable>
-        </Link>
+        {links.map((link, i) => (
+          <Link key={link.href} href={link.href} asChild>
+            <Pressable style={styles.card}>
+              <View style={[styles.accentStripe, { backgroundColor: ACCENTS[i % ACCENTS.length] }]} />
+              <Text style={styles.cardTitle}>{link.label}</Text>
+            </Pressable>
+          </Link>
+        ))}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  links: { padding: 16, gap: 12 },
-  card: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, padding: 20 },
-  cardTitle: { fontSize: 17, fontWeight: "600" },
+  container: { flex: 1, backgroundColor: colors.cream },
+  links: { padding: 16, gap: 14 },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: colors.ink,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    overflow: "hidden",
+    ...brutalShadow(3),
+  },
+  accentStripe: { width: 10, alignSelf: "stretch" },
+  cardTitle: { fontSize: 17, fontWeight: "600", fontFamily: "Poppins_600SemiBold", padding: 20, color: colors.navy900 },
 });

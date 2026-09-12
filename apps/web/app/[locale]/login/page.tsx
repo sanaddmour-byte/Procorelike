@@ -49,9 +49,12 @@ export default function LoginPage() {
     <>
       <Header />
       <main className="mx-auto flex min-h-[calc(100vh-73px)] max-w-sm flex-col justify-center gap-4 px-4">
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-sm">
+        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        <form
+          onSubmit={(e) => void handleSubmit(e)}
+          className="flex flex-col gap-4 rounded-xl border-3 border-ink bg-white p-6 shadow-brutal"
+        >
+          <label className="flex flex-col gap-1 text-sm font-semibold text-navy-800">
             {t("email")}
             <input
               type="email"
@@ -59,10 +62,10 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded border border-slate-300 px-3 py-2"
+              className="rounded-lg border-3 border-ink px-3 py-2 font-normal focus:outline-none focus:shadow-brutal-sm"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-sm font-semibold text-navy-800">
             {t("password")}
             <input
               type="password"
@@ -70,11 +73,11 @@ export default function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded border border-slate-300 px-3 py-2"
+              className="rounded-lg border-3 border-ink px-3 py-2 font-normal focus:outline-none focus:shadow-brutal-sm"
             />
           </label>
           {needsTotp && (
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-sm font-semibold text-navy-800">
               {t("totpLabel")}
               <input
                 type="text"
@@ -82,15 +85,15 @@ export default function LoginPage() {
                 maxLength={6}
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2"
+                className="rounded-lg border-3 border-ink px-3 py-2 font-normal focus:outline-none focus:shadow-brutal-sm"
               />
             </label>
           )}
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="rounded-lg border-3 border-maroon-700 bg-maroon-100 p-2 text-sm font-semibold text-maroon-800">{error}</p>}
           <button
             type="submit"
             disabled={submitting}
-            className="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50"
+            className="rounded-lg border-3 border-ink bg-orange-500 brutal-interactive px-3 py-2 font-bold text-ink disabled:opacity-50"
           >
             {submitting ? tc("loading") : t("submit")}
           </button>

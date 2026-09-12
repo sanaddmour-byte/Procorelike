@@ -40,7 +40,7 @@ export default function NewDailyLogPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-lg px-4 py-8">
-        <h1 className="mb-4 text-2xl font-semibold">{t("createTitle")}</h1>
+        <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("createTitle")}</h1>
         <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
             {t("date")}
@@ -49,7 +49,7 @@ export default function NewDailyLogPage() {
               required
               value={logDate}
               onChange={(e) => setLogDate(e.target.value)}
-              className="rounded border border-slate-300 px-3 py-2"
+              className="rounded-lg border-3 border-ink px-3 py-2"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -58,18 +58,18 @@ export default function NewDailyLogPage() {
               rows={5}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="rounded border border-slate-300 px-3 py-2"
+              className="rounded-lg border-3 border-ink px-3 py-2"
             />
           </label>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-maroon-700">{error}</p>}
           <div className="flex gap-2">
-            <button type="submit" disabled={submitting} className="rounded bg-slate-900 px-3 py-2 text-white disabled:opacity-50">
+            <button type="submit" disabled={submitting} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-white disabled:opacity-50">
               {t("save")}
             </button>
             <button
               type="button"
               onClick={() => router.back()}
-              className="rounded border border-slate-300 px-3 py-2 text-slate-700"
+              className="rounded-lg border-3 border-ink px-3 py-2 text-navy-800"
             >
               {t("cancel")}
             </button>

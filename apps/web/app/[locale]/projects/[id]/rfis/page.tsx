@@ -98,17 +98,17 @@ export default function RfisPage() {
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded bg-slate-900 px-3 py-2 text-sm text-white">
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
             {t("newButton")}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded border border-slate-200 p-4">
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
             <label className="flex flex-col gap-1 text-sm">
               {t("subject")}
-              <input required value={subject} onChange={(e) => setSubject(e.target.value)} className="rounded border border-slate-300 px-3 py-2" />
+              <input required value={subject} onChange={(e) => setSubject(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               {t("question")}
@@ -116,7 +116,7 @@ export default function RfisPage() {
                 required
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2"
+                className="rounded-lg border-3 border-ink px-3 py-2"
                 rows={3}
               />
             </label>
@@ -125,7 +125,7 @@ export default function RfisPage() {
               <select
                 value={ballInCourtUserId}
                 onChange={(e) => setBallInCourtUserId(e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2"
+                className="rounded-lg border-3 border-ink px-3 py-2"
               >
                 <option value="">{t("unassigned")}</option>
                 {members.map((m) => (
@@ -137,36 +137,36 @@ export default function RfisPage() {
             </label>
             <label className="flex flex-col gap-1 text-sm">
               {t("dueDate")}
-              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded border border-slate-300 px-3 py-2" />
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
-            <button type="submit" disabled={creating} className="self-start rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50">
+            <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
             </button>
           </form>
         )}
 
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-maroon-700">{error}</p>}
         {!rfis && !error && <p>{tc("loading")}</p>}
-        {rfis && rfis.length === 0 && <p className="text-slate-500">{t("empty")}</p>}
+        {rfis && rfis.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
         <ul className="flex flex-col gap-3">
           {rfis?.map((rfi) => (
             <li key={rfi.id}>
               <Link
                 href={`/${locale}/projects/${params.id}/rfis/${rfi.id}`}
-                className="block rounded border border-slate-200 p-4 hover:border-slate-400"
+                className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">
                     {rfi.number} — {rfi.subject}
                   </span>
                   <div className="flex shrink-0 gap-2">
-                    {rfi.isOverdue && <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-700">{t("overdue")}</span>}
-                    <span className="whitespace-nowrap rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                    {rfi.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
+                    <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
                       {statusLabel(rfi.status, t)}
                     </span>
                   </div>
                 </div>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-navy-600">
                   {t("ballInCourt")}: {memberName(rfi.ballInCourtUserId)}
                 </p>
               </Link>

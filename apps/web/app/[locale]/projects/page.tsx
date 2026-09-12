@@ -37,21 +37,24 @@ export default function ProjectsPage() {
     <>
       <Header />
       <main className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-semibold">{t("title")}</h1>
-        {error && <p className="text-red-600">{error}</p>}
+        <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        {error && <p className="text-maroon-700">{error}</p>}
         {!projects && !error && <p>{tc("loading")}</p>}
         {projects && projects.length === 0 && <p>{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {projects?.map((p) => (
-            <li key={p.id} className="rounded border border-slate-200 p-4">
-              <div className="font-medium">{p.name}</div>
-              {p.address && <div className="text-sm text-slate-500">{p.address}</div>}
-              <Link
-                href={`/${locale}/projects/${p.id}/directory`}
-                className="mt-2 inline-block text-sm text-slate-900 underline"
-              >
-                {t("viewDirectory")}
-              </Link>
+            <li key={p.id} className="overflow-hidden rounded-xl border-3 border-ink bg-white shadow-brutal">
+              <div className="h-2 bg-orange-500" aria-hidden="true" />
+              <div className="p-4">
+                <div className="text-lg font-bold text-navy-900">{p.name}</div>
+                {p.address && <div className="text-sm text-navy-600">{p.address}</div>}
+                <Link
+                  href={`/${locale}/projects/${p.id}/directory`}
+                  className="mt-3 inline-block rounded-lg border-3 border-ink bg-maroon-700 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive"
+                >
+                  {t("viewDirectory")}
+                </Link>
+              </div>
             </li>
           ))}
         </ul>

@@ -93,26 +93,26 @@ export default function InspectionsPage() {
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <div className="flex gap-2">
-            <Link href={`/${locale}/projects/${params.id}/inspections/templates`} className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700">
+            <Link href={`/${locale}/projects/${params.id}/inspections/templates`} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
               {t("manageTemplates")}
             </Link>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded bg-slate-900 px-3 py-2 text-sm text-white">
+            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
               {t("newButton")}
             </button>
           </div>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded border border-slate-200 p-4">
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
             {templates.length === 0 ? (
-              <p className="text-sm text-slate-500">{t("noTemplates")}</p>
+              <p className="text-sm text-navy-600">{t("noTemplates")}</p>
             ) : (
               <>
                 <label className="flex flex-col gap-1 text-sm">
                   {t("template")}
-                  <select required value={templateId} onChange={(e) => setTemplateId(e.target.value)} className="rounded border border-slate-300 px-3 py-2">
+                  <select required value={templateId} onChange={(e) => setTemplateId(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
                     {templates.map((tpl) => (
                       <option key={tpl.id} value={tpl.id}>
                         {tpl.title}
@@ -122,9 +122,9 @@ export default function InspectionsPage() {
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                   {t("scheduledDate")}
-                  <input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="rounded border border-slate-300 px-3 py-2" />
+                  <input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
                 </label>
-                <button type="submit" disabled={creating} className="self-start rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50">
+                <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                   {t("create")}
                 </button>
               </>
@@ -132,23 +132,23 @@ export default function InspectionsPage() {
           </form>
         )}
 
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-maroon-700">{error}</p>}
         {!inspections && !error && <p>{tc("loading")}</p>}
-        {inspections && inspections.length === 0 && <p className="text-slate-500">{t("empty")}</p>}
+        {inspections && inspections.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
         <ul className="flex flex-col gap-3">
           {inspections?.map((inspection) => (
             <li key={inspection.id}>
               <Link
                 href={`/${locale}/projects/${params.id}/inspections/${inspection.id}`}
-                className="block rounded border border-slate-200 p-4 hover:border-slate-400"
+                className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{templateTitle(inspection.templateId)}</span>
-                  <span className="whitespace-nowrap rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
                     {statusLabel(inspection.status, t)}
                   </span>
                 </div>
-                {inspection.scheduledAt && <p className="mt-1 text-sm text-slate-500">{inspection.scheduledAt.slice(0, 10)}</p>}
+                {inspection.scheduledAt && <p className="mt-1 text-sm text-navy-600">{inspection.scheduledAt.slice(0, 10)}</p>}
               </Link>
             </li>
           ))}

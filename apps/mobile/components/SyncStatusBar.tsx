@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { getLastSyncedAt, outboxCount } from "../lib/db/outbox-repo";
 import { i18n } from "../lib/i18n";
+import { brutalShadow, colors } from "../lib/theme";
 import { syncProject, type SyncResult } from "../lib/sync/sync-engine";
 
 interface Props {
@@ -59,7 +60,7 @@ export function SyncStatusBar({ projectId, onSynced }: Props) {
         )}
       </View>
       <Pressable onPress={() => void handleSync()} disabled={syncing} style={[styles.button, syncing && styles.buttonDisabled]}>
-        {syncing ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.buttonText}>{i18n.t("sync.syncNow")}</Text>}
+        {syncing ? <ActivityIndicator color={colors.ink} size="small" /> : <Text style={styles.buttonText}>{i18n.t("sync.syncNow")}</Text>}
       </Pressable>
     </View>
   );
@@ -73,14 +74,24 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: "#f1f5f9",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    backgroundColor: "#eef1f8",
+    borderBottomWidth: 3,
+    borderBottomColor: "#171310",
   },
   info: { flex: 1, gap: 2 },
-  status: { fontSize: 13, fontWeight: "600", color: "#0f172a" },
-  meta: { fontSize: 11, color: "#64748b" },
-  button: { backgroundColor: "#0f172a", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 6, minWidth: 92, alignItems: "center" },
+  status: { fontSize: 13, fontWeight: "600", fontFamily: "Poppins_600SemiBold", color: "#080f1c" },
+  meta: { fontSize: 11, color: "#182a51" },
+  button: {
+    backgroundColor: "#f97316",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 3,
+    borderColor: "#171310",
+    minWidth: 92,
+    alignItems: "center",
+    ...brutalShadow(3),
+  },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 13, fontWeight: "600" },
+  buttonText: { color: "#171310", fontSize: 13, fontWeight: "700", fontFamily: "Poppins_700Bold" },
 });

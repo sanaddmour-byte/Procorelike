@@ -79,16 +79,16 @@ export function DrawingViewer({ pdfUrl, markups, errorLabel, onAddPin }: Props) 
 
   return (
     <div className="inline-block">
-      {error && <p className="text-red-600">{errorLabel}</p>}
+      {error && <p className="text-maroon-700">{errorLabel}</p>}
       <div className="relative inline-block" onClick={handleClick}>
-        <canvas ref={canvasRef} className="max-w-full cursor-crosshair border border-slate-300" />
+        <canvas ref={canvasRef} className="max-w-full cursor-crosshair border border-ink" />
         {ready &&
           markups.map((markup) =>
             markup.coords.type === "pin" ? (
               <div
                 key={markup.id}
                 title={markup.note ?? undefined}
-                className="absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-red-600 shadow"
+                className="absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-maroon-600 shadow"
                 style={{ left: `${markup.coords.x * 100}%`, top: `${markup.coords.y * 100}%` }}
               />
             ) : null,

@@ -109,18 +109,18 @@ export default function MobileSubmittalDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   content: { padding: 16, gap: 8 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 20, fontWeight: "700" },
-  subtitle: { fontSize: 13, color: "#64748b" },
-  viewOnlyNote: { fontSize: 12, color: "#92400e", backgroundColor: "#fef3c7", padding: 10, borderRadius: 8, marginVertical: 8 },
+  title: { fontSize: 20, fontWeight: "700", fontFamily: "Poppins_700Bold" },
+  subtitle: { fontSize: 13, color: "#182a51" },
+  viewOnlyNote: { fontSize: 12, color: "#9a3412", backgroundColor: "#fff4e6", padding: 10, borderRadius: 8, marginVertical: 8 },
   packageBlock: { marginBottom: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: 6 },
-  card: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, padding: 12, gap: 6, marginBottom: 8 },
-  cardTitle: { fontSize: 13, fontWeight: "600", color: "#0f172a" },
+  sectionTitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", marginBottom: 6 },
+  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 12, gap: 6, marginBottom: 8 },
+  cardTitle: { fontSize: 13, fontWeight: "600", fontFamily: "Poppins_600SemiBold", color: "#080f1c" },
   reviewRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  reviewText: { fontSize: 12, color: "#334155" },
-  badge: { fontSize: 11, backgroundColor: "#e2e8f0", color: "#334155", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  error: { fontSize: 13, color: "#dc2626" },
+  reviewText: { fontSize: 12, color: "#13213f" },
+  badge: { fontSize: 11, fontFamily: "Poppins_600SemiBold", backgroundColor: "#ffe4bf", color: "#7c2d12", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  error: { fontSize: 13, color: "#731c29" },
 });

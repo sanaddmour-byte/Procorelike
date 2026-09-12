@@ -1,31 +1,33 @@
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+@import "@fontsource/poppins/800.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: light;
+  --font-poppins: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /*
- * System font stacks rather than next/font/google: this build must not
- * depend on live network access to Google Fonts (docs/ROADMAP.md notes this
- * as a deliberate Phase 1 choice, not a placeholder). Every OS/browser combo
- * in this stack ships decent Arabic glyph coverage in its default UI font,
- * satisfying the "Arabic-safe font" requirement without an external fetch.
- * Self-hosted Arabic display faces (e.g. Noto Sans Arabic .woff2) can be
- * added later once a CDN/hosting decision is made.
+ * Poppins is self-hosted via @fontsource/poppins (npm-bundled woff2, no
+ * runtime fetch to Google's CDN) so this still satisfies the original
+ * Phase 1 "no live network dependency for fonts" constraint while giving
+ * the Neubrutalism redesign its brand typeface.
+ *
+ * Poppins has no Arabic glyphs at all, so it only applies to the base
+ * (LTR) rule below. The [dir="rtl"] override keeps the original
+ * Arabic-safe system font stack untouched -- same split this file has
+ * used since Phase 1, just with Poppins slotted in on the Latin side.
  */
 body {
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
+  font-family: var(--font-poppins);
+  background-color: #fbf4e8;
+  color: #080f1c;
 }
 
 [dir="rtl"] body {
@@ -37,4 +39,49 @@ body {
     "Noto Sans Arabic",
     "Geeza Pro",
     sans-serif;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 700;
+  }
+
+  a {
+    color: #5c1620;
+  }
+
+  button {
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    background-color: #fff;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #6f88b8;
+  }
+}
+
+@layer components {
+  /* Shared Neubrutalism primitives: thick ink border + hard offset shadow,
+     a small lift-and-drop-shadow interaction on press/hover. Tailwind
+     utility classes across the app compose these by hand (border-3
+     border-ink shadow-brutal); these two classes exist for the few spots
+     that want the whole package as one class. */
+  .brutal-panel {
+    @apply rounded-xl border-3 border-ink bg-white shadow-brutal;
+  }
+
+  .brutal-interactive {
+    @apply shadow-brutal transition-transform duration-100 ease-out hover:-translate-y-0.5 hover:shadow-brutal-lg active:translate-y-0 active:shadow-brutal-sm;
+  }
 }

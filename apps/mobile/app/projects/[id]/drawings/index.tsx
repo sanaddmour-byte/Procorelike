@@ -61,13 +61,13 @@ export default function MobileDrawingsListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   list: { padding: 16, gap: 12 },
-  card: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, padding: 16, gap: 4 },
+  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 16, gap: 4 },
   cardRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  cardTitle: { fontSize: 15, fontWeight: "600", flex: 1 },
-  badge: { fontSize: 11, backgroundColor: "#e2e8f0", color: "#334155", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  hint: { fontSize: 12, color: "#92400e" },
-  empty: { padding: 16, color: "#64748b" },
-  error: { padding: 16, color: "#dc2626" },
+  cardTitle: { fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold", flex: 1 },
+  badge: { fontSize: 11, fontFamily: "Poppins_600SemiBold", backgroundColor: "#ffe4bf", color: "#7c2d12", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  hint: { fontSize: 12, color: "#9a3412" },
+  empty: { padding: 16, color: "#182a51" },
+  error: { padding: 16, color: "#731c29" },
 });

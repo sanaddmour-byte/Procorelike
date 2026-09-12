@@ -122,7 +122,7 @@ export default function RfiDetailScreen() {
       <>
         <Header />
         <ProjectTabs projectId={params.id} />
-        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-red-600">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
       </>
     );
   }
@@ -132,27 +132,27 @@ export default function RfiDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <Link href={`/${locale}/projects/${params.id}/rfis`} className="mb-4 inline-block text-sm text-slate-500 underline">
+        <Link href={`/${locale}/projects/${params.id}/rfis`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}
         </Link>
 
         <div className="mb-1 flex items-center gap-2">
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
             {rfi.number} — {rfi.subject}
           </h1>
-          {rfi.isOverdue && <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-700">{t("overdue")}</span>}
+          {rfi.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
         </div>
-        <p className="mb-4 text-sm text-slate-500">
+        <p className="mb-4 text-sm text-navy-600">
           {statusLabel(rfi.status, t)} · {t("ballInCourt")}: {memberName(rfi.ballInCourtUserId)}
           {rfi.dueDate && ` · ${t("dueDate")}: ${rfi.dueDate.slice(0, 10)}`}
         </p>
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-maroon-700">{error}</p>}
 
-        <div className="mb-6 rounded border border-slate-200 p-4">
+        <div className="mb-6 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
           <p className="whitespace-pre-wrap">{rfi.question}</p>
-          <div className="mt-3 flex gap-3 text-xs text-slate-500">
-            {rfi.costImpactFlag && <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">{t("costImpact")}</span>}
-            {rfi.scheduleImpactFlag && <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">{t("scheduleImpact")}</span>}
+          <div className="mt-3 flex gap-3 text-xs text-navy-600">
+            {rfi.costImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("costImpact")}</span>}
+            {rfi.scheduleImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("scheduleImpact")}</span>}
           </div>
         </div>
 
@@ -163,7 +163,7 @@ export default function RfiDetailScreen() {
                 key={next}
                 onClick={() => void handleTransition(next)}
                 disabled={transitioning}
-                className="rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+                className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
               >
                 {transitionLabel(rfi.status, next, t)}
               </button>
@@ -174,10 +174,10 @@ export default function RfiDetailScreen() {
         <h2 className="mb-2 text-lg font-medium">{t("responses")}</h2>
         <ul className="mb-4 flex flex-col gap-2">
           {rfi.responses.map((r) => (
-            <li key={r.id} className="rounded border border-slate-200 p-3">
+            <li key={r.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
               <div className="mb-1 flex items-center justify-between">
-                <span className="text-xs text-slate-500">{memberName(r.respondedBy)}</span>
-                {r.isOfficial && <span className="rounded bg-slate-900 px-2 py-0.5 text-xs text-white">{t("official")}</span>}
+                <span className="text-xs text-navy-600">{memberName(r.respondedBy)}</span>
+                {r.isOfficial && <span className="rounded-full bg-navy-700 px-2 py-0.5 text-xs text-white">{t("official")}</span>}
               </div>
               <p className="whitespace-pre-wrap text-sm">{r.responseText}</p>
             </li>
@@ -185,14 +185,14 @@ export default function RfiDetailScreen() {
         </ul>
 
         {rfi.status !== "closed" && (
-          <form onSubmit={(e) => void handleAddResponse(e)} className="flex flex-col gap-3 rounded border border-slate-200 p-4">
+          <form onSubmit={(e) => void handleAddResponse(e)} className="flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
             <label className="flex flex-col gap-1 text-sm">
               {t("responseText")}
               <textarea
                 required
                 value={responseText}
                 onChange={(e) => setResponseText(e.target.value)}
-                className="rounded border border-slate-300 px-3 py-2"
+                className="rounded-lg border-3 border-ink px-3 py-2"
                 rows={3}
               />
             </label>
@@ -203,7 +203,7 @@ export default function RfiDetailScreen() {
             <button
               type="submit"
               disabled={submittingResponse}
-              className="self-start rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+              className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
             >
               {t("addResponse")}
             </button>

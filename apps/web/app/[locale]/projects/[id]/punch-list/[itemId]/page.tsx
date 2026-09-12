@@ -72,19 +72,19 @@ export default function PunchItemDetailPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-lg px-4 py-8">
-        <Link href={backHref} className="text-sm text-slate-600 underline">
+        <Link href={backHref} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
         {!item && !error && <p className="mt-4">{tc("loading")}</p>}
-        {error && <p className="mt-4 text-red-600">{error}</p>}
+        {error && <p className="mt-4 text-maroon-700">{error}</p>}
         {item && (
           <>
-            <h1 className="mb-1 mt-2 text-2xl font-semibold">{item.number}</h1>
-            <p className="mb-4 text-slate-700">{item.description}</p>
+            <h1 className="mb-1 mt-2 text-2xl font-extrabold tracking-tight text-navy-900">{item.number}</h1>
+            <p className="mb-4 text-navy-800">{item.description}</p>
 
             {item.needsReview && item.conflictData && (
-              <div className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
-                <p className="mb-2 font-medium text-amber-800">{t("conflictBanner")}</p>
+              <div className="mb-4 rounded-lg border-3 border-orange-600 bg-orange-50 p-3 text-sm shadow-brutal-sm">
+                <p className="mb-2 font-medium text-orange-900">{t("conflictBanner")}</p>
                 {item.conflictData.map((c) => (
                   <div key={c.field} className="mb-1 grid grid-cols-2 gap-2 text-xs">
                     <span>
@@ -99,8 +99,8 @@ export default function PunchItemDetailPage() {
             )}
 
             <div className="mb-4 flex items-center gap-2">
-              <span className="text-sm text-slate-500">{t("status")}:</span>
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-sm">{statusLabel(item.status)}</span>
+              <span className="text-sm text-navy-600">{t("status")}:</span>
+              <span className="rounded bg-orange-100 px-2 py-0.5 text-sm">{statusLabel(item.status)}</span>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -110,7 +110,7 @@ export default function PunchItemDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => void transition(next)}
-                  className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 disabled:opacity-50"
+                  className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800 disabled:opacity-50"
                 >
                   {t("moveTo")}: {statusLabel(next)}
                 </button>
@@ -118,7 +118,7 @@ export default function PunchItemDetailPage() {
             </div>
 
             <section className="mt-6">
-              <ul className="flex flex-col gap-2 text-sm text-slate-600">
+              <ul className="flex flex-col gap-2 text-sm text-navy-700">
                 {item.history.map((h) => (
                   <li key={h.id}>
                     {h.fromStatus ? `${statusLabel(h.fromStatus)} → ` : ""}

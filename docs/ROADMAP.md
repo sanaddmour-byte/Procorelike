@@ -680,6 +680,73 @@ above): drawn-signature images (schema-ready, no client produces one);
 mobile photo responses and PDF report download; global/reusable checklist
 templates; everything already listed as deferred from Phases 1–4.
 
+## Design system: Neubrutalism redesign (post-Phase 5)
+
+A cross-cutting UI/UX pass across both `apps/web` and `apps/mobile`,
+requested outside the phase plan: Neubrutalism visual style (thick dark
+borders, hard offset drop-shadows, flat bold color blocks) in a maroon /
+dark-navy / orange palette, with Poppins as the display typeface.
+
+**Tokens:**
+- `apps/web/tailwind.config.ts` — `maroon`/`navy` color scales (50–900),
+  `ink` (border black) and `cream` (page background), a `boxShadow.brutal*`
+  set (hard, non-blurred offsets), and `border-3` (3px).
+- `apps/mobile/lib/theme.ts` — the same hex values as plain constants
+  (`colors`), a `brutalShadow()` helper, and `fonts` mapping to the
+  specific static Poppins weights loaded via `@expo-google-fonts/poppins`.
+
+**Font:** Poppins is self-hosted (`@fontsource/poppins` on web,
+`@expo-google-fonts/poppins` on mobile) rather than fetched from Google's
+CDN at runtime — this preserves the Phase 1 "no live network dependency
+for fonts" constraint (see `apps/web/app/globals.css`) while still getting
+the brand typeface. Poppins has no Arabic glyphs, so the existing
+`[dir="rtl"] body` system-font fallback (Phase 1) is untouched — Arabic UI
+still renders in the original Arabic-safe stack, only the LTR/English
+side switched to Poppins. On mobile, the global default font is applied
+via `Text.defaultProps`/`TextInput.defaultProps` in `app/_layout.tsx`
+(the standard React Native pattern for an app-wide default typeface,
+since RN has no CSS cascade); per-screen `fontWeight` values were
+mechanically paired with the matching static Poppins weight (e.g.
+`fontWeight: "600"` + `fontFamily: "Poppins_600SemiBold"`) because static
+(non-variable) font files don't respond to the `fontWeight` style prop.
+
+**How the repaint was done:** rather than hand-editing every screen, the
+existing Tailwind utility classes (web) and StyleSheet hex literals
+(mobile) were extremely consistent across all ~45 screen/component files
+(e.g. every card was `rounded border border-slate-200 p-4`, every mobile
+card was `borderWidth: 1, borderColor: "#e2e8f0"`), so a scripted
+find-and-replace mapped the old slate/red/amber tokens onto the new
+palette + thicker borders + shadows in one pass across both apps. The
+highest-traffic shared chrome (`Header.tsx`, `ProjectTabs.tsx`, the login
+and projects-list screens on web; `app/_layout.tsx`, `SyncStatusBar.tsx`,
+the login and project-hub screens on mobile) was then hand-polished
+beyond the mechanical pass (accent stripes, lift-on-hover, a proper
+sign-in card). A handful of multi-line style objects that didn't match
+the scripted single-line patterns were caught by a grep sweep afterward
+and fixed by hand.
+
+**Deliberate simplifications / known gaps:**
+- The hard offset shadow is authentic on web (CSS `box-shadow` with zero
+  blur) and on iOS (`shadowOffset`/`shadowOpacity`/`shadowRadius: 0`).
+  Android has no equivalent for a crisp, non-blurred offset shadow via
+  the standard `elevation` API, so Android mobile screens get a normal
+  soft Material elevation shadow instead — a platform limitation, not a
+  bug.
+- RTL doesn't mirror the shadow direction (it stays bottom-right in both
+  directions) — a consistent brand shadow was judged more useful than a
+  physically "correct" mirrored one; easy to revisit if it reads wrong
+  in practice.
+- Verification: `pnpm typecheck && pnpm lint && pnpm test && pnpm build`
+  all green (same 74 tests, untouched by this pass since it's styling
+  only). Visually confirmed via Playwright screenshots of the web login
+  screen in both `en` (LTR, Poppins) and `ar` (RTL, Arabic-safe fallback,
+  mirrored layout). Deeper logged-in web screens and all mobile screens
+  are typecheck/lint-verified but not visually screenshotted in this
+  pass (no simulator/device for mobile, consistent with every prior
+  phase's mobile disclosure; web's login/projects-list flagship screens
+  stood in for the rest given the mechanical, low-risk nature of the
+  repaint).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

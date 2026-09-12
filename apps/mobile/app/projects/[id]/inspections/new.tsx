@@ -49,10 +49,10 @@ export default function NewInspectionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  label: { fontSize: 13, color: "#334155", padding: 16, paddingBottom: 0 },
-  hint: { margin: 16, color: "#92400e", backgroundColor: "#fef3c7", padding: 10, borderRadius: 8, fontSize: 12 },
+  container: { flex: 1, backgroundColor: "#ffffff" },
+  label: { fontSize: 13, color: "#13213f", padding: 16, paddingBottom: 0 },
+  hint: { margin: 16, color: "#9a3412", backgroundColor: "#fff4e6", padding: 10, borderRadius: 8, fontSize: 12 },
   list: { padding: 16, gap: 10 },
-  card: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, padding: 16 },
-  cardTitle: { fontSize: 15, fontWeight: "600" },
+  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 16 },
+  cardTitle: { fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
 });

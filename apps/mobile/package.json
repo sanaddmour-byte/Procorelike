@@ -11,18 +11,20 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@siteops/shared": "workspace:*",
     "expo": "52.0.11",
-    "expo-router": "4.0.9",
-    "expo-status-bar": "2.0.0",
+    "expo-crypto": "14.0.1",
+    "expo-font": "^57.0.4",
     "expo-localization": "16.0.1",
+    "expo-router": "4.0.9",
     "expo-secure-store": "14.0.0",
     "expo-sqlite": "15.0.3",
-    "expo-crypto": "14.0.1",
+    "expo-status-bar": "2.0.0",
+    "i18n-js": "4.5.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-native": "0.76.3",
-    "i18n-js": "4.5.1"
+    "react-native": "0.76.3"
   },
   "devDependencies": {
     "@types/react": "18.3.12",

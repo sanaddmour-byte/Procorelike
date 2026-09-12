@@ -22,7 +22,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   ];
 
   return (
-    <nav className="border-b border-slate-200 px-4">
+    <nav className="border-b-3 border-ink bg-white px-4">
       <div className="mx-auto flex max-w-3xl gap-1 overflow-x-auto">
         {tabs.map((tab) => {
           const active = pathname.startsWith(tab.href);
@@ -30,8 +30,8 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
             <Link
               key={tab.key}
               href={tab.href}
-              className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm ${
-                active ? "border-slate-900 font-medium text-slate-900" : "border-transparent text-slate-500"
+              className={`whitespace-nowrap border-b-4 px-3 py-3 text-sm font-semibold transition-colors ${
+                active ? "border-maroon-600 text-maroon-700" : "border-transparent text-navy-600 hover:text-navy-900"
               }`}
             >
               {tab.label}
