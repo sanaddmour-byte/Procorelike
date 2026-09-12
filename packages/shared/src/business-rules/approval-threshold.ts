@@ -1,9 +1,14 @@
-import type { ProjectRole } from "../constants/roles";
-
+/**
+ * `role` is plain `string`, not `ProjectRole`, on purpose: an Approver can
+ * be reconstructed from a change order's jsonb `approval_chain` (round-
+ * tripped JSON, no union-type guarantee) as easily as from a fresh
+ * `project_users` row, and role plays no part in the validation below
+ * anyway -- it's carried along only as audit-trail context.
+ */
 export interface Approver {
   userId: string;
   companyId: string;
-  role: ProjectRole;
+  role: string;
 }
 
 /**

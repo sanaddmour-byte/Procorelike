@@ -29,3 +29,8 @@ export function formatPunchItemNumber(value: number): string {
 export function formatSubmittalNumber(specSectionCode: string, value: number): string {
   return `SUB-${specSectionCode}-${String(value).padStart(3, "0")}`;
 }
+
+/** "po" -> PO-001, "subcontract" -> SC-001. Not in the original numbering-formats table; a reasonable extension of the same convention. */
+export function formatCommitmentNumber(type: "subcontract" | "po", value: number): string {
+  return formatSequenceNumber(type === "po" ? "PO" : "SC", value, 3);
+}

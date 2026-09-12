@@ -18,6 +18,10 @@ export default function ProjectHomeScreen() {
     { href: `/projects/${id}/rfis`, label: i18n.t("rfis.title") },
     { href: `/projects/${id}/submittals`, label: i18n.t("submittals.title") },
     { href: `/projects/${id}/inspections`, label: i18n.t("inspections.title") },
+    { href: `/projects/${id}/budget`, label: i18n.t("budget.title") },
+    { href: `/projects/${id}/commitments`, label: i18n.t("commitments.title") },
+    { href: `/projects/${id}/change-orders`, label: i18n.t("changeManagement.title") },
+    { href: `/projects/${id}/billing`, label: i18n.t("billing.title") },
   ];
 
   return (

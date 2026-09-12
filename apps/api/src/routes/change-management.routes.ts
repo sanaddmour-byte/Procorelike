@@ -1,0 +1,210 @@
+import type { Database } from "@siteops/db";
+import {
+  createChangeEventSchema,
+  createChangeOrderSchema,
+  createPotentialChangeOrderSchema,
+  updatePotentialChangeOrderStatusSchema,
+} from "@siteops/shared";
+import { Router, type NextFunction, type Request, type Response } from "express";
+import type { Env } from "../env";
+import { NotFoundError } from "../lib/errors";
+import { paramAsString } from "../lib/params";
+import { requireAuth } from "../middleware/auth";
+import { validateBody } from "../middleware/validate";
+import * as changeManagementService from "../services/change-management.service";
+import { loadPermissionContext } from "../services/permission.service";
+
+export function changeEventsRouter(appDb: Database, env: Env): Router {
+  const router = Router();
+  router.use(requireAuth(env));
+
+  router.post("/", validateBody(createChangeEventSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const ctx = await loadPermissionContext(appDb, authUser.id, req.body.projectId);
+      const row = await changeManagementService.createChangeEvent(appDb, authUser.id, ctx, req.body);
+      res.status(201).json(row);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const rows = await changeManagementService.listChangeEvents(appDb, authUser.id, ctx, projectId);
+      res.json(rows);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Change event not found");
+      const event = await changeManagementService.findChangeEventById(appDb, authUser.id, id);
+      if (!event) throw new NotFoundError("Change event not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, event.projectId);
+      const detail = await changeManagementService.getChangeEvent(appDb, authUser.id, ctx, id);
+      if (!detail) throw new NotFoundError("Change event not found");
+      res.json(detail);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post(
+    "/:id/potential-change-orders",
+    validateBody(createPotentialChangeOrderSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const authUser = req.authUser;
+        if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+        const id = paramAsString(req.params.id);
+        if (!id) throw new NotFoundError("Change event not found");
+        const event = await changeManagementService.findChangeEventById(appDb, authUser.id, id);
+        if (!event) throw new NotFoundError("Change event not found");
+        const ctx = await loadPermissionContext(appDb, authUser.id, event.projectId);
+        const row = await changeManagementService.createPotentialChangeOrder(appDb, authUser.id, ctx, id, req.body);
+        res.status(201).json(row);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  return router;
+}
+
+export function potentialChangeOrdersRouter(appDb: Database, env: Env): Router {
+  const router = Router();
+  router.use(requireAuth(env));
+
+  router.patch(
+    "/:id",
+    validateBody(updatePotentialChangeOrderStatusSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const authUser = req.authUser;
+        if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+        const id = paramAsString(req.params.id);
+        if (!id) throw new NotFoundError("Potential change order not found");
+        const pco = await changeManagementService.findPotentialChangeOrderById(appDb, authUser.id, id);
+        if (!pco) throw new NotFoundError("Potential change order not found");
+        const ctx = await loadPermissionContext(appDb, authUser.id, pco.projectId);
+        const updated = await changeManagementService.updatePotentialChangeOrderStatus(appDb, authUser.id, ctx, id, req.body);
+        res.json(updated);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  return router;
+}
+
+export function changeOrdersRouter(appDb: Database, env: Env): Router {
+  const router = Router();
+  router.use(requireAuth(env));
+
+  router.post("/", validateBody(createChangeOrderSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const ctx = await loadPermissionContext(appDb, authUser.id, req.body.projectId);
+      const row = await changeManagementService.createChangeOrder(appDb, authUser.id, ctx, req.body);
+      res.status(201).json(row);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const rows = await changeManagementService.listChangeOrders(appDb, authUser.id, ctx, projectId);
+      res.json(rows);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Change order not found");
+      const co = await changeManagementService.findChangeOrderById(appDb, authUser.id, id);
+      if (!co) throw new NotFoundError("Change order not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, co.projectId);
+      const detail = await changeManagementService.getChangeOrder(appDb, authUser.id, ctx, id);
+      if (!detail) throw new NotFoundError("Change order not found");
+      res.json(detail);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/:id/submit", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Change order not found");
+      const co = await changeManagementService.findChangeOrderById(appDb, authUser.id, id);
+      if (!co) throw new NotFoundError("Change order not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, co.projectId);
+      const updated = await changeManagementService.submitChangeOrder(appDb, authUser.id, ctx, id);
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/:id/approve", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Change order not found");
+      const co = await changeManagementService.findChangeOrderById(appDb, authUser.id, id);
+      if (!co) throw new NotFoundError("Change order not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, co.projectId);
+      const updated = await changeManagementService.approveChangeOrder(appDb, authUser.id, ctx, id);
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/:id/reject", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Change order not found");
+      const co = await changeManagementService.findChangeOrderById(appDb, authUser.id, id);
+      if (!co) throw new NotFoundError("Change order not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, co.projectId);
+      const updated = await changeManagementService.rejectChangeOrder(appDb, authUser.id, ctx, id);
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  return router;
+}

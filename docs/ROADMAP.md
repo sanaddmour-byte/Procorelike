@@ -2,7 +2,7 @@
 
 ## Status
 
-**Current phase: 5 (Quality: inspections) — complete. Phase 6 (Financials, T2) is next.**
+**Current phase: 6 (Financials, T2) — complete. Phase 7 (Meetings, reports, dashboards) is next.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -23,11 +23,11 @@
 
 | # | Module | Status |
 |---|---|---|
-| 9 | Budget | Not started |
-| 10 | Commitments | Not started |
-| 11 | Change Management | Not started |
-| 12 | Progress Billing | Not started |
-| 13 | Meetings | Not started |
+| 9 | Budget | Done (web full CRUD; mobile view-only) |
+| 10 | Commitments | Done (web full CRUD + SOV lines; mobile view-only) |
+| 11 | Change Management | Done (web full workflow incl. second-approver threshold; mobile view-only) |
+| 12 | Progress Billing | Done (web full workflow; mobile view-only) |
+| 13 | Meetings | Not started (schema scaffolded in Phase 1, no service/UI yet) |
 
 ### T3 — Extended
 
@@ -87,11 +87,17 @@ telematics.
       web execution flow were also driven in a real browser. Sign-off is a
       typed name on every platform, not a drawn signature — see the Phase
       5 gate report.**
-- [ ] **Phase 6 — Financials (T2).** Budget, commitments, change
+- [x] **Phase 6 — Financials (T2).** Budget, commitments, change
       management, progress billing.
       *Gate: a change order flows through approval and updates the budget
       forecast correctly, and `client_viewer` provably cannot reach any of
-      it.*
+      it.* **— PASSED, verified by an automated test covering both the
+      below-threshold (single approver) and at-threshold (second approver
+      from a different company required) paths, and confirming the
+      approved change order's cost impact lands on the target budget line
+      item's `approvedChangesAmount`/`projectedAmount`; client_viewer
+      lockout verified with 403s across all four financial list endpoints
+      — see the Phase 6 gate report.**
 - [ ] **Phase 7 — Meetings, reports, dashboards, saved views, scheduled
       digests.**
 - [ ] **Phase 8 — Hardening.** Performance pass against 100k-row seed
@@ -746,6 +752,148 @@ and fixed by hand.
   phase's mobile disclosure; web's login/projects-list flagship screens
   stood in for the rest given the mechanical, low-risk nature of the
   repaint).
+
+## Phase 6 gate report
+
+**Gate:** "a change order flows through approval and updates the budget
+forecast correctly, and `client_viewer` provably cannot reach any of it."
+**— PASSED**, see Verification below.
+
+**What was built.** All four T2 financial modules, full workflow on web,
+view-only on mobile (the same split already used for RFIs/Submittals):
+
+- **Budget**: `budget_line_items` CRUD per cost code. `originalAmount` and
+  `forecastToComplete` are PM-entered; `approvedChangesAmount` is
+  system-managed, bumped only by an approved change order;
+  `projectedAmount` is a stored, auto-recomputed cache =
+  `originalAmount + approvedChangesAmount + forecastToComplete`
+  (`packages/shared/src/business-rules/budget.ts` — the formula isn't
+  specified in the brief, documented there as an assumption).
+- **Commitments**: subcontracts/POs (`commitments`) with schedule-of-
+  values line items (`commitment_line_items`). Contract value is computed
+  at read time as SOV lines + any approved change orders targeting that
+  commitment, not stored redundantly.
+- **Change Management**: `change_events` → `potential_change_orders`
+  (pricing options under negotiation) → `change_orders` (the binding
+  document), each going through `draft → pending_approval →
+  approved/rejected`. Approving enforces
+  `requiresSecondApprover`/`isValidSecondApprover`
+  (`packages/shared/src/business-rules/approval-threshold.ts`, built in
+  Phase 1 ahead of this phase) server-side, not just in the UI: at or
+  above the project's `changeOrderThreshold` (a new configurable column,
+  default $5000), a second approver from a *different company* than the
+  first must approve before the status flips to `approved`. Approving a
+  `prime`-targeted order applies its cost impact to the target budget line
+  item in the same transaction as the status change.
+- **Progress Billing**: `payment_applications` (prime or per-commitment)
+  with lines against SOV line items. `pctCompletePrevious` is never
+  client-supplied — the service derives it from the most recent earlier
+  application against the same commitment, so a chain of applications
+  can't drift from actual history. This-period amount, retention
+  withheld, and net-this-period are all computed fresh
+  (`packages/shared/src/business-rules/billing.ts`), matching the
+  DATA_MODEL note that these are "computed, not stored redundantly."
+
+**A genuine surprise: most of the foundation already existed.** Phase 1
+(back before any of T1 was built) had already scaffolded the full T2
+schema (`budget_line_items`, `commitments`, `commitment_line_items`,
+`change_events`, `potential_change_orders`, `change_orders`,
+`payment_applications`, `payment_application_lines`), the RLS
+`RESTRICTIVE` policies denying `client_viewer` on every one of those
+tables, the `budget`/`commitments`/`change_management`/`progress_billing`
+permission modules with per-role default levels, the
+`requiresSecondApprover`/`isValidSecondApprover` business rule, and the CO
+numbering format (`formatChangeOrderNumber`) — all built ahead of need,
+anticipating this phase. Phase 6's actual work was the services, routes,
+web/mobile UI, and the handful of schema fields that planning hadn't
+anticipated (see below) — not a from-scratch build of the financial data
+model.
+
+**Small schema additions made this phase** (forward-only migrations):
+- `projects.change_order_threshold` — the second-approver threshold has to
+  live somewhere and the brief calls it "configurable per project"; there
+  was no column for it yet.
+- `commitments.number` / `commitments.title` and
+  `commitment_line_items.description` — the original schema had no
+  human-readable identifier for a commitment or its line items at all.
+  Commitment numbering follows a new (undocumented in the original
+  numbering-formats table) `PO-001`/`SC-001` convention, an extension of
+  the same pattern as RFI/CO numbering.
+- `budget_line_items.createdBy`/`updatedBy`, `change_orders.updatedBy`,
+  `payment_applications.updatedBy` — present on every other actively-
+  edited T1 table, missing here since these tables hadn't been touched by
+  code yet.
+
+**Deliberate simplifications:**
+- **Mobile is view-only** for all four modules, matching the existing
+  RFI/Submittal split — financial workflow (creating commitments, running
+  change-order approvals, entering billing percentages) is a PM/office
+  task in practice, not a field one, and the added complexity of an
+  editable + offline-synced financial module didn't seem justified. Each
+  mobile list screen carries an explicit `viewOnlyNote` saying so.
+  Read-only doesn't need offline sync, so none was built for these four
+  modules.
+  - Progress billing only supports **commitment-scoped** (subcontractor/
+    PO) pay applications. The schema comment allows `commitmentId: null`
+    for "a prime contract application," but there is no project-level SOV
+    table to source line items from in that case — only
+    `commitment_line_items`, which belongs to a commitment. A prime/owner
+    pay application can be created (the field is nullable) but its lines
+    editor is skipped with an explanatory message; a real prime SOV would
+    need a new table, out of scope here.
+  - The second-approver-from-a-different-company rule needed testing with
+    two standard-access users from different companies. The seeded roles
+    with standard+ `change_management` access by default (`owner_admin`,
+    `project_manager`) are both company "gc" in the seed data — there's no
+    such pair seeded. Rather than change the seed data, the test grants a
+    subcontractor a per-project `change_management` permission override
+    directly (the same `project_user_permissions` mechanism a not-yet-
+    built invite/permissions UI would use — see module tier #1's "still
+    pending" note), proving the rule against a real cross-company pair
+    without touching seed fixtures.
+  - Cost codes and project companies had no read endpoints before this
+    phase (needed for the Budget/Commitments pickers); added as
+    `GET /projects/:id/cost-codes` and `GET /projects/:id/companies`,
+    gated on read access to any one of the four financial modules since
+    cost codes are shared reference data, not a module of their own.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green: 90
+  tests total (37 in `apps/api`, up from 32; 52 in `packages/shared`, up
+  from 42; 1 db smoke test).
+- `apps/api/src/routes/financial.test.ts` reproduces the literal gate
+  scenario end to end: creates a budget line item, cuts a below-threshold
+  change order, submits and approves it with a single approver, and
+  confirms `approvedChangesAmount`/`projectedAmount` update correctly; a
+  second test cuts an at-threshold change order and proves a same-user
+  re-approval is rejected (400), a same-company second approval is
+  rejected (403), and a different-company second approval succeeds (200,
+  `approved`, budget updated); a third test proves `client_viewer` gets
+  403 on all four financial list endpoints. A fourth test exercises
+  commitments + SOV + a chained pair of payment applications, checking
+  the computed retention/net-this-period math and that the second
+  application's `pctCompletePrevious` is correctly derived from the
+  first.
+- `apps/web`: driven with a real headless browser (Playwright/Chromium) —
+  logged in, created a budget line item, viewed the change-event/PCO/
+  change-order flow, opened a commitment's SOV, and opened a payment
+  application showing the exact computed figures (20%/10% retention →
+  $18,000 net) the API test also produced — the same numbers appearing in
+  both the automated test and the live UI is direct evidence the UI reads
+  the real computed response, not a mock. Screenshots taken as evidence.
+- `apps/mobile`: `tsc --noEmit` and `eslint --max-warnings=0` both pass
+  clean for the four new read-only module screens. **Not verified**: no
+  simulator/device in this sandbox (same standing limitation since
+  Phase 2) — code-complete but unrun on-device, consistent with the rest
+  of the mobile app.
+
+**Known gaps / deferred items** (in addition to the scope reductions
+above): Meetings (T2 module #13) has schema only, no service/UI yet —
+next up in Phase 7 per the module tiers table; a project-level SOV table
+for true prime/owner pay applications; mobile offline editing for any of
+the four financial modules; a change order's PCO can be referenced but
+there's no UI affordance yet to convert a specific PCO's numbers into a
+change order pre-filled (the two are created independently today).
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 

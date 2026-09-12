@@ -271,6 +271,46 @@ users per project, not 100 concurrent *creates* of the same record type.
   in the app's own offline-note copy, not silently disabled without
   explanation.
 
+## 7c. Financials — budget, commitments, change management, billing (Phase 6)
+
+- **Almost the whole data model predates this phase.** Phase 1's original
+  55-table schema, RLS policies, and permission-module scaffolding already
+  covered every T2 financial table and the `client_viewer` financial
+  lockout (§4, docs/DATA_MODEL.md §10). Phase 6's work was services,
+  routes, and UI against a foundation that was already there — see the
+  Phase 6 gate report in docs/ROADMAP.md for exactly what had to be added
+  (a handful of missing columns) versus what already existed.
+- **Change orders carry their own approval chain as jsonb**
+  (`change_orders.approval_chain`, an ordered
+  `{userId, companyId, role, approvedAt}[]`), evaluated by
+  `apps/api/src/services/change-management.service.ts`'s
+  `approveChangeOrder` against `packages/shared`'s
+  `requiresSecondApprover`/`isValidSecondApprover`: below the project's
+  `change_order_threshold`, one approval finalizes it; at or above,
+  finalizing requires a second approver whose `companyId` differs from the
+  first's, checked server-side on every `/approve` call — a client can't
+  finalize by skipping the check, since the status only flips inside this
+  function.
+- **A `prime`-targeted change order writes to the budget in the same
+  transaction as its own status flip** (`applyApprovedPrimeChangeToLineItem`
+  in `budget.service.ts`, called from inside `approveChangeOrder`'s
+  transaction) — the two can't end up disagreeing because a crash or
+  error rolls both back together. A `commitment`-targeted one writes
+  nothing extra: that commitment's contract value is computed at read
+  time as SOV lines + approved change orders targeting it, so approval
+  alone is enough to change what a later read returns.
+- **Progress billing's "previous %" is derived, never client-supplied.**
+  Setting a payment application's lines
+  (`billing.service.ts`'s `setPaymentApplicationLines`) looks up the most
+  recent earlier application against the same commitment and pulls that
+  line's `pctCompleteThisPeriod` forward as this one's
+  `pctCompletePrevious` — the chain of applications for a commitment can't
+  be edited into an inconsistent state because "previous" is never a
+  freestanding input.
+- **Mobile is read-only for all four modules**, the same split already
+  used for RFIs and Submittals (§7a) — no outbox, no offline writes, no
+  sync-status for budget/commitments/change-orders/billing screens.
+
 ## 8. Search
 
 Postgres full-text search (`tsvector` columns + GIN indexes) across

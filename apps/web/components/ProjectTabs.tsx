@@ -19,6 +19,10 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { key: "daily-log", label: t("dailyLog"), href: `/${locale}/projects/${projectId}/daily-log` },
     { key: "punch-list", label: t("punchList"), href: `/${locale}/projects/${projectId}/punch-list` },
     { key: "photos", label: t("photos"), href: `/${locale}/projects/${projectId}/photos` },
+    { key: "budget", label: t("budget"), href: `/${locale}/projects/${projectId}/budget` },
+    { key: "commitments", label: t("commitments"), href: `/${locale}/projects/${projectId}/commitments` },
+    { key: "change-orders", label: t("changeOrders"), href: `/${locale}/projects/${projectId}/change-orders` },
+    { key: "billing", label: t("billing"), href: `/${locale}/projects/${projectId}/billing` },
   ];
 
   return (

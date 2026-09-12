@@ -1,0 +1,2 @@
+ALTER TABLE "payment_applications" ADD COLUMN "updated_by" uuid;--> statement-breakpoint
+ALTER TABLE "payment_applications" ADD CONSTRAINT "payment_applications_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

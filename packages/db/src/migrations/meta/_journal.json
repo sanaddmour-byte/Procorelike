@@ -36,6 +36,34 @@
       "when": 1789234092849,
       "tag": "0004_milky_sage",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789239259615,
+      "tag": "0005_light_brother_voodoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789239461147,
+      "tag": "0006_flat_impossible_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789239662347,
+      "tag": "0007_real_menace",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789239778655,
+      "tag": "0008_opposite_quentin_quire",
+      "breakpoints": true
     }
   ]
 }

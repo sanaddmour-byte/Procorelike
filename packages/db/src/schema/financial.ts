@@ -48,6 +48,10 @@ export const budgetLineItems = pgTable("budget_line_items", {
     .notNull()
     .default("0"),
   currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
   ...auditColumns(),
 });
 
@@ -56,6 +60,8 @@ export const commitments = pgTable("commitments", {
   projectId: uuid("project_id")
     .notNull()
     .references(() => projects.id),
+  number: varchar("number", { length: 50 }).notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
   companyId: uuid("company_id")
     .notNull()
     .references(() => companies.id),
@@ -77,6 +83,7 @@ export const commitmentLineItems = pgTable("commitment_line_items", {
   costCodeId: uuid("cost_code_id")
     .notNull()
     .references(() => costCodes.id),
+  description: varchar("description", { length: 300 }).notNull(),
   scheduleOfValuesAmount: numeric("schedule_of_values_amount", { precision: 14, scale: 2 }).notNull(),
 });
 
@@ -115,12 +122,16 @@ export const changeOrders = pgTable("change_orders", {
   targetId: uuid("target_id").notNull(),
   costImpact: numeric("cost_impact", { precision: 14, scale: 2 }).notNull(),
   timeImpactDays: integer("time_impact_days").notNull().default(0),
-  /** Ordered list of { userId, companyId, role, approvedAt? } — see @siteops/shared approval-threshold. */
-  approvalChain: jsonb("approval_chain").notNull().default([]),
+  /** Ordered list of { userId, companyId, role, approvedAt } — see @siteops/shared approval-threshold. */
+  approvalChain: jsonb("approval_chain")
+    .notNull()
+    .default([])
+    .$type<{ userId: string; companyId: string; role: string; approvedAt: string }[]>(),
   status: changeStatusEnum("status").notNull().default("draft"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
   ...auditColumns(),
 });
 
@@ -137,6 +148,7 @@ export const paymentApplications = pgTable("payment_applications", {
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
   ...auditColumns(),
 });
 

@@ -137,6 +137,8 @@ export const projects = pgTable("projects", {
   localeDefault: varchar("locale_default", { length: 5 }).notNull().default("en"),
   timezone: varchar("timezone", { length: 100 }).notNull().default("Asia/Amman"),
   status: varchar("status", { length: 50 }).notNull().default("active"),
+  /** A change order at or above this amount requires a second approver from a different company (packages/shared's requiresSecondApprover). Configurable per project; docs/DATA_MODEL.md §9. */
+  changeOrderThreshold: numeric("change_order_threshold", { precision: 14, scale: 2 }).notNull().default("5000"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),

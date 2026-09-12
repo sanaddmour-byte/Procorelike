@@ -1,0 +1,2 @@
+ALTER TABLE "change_orders" ADD COLUMN "updated_by" uuid;--> statement-breakpoint
+ALTER TABLE "change_orders" ADD CONSTRAINT "change_orders_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
