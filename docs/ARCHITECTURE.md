@@ -183,6 +183,48 @@ from failed transactions are *silently* reused and no two concurrent inserts
 collide — throughput cost is acceptable given the target of 100 concurrent
 users per project, not 100 concurrent *creates* of the same record type.
 
+## 7a. Ball-in-court workflows & email notifications
+
+- **RFIs and Submittals both track a single "ball-in-court" user** — the
+  person currently expected to act. It moves automatically on the state
+  transitions that matter: an RFI's official response flips it back to
+  whoever asked the question; a submittal review flips it to the next
+  eligible reviewer, or back to the submitter once every assigned reviewer
+  has responded. A single `ball_in_court_user_id` column can't represent
+  "several parallel reviewers are simultaneously on the hook" — see the
+  doc comments on `initialBallInCourt`/`nextBallInCourt` in
+  `apps/api/src/services/submittal.service.ts` for how that's handled
+  (pick one reasonable point of contact; never silently invent one where
+  it'd be misleading).
+- **Submittal reviews**: sequential reviewers block on `sequence_order`
+  (a later one can't submit until every earlier sequential reviewer has);
+  parallel reviewers never block on order. Submitting a review is
+  authorized by *being the assigned reviewer*, not by the caller's general
+  module permission level — a read-only role (e.g. `qa_qc`'s default
+  template) must still be able to submit a review they were explicitly
+  assigned.
+- **RFI subcontractor visibility**: enforced at the RLS layer (a
+  `RESTRICTIVE` policy mirroring `subcontractorCanSeeRecord()` in
+  `packages/shared`) — a `subcontractor` role only sees an RFI where their
+  own company is the ball-in-court company or an explicit distribution
+  recipient. This was the module named as the concrete example when the
+  rule was first documented in Phase 1 (docs/DATA_MODEL.md §10) and lands
+  here in Phase 4, RFIs' own phase.
+- **Overdue RFI escalation** is a system-level sweep
+  (`apps/api/src/jobs/rfi-overdue-sweep.ts`), not a per-request operation —
+  it queries every project's open, past-due, not-yet-escalated RFIs at
+  once and emails each one's ball-in-court user via nodemailer (against
+  MailHog locally, real SMTP in prod, same env vars). It uses `authDb`
+  (RLS-bypassing) for the same reason the pre-authentication lookups do
+  (§3): there's no single user's request context to scope a cross-project
+  sweep by. `escalated_at` is stamped so a re-run doesn't re-email the same
+  RFI, and clears when the RFI transitions back to `open` so a genuinely
+  re-opened overdue RFI escalates again. There is no in-process scheduler
+  triggering this on a timer: `POST /internal/rfi-overdue-check` (gated by
+  a shared secret, not a user session — there's no per-project permission
+  context that would make sense for a sweep spanning every project) is
+  meant to be invoked by an external cron in a real deployment.
+
 ## 8. Search
 
 Postgres full-text search (`tsvector` columns + GIN indexes) across

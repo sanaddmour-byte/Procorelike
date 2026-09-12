@@ -33,6 +33,7 @@ export const submittals = pgTable("submittals", {
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
   ...auditColumns(),
 });
 

@@ -1,0 +1,161 @@
+"use client";
+
+import { Header } from "@/components/Header";
+import { ProjectTabs } from "@/components/ProjectTabs";
+import { apiJson } from "@/lib/api-client";
+import { loadStoredAuth } from "@/lib/auth-storage";
+import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
+
+interface SpecSection {
+  id: string;
+  csiCode: string;
+  title: string;
+}
+
+interface Submittal {
+  id: string;
+  number: string;
+  title: string;
+  status: "draft" | "in_review" | "approved" | "closed";
+  ballInCourtUserId: string | null;
+}
+
+interface Member {
+  userId: string;
+  name: string;
+}
+
+function statusLabel(status: Submittal["status"], t: (key: string) => string): string {
+  return { draft: t("statusDraft"), in_review: t("statusInReview"), approved: t("statusApproved"), closed: t("statusClosed") }[status];
+}
+
+export default function SubmittalsPage() {
+  const t = useTranslations("Submittals");
+  const tc = useTranslations("Common");
+  const router = useRouter();
+  const locale = useLocale();
+  const params = useParams<{ id: string }>();
+
+  const [submittals, setSubmittals] = useState<Submittal[] | null>(null);
+  const [specSections, setSpecSections] = useState<SpecSection[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [specSectionId, setSpecSectionId] = useState("");
+  const [title, setTitle] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  function load(): void {
+    apiJson<Submittal[]>(`/submittals?projectId=${params.id}`)
+      .then(setSubmittals)
+      .catch(() => setError(tc("errorGeneric")));
+  }
+
+  useEffect(() => {
+    if (!loadStoredAuth()) {
+      router.replace(`/${locale}/login`);
+      return;
+    }
+    load();
+    apiJson<SpecSection[]>(`/submittals/spec-sections?projectId=${params.id}`)
+      .then((sections) => {
+        setSpecSections(sections);
+        setSpecSectionId((current) => current || sections[0]?.id || "");
+      })
+      .catch(() => undefined);
+    apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
+  }, [router, locale, params.id]);
+
+  function memberName(userId: string | null): string {
+    if (!userId) return t("unassigned");
+    return members.find((m) => m.userId === userId)?.name ?? userId;
+  }
+
+  async function handleCreate(e: FormEvent): Promise<void> {
+    e.preventDefault();
+    if (!specSectionId) return;
+    setCreating(true);
+    try {
+      await apiJson("/submittals", {
+        method: "POST",
+        body: JSON.stringify({ projectId: params.id, specSectionId, title }),
+      });
+      setTitle("");
+      setShowForm(false);
+      load();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <>
+      <Header />
+      <ProjectTabs projectId={params.id} />
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <button onClick={() => setShowForm((s) => !s)} className="rounded bg-slate-900 px-3 py-2 text-sm text-white">
+            {t("newButton")}
+          </button>
+        </div>
+
+        {showForm && (
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded border border-slate-200 p-4">
+            <label className="flex flex-col gap-1 text-sm">
+              {t("specSection")}
+              <select
+                required
+                value={specSectionId}
+                onChange={(e) => setSpecSectionId(e.target.value)}
+                className="rounded border border-slate-300 px-3 py-2"
+              >
+                {specSections.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.csiCode} — {s.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("submittalTitle")}
+              <input required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded border border-slate-300 px-3 py-2" />
+            </label>
+            <button type="submit" disabled={creating || !specSectionId} className="self-start rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50">
+              {t("create")}
+            </button>
+          </form>
+        )}
+
+        {error && <p className="text-red-600">{error}</p>}
+        {!submittals && !error && <p>{tc("loading")}</p>}
+        {submittals && submittals.length === 0 && <p className="text-slate-500">{t("empty")}</p>}
+        <ul className="flex flex-col gap-3">
+          {submittals?.map((s) => (
+            <li key={s.id}>
+              <Link
+                href={`/${locale}/projects/${params.id}/submittals/${s.id}`}
+                className="block rounded border border-slate-200 p-4 hover:border-slate-400"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">
+                    {s.number} — {s.title}
+                  </span>
+                  <span className="whitespace-nowrap rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{statusLabel(s.status, t)}</span>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t("ballInCourt")}: {memberName(s.ballInCourtUserId)}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </main>
+    </>
+  );
+}

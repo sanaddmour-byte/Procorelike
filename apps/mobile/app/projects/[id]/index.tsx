@@ -28,6 +28,16 @@ export default function ProjectHomeScreen() {
             <Text style={styles.cardTitle}>{i18n.t("drawings.title")}</Text>
           </Pressable>
         </Link>
+        <Link href={`/projects/${id}/rfis`} asChild>
+          <Pressable style={styles.card}>
+            <Text style={styles.cardTitle}>{i18n.t("rfis.title")}</Text>
+          </Pressable>
+        </Link>
+        <Link href={`/projects/${id}/submittals`} asChild>
+          <Pressable style={styles.card}>
+            <Text style={styles.cardTitle}>{i18n.t("submittals.title")}</Text>
+          </Pressable>
+        </Link>
       </View>
     </View>
   );

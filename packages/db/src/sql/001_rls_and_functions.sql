@@ -109,6 +109,19 @@ $$;
 
 GRANT EXECUTE ON FUNCTION is_company_visible(uuid) TO siteops_app;
 
+-- Same cycle again: rfis' own subcontractor-scoping policy (below) needs to
+-- check rfi_distribution, but rfi_distribution's policy (section 5) checks
+-- rfis for project membership — a two-table cycle, same fix.
+CREATE OR REPLACE FUNCTION rfi_distributed_to_company(p_rfi_id uuid, p_company_id uuid)
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM rfi_distribution WHERE rfi_id = p_rfi_id AND company_id = p_company_id
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION rfi_distributed_to_company(uuid, uuid) TO siteops_app;
+
 -- ---------------------------------------------------------------------------
 -- 2. Session context helper macros (as comments, not SQL): every API
 -- transaction runs
@@ -343,6 +356,33 @@ BEGIN
   END LOOP;
 END
 $$;
+
+-- Hard rule: a subcontractor may only see an RFI where their own company is
+-- the ball-in-court or an explicit distribution recipient — mirrors
+-- subcontractorCanSeeRecord() in packages/shared/src/permissions/engine.ts
+-- (docs/DATA_MODEL.md §10). This was flagged in the Phase 1 gate report as
+-- "lands with each module in its own phase" — Phase 4 is RFIs' phase.
+-- Querying project_users directly is a one-way dependency (its own policy
+-- doesn't reference rfis), safe without a wrapper; the rfi_distribution
+-- check goes through rfi_distributed_to_company() above to avoid the cycle
+-- described there.
+DROP POLICY IF EXISTS rfis_subcontractor_scope ON rfis;
+CREATE POLICY rfis_subcontractor_scope ON rfis AS RESTRICTIVE FOR ALL USING (
+  current_setting('app.role', true) IS DISTINCT FROM 'subcontractor'
+  OR ball_in_court_company_id = (
+    SELECT company_id FROM project_users
+    WHERE project_id = rfis.project_id
+      AND user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+  )
+  OR rfi_distributed_to_company(
+    rfis.id,
+    (
+      SELECT company_id FROM project_users
+      WHERE project_id = rfis.project_id
+        AND user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+    )
+  )
+);
 
 -- ---------------------------------------------------------------------------
 -- 5. Child tables scoped via their parent's own (already-RLS'd) table.

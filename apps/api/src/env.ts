@@ -16,6 +16,11 @@ const envSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().default("siteops"),
   S3_SECRET_ACCESS_KEY: z.string().default("siteops123"),
   S3_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
+  SMTP_HOST: z.string().default("localhost"),
+  SMTP_PORT: z.coerce.number().default(1025),
+  SMTP_FROM: z.string().default("no-reply@siteops.local"),
+  /** Shared secret an external cron presents to trigger the overdue-RFI sweep — there's no per-project permission context for a system-wide job, and no in-process scheduler (see jobs/rfi-overdue-sweep.ts). */
+  INTERNAL_JOB_SECRET: z.string().min(16).default("dev-internal-job-secret-change-me"),
 });
 
 export type Env = z.infer<typeof envSchema>;

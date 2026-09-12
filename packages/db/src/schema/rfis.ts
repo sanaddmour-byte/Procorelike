@@ -23,6 +23,9 @@ export const rfis = pgTable(
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    /** Set when the overdue-escalation sweep last emailed the ball-in-court user for this RFI; cleared on any status transition back to "open" so a re-opened, still-overdue RFI escalates again rather than staying silently suppressed. */
+    escalatedAt: timestamp("escalated_at", { withTimezone: true }),
     ...auditColumns(),
   },
   (table) => [

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Current phase: 3 (Document control) — complete. Phase 4 (Workflow core: RFIs/Submittals) is next.**
+**Current phase: 4 (Workflow core: RFIs/Submittals) — complete. Phase 5 (Quality: inspections) is next.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -12,8 +12,8 @@
 |---|---|---|
 | 1 | Projects & Directory | Foundation done: create/list projects, company directory, per-project member listing, auth+permission engine. Full directory management UI (invite/reassign from web) still pending. |
 | 2 | Documents & Drawings | Done (web + mobile viewing; markup pins web-only, see Phase 3 gate report) |
-| 3 | RFIs | Not started |
-| 4 | Submittals | Not started |
+| 3 | RFIs | Done (web + mobile view-only, full lifecycle + overdue email escalation) |
+| 4 | Submittals | Done (web full workflow; mobile view-only) |
 | 5 | Daily Log | Done (web + mobile offline, Phase 2) |
 | 6 | Punch List / Snags | Done (web + mobile offline; status transitions online-only, Phase 2) |
 | 7 | Photos | Done on web (upload/album); mobile capture/offline queue deferred |
@@ -71,11 +71,13 @@ telematics.
       and in a real browser; PDF viewer/markup pins and offline drawing
       cache are web-only and web-only-respectively — see Phase 3 gate
       report for the exact mobile scope and why.**
-- [ ] **Phase 4 — Workflow core.** RFIs and Submittals — ball-in-court,
+- [x] **Phase 4 — Workflow core.** RFIs and Submittals — ball-in-court,
       distribution, review workflows, response codes, overdue logic, email
       notifications, PDF export.
       *Gate: full RFI lifecycle across three users, plus an overdue
-      escalation email.*
+      escalation email.* **— PASSED, verified by an automated test
+      reproducing both halves of the gate; PDF export was not built this
+      phase — see the Phase 4 gate report.**
 - [ ] **Phase 5 — Quality.** Checklist templates, inspections, failed-item
       → punch-item generation, signed PDF inspection report.
       *Gate: run a template-driven inspection on mobile offline, sync,
@@ -426,6 +428,135 @@ above): offline drawing cache, mobile markup creation, polygon-shaped
 markups (only pins render in the viewer — the schema supports polygons,
 the UI doesn't draw them yet), and everything already listed as deferred
 from Phases 1–2.
+
+## Phase 4 gate report
+
+**What was built**: RFIs (full lifecycle) and Submittals (full sequential/
+parallel review workflow), on web; both view-only on mobile. Specifically:
+- `packages/shared`: Zod schemas for RFI create/update/response/transition
+  and Submittal create/revision/review, the RFI status state machine
+  (`RFI_STATUS_TRANSITIONS`), and `PASSING_SUBMITTAL_RESPONSE_CODES`.
+- `apps/api`: `rfi.service`/`rfis.routes` (create, respond, an official
+  response auto-transitions to `answered` and flips ball-in-court back to
+  the asker, explicit status transitions, a derived — never stored —
+  `isOverdue` flag) and `submittal.service`/`submittals.routes` (spec
+  sections, packages, revisions with reviewer assignment, sequential/
+  parallel review submission, aggregate approve/reject once every reviewer
+  responds, close). A new `GET /attachments/:id/download` caller
+  (`submittal_revision` ownerType) reuses Phase 3's download endpoint.
+  A new mailer (`apps/api/src/lib/mailer.ts`, nodemailer against the
+  already-provisioned MailHog config) and an overdue-RFI sweep job
+  (`apps/api/src/jobs/rfi-overdue-sweep.ts`) with its trigger endpoint
+  (`POST /internal/rfi-overdue-check`).
+- `apps/web`: RFI list/create/detail (responses, official-answer flag,
+  status-transition buttons, overdue badge) and Submittal list/create/
+  detail (packages, revision upload with a reviewer-assignment builder,
+  inline review submission for the logged-in user's pending reviews),
+  bilingual EN/AR, added to `ProjectTabs`.
+- `apps/mobile`: RFI and Submittal list/detail screens — deliberately
+  view-only (see below).
+
+**A real correctness fix found while building this (not scope creep)**:
+`submitSubmittalReview` initially required `requirePermission(ctx,
+"submittals", "standard")`, but authorization for that action actually
+comes from being the specific reviewer assigned to the revision (checked
+right after) — a role with only `read`-level submittals access by default
+(`qa_qc`, `superintendent`) would have been wrongly blocked from
+submitting a review they were explicitly assigned to. Caught by the
+sequential-reviewer test failing with 403 instead of the expected
+`out_of_sequence` 400. Fixed by dropping the check to `read` (needed
+anyway to see the data) and letting the assignment check itself gate the
+write — the same principle as a punch item's assignee acting on it
+without module-wide `standard` access.
+
+**A second correctness fix, this one a Phase 1 debt actually flagged for
+this phase**: RLS didn't yet enforce the subcontractor-visibility rule on
+`rfis` — docs/DATA_MODEL.md §10 always said it would "land with each
+module in its own phase," naming RFIs as the concrete example. Added a
+`RESTRICTIVE` policy mirroring `subcontractorCanSeeRecord()`, which in
+turn needed a second `SECURITY DEFINER` helper
+(`rfi_distributed_to_company`) to avoid the same kind of cross-table RLS
+recursion documented for `is_company_visible` in Phase 1 — `rfis`' policy
+checks `rfi_distribution`, whose own policy checks `rfis` back.
+
+**A schema/data-model limitation, surfaced and documented rather than
+silently worked around**: `ball_in_court_user_id` is a single column, but
+a submittal revision can have several *parallel* reviewers simultaneously
+on the hook, and an RFI can be addressed to a company with no specific
+person. Both cases are handled with a documented, deterministic choice
+(pick the lowest-sequence sequential reviewer, or leave it null when
+everyone's parallel; skip company-only RFIs in the email sweep) rather
+than inventing a multi-recipient model this phase didn't ask for — see the
+doc comments on `initialBallInCourt`/`nextBallInCourt` in
+`submittal.service.ts` and docs/ARCHITECTURE.md §7a.
+
+**Scope reductions (own engineering judgment under "Resume", flagged per
+the same rule as Phases 2–3's)**:
+- **No PDF export** for RFIs, despite being named in the phase brief. Not
+  started this phase — `pdf-lib` (already in the locked stack) is the
+  obvious tool for it, but generating a well-formatted RFI PDF is its own
+  chunk of work and didn't fit given everything else in this phase.
+- **Mobile is view-only** for both RFIs and Submittals — no responding,
+  transitioning, or reviewing from the mobile app. Neither module is part
+  of the Phase 2 offline-sync scope (docs/ARCHITECTURE.md §6 covers only
+  Daily Log/Punch List), so this is consistent with Phase 3's Drawings
+  scoping, not a new kind of gap.
+- **No in-process scheduler** for the overdue sweep — `POST
+  /internal/rfi-overdue-check` exists and is fully tested, but nothing in
+  this codebase calls it on a timer. Building a real scheduler
+  (cron/BullMQ+Redis) would add infrastructure this sandbox can't verify
+  either; a production deployment is expected to hit that endpoint from
+  an external cron.
+
+**Verification actually performed this session**:
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all pass across
+  all 5 workspaces (68 tests total, up from 60 in Phase 3).
+- `apps/api`: 13 new Supertest tests. One reproduces the **exact Phase 4
+  gate scenario's first half** — an RFI's full lifecycle
+  (draft→open→answered→closed) touched by three distinct seeded users
+  (the creator, the ball-in-court responder, and a third user who closes
+  it), asserting the ball-in-court flips correctly at each step and that
+  an invalid transition (e.g. re-opening a closed RFI) is rejected. A
+  second test proves `isOverdue` is computed fresh from `status`+`dueDate`
+  rather than stored. A third proves the subcontractor-visibility RLS rule
+  end-to-end (one subcontractor sees an RFI addressed to their company;
+  an unrelated subcontractor on the same project gets 404 from both the
+  list and detail endpoints). Three more tests cover the submittal
+  workflow: an out-of-order sequential reviewer is rejected, then the
+  submittal reaches `approved` once every reviewer passes and can be
+  closed; two parallel reviewers don't block on order and a single
+  rejection keeps the submittal `in_review`; a non-assigned caller gets
+  403 attempting to review. The **second half of the gate** — the overdue
+  escalation email — is proven with `runRfiOverdueSweep` called directly
+  against nodemailer's `jsonTransport` (no real network): an open,
+  past-due, unescalated RFI gets escalated exactly once (a second sweep
+  run leaves its `escalatedAt` untouched), and an RFI addressed only to a
+  company (no specific person) is correctly skipped. The trigger
+  endpoint's auth guard is tested for real; actually sending mail through
+  it is not (see below).
+- `apps/web`: driven with a real headless browser (Playwright/Chromium)
+  against the live API — created an RFI, submitted it, added an official
+  response and confirmed the status flipped to "Answered" with the
+  correct transition buttons ("Close"/"Reopen") appearing; created a
+  submittal and a package; loaded the Arabic locale and confirmed RTL
+  mirroring on the new RFI screens. Screenshots taken as evidence.
+- **Not verified**: real SMTP delivery. This sandbox has no Docker, so
+  MailHog can't run — the same constraint as every other Phase's
+  S3/MinIO gap, just on the mail side this time. `runRfiOverdueSweep`'s
+  query/composition/escalation-bookkeeping logic is proven with a fake
+  transport; nobody has watched a real email land in an inbox. Treat
+  actual delivery as code-complete but unrun, same status given to every
+  other piece of infrastructure this sandbox can't run end-to-end
+  (MinIO uploads, the mobile app, pdf.js rendering a real file).
+- Submittal revision file upload has the same "can't actually PUT to
+  S3" limitation as Phase 3's drawing revisions — the presign/confirm
+  code path is exercised via the confirm-only bypass in tests, not a real
+  upload.
+
+**Known gaps / deferred items** (in addition to the scope reductions
+above): RFI PDF export; mobile response/transition/review actions;
+in-process job scheduling; everything already listed as deferred from
+Phases 1–3.
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 

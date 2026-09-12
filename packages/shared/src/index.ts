@@ -20,6 +20,8 @@ export * from "./schemas/photo.schema";
 export * from "./schemas/sync.schema";
 export * from "./schemas/document.schema";
 export * from "./schemas/drawing.schema";
+export * from "./schemas/rfi.schema";
+export * from "./schemas/submittal.schema";
 
 export * from "./sync/merge";
 

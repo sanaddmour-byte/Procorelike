@@ -12,11 +12,15 @@ import { dailyLogsRouter } from "./routes/daily-logs.routes";
 import { documentsRouter } from "./routes/documents.routes";
 import { drawingsRouter } from "./routes/drawings.routes";
 import { healthRouter } from "./routes/health.routes";
+import { internalRouter } from "./routes/internal.routes";
 import { photosRouter } from "./routes/photos.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { punchItemsRouter } from "./routes/punch-items.routes";
+import { rfisRouter } from "./routes/rfis.routes";
+import { submittalsRouter } from "./routes/submittals.routes";
 import { syncRouter } from "./routes/sync.routes";
 import { createS3Client } from "./lib/s3";
+import { createMailer } from "./lib/mailer";
 
 export function createApp(env: Env, clients: ApiDbClients): Express {
   const app = express();
@@ -27,6 +31,7 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
 
   const authDeps = { authDb: clients.authDb.db, appDb: clients.appDb.db, env };
   const s3 = createS3Client(env);
+  const mailer = createMailer(env);
 
   app.use("/health", healthRouter());
   app.use("/auth", authRouter(authDeps, env));
@@ -38,7 +43,10 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/photos", photosRouter(clients.appDb.db, env));
   app.use("/documents", documentsRouter(clients.appDb.db, env));
   app.use("/drawings", drawingsRouter(clients.appDb.db, env));
+  app.use("/rfis", rfisRouter(clients.appDb.db, env));
+  app.use("/submittals", submittalsRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
+  app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 
   app.use(errorHandler);
   return app;

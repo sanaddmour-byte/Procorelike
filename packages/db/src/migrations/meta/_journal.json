@@ -22,6 +22,13 @@
       "when": 1789217545446,
       "tag": "0002_plain_xorn",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789223093799,
+      "tag": "0003_regular_living_mummy",
+      "breakpoints": true
     }
   ]
 }
