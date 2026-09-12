@@ -125,10 +125,12 @@ is evaluated server-side on the state-transition endpoint, not the client.
   and official). The repository layer (`apps/mobile/lib/db/*-repo.ts`) is
   the only place that knows the storage engine, so swapping it later touches
   those two files, not the sync engine or any screen.
-- Phase 2 ships offline CRUD for **Daily Log** and **Punch List** only.
-  Photos are create/upload-only (no offline edit or offline capture queue
-  yet); Inspections and RFI creation stay out of scope for offline until a
-  later phase.
+- Offline CRUD covers **Daily Log**, **Punch List** (Phase 2), and
+  **Inspections** (Phase 5). Photos are create/upload-only (no offline edit
+  or offline capture queue yet); RFIs and Submittals stay online-only —
+  neither was part of the original offline-scope list (§6's very first
+  draft named Daily Log, Punch List, Photos, Inspections, and RFI
+  *creation* specifically, not the full RFI/Submittal workflow).
 - Every locally-created/edited record queues in an **outbox** (one row per
   `entityType:localId`, so repeated offline edits before a sync collapse
   into a single queue entry). `apps/mobile/lib/sync/sync-engine.ts` drains
@@ -224,6 +226,50 @@ users per project, not 100 concurrent *creates* of the same record type.
   a shared secret, not a user session — there's no per-project permission
   context that would make sense for a sweep spanning every project) is
   meant to be invoked by an external cron in a real deployment.
+
+## 7b. Inspections & checklists (Phase 5)
+
+- **Templates are reference data, cached whole for offline use.** A
+  checklist template (with all its items) is fetched and cached into local
+  SQLite (`apps/mobile/lib/db/checklist-template-repo.ts`) whenever the
+  mobile Inspections screen loads with a connection — no outbox, no
+  sync-status, no conflict handling, because templates aren't edited from
+  the field. Caching replaces any previously-cached copy of the same
+  template wholesale ("last cached wins"); there's no per-template
+  versioning.
+- **An inspection and its full response set sync as one record** — the
+  same "replace-all sub-rows" shape as a daily log's manpower array
+  (`data.responses` travels alongside `data.status`/`data.signedByName` in
+  the push payload; see `packages/db`'s `inspections`/`inspection_responses`
+  tables and `apps/api/src/services/inspection.service.ts`'s
+  `applyInspectionPush`). A pull fetches each inspection's full detail
+  (including responses) separately, since the generic sync-pull row for an
+  inspection carries only its own columns.
+- **Failed pass/fail → punch item, one-way.** The first time a `pass_fail`
+  checklist item is answered `false`, a linked punch item is created
+  (`inspection_responses.generated_punch_item_id`, docs/DATA_MODEL.md §8).
+  Correcting the answer afterward never retracts that punch item — a real
+  defect once flagged shouldn't silently vanish because a checklist answer
+  changed.
+- **Sign-off is a typed name, not a drawn signature, on every platform.**
+  `inspections.signature_attachment_id` exists in the schema for a future
+  signature-pad image, but no client produces one — completing an
+  inspection always requires `signed_by_name` (typed), which is what the
+  PDF report renders. This was a deliberate simplification, not a
+  platform gap: a canvas-drawn signature was in scope for consideration,
+  but a uniform typed-name flow is simpler and equally honest given no
+  client needed to differ.
+- **The PDF report is generated from scratch with pdf-lib** on every
+  request (`apps/api/src/lib/inspection-report.ts`) — no template engine,
+  no headless browser, no stored copy: `GET /inspections/:id/report`
+  assembles the current data and streams `application/pdf` bytes back
+  directly. Regenerating on every call means the report can never go
+  stale relative to the inspection's current state.
+- **Photo responses need a connection.** A `photo` checklist item requires
+  the same presign → PUT → confirm attachment flow as any other upload
+  (§5), so mobile can't answer one entirely offline in this phase — flagged
+  in the app's own offline-note copy, not silently disabled without
+  explanation.
 
 ## 8. Search
 

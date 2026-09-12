@@ -38,6 +38,11 @@ export default function ProjectHomeScreen() {
             <Text style={styles.cardTitle}>{i18n.t("submittals.title")}</Text>
           </Pressable>
         </Link>
+        <Link href={`/projects/${id}/inspections`} asChild>
+          <Pressable style={styles.card}>
+            <Text style={styles.cardTitle}>{i18n.t("inspections.title")}</Text>
+          </Pressable>
+        </Link>
       </View>
     </View>
   );

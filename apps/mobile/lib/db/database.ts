@@ -55,6 +55,42 @@ async function openAndMigrate(): Promise<SQLite.SQLiteDatabase> {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS checklist_templates (
+      id TEXT PRIMARY KEY NOT NULL,
+      project_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      cached_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS checklist_template_items (
+      id TEXT PRIMARY KEY NOT NULL,
+      template_id TEXT NOT NULL,
+      prompt TEXT NOT NULL,
+      response_type TEXT NOT NULL,
+      item_order INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS inspections (
+      id TEXT PRIMARY KEY NOT NULL,
+      project_id TEXT NOT NULL,
+      template_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'in_progress',
+      signed_by_name TEXT,
+      signed_at TEXT,
+      base_revision INTEGER,
+      base_snapshot TEXT,
+      sync_status TEXT NOT NULL DEFAULT 'pending',
+      conflict_data TEXT,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS inspection_responses (
+      inspection_id TEXT NOT NULL,
+      template_item_id TEXT NOT NULL,
+      value TEXT NOT NULL,
+      PRIMARY KEY (inspection_id, template_item_id)
+    );
+
     CREATE TABLE IF NOT EXISTS outbox (
       queue_id TEXT PRIMARY KEY NOT NULL,
       entity_type TEXT NOT NULL,

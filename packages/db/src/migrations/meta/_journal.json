@@ -29,6 +29,13 @@
       "when": 1789223093799,
       "tag": "0003_regular_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789234092849,
+      "tag": "0004_milky_sage",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-/** Entity types the mobile outbox can push/pull today (Phase 2). Photos are create-only over sync — see docs/ROADMAP.md Phase 2 gate report. */
-export const SYNC_ENTITY_TYPES = ["daily_log", "punch_item"] as const;
+/** Entity types the mobile outbox can push/pull. Photos are create-only over sync — see docs/ROADMAP.md Phase 2 gate report. "inspection" was added in Phase 5: its full response set travels in `data.responses`, the same "replace-all sub-rows" pattern as a daily log's manpower array. */
+export const SYNC_ENTITY_TYPES = ["daily_log", "punch_item", "inspection"] as const;
 export type SyncEntityType = (typeof SYNC_ENTITY_TYPES)[number];
 
 export const syncPushRecordSchema = z

@@ -39,6 +39,7 @@ const OWNER_TYPE_MODULES: Record<string, Module> = {
   document: "documents",
   drawing_revision: "drawings",
   submittal_revision: "submittals",
+  inspection: "inspections",
 };
 
 function moduleForOwnerType(ownerType: string): Module {

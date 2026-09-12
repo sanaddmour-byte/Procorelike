@@ -2,7 +2,7 @@
 
 ## Status
 
-**Current phase: 4 (Workflow core: RFIs/Submittals) — complete. Phase 5 (Quality: inspections) is next.**
+**Current phase: 5 (Quality: inspections) — complete. Phase 6 (Financials, T2) is next.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -17,7 +17,7 @@
 | 5 | Daily Log | Done (web + mobile offline, Phase 2) |
 | 6 | Punch List / Snags | Done (web + mobile offline; status transitions online-only, Phase 2) |
 | 7 | Photos | Done on web (upload/album); mobile capture/offline queue deferred |
-| 8 | Inspections & Checklists | Not started |
+| 8 | Inspections & Checklists | Done (web + mobile offline, full lifecycle, PDF report) |
 
 ### T2 — Financial & Commercial
 
@@ -78,10 +78,15 @@ telematics.
       escalation email.* **— PASSED, verified by an automated test
       reproducing both halves of the gate; PDF export was not built this
       phase — see the Phase 4 gate report.**
-- [ ] **Phase 5 — Quality.** Checklist templates, inspections, failed-item
+- [x] **Phase 5 — Quality.** Checklist templates, inspections, failed-item
       → punch-item generation, signed PDF inspection report.
       *Gate: run a template-driven inspection on mobile offline, sync,
-      export the report.*
+      export the report.* **— PASSED, verified by an automated test that
+      pushes an entire offline-completed inspection through /sync/push and
+      confirms the failed item generates a punch item; the PDF report and
+      web execution flow were also driven in a real browser. Sign-off is a
+      typed name on every platform, not a drawn signature — see the Phase
+      5 gate report.**
 - [ ] **Phase 6 — Financials (T2).** Budget, commitments, change
       management, progress billing.
       *Gate: a change order flows through approval and updates the budget
@@ -557,6 +562,123 @@ the same rule as Phases 2–3's)**:
 above): RFI PDF export; mobile response/transition/review actions;
 in-process job scheduling; everything already listed as deferred from
 Phases 1–3.
+
+## Phase 5 gate report
+
+**What was built**: Checklist Templates and Inspections, with genuine
+mobile offline support (unlike Phase 4's RFIs/Submittals, this module was
+in the original offline-scope list — see docs/ARCHITECTURE.md §6), a
+failed-item → punch-item auto-generation rule, and a from-scratch PDF
+report.
+- `packages/shared`: Zod schemas for templates/items/inspections/responses
+  (a discriminated union per response type — `pass_fail`/`na`/`numeric`/
+  `photo`/`signature`), `INSPECTION_STATUS_TRANSITIONS`, the
+  `shouldGeneratePunchItem`/`formatGeneratedPunchItemDescription` business
+  rule (unit-tested in isolation), and `formatInspectionResponseValue` — one
+  place both the PDF report and any UI render a response from.
+- `packages/db`: `inspections` gained the sync/audit columns every other
+  offline-capable table already has (`updatedBy`, `syncColumns()`), plus
+  `signedByName`/`signedAt` for the typed-signature sign-off (see below).
+- `apps/api`: `checklist-template.service`/`.routes` (create + list,
+  project-scoped only — see the scope reduction below), `inspection.service`/
+  `.routes` (create, answer responses with per-item type validation,
+  status transitions, complete/sign-off, and the failed-pass/fail → punch
+  item rule applied inline), `applyInspectionPush`/`listInspectionsSince`
+  wired into the same `sync.service.ts` dispatch Phase 2 built, and
+  `GET /inspections/:id/report` generating a PDF with `pdf-lib` (the
+  locked stack's "generate" tool, until now unused — pdf.js from Phase 3
+  is the "view" half).
+- `apps/web`: a template builder (dynamic item rows), an inspection
+  list/create flow, and an execution screen answering each checklist item
+  inline by response type, completing with a typed signature, and
+  downloading the generated PDF (fetched with the stored auth token and
+  opened as a blob URL, since the report endpoint isn't a public S3-style
+  link).
+- `apps/mobile`: a real offline data layer — `checklist-template-repo.ts`
+  caches templates (with items) locally whenever the Inspections screen
+  loads online; `inspection-repo.ts` mirrors the Phase 2 daily-log-repo
+  pattern (outbox, base-snapshot, conflict flagging); `sync-engine.ts`
+  was generalized from an `if/else` two-entity dispatch to a proper
+  switch over all three offline entity types. Screens: a list (from the
+  local repo, so it works with zero connectivity), a template picker that
+  only shows already-cached templates, and an execution screen that
+  answers items and completes entirely against local SQLite.
+
+**Two deliberate simplifications, decided together and applied uniformly
+(not one platform doing more than another)**:
+- **Sign-off is always a typed name**, never a drawn signature. The schema
+  keeps `signatureAttachmentId` for a future signature-pad image, and
+  `completeInspectionSchema` still accepts one, but no client — web or
+  mobile — produces one. This was a live design decision during the build
+  (an earlier draft had web draw a real canvas signature and mobile fall
+  back to typed-name only), reversed in favor of one uniform, always-true
+  behavior: simpler, and just as honest an implementation of "signed"
+  given every platform ended up needing the typed name anyway as the PDF's
+  actual source of truth.
+- **Checklist templates are project-scoped only** — `checklist_templates
+  .project_id` is nullable in the schema for a global/reusable template
+  (docs/DATA_MODEL.md §8), but creating one has no single project's
+  permission context to authorize against, and this phase doesn't build
+  an org-level-admin concept. `createChecklistTemplateSchema.projectId` is
+  required for now; the list endpoint still returns global templates
+  alongside a project's own (RLS already permits it), so nothing already
+  in the database would become invisible if one existed.
+
+**Other scope notes**:
+- **Mobile can't answer a `photo` checklist item offline** — like any
+  attachment, it needs the presign → PUT → confirm round-trip. The
+  execution screen shows this response type as unsupported rather than
+  pretending to capture it; `pass_fail`/`na`/`numeric`/`signature` all work
+  fully offline.
+- **No PDF download on mobile.** The report endpoint exists and mobile
+  could call it, but rendering/saving a PDF on-device wasn't built this
+  phase — consistent with Phase 3's Drawings scoping (view a PDF from a
+  URL, don't build a full in-app PDF pipeline, on mobile).
+- **A "start now" inspection skips the `scheduled` status on mobile** —
+  creating an inspection from the mobile app goes straight to
+  `in_progress` (the field user opening the screen is starting it right
+  then); `scheduled` remains reachable from the web app for planning
+  ahead. Both respect the same `INSPECTION_STATUS_TRANSITIONS` state
+  machine server-side.
+
+**Verification actually performed this session**:
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all pass across
+  all 5 workspaces (74 tests total, up from 68 in Phase 4, including a new
+  4-test unit suite for the failed-item → punch-item rule in isolation).
+- `apps/api`: 3 new integration tests, including one that reproduces the
+  **exact Phase 5 gate scenario** — an inspection created, answered
+  (including a failing pass/fail item), and completed, all pushed as a
+  single `/sync/push` record with `baseRevision: null` (i.e., done
+  entirely offline), then confirmed via `/sync/pull` and a detail fetch
+  that the failed item generated a linked punch item. A second test proves
+  correcting a failed answer to passing does not retract the already-
+  generated punch item (the "one-way" rule). A third exercises the report
+  endpoint directly: `Content-Type: application/pdf`, the response starts
+  with the `%PDF-` magic bytes, and is a non-trivial size — proof
+  `pdf-lib` actually produced a real PDF, not just a 200 with an empty
+  body.
+- `apps/web`: driven with a real headless browser (Playwright/Chromium)
+  against the live API — created a template with a pass/fail and a
+  numeric item, created an inspection, started it, failed the pass/fail
+  item (confirmed the "Punch item created" link appeared), saved the
+  numeric answer, completed with a typed signature, and downloaded the
+  PDF report — confirmed the browser actually opened a `blob:` URL
+  (proof the fetch-token-then-blob download path works, not just that the
+  button exists). Screenshots taken as evidence.
+- `apps/mobile`: `tsc --noEmit` and `eslint --max-warnings=0` both pass
+  clean for the new repos, the generalized sync engine, and all three
+  inspection screens. **Not verified**: this sandbox still has no
+  simulator/device (same limitation as every mobile screen since Phase 2),
+  so the offline caching, local SQLite writes, and the actual sync round-
+  trip from a real device have never executed — only the API side of that
+  round-trip is proven, by the sync test described above. Treat the
+  mobile inspection flow as code-complete but unrun, same status given to
+  the rest of the mobile app.
+
+**Known gaps / deferred items** (in addition to the scope reductions
+above): drawn-signature images (schema-ready, no client produces one);
+mobile photo responses and PDF report download; global/reusable checklist
+templates; everything already listed as deferred from Phases 1–4.
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 

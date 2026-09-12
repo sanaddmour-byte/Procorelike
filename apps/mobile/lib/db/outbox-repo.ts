@@ -1,6 +1,6 @@
 import { getDb } from "./database";
 
-export type SyncEntityType = "daily_log" | "punch_item";
+export type SyncEntityType = "daily_log" | "punch_item" | "inspection";
 
 export interface OutboxEntry {
   queueId: string;
