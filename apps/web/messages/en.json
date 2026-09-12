@@ -32,6 +32,8 @@
     "dailyLog": "Daily Log",
     "punchList": "Punch List",
     "photos": "Photos",
+    "documents": "Documents",
+    "drawings": "Drawings",
     "backToProjects": "Back to projects"
   },
   "DailyLog": {
@@ -90,6 +92,43 @@
     "empty": "No photos yet.",
     "uploading": "Uploading…",
     "uploaded": "Uploaded"
+  },
+  "Documents": {
+    "title": "Documents",
+    "foldersTitle": "Folders",
+    "newFolder": "New folder",
+    "folderName": "Folder name",
+    "allDocuments": "All documents (no folder)",
+    "uploadButton": "Upload document",
+    "uploading": "Uploading…",
+    "documentTitle": "Title",
+    "empty": "No documents here yet.",
+    "replaceFile": "Replace file",
+    "download": "Download"
+  },
+  "Drawings": {
+    "title": "Drawings",
+    "newButton": "New drawing",
+    "empty": "No drawings registered yet.",
+    "sheetNumber": "Sheet number",
+    "discipline": "Discipline",
+    "drawingTitle": "Title",
+    "create": "Create",
+    "currentRevision": "Current revision",
+    "noRevisions": "No revisions uploaded yet.",
+    "uploadRevision": "Upload revision",
+    "uploading": "Uploading…",
+    "revisionCode": "Revision code",
+    "issuedDate": "Issued date",
+    "revisionHistory": "Revision history",
+    "superseded": "Superseded",
+    "current": "Current",
+    "viewer": "Viewer",
+    "viewerHint": "Click on the drawing to drop a markup pin.",
+    "viewerError": "Could not load this PDF.",
+    "noteLabel": "Note (optional)",
+    "addPin": "Add pin",
+    "back": "Back to drawings"
   },
   "Language": {
     "english": "English",

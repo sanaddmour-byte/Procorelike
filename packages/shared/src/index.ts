@@ -18,6 +18,8 @@ export * from "./schemas/daily-log.schema";
 export * from "./schemas/punch-item.schema";
 export * from "./schemas/photo.schema";
 export * from "./schemas/sync.schema";
+export * from "./schemas/document.schema";
+export * from "./schemas/drawing.schema";
 
 export * from "./sync/merge";
 

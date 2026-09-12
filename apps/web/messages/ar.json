@@ -32,6 +32,8 @@
     "dailyLog": "السجل اليومي",
     "punchList": "قائمة الملاحظات",
     "photos": "الصور",
+    "documents": "المستندات",
+    "drawings": "المخططات",
     "backToProjects": "العودة إلى المشاريع"
   },
   "DailyLog": {
@@ -90,6 +92,43 @@
     "empty": "لا توجد صور بعد.",
     "uploading": "جارٍ الرفع…",
     "uploaded": "تم الرفع"
+  },
+  "Documents": {
+    "title": "المستندات",
+    "foldersTitle": "المجلدات",
+    "newFolder": "مجلد جديد",
+    "folderName": "اسم المجلد",
+    "allDocuments": "كل المستندات (بدون مجلد)",
+    "uploadButton": "رفع مستند",
+    "uploading": "جارٍ الرفع…",
+    "documentTitle": "العنوان",
+    "empty": "لا توجد مستندات هنا بعد.",
+    "replaceFile": "استبدال الملف",
+    "download": "تنزيل"
+  },
+  "Drawings": {
+    "title": "المخططات",
+    "newButton": "مخطط جديد",
+    "empty": "لا توجد مخططات مسجلة بعد.",
+    "sheetNumber": "رقم اللوحة",
+    "discipline": "التخصص",
+    "drawingTitle": "العنوان",
+    "create": "إنشاء",
+    "currentRevision": "المراجعة الحالية",
+    "noRevisions": "لم يتم رفع أي مراجعة بعد.",
+    "uploadRevision": "رفع مراجعة",
+    "uploading": "جارٍ الرفع…",
+    "revisionCode": "رمز المراجعة",
+    "issuedDate": "تاريخ الإصدار",
+    "revisionHistory": "سجل المراجعات",
+    "superseded": "تم استبدالها",
+    "current": "الحالية",
+    "viewer": "العارض",
+    "viewerHint": "انقر على المخطط لإضافة دبوس ملاحظة.",
+    "viewerError": "تعذّر تحميل ملف PDF هذا.",
+    "noteLabel": "ملاحظة (اختياري)",
+    "addPin": "إضافة دبوس",
+    "back": "العودة إلى المخططات"
   },
   "Language": {
     "english": "English",

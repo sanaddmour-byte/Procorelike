@@ -2,7 +2,7 @@
 
 ## Status
 
-**Current phase: 2 (Field core) — complete. Phase 3 (Document control) is next.**
+**Current phase: 3 (Document control) — complete. Phase 4 (Workflow core: RFIs/Submittals) is next.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -11,7 +11,7 @@
 | # | Module | Status |
 |---|---|---|
 | 1 | Projects & Directory | Foundation done: create/list projects, company directory, per-project member listing, auth+permission engine. Full directory management UI (invite/reassign from web) still pending. |
-| 2 | Documents & Drawings | Not started |
+| 2 | Documents & Drawings | Done (web + mobile viewing; markup pins web-only, see Phase 3 gate report) |
 | 3 | RFIs | Not started |
 | 4 | Submittals | Not started |
 | 5 | Daily Log | Done (web + mobile offline, Phase 2) |
@@ -63,11 +63,14 @@ telematics.
       offline, reconnect, all sync.* **— PASSED at the API/sync-protocol
       level with an automated test; see Phase 2 gate report for exactly
       what could and could not be verified on-device in this sandbox.**
-- [ ] **Phase 3 — Document control.** Documents, folders, drawing register
+- [x] **Phase 3 — Document control.** Documents, folders, drawing register
       w/ revisions, PDF viewer with markup pins (web + mobile), offline
       drawing cache.
       *Gate: upload a revision, verify the old one is retained and the
-      register shows current.*
+      register shows current.* **— PASSED, verified by an automated test
+      and in a real browser; PDF viewer/markup pins and offline drawing
+      cache are web-only and web-only-respectively — see Phase 3 gate
+      report for the exact mobile scope and why.**
 - [ ] **Phase 4 — Workflow core.** RFIs and Submittals — ball-in-court,
       distribution, review workflows, response codes, overdue logic, email
       notifications, PDF export.
@@ -324,6 +327,105 @@ not user-directed — flagged per the same rule)**:
   never actually added it. Added it to `dailyLogs`/`punchItems` (the tables
   this phase touches) rather than silently leaving the gap or claiming it
   was already there; still missing on tables Phase 2 doesn't touch.
+
+## Phase 3 gate report
+
+**What was built**: Documents (folders + files, no revision history — see
+docs/DATA_MODEL.md §2) and Drawings (register + full revision history +
+markup pins), on both web and mobile, plus a new attachment download
+endpoint neither prior phase needed.
+- `packages/shared`: Zod schemas for document folders/documents, drawings,
+  drawing revisions, and markups (pin or polygon coordinates, normalized
+  0–1 against the rendered page).
+- `apps/api`: `document.service`/`documents.routes` (folders, documents,
+  replace-file PATCH), `drawing.service`/`drawings.routes` (register CRUD,
+  revision upload with the supersede-and-repoint logic, markup pins), and
+  a new `GET /attachments/:id/download` alongside the existing
+  presign/confirm — all going through the same permission-then-RLS
+  discipline as every other route this build has added.
+- `apps/web`: a Documents screen (folder tree, upload, replace-file,
+  download) and a Drawings register + detail screen with a real PDF viewer
+  (pdf.js, dynamically imported so it never bloats the initial bundle) that
+  renders the current revision and lets a user click the page to drop a
+  markup pin.
+- `apps/mobile`: a Drawings register list and detail screen (revision
+  history, "View current PDF" opening the file in the system viewer via
+  `Linking.openURL`) — deliberately scoped down from the full brief; see
+  below.
+
+**A real correctness fix made along the way, not scope creep**: the
+attachment presign/confirm endpoints had hardcoded `requirePermission(ctx,
+"documents", "standard")` regardless of what was being uploaded — so a
+role with `photos` write but not `documents` write would have been wrongly
+blocked from uploading its own photos. Every seeded role happens to grant
+both at the same level, so this never surfaced as a test failure, but
+Phase 3 makes it load-bearing (`drawing_revision` uploads need to check
+`drawings`, not `documents`). Fixed with an `ownerType → module` lookup
+table in `apps/api/src/services/attachment.service.ts`, applied to upload,
+confirm, and the new download endpoint alike. All existing and new tests
+still pass.
+
+**Scope reductions (own engineering judgment under "Resume", flagged per
+the same rule as Phase 2's)**:
+- **No offline drawing cache.** The brief calls for one; Phase 3 mobile is
+  online-only for Drawings (a persistent banner says so in the app). Building
+  a real cache — download-to-device-storage, cache-invalidation-on-new-
+  revision, an offline-aware viewer — is a meaningfully sized feature on
+  its own, and mobile PDF rendering has no equivalent of pdf.js to build on
+  (no canvas-based PDF renderer ships with Expo/React Native); doing it
+  properly needs either a native module (a real device/simulator to verify
+  against, which this sandbox still doesn't have — same constraint as
+  Phase 2's WatermelonDB decision) or a WebView-based viewer, which is its
+  own scope decision worth its own flag rather than folding in here.
+- **No markup pin creation on mobile.** Viewing only. Dropping a pin needs
+  a rendered page to tap coordinates against, which needs the PDF-rendering
+  capability above; the API (`POST /drawings/revisions/:id/markups`) is
+  already there for whenever a mobile viewer exists to call it.
+- **Mobile opens the PDF via the OS's own viewer** (`Linking.openURL`)
+  rather than an in-app viewer, so no new native dependency was added on
+  the strength of an unverified sandbox decision — consistent with the
+  Phase 2 WatermelonDB-avoidance reasoning.
+
+**Verification actually performed this session**:
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all pass across
+  all 5 workspaces (60 tests total, up from 54 in Phase 2).
+- `apps/api`: 4 new Supertest tests, including the **exact Phase 3 gate
+  scenario** — register a drawing, upload revision A (register's current
+  pointer moves to A), upload revision B (pointer moves to B, A is now
+  `supersededAt`-stamped but still returned intact — same `attachmentId` —
+  in the full history list) — plus a markup-pin create/list test and a
+  permission-rejection test. The download endpoint is exercised too:
+  since `getSignedUrl` computes a signature locally without contacting S3,
+  this passes without a live object store.
+- `apps/web`: driven with a real headless browser (Playwright/Chromium)
+  against the live API — created a document folder, created a drawing
+  register entry, opened its detail page, and loaded the Arabic locale to
+  confirm the new pages mirror to RTL correctly (screenshots taken as
+  evidence). The revision-history UI was confirmed rendering real
+  superseded/current state produced by the API test suite (one revision
+  badge "Current", the other "Superseded", matching the DB).
+- **Not verified**: the actual file upload (presign → PUT → confirm) and
+  therefore the PDF viewer's real-file render path. This sandbox has no
+  Docker daemon, so MinIO can't run (same constraint as Phase 1's
+  attachment flow), and direct internet access to fetch an alternative
+  local S3 server is blocked by this environment's egress proxy. Confirmed
+  the failure mode is graceful, not a crash: attempting a real upload in
+  the browser correctly surfaces an inline error instead of hanging or
+  throwing unhandled. `pdfjs-dist`'s worker bundles successfully under
+  `next build` (a real risk with Next.js + workers), which is the strongest
+  signal available in this sandbox that the viewer code itself is wired
+  correctly, but nobody has watched it actually render a real PDF from a
+  real signed URL. Treat the upload-to-viewer path as code-complete but
+  unrun, the same status Phase 2 gave the whole mobile app.
+- The mobile Drawings screens are typecheck/lint-clean but, like all of
+  Phase 2's mobile work, have never executed on a device or simulator —
+  no new capability here changes that.
+
+**Known gaps / deferred items** (in addition to the scope reductions
+above): offline drawing cache, mobile markup creation, polygon-shaped
+markups (only pins render in the viewer — the schema supports polygons,
+the UI doesn't draw them yet), and everything already listed as deferred
+from Phases 1–2.
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 

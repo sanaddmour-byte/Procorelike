@@ -9,6 +9,8 @@ import { attachmentsRouter } from "./routes/attachments.routes";
 import { authRouter } from "./routes/auth.routes";
 import { companiesRouter } from "./routes/companies.routes";
 import { dailyLogsRouter } from "./routes/daily-logs.routes";
+import { documentsRouter } from "./routes/documents.routes";
+import { drawingsRouter } from "./routes/drawings.routes";
 import { healthRouter } from "./routes/health.routes";
 import { photosRouter } from "./routes/photos.routes";
 import { projectsRouter } from "./routes/projects.routes";
@@ -34,6 +36,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/daily-logs", dailyLogsRouter(clients.appDb.db, env));
   app.use("/punch-items", punchItemsRouter(clients.appDb.db, env));
   app.use("/photos", photosRouter(clients.appDb.db, env));
+  app.use("/documents", documentsRouter(clients.appDb.db, env));
+  app.use("/drawings", drawingsRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
 
   app.use(errorHandler);

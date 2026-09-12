@@ -11,6 +11,8 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
 
   const tabs = [
     { key: "directory", label: t("directory"), href: `/${locale}/projects/${projectId}/directory` },
+    { key: "documents", label: t("documents"), href: `/${locale}/projects/${projectId}/documents` },
+    { key: "drawings", label: t("drawings"), href: `/${locale}/projects/${projectId}/drawings` },
     { key: "daily-log", label: t("dailyLog"), href: `/${locale}/projects/${projectId}/daily-log` },
     { key: "punch-list", label: t("punchList"), href: `/${locale}/projects/${projectId}/punch-list` },
     { key: "photos", label: t("photos"), href: `/${locale}/projects/${projectId}/photos` },

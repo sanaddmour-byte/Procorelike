@@ -94,7 +94,27 @@ is evaluated server-side on the state-transition endpoint, not the client.
   storage, then confirm completion to the API, which records the
   `attachments` row. Files never proxy through the API process.
 - Downloads: same pattern in reverse — short-lived pre-signed GET URLs,
-  issued only after a permission check.
+  issued only after a permission check (`GET /attachments/:id/download`,
+  added in Phase 3 once Documents/Drawings needed to actually read a file
+  back, not just write one). An attachment's `ownerType` (`photo`,
+  `document`, `drawing_revision`, …) determines which module's permission
+  governs both the upload and the download — a lookup table in
+  `apps/api/src/services/attachment.service.ts`, not a single hardcoded
+  module, so a role with `photos` access but not `documents` access can
+  still upload/download its own photos.
+- **Drawing revisions never overwrite in place.** Uploading a new revision
+  stamps the previously-current one `superseded_at` (retained, still
+  queryable in the full history) and moves `drawings.current_revision_id`
+  to the new row — an atomic pointer swap inside one transaction, not a
+  destructive replace. Plain `documents` are simpler: a single
+  `current_attachment_id` pointer with no history (docs/DATA_MODEL.md §2) —
+  replacing a document's file is a direct overwrite, by design.
+- **Markup pins** are normalized to 0–1 sheet coordinates (not pixels), so
+  they stay correctly placed regardless of the viewer's render scale or
+  the device's screen size. They anchor to one `drawing_revision_id` and
+  are not re-projected onto a later revision automatically
+  (docs/DATA_MODEL.md §2) — a pin on revision A stays on revision A even
+  after revision B supersedes it.
 
 ## 6. Offline sync (mobile)
 
