@@ -84,6 +84,7 @@ export default function MobileSubmittalDetailScreen() {
 
       <Text style={styles.viewOnlyNote}>{i18n.t("submittals.viewOnlyNote")}</Text>
 
+      {submittal.packages.length === 0 && <Text style={styles.empty}>{i18n.t("submittals.noPackages")}</Text>}
       {submittal.packages.map((pkg) => (
         <View key={pkg.id} style={styles.packageBlock}>
           <Text style={styles.sectionTitle}>
@@ -115,6 +116,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: "700", fontFamily: "Poppins_700Bold" },
   subtitle: { fontSize: 13, color: "#182a51" },
   viewOnlyNote: { fontSize: 12, color: "#9a3412", backgroundColor: "#fff4e6", padding: 10, borderRadius: 8, marginVertical: 8 },
+  empty: { fontSize: 13, color: "#182a51" },
   packageBlock: { marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", marginBottom: 6 },
   card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 12, gap: 6, marginBottom: 8 },

@@ -15,10 +15,15 @@ function statusLabel(log: LocalDailyLog): string {
 export default function DailyLogListScreen() {
   useRequireAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [logs, setLogs] = useState<LocalDailyLog[]>([]);
+  const [logs, setLogs] = useState<LocalDailyLog[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setLogs(await listDailyLogs(id));
+    try {
+      setLogs(await listDailyLogs(id));
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
+    }
   }, [id]);
 
   useEffect(() => {
@@ -40,9 +45,11 @@ export default function DailyLogListScreen() {
         }}
       />
       <SyncStatusBar projectId={id} onSynced={refresh} />
-      {logs.length === 0 && <Text style={styles.empty}>{i18n.t("dailyLog.empty")}</Text>}
+      {error && <Text style={styles.error}>{error}</Text>}
+      {!logs && !error && <Text style={styles.empty}>{i18n.t("common.loading")}</Text>}
+      {logs && logs.length === 0 && <Text style={styles.empty}>{i18n.t("dailyLog.empty")}</Text>}
       <FlatList
-        data={logs}
+        data={logs ?? []}
         keyExtractor={(l) => l.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
@@ -84,5 +91,6 @@ const styles = StyleSheet.create({
   badgePending: { backgroundColor: "#fff4e6", color: "#9a3412" },
   badgeConflict: { backgroundColor: "#fbebec", color: "#5c1620" },
   empty: { padding: 16, color: "#182a51" },
+  error: { padding: 16, color: "#5c1620" },
   headerButton: { color: "#fff", fontSize: 14, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
 });

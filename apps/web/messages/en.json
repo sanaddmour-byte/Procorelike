@@ -29,7 +29,8 @@
     "email": "Email",
     "role": "Role",
     "company": "Company",
-    "back": "Back to projects"
+    "back": "Back to projects",
+    "empty": "No one has been added to this project's directory yet."
   },
   "ProjectNav": {
     "dashboard": "Dashboard",
@@ -122,7 +123,8 @@
     "documentTitle": "Title",
     "empty": "No documents here yet.",
     "replaceFile": "Replace file",
-    "download": "Download"
+    "download": "Download",
+    "noFolders": "No folders yet."
   },
   "Drawings": {
     "title": "Drawings",
@@ -169,6 +171,7 @@
     "reopen": "Reopen",
     "close": "Close",
     "responses": "Responses",
+    "noResponses": "No responses yet.",
     "official": "Official",
     "addResponse": "Add response",
     "responseText": "Response",
@@ -189,6 +192,7 @@
     "ballInCourt": "Ball in court",
     "unassigned": "Unassigned",
     "packages": "Packages",
+    "noPackages": "No packages yet.",
     "package": "Package",
     "newPackage": "New package",
     "revisions": "Revisions",
@@ -381,7 +385,8 @@
     "close": "Close",
     "carryForward": "Carry forward to",
     "convertToPunchItem": "Convert to punch item",
-    "selectMeeting": "Select a meeting"
+    "selectMeeting": "Select a meeting",
+    "noActionItems": "No action items yet."
   },
   "Language": {
     "english": "English",

@@ -161,6 +161,12 @@ export default function DocumentsPage() {
                   {t("allDocuments")}
                 </button>
               </li>
+              {!folders && (
+                <li className="px-2 py-1.5 text-sm text-navy-500">{tc("loading")}</li>
+              )}
+              {folders && folders.length === 0 && (
+                <li className="px-2 py-1.5 text-sm text-navy-500">{t("noFolders")}</li>
+              )}
               {folders?.map((folder) => (
                 <li key={folder.id}>
                   <button

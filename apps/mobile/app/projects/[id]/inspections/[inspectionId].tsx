@@ -26,13 +26,18 @@ export default function MobileInspectionDetailScreen() {
   const [responses, setResponses] = useState<LocalInspectionResponse[]>([]);
   const [signedByName, setSignedByName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const loaded = await getInspection(inspectionId);
-    setInspection(loaded);
-    if (loaded) {
-      setItems(await getCachedTemplateItems(loaded.templateId));
-      setResponses(await getResponses(inspectionId));
+    try {
+      const loaded = await getInspection(inspectionId);
+      setInspection(loaded);
+      if (loaded) {
+        setItems(await getCachedTemplateItems(loaded.templateId));
+        setResponses(await getResponses(inspectionId));
+      }
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
     }
   }, [inspectionId]);
 
@@ -41,8 +46,12 @@ export default function MobileInspectionDetailScreen() {
   }, [load]);
 
   async function handleAnswer(templateItemId: string, value: Record<string, unknown>): Promise<void> {
-    await setResponse(inspectionId, templateItemId, value);
-    setResponses(await getResponses(inspectionId));
+    try {
+      await setResponse(inspectionId, templateItemId, value);
+      setResponses(await getResponses(inspectionId));
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
+    }
   }
 
   async function handleComplete(): Promise<void> {
@@ -51,9 +60,19 @@ export default function MobileInspectionDetailScreen() {
     try {
       await completeInspection(inspectionId, signedByName.trim());
       await load();
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
     } finally {
       setBusy(false);
     }
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
   }
 
   if (!inspection) {
@@ -163,6 +182,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff" },
   content: { padding: 16, gap: 8 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  errorText: { padding: 16, color: "#5c1620" },
   status: { fontSize: 13, fontWeight: "600", fontFamily: "Poppins_600SemiBold", color: "#13213f" },
   offlineNote: { fontSize: 11, color: "#9a3412", backgroundColor: "#fff4e6", padding: 10, borderRadius: 8, marginVertical: 6 },
   sectionTitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", marginTop: 8, marginBottom: 4 },

@@ -172,6 +172,7 @@ export default function RfiDetailScreen() {
         )}
 
         <h2 className="mb-2 text-lg font-medium">{t("responses")}</h2>
+        {rfi.responses.length === 0 && <p className="mb-4 text-navy-600">{t("noResponses")}</p>}
         <ul className="mb-4 flex flex-col gap-2">
           {rfi.responses.map((r) => (
             <li key={r.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">

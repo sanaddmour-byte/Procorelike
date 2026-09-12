@@ -49,7 +49,8 @@ export default function DirectoryPage() {
         <h1 className="mb-4 mt-2 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         {error && <p className="text-maroon-700">{error}</p>}
         {!members && !error && <p>{tc("loading")}</p>}
-        {members && (
+        {members && members.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
+        {members && members.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

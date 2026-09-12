@@ -17,12 +17,16 @@ export default function NewDailyLogScreen() {
   const [logDate, setLogDate] = useState(todayIso());
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSave(): Promise<void> {
     setSaving(true);
+    setError(null);
     try {
       const log = await createDailyLog({ projectId: id, logDate, notes: notes || undefined });
       router.replace(`/projects/${id}/daily-log/${log.id}`);
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -43,6 +47,7 @@ export default function NewDailyLogScreen() {
         multiline
       />
 
+      {error && <Text style={styles.error}>{error}</Text>}
       <Pressable style={[styles.button, saving && styles.buttonDisabled]} onPress={() => void handleSave()} disabled={saving}>
         {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{i18n.t("common.save")}</Text>}
       </Pressable>
@@ -55,6 +60,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, color: "#13213f", marginTop: 8 },
   input: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
   textArea: { minHeight: 120, textAlignVertical: "top" },
+  error: { marginTop: 8, color: "#5c1620" },
   button: { marginTop: 20, backgroundColor: "#182a51", borderRadius: 8, paddingVertical: 12, alignItems: "center" },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: "#fff", fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },

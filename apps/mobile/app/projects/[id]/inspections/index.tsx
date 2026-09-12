@@ -33,12 +33,17 @@ async function refreshTemplateCache(projectId: string): Promise<void> {
 export default function MobileInspectionsListScreen() {
   const auth = useRequireAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [inspections, setInspections] = useState<LocalInspection[]>([]);
+  const [inspections, setInspections] = useState<LocalInspection[] | null>(null);
   const [hasCachedTemplates, setHasCachedTemplates] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setInspections(await listInspections(id));
-    setHasCachedTemplates((await listCachedTemplates(id)).length > 0);
+    try {
+      setInspections(await listInspections(id));
+      setHasCachedTemplates((await listCachedTemplates(id)).length > 0);
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
+    }
   }, [id]);
 
   useEffect(() => {
@@ -64,9 +69,11 @@ export default function MobileInspectionsListScreen() {
       />
       <SyncStatusBar projectId={id} onSynced={refresh} />
       {!hasCachedTemplates && <Text style={styles.hint}>{i18n.t("inspections.noTemplates")}</Text>}
-      {inspections.length === 0 && <Text style={styles.empty}>{i18n.t("inspections.empty")}</Text>}
+      {error && <Text style={styles.error}>{error}</Text>}
+      {!inspections && !error && <Text style={styles.empty}>{i18n.t("common.loading")}</Text>}
+      {inspections && inspections.length === 0 && <Text style={styles.empty}>{i18n.t("inspections.empty")}</Text>}
       <FlatList
-        data={inspections}
+        data={inspections ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
@@ -102,6 +109,7 @@ const styles = StyleSheet.create({
   badgePending: { backgroundColor: "#fff4e6", color: "#9a3412" },
   badgeConflict: { backgroundColor: "#fbebec", color: "#5c1620" },
   empty: { padding: 16, color: "#182a51" },
+  error: { padding: 16, color: "#5c1620" },
   hint: { margin: 16, padding: 10, backgroundColor: "#fff4e6", color: "#9a3412", borderRadius: 8, fontSize: 12 },
   headerButton: { color: "#fff", fontSize: 13, fontWeight: "600", fontFamily: "Poppins_600SemiBold", marginRight: 4 },
 });

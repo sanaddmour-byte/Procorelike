@@ -29,7 +29,8 @@
     "email": "البريد الإلكتروني",
     "role": "الدور",
     "company": "الشركة",
-    "back": "العودة إلى المشاريع"
+    "back": "العودة إلى المشاريع",
+    "empty": "لم تتم إضافة أي شخص إلى دليل هذا المشروع بعد."
   },
   "ProjectNav": {
     "dashboard": "لوحة المعلومات",
@@ -122,7 +123,8 @@
     "documentTitle": "العنوان",
     "empty": "لا توجد مستندات هنا بعد.",
     "replaceFile": "استبدال الملف",
-    "download": "تنزيل"
+    "download": "تنزيل",
+    "noFolders": "لا توجد مجلدات بعد."
   },
   "Drawings": {
     "title": "المخططات",
@@ -169,6 +171,7 @@
     "reopen": "إعادة فتح",
     "close": "إغلاق",
     "responses": "الردود",
+    "noResponses": "لا توجد ردود بعد.",
     "official": "رسمي",
     "addResponse": "إضافة رد",
     "responseText": "الرد",
@@ -189,6 +192,7 @@
     "ballInCourt": "الدور على",
     "unassigned": "غير معيّن",
     "packages": "الحزم",
+    "noPackages": "لا توجد حزم بعد.",
     "package": "حزمة",
     "newPackage": "حزمة جديدة",
     "revisions": "المراجعات",
@@ -381,7 +385,8 @@
     "close": "إغلاق",
     "carryForward": "ترحيل إلى",
     "convertToPunchItem": "تحويل إلى ملاحظة",
-    "selectMeeting": "اختر اجتماعاً"
+    "selectMeeting": "اختر اجتماعاً",
+    "noActionItems": "لا توجد بنود عمل بعد."
   },
   "Language": {
     "english": "English",

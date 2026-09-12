@@ -84,6 +84,7 @@ export default function MobileDrawingDetailScreen() {
       )}
 
       <Text style={styles.sectionTitle}>{i18n.t("drawings.revisionHistory")}</Text>
+      {revisions.length === 0 && <Text style={styles.hint}>{i18n.t("drawings.noRevisions")}</Text>}
       {revisions.map((rev) => (
         <View key={rev.id} style={styles.revisionRow}>
           <Text style={styles.revisionText}>

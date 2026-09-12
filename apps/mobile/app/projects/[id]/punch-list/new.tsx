@@ -15,6 +15,7 @@ export default function NewPunchItemScreen() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<(typeof PRIORITIES)[number]>("medium");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function priorityLabel(p: (typeof PRIORITIES)[number]): string {
     return { low: i18n.t("punchList.priorityLow"), medium: i18n.t("punchList.priorityMedium"), high: i18n.t("punchList.priorityHigh") }[p];
@@ -23,9 +24,12 @@ export default function NewPunchItemScreen() {
   async function handleSave(): Promise<void> {
     if (!description.trim()) return;
     setSaving(true);
+    setError(null);
     try {
       const item = await createPunchItem({ projectId: id, description: description.trim(), priority });
       router.replace(`/projects/${id}/punch-list/${item.id}`);
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -57,6 +61,7 @@ export default function NewPunchItemScreen() {
         ))}
       </View>
 
+      {error && <Text style={styles.error}>{error}</Text>}
       <Pressable
         style={[styles.button, (saving || !description.trim()) && styles.buttonDisabled]}
         onPress={() => void handleSave()}
@@ -81,4 +86,5 @@ const styles = StyleSheet.create({
   button: { marginTop: 20, backgroundColor: "#182a51", borderRadius: 8, paddingVertical: 12, alignItems: "center" },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: "#fff", fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
+  error: { marginTop: 8, color: "#5c1620" },
 });

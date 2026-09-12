@@ -18,12 +18,15 @@ export default function DailyLogDetailScreen() {
   const [log, setLog] = useState<LocalDailyLog | null>(null);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getDailyLog(logId).then((row) => {
-      setLog(row);
-      setNotes(row?.notes ?? "");
-    });
+    getDailyLog(logId)
+      .then((row) => {
+        setLog(row);
+        setNotes(row?.notes ?? "");
+      })
+      .catch(() => setError(i18n.t("common.errorGeneric")));
   }, [logId]);
 
   async function handleBlur(): Promise<void> {
@@ -32,9 +35,19 @@ export default function DailyLogDetailScreen() {
     try {
       await updateDailyLogNotes(logId, notes);
       setLog(await getDailyLog(logId));
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
     } finally {
       setSaving(false);
     }
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.error}>{error}</Text>
+      </View>
+    );
   }
 
   if (!log) {
@@ -84,6 +97,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff" },
   content: { padding: 16, gap: 6 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  error: { padding: 16, color: "#5c1620" },
   label: { fontSize: 13, color: "#13213f", marginTop: 12 },
   value: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
   input: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },

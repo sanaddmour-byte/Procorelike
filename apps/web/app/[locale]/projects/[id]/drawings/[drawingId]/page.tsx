@@ -209,6 +209,7 @@ export default function DrawingDetailScreen() {
             </form>
           )}
 
+          {revisions.length === 0 && <p className="text-navy-600">{t("noRevisions")}</p>}
           <ul className="flex flex-col gap-2">
             {revisions.map((rev) => (
               <li

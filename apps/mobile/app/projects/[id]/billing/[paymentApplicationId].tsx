@@ -72,6 +72,7 @@ export default function MobilePaymentApplicationDetailScreen() {
             data={application.lines}
             keyExtractor={(l) => l.sovLineId}
             contentContainerStyle={styles.list}
+            ListEmptyComponent={<Text style={styles.empty}>{i18n.t("billing.noLineItems")}</Text>}
             ListFooterComponent={
               application.lines.length > 0 ? (
                 <View style={styles.totalCard}>
@@ -119,4 +120,5 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 13, color: colors.navy700 },
   totalAmount: { fontSize: 22, fontWeight: "800", fontFamily: "Poppins_800ExtraBold", color: colors.navy900 },
   error: { padding: 16, color: colors.maroon700 },
+  empty: { padding: 16, color: colors.navy600 },
 });

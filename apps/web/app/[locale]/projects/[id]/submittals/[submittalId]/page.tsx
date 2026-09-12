@@ -222,6 +222,7 @@ export default function SubmittalDetailScreen() {
           </button>
         </div>
 
+        {submittal.packages.length === 0 && <p className="text-navy-600">{t("noPackages")}</p>}
         <div className="flex flex-col gap-6">
           {submittal.packages.map((pkg) => (
             <div key={pkg.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">

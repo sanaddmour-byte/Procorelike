@@ -59,6 +59,7 @@ export default function MobileMeetingDetailScreen() {
             data={meeting.items}
             keyExtractor={(i) => i.id}
             contentContainerStyle={styles.list}
+            ListEmptyComponent={<Text style={styles.empty}>{i18n.t("meetings.noActionItems")}</Text>}
             renderItem={({ item }) => (
               <View style={styles.itemCard}>
                 <Text style={styles.itemDescription}>{item.description}</Text>
@@ -83,4 +84,5 @@ const styles = StyleSheet.create({
   itemDescription: { fontSize: 14, color: colors.navy900 },
   itemStatus: { fontSize: 11, fontFamily: "Poppins_600SemiBold", color: colors.orange900, backgroundColor: colors.orange100, alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
   error: { padding: 16, color: colors.maroon700 },
+  empty: { padding: 16, color: colors.navy600 },
 });

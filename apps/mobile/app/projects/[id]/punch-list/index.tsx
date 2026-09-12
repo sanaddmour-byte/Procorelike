@@ -24,10 +24,15 @@ function syncLabel(item: LocalPunchItem): string {
 export default function PunchListScreen() {
   useRequireAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [items, setItems] = useState<LocalPunchItem[]>([]);
+  const [items, setItems] = useState<LocalPunchItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setItems(await listPunchItems(id));
+    try {
+      setItems(await listPunchItems(id));
+    } catch {
+      setError(i18n.t("common.errorGeneric"));
+    }
   }, [id]);
 
   useEffect(() => {
@@ -49,9 +54,11 @@ export default function PunchListScreen() {
         }}
       />
       <SyncStatusBar projectId={id} onSynced={refresh} />
-      {items.length === 0 && <Text style={styles.empty}>{i18n.t("punchList.empty")}</Text>}
+      {error && <Text style={styles.error}>{error}</Text>}
+      {!items && !error && <Text style={styles.empty}>{i18n.t("common.loading")}</Text>}
+      {items && items.length === 0 && <Text style={styles.empty}>{i18n.t("punchList.empty")}</Text>}
       <FlatList
-        data={items}
+        data={items ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
@@ -94,5 +101,6 @@ const styles = StyleSheet.create({
   badgePending: { backgroundColor: "#fff4e6", color: "#9a3412" },
   badgeConflict: { backgroundColor: "#fbebec", color: "#5c1620" },
   empty: { padding: 16, color: "#182a51" },
+  error: { padding: 16, color: "#5c1620" },
   headerButton: { color: "#fff", fontSize: 14, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
 });

@@ -161,6 +161,7 @@ export default function MeetingDetailPage() {
               </button>
             </form>
 
+            {meeting.items.length === 0 && <p className="text-navy-600">{t("noActionItems")}</p>}
             <ul className="flex flex-col gap-3">
               {meeting.items.map((item) => (
                 <li key={item.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
