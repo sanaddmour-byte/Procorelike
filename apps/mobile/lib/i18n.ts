@@ -11,6 +11,9 @@ const translations = {
       save: "Save",
       cancel: "Cancel",
       logout: "Log out",
+      errorBoundaryTitle: "Something broke on our end",
+      errorBoundaryBody: "The app ran into an unexpected error.",
+      retry: "Try again",
     },
     login: {
       title: "Log in",
@@ -219,6 +222,9 @@ const translations = {
       save: "حفظ",
       cancel: "إلغاء",
       logout: "تسجيل الخروج",
+      errorBoundaryTitle: "حدث عطل من جانبنا",
+      errorBoundaryBody: "واجه التطبيق خطأً غير متوقع.",
+      retry: "حاول مرة أخرى",
     },
     login: {
       title: "تسجيل الدخول",

@@ -9,6 +9,7 @@ import {
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { Text, TextInput } from "react-native";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/lib/auth-context";
 import { colors, fonts } from "@/lib/theme";
 
@@ -47,17 +48,19 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.navy900 },
-          headerTintColor: colors.white,
-          headerTitleStyle: { fontFamily: fonts.bold, fontSize: 17 },
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-      </Stack>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.navy900 },
+            headerTintColor: colors.white,
+            headerTitleStyle: { fontFamily: fonts.bold, fontSize: 17 },
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+        </Stack>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

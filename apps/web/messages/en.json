@@ -3,7 +3,11 @@
     "appName": "SiteOps",
     "loading": "Loading…",
     "logout": "Log out",
-    "errorGeneric": "Something went wrong. Please try again."
+    "errorGeneric": "Something went wrong. Please try again.",
+    "errorBoundaryTitle": "Something broke on our end",
+    "errorBoundaryBody": "This page ran into an unexpected error. Your work in other tabs is unaffected.",
+    "retry": "Try again",
+    "backToProjects": "Back to projects"
   },
   "Login": {
     "title": "Sign in to SiteOps",
