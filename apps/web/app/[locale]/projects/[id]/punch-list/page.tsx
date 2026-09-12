@@ -18,6 +18,12 @@ interface PunchItem {
   needsReview: boolean;
 }
 
+interface SavedView {
+  id: string;
+  name: string;
+  filters: { status?: string };
+}
+
 export default function PunchListPage() {
   const t = useTranslations("PunchList");
   const tc = useTranslations("Common");
@@ -27,6 +33,16 @@ export default function PunchListPage() {
 
   const [items, setItems] = useState<PunchItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
+  const [newViewName, setNewViewName] = useState("");
+  const [savingView, setSavingView] = useState(false);
+
+  function loadSavedViews(): void {
+    apiJson<SavedView[]>(`/saved-views?projectId=${params.id}&module=punch_list`)
+      .then(setSavedViews)
+      .catch(() => undefined);
+  }
 
   useEffect(() => {
     if (!loadStoredAuth()) {
@@ -36,6 +52,7 @@ export default function PunchListPage() {
     apiJson<PunchItem[]>(`/punch-items?projectId=${params.id}`)
       .then(setItems)
       .catch(() => setError(tc("errorGeneric")));
+    loadSavedViews();
   }, [router, locale, params.id, tc]);
 
   function statusLabel(status: PunchItem["status"]): string {
@@ -46,6 +63,25 @@ export default function PunchListPage() {
       closed: t("statusClosed"),
     }[status];
   }
+
+  async function handleSaveView(): Promise<void> {
+    if (!newViewName.trim()) return;
+    setSavingView(true);
+    try {
+      await apiJson("/saved-views", {
+        method: "POST",
+        body: JSON.stringify({ projectId: params.id, module: "punch_list", name: newViewName.trim(), filters: { status: statusFilter } }),
+      });
+      setNewViewName("");
+      loadSavedViews();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setSavingView(false);
+    }
+  }
+
+  const filteredItems = items?.filter((item) => !statusFilter || item.status === statusFilter) ?? null;
 
   return (
     <>
@@ -61,11 +97,41 @@ export default function PunchListPage() {
             {t("newButton")}
           </Link>
         </div>
+
+        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
+          <label className="flex flex-col gap-1 text-sm">
+            {t("filterByStatus")}
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
+              <option value="">{t("filterAll")}</option>
+              <option value="open">{t("statusOpen")}</option>
+              <option value="ready_for_review">{t("statusReadyForReview")}</option>
+              <option value="approved">{t("statusApproved")}</option>
+              <option value="closed">{t("statusClosed")}</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            {t("saveViewAs")}
+            <input value={newViewName} onChange={(e) => setNewViewName(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" placeholder={t("viewNamePlaceholder")} />
+          </label>
+          <button onClick={() => void handleSaveView()} disabled={savingView || !newViewName.trim()} className="rounded-lg border-3 border-ink bg-orange-500 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
+            {t("saveView")}
+          </button>
+          {savedViews.map((view) => (
+            <button
+              key={view.id}
+              onClick={() => setStatusFilter(view.filters.status ?? "")}
+              className="rounded-full border-3 border-ink bg-navy-100 px-3 py-1 text-xs font-semibold text-navy-800"
+            >
+              {view.name}
+            </button>
+          ))}
+        </div>
+
         {error && <p className="text-maroon-700">{error}</p>}
-        {!items && !error && <p>{tc("loading")}</p>}
-        {items && items.length === 0 && <p>{t("empty")}</p>}
+        {!filteredItems && !error && <p>{tc("loading")}</p>}
+        {filteredItems && filteredItems.length === 0 && <p>{t("empty")}</p>}
         <ul className="flex flex-col gap-3">
-          {items?.map((item) => (
+          {filteredItems?.map((item) => (
             <li key={item.id}>
               <Link
                 href={`/${locale}/projects/${params.id}/punch-list/${item.id}`}

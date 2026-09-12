@@ -19,6 +19,8 @@ import { drawingsRouter } from "./routes/drawings.routes";
 import { healthRouter } from "./routes/health.routes";
 import { inspectionsRouter } from "./routes/inspections.routes";
 import { internalRouter } from "./routes/internal.routes";
+import { meetingItemsRouter, meetingsRouter } from "./routes/meetings.routes";
+import { savedViewsRouter } from "./routes/saved-views.routes";
 import { photosRouter } from "./routes/photos.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { punchItemsRouter } from "./routes/punch-items.routes";
@@ -56,6 +58,9 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/potential-change-orders", potentialChangeOrdersRouter(clients.appDb.db, env));
   app.use("/change-orders", changeOrdersRouter(clients.appDb.db, env));
   app.use("/payment-applications", billingRouter(clients.appDb.db, env));
+  app.use("/meetings", meetingsRouter(clients.appDb.db, env));
+  app.use("/meeting-items", meetingItemsRouter(clients.appDb.db, env));
+  app.use("/saved-views", savedViewsRouter(clients.appDb.db, env));
   app.use("/drawings", drawingsRouter(clients.appDb.db, env));
   app.use("/rfis", rfisRouter(clients.appDb.db, env));
   app.use("/submittals", submittalsRouter(clients.appDb.db, env));

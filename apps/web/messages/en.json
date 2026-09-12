@@ -28,6 +28,8 @@
     "back": "Back to projects"
   },
   "ProjectNav": {
+    "dashboard": "Dashboard",
+    "meetings": "Meetings",
     "directory": "Directory",
     "dailyLog": "Daily Log",
     "punchList": "Punch List",
@@ -88,7 +90,12 @@
     "moveTo": "Move to",
     "needsReview": "Needs review — sync conflict",
     "conflictBanner": "This item has a sync conflict: another edit changed the same field. Review both values below.",
-    "back": "Back to punch list"
+    "back": "Back to punch list",
+    "filterByStatus": "Filter by status",
+    "filterAll": "All",
+    "saveViewAs": "Save current filter as",
+    "viewNamePlaceholder": "View name",
+    "saveView": "Save view"
   },
   "Photos": {
     "title": "Photos",
@@ -339,6 +346,38 @@
     "submitApplication": "Submit",
     "certify": "Certify",
     "markPaid": "Mark paid"
+  },
+  "Dashboard": {
+    "title": "Dashboard",
+    "rfis": "RFIs",
+    "rfisTotal": "Total",
+    "rfisOpen": "Open",
+    "rfisOverdue": "Overdue",
+    "punchList": "Punch List",
+    "budget": "Budget",
+    "budgetRevised": "Revised",
+    "budgetProjected": "Projected",
+    "budgetVariance": "Variance",
+    "changeOrders": "Change Orders"
+  },
+  "Meetings": {
+    "title": "Meetings",
+    "newButton": "New meeting",
+    "empty": "No meetings yet.",
+    "titleField": "Title",
+    "occurredAt": "Date",
+    "create": "Create",
+    "back": "Back to meetings",
+    "actionItems": "Action items",
+    "addItem": "Add action item",
+    "description": "Description",
+    "statusOpen": "Open",
+    "statusClosed": "Closed",
+    "statusConverted": "Converted to punch item",
+    "close": "Close",
+    "carryForward": "Carry forward to",
+    "convertToPunchItem": "Convert to punch item",
+    "selectMeeting": "Select a meeting"
   },
   "Language": {
     "english": "English",

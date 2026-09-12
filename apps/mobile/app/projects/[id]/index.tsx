@@ -12,6 +12,7 @@ export default function ProjectHomeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const links = [
+    { href: `/projects/${id}/dashboard`, label: i18n.t("dashboard.title") },
     { href: `/projects/${id}/daily-log`, label: i18n.t("dailyLog.title") },
     { href: `/projects/${id}/punch-list`, label: i18n.t("punchList.title") },
     { href: `/projects/${id}/drawings`, label: i18n.t("drawings.title") },
@@ -22,6 +23,7 @@ export default function ProjectHomeScreen() {
     { href: `/projects/${id}/commitments`, label: i18n.t("commitments.title") },
     { href: `/projects/${id}/change-orders`, label: i18n.t("changeManagement.title") },
     { href: `/projects/${id}/billing`, label: i18n.t("billing.title") },
+    { href: `/projects/${id}/meetings`, label: i18n.t("meetings.title") },
   ];
 
   return (

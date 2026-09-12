@@ -311,6 +311,34 @@ users per project, not 100 concurrent *creates* of the same record type.
   used for RFIs and Submittals (§7a) — no outbox, no offline writes, no
   sync-status for budget/commitments/change-orders/billing screens.
 
+## 7d. Meetings, dashboard, saved views, digest (Phase 7)
+
+- **No new sweep infrastructure — the daily digest reuses Phase 4's
+  shape exactly**: `runDailyDigestSweep` runs on `authDb`, is invoked via
+  a shared-secret `/internal` route, and has no in-process scheduler,
+  just like `runRfiOverdueSweep` (§7a). An external cron is expected to
+  hit both endpoints in a real deployment.
+- **The project dashboard has no cache and no new tables** — every call
+  to `GET /projects/:id/dashboard` re-queries RFIs, Punch Items, Budget
+  Line Items, and Change Orders directly and aggregates in application
+  code. Each of those four sections is gated independently on
+  `hasPermission(ctx, <module>, "read")` and simply left out of the
+  response — not a 403 — when the caller can't see it, so one endpoint
+  serves every role's correctly-scoped view rather than branching per
+  role or exposing an all-or-nothing response.
+- **`saved_views` needed its own RLS policy shape** — every other
+  project-scoped table in this codebase is visible to every project
+  member (the generic `direct_project_tables` loop in
+  `001_rls_and_functions.sql`), but a saved view is private to whoever
+  created it. `saved_views_self` ANDs the usual project-membership
+  subquery with a `user_id` match, the same two-condition shape as
+  `notifications_self`'s single condition, extended by one clause.
+- **Converting a meeting item to a punch item is two transactions, not
+  one** — `createPunchItem` (Punch List's own general-purpose entry
+  point) runs independently of the meeting-item update that records the
+  link, documented as an accepted gap in `meeting.service.ts` rather than
+  inlining punch-item creation into a shared transaction.
+
 ## 8. Search
 
 Postgres full-text search (`tsvector` columns + GIN indexes) across

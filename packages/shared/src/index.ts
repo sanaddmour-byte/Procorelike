@@ -27,6 +27,8 @@ export * from "./schemas/rfi.schema";
 export * from "./schemas/submittal.schema";
 export * from "./schemas/inspection.schema";
 export * from "./schemas/financial.schema";
+export * from "./schemas/meeting.schema";
+export * from "./schemas/saved-view.schema";
 
 export * from "./sync/merge";
 

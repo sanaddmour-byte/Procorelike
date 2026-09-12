@@ -2,6 +2,7 @@ import type { Database } from "@siteops/db";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Transporter } from "nodemailer";
 import type { Env } from "../env";
+import { runDailyDigestSweep } from "../jobs/daily-digest-sweep";
 import { runRfiOverdueSweep } from "../jobs/rfi-overdue-sweep";
 
 /**
@@ -21,6 +22,19 @@ export function internalRouter(authDb: Database, mailer: Transporter, env: Env):
         return;
       }
       const result = await runRfiOverdueSweep(authDb, mailer, env);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/daily-digest", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (req.header("x-internal-job-secret") !== env.INTERNAL_JOB_SECRET) {
+        res.status(401).json({ error: { message: "Invalid internal job secret", code: "unauthorized" } });
+        return;
+      }
+      const result = await runDailyDigestSweep(authDb, mailer, env);
       res.json(result);
     } catch (err) {
       next(err);

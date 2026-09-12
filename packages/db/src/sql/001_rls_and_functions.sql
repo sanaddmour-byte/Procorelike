@@ -325,6 +325,18 @@ BEGIN
 END
 $$;
 
+-- saved_views: private to the user who created it, not visible to every
+-- project member the way the generic direct-project-tables policy would
+-- make it -- needs both the project-membership predicate AND a user_id
+-- match, so it gets its own policy rather than joining the loop above.
+ALTER TABLE saved_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_views FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS saved_views_self ON saved_views;
+CREATE POLICY saved_views_self ON saved_views FOR ALL USING (
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+  AND project_id IN (SELECT project_id FROM project_users WHERE user_id = NULLIF(current_setting('app.user_id', true), '')::uuid)
+);
+
 -- checklist_templates: project_id is nullable (global reusable templates),
 -- so it needs its own predicate rather than the generic loop above.
 ALTER TABLE checklist_templates ENABLE ROW LEVEL SECURITY;

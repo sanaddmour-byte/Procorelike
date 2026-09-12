@@ -10,6 +10,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   const pathname = usePathname();
 
   const tabs = [
+    { key: "dashboard", label: t("dashboard"), href: `/${locale}/projects/${projectId}/dashboard` },
     { key: "directory", label: t("directory"), href: `/${locale}/projects/${projectId}/directory` },
     { key: "documents", label: t("documents"), href: `/${locale}/projects/${projectId}/documents` },
     { key: "drawings", label: t("drawings"), href: `/${locale}/projects/${projectId}/drawings` },
@@ -23,6 +24,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { key: "commitments", label: t("commitments"), href: `/${locale}/projects/${projectId}/commitments` },
     { key: "change-orders", label: t("changeOrders"), href: `/${locale}/projects/${projectId}/change-orders` },
     { key: "billing", label: t("billing"), href: `/${locale}/projects/${projectId}/billing` },
+    { key: "meetings", label: t("meetings"), href: `/${locale}/projects/${projectId}/meetings` },
   ];
 
   return (

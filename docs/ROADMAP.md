@@ -2,7 +2,7 @@
 
 ## Status
 
-**Current phase: 6 (Financials, T2) — complete. Phase 7 (Meetings, reports, dashboards) is next.**
+**Current phase: 7 (Meetings, dashboards, saved views, scheduled digests) — complete. Phase 8 (Hardening) is next.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -27,7 +27,7 @@
 | 10 | Commitments | Done (web full CRUD + SOV lines; mobile view-only) |
 | 11 | Change Management | Done (web full workflow incl. second-approver threshold; mobile view-only) |
 | 12 | Progress Billing | Done (web full workflow; mobile view-only) |
-| 13 | Meetings | Not started (schema scaffolded in Phase 1, no service/UI yet) |
+| 13 | Meetings | Done (web full workflow incl. carry-forward + convert-to-punch-item; mobile view-only) |
 
 ### T3 — Extended
 
@@ -36,7 +36,7 @@
 | 14 | Schedule | Not started |
 | 15 | Safety | Not started |
 | 16 | T&M Tickets / Field Productivity | Not started |
-| 17 | Reports & Dashboards | Not started |
+| 17 | Reports & Dashboards | Partially done: a per-project rollup dashboard (RFIs/Punch List/Budget/Change Orders) exists on web and mobile; no saved custom reports or org-wide dashboards yet |
 | 18 | Correspondence / Transmittals | Not started |
 
 **Explicitly out of scope for v1**: bidding/tender marketplace, BIM/IFC model
@@ -98,8 +98,22 @@ telematics.
       item's `approvedChangesAmount`/`projectedAmount`; client_viewer
       lockout verified with 403s across all four financial list endpoints
       — see the Phase 6 gate report.**
-- [ ] **Phase 7 — Meetings, reports, dashboards, saved views, scheduled
+- [x] **Phase 7 — Meetings, reports, dashboards, saved views, scheduled
       digests.**
+      *Gate (not specified in the original brief -- defined here before
+      building, the same way Phase 0 defined the overall assumptions
+      list): log a meeting with action items; carry an unresolved item
+      forward to a new meeting and convert another straight into a punch
+      item; a project dashboard shows live rollup counts across RFIs,
+      Punch List, Budget, and Change Orders; a saved view persists a list
+      screen's filter so it can be reapplied later; and a scheduled digest
+      job emails a user a summary of their open ball-in-court RFIs and
+      assigned punch items.* **— PASSED, verified by automated tests
+      covering the full meeting lifecycle (create, carry-forward,
+      convert-to-punch-item, close), dashboard rollup correctness
+      including per-section permission gating, saved-view privacy across
+      two different users on the same project, and the digest job's
+      composition — see the Phase 7 gate report.**
 - [ ] **Phase 8 — Hardening.** Performance pass against 100k-row seed
       data, E2E suites, error boundaries, empty/loading/error states
       everywhere, deployment docs, backup/restore runbook.
@@ -894,6 +908,112 @@ for true prime/owner pay applications; mobile offline editing for any of
 the four financial modules; a change order's PCO can be referenced but
 there's no UI affordance yet to convert a specific PCO's numbers into a
 change order pre-filled (the two are created independently today).
+
+## Phase 7 gate report
+
+**Gate** (self-defined -- see the Phase 7 checklist entry above for why):
+log a meeting with action items; carry one forward and convert another to
+a punch item; a dashboard shows live rollups; a saved view persists a
+filter; a digest job emails a summary. **— PASSED**, see Verification.
+
+**What was built:**
+- **Meetings**: `meetings`/`meeting_items` (schema already existed from
+  Phase 1, unused until now). A meeting has a title, timestamp, and
+  attendee list; each action item is `open → closed`, or handled one of
+  two other ways: **carry-forward** copies it into a later meeting's
+  agenda (`carriedForwardFromItemId` links back to the original, which is
+  left untouched -- carrying forward doesn't imply resolution), or
+  **convert to punch item** creates a real punch item from the item's
+  description via the existing `punch-item.service.ts` and records the
+  link (`convertedToType`/`convertedToId`). Web gets full workflow;
+  mobile is view-only.
+- **Reports & Dashboards**: `GET /projects/:id/dashboard` computes live
+  rollups on request (no new tables, no caching) -- RFI total/open/
+  overdue, Punch List counts by status, Budget original/approved-changes/
+  revised/projected/variance totals, Change Order counts by status. Each
+  section is gated independently on that module's own read permission and
+  simply omitted (not a 403) if the caller can't see it, so a
+  `client_viewer` gets RFI/Punch List tiles but no Budget/Change Order
+  section on the same dashboard -- one endpoint, per-section visibility,
+  rather than either showing everything or refusing the whole request.
+- **Saved views**: a new `saved_views` table (project_id, user_id, module,
+  name, filters jsonb), private to the creating user via its own RLS
+  policy (`saved_views_self`, ANDing project-membership with a `user_id`
+  match -- the first table in this codebase needing both together). Wired
+  into exactly one screen, Punch List, as the reference implementation: a
+  status filter, a "save current filter as..." control, and a row of
+  saved-view chips that reapply the stored filter. Web only.
+- **Scheduled digest**: `runDailyDigestSweep`
+  (`apps/api/src/jobs/daily-digest-sweep.ts`) follows the exact shape of
+  Phase 4's `runRfiOverdueSweep` -- same `authDb` (RLS-bypassing, since it
+  spans every project), same "no in-process scheduler, an external cron
+  hits `POST /internal/daily-digest`" pattern, same shared-secret gate.
+  It emails every user with at least one open ball-in-court RFI or open
+  assigned punch item a single summary of both lists across all their
+  projects.
+
+**Scope decisions:**
+- **Mobile is view-only for Meetings and read-only for the Dashboard**,
+  matching the established RFI/Submittal/Financials split -- logging a
+  meeting, working an agenda, and filter/saved-view UI are desk tasks.
+  Saved views are **web-only entirely**; a mobile equivalent would need
+  its own local-storage-backed UI with no server round-trip benefit
+  (mobile screens don't have the kind of large, filterable lists the web
+  Punch List does) and wasn't built.
+- **Saved views only reached one screen (Punch List)**, deliberately, to
+  prove the mechanism end-to-end (create, list, apply, RLS-enforced
+  privacy) rather than thinly wiring it into every list screen. The
+  `module` field is already generic (any value from `@siteops/shared`'s
+  `MODULES`), so extending to RFIs/Submittals/etc. is additive, not a
+  redesign.
+- **The digest is a single flat summary**, not a per-project or
+  per-module digest and not configurable (frequency, quiet hours,
+  opt-out) -- "a scheduled job emails a summary" was the gate; a
+  preferences system for it is a reasonable follow-up, not built here.
+- **Converting a meeting item to a punch item is two writes, not one
+  transaction** -- `createPunchItem` is a general-purpose entry point
+  with its own transaction, called from inside `convertMeetingItemToPunchItem`
+  rather than being inlined. A crash between the two writes would leave a
+  punch item with no recorded back-link. Documented in
+  `meeting.service.ts` as an accepted simplification, not silently risked.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green: 94
+  tests total (41 in `apps/api`, up from 37; 52 in `packages/shared`; 1 db
+  smoke test).
+- `apps/api/src/routes/meeting.test.ts` reproduces the meeting half of the
+  gate end to end: logs a meeting with two action items, carries one
+  forward to a second meeting (and confirms the original is untouched),
+  converts the other into a real punch item (confirmed by fetching that
+  punch item back with the exact description), and closes an item
+  directly.
+- `apps/api/src/routes/dashboard-saved-views.test.ts` covers the other
+  three: a dashboard rollup for a standard user includes all four
+  sections while the same call for `client_viewer` includes only RFIs/
+  Punch List (the two non-financial ones); a saved view is created,
+  listed back for its creator, and confirmed absent from a different
+  project member's list (RLS privacy, not just an application-layer
+  filter); the digest sweep is run directly against a fixture RFI with
+  nodemailer's `jsonTransport` (no real SMTP, same technique as the
+  Phase 4 sweep test) and confirmed to email at least one user.
+- `apps/web`: driven with a real headless browser (Playwright/Chromium)
+  -- the dashboard's tiles showed real aggregated numbers from data
+  created across this whole build (72 RFIs, 207 punch items, real budget
+  totals), not placeholders; created a meeting and an action item live
+  and saw them render; applied a saved view chip on Punch List and
+  confirmed the underlying `<select>` picked up the stored filter value.
+  Screenshots taken as evidence.
+- `apps/mobile`: `tsc --noEmit` and `eslint --max-warnings=0` both pass
+  clean for the new Meetings and Dashboard screens. **Not verified**: no
+  simulator/device in this sandbox (same standing limitation since
+  Phase 2) -- code-complete but unrun on-device.
+
+**Known gaps / deferred items**: saved views on any screen besides Punch
+List; a mobile saved-views equivalent; digest scheduling/preferences
+(frequency, opt-out); org-wide or cross-project dashboards; custom
+report building (T3 module #17 remains "partially done" in the module
+tiers table). Schedule, Safety, T&M Tickets, and Correspondence (T3
+modules #14, #15, #16, #18) remain entirely unstarted.
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 

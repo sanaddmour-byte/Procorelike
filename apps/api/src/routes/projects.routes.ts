@@ -7,6 +7,7 @@ import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import * as projectService from "../services/project.service";
 import { listProjectCompanies, listProjectCostCodes, listProjectMembers } from "../services/directory.service";
+import { getProjectDashboard } from "../services/dashboard.service";
 import { loadPermissionContext } from "../services/permission.service";
 
 export function projectsRouter(appDb: Database, env: Env): Router {
@@ -62,6 +63,20 @@ export function projectsRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const costCodes = await listProjectCostCodes(appDb, authUser.id, ctx, projectId);
       res.json(costCodes);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/:id/dashboard", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = paramAsString(req.params.id);
+      if (!projectId) throw new Error("missing :id param");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const dashboard = await getProjectDashboard(appDb, authUser.id, ctx, projectId);
+      res.json(dashboard);
     } catch (err) {
       next(err);
     }

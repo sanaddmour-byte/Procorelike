@@ -28,6 +28,8 @@
     "back": "العودة إلى المشاريع"
   },
   "ProjectNav": {
+    "dashboard": "لوحة المعلومات",
+    "meetings": "الاجتماعات",
     "directory": "الدليل",
     "dailyLog": "السجل اليومي",
     "punchList": "قائمة الملاحظات",
@@ -88,7 +90,12 @@
     "moveTo": "نقل إلى",
     "needsReview": "بحاجة إلى مراجعة — تعارض مزامنة",
     "conflictBanner": "يوجد تعارض مزامنة في هذا العنصر: تغيّر نفس الحقل في تعديل آخر. راجع القيمتين أدناه.",
-    "back": "العودة إلى قائمة الملاحظات"
+    "back": "العودة إلى قائمة الملاحظات",
+    "filterByStatus": "تصفية حسب الحالة",
+    "filterAll": "الكل",
+    "saveViewAs": "حفظ التصفية الحالية باسم",
+    "viewNamePlaceholder": "اسم العرض",
+    "saveView": "حفظ العرض"
   },
   "Photos": {
     "title": "الصور",
@@ -339,6 +346,38 @@
     "submitApplication": "إرسال",
     "certify": "اعتماد",
     "markPaid": "تمييز كمدفوع"
+  },
+  "Dashboard": {
+    "title": "لوحة المعلومات",
+    "rfis": "طلبات المعلومات",
+    "rfisTotal": "الإجمالي",
+    "rfisOpen": "مفتوحة",
+    "rfisOverdue": "متأخرة",
+    "punchList": "قائمة الملاحظات",
+    "budget": "الميزانية",
+    "budgetRevised": "المعدّلة",
+    "budgetProjected": "المتوقعة",
+    "budgetVariance": "الفرق",
+    "changeOrders": "أوامر التغيير"
+  },
+  "Meetings": {
+    "title": "الاجتماعات",
+    "newButton": "اجتماع جديد",
+    "empty": "لا توجد اجتماعات بعد.",
+    "titleField": "العنوان",
+    "occurredAt": "التاريخ",
+    "create": "إنشاء",
+    "back": "العودة إلى الاجتماعات",
+    "actionItems": "بنود العمل",
+    "addItem": "إضافة بند عمل",
+    "description": "الوصف",
+    "statusOpen": "مفتوح",
+    "statusClosed": "مغلق",
+    "statusConverted": "تم تحويله إلى ملاحظة",
+    "close": "إغلاق",
+    "carryForward": "ترحيل إلى",
+    "convertToPunchItem": "تحويل إلى ملاحظة",
+    "selectMeeting": "اختر اجتماعاً"
   },
   "Language": {
     "english": "English",

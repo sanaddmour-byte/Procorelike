@@ -208,6 +208,25 @@ export const projectUserPermissions = pgTable(
   ],
 );
 
+/** A user's saved filter for one module's list screen (Phase 7) — private to that user, not shared project-wide. `filters` is a free-form bag of the screen's own filter state (e.g. `{status: "open"}`), interpreted client-side; the server just stores and returns it. */
+export const savedViews = pgTable(
+  "saved_views",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    module: permissionModuleEnum("module").notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    filters: jsonb("filters").notNull().$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("saved_views_unique_name").on(table.projectId, table.userId, table.module, table.name)],
+);
+
 // ---------------------------------------------------------------------------
 // Shared reference data
 // ---------------------------------------------------------------------------
