@@ -318,6 +318,32 @@ company" column, so their PDF branding resolves via `project_users
 - No "DRAFT" watermark on a not-yet-approved document's PDF -- status is
   shown as plain header text instead.
 
+## 9i. "Export all" summary PDF registers, A4 default page size (user-directed, Phase 13)
+
+No schema change -- a follow-up to 9h adding a project-wide table-summary
+PDF per module alongside the existing single-item exports, and switching
+`PdfBuilder`'s default page size from US Letter to A4 for every export
+(new and existing alike). Full detail in `docs/ROADMAP.md`'s Phase 13 gate
+report.
+
+**API surface**: `GET /{rfis,submittals,change-orders,correspondence,inspections}/summary-report?projectId=`
+(all `application/pdf`), each backed by a `get*ListReportData()` in the
+module's service and a `generate*ListPdf()` in `apps/api/src/lib/`, both
+using `PdfBuilder`'s new `drawTable()` method (a header row repeated on
+every page a register spans, cells word-wrapped per column). A register's
+branding resolves to the *requesting user's own* company on the project
+(`resolveAuthorCompanyBranding()`, reused with the caller's `userId`)
+rather than any one row's author, since a register spans many. Inspection's
+register is unbranded, matching its existing single-item report (Phase 5
+predates Phase 12's letterhead).
+
+**Scope cuts, documented rather than silently incomplete:**
+- No filtering/sorting on a summary endpoint -- every item on the project,
+  matching "export all" literally.
+- No CSV/Excel export -- PDF only, as asked.
+- Inspection's register left unbranded rather than retrofitting Phase 12's
+  letterhead onto Phase 5's generator.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

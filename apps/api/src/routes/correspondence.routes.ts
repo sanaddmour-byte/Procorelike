@@ -2,6 +2,7 @@ import type { Database } from "@siteops/db";
 import { createCorrespondenceSchema, transitionCorrespondenceStatusSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
+import { generateCorrespondenceListPdf } from "../lib/correspondence-list-report";
 import { generateCorrespondencePdf } from "../lib/correspondence-report";
 import { NotFoundError } from "../lib/errors";
 import { paramAsString } from "../lib/params";
@@ -41,6 +42,23 @@ export function correspondenceRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const rows = await correspondenceService.listCorrespondence(appDb, authUser.id, ctx, projectId);
       res.json(rows);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/summary-report", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const reportData = await correspondenceService.getCorrespondenceListReportData(appDb, authUser.id, ctx, projectId);
+      const pdfBytes = await generateCorrespondenceListPdf(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="correspondence-register.pdf"`);
+      res.send(Buffer.from(pdfBytes));
     } catch (err) {
       next(err);
     }

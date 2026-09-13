@@ -8,6 +8,7 @@ import {
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
+import { generateInspectionListPdf } from "../lib/inspection-list-report";
 import { generateInspectionReportPdf } from "../lib/inspection-report";
 import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
@@ -40,6 +41,23 @@ export function inspectionsRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const inspections = await inspectionService.listInspections(appDb, authUser.id, ctx, projectId);
       res.json(inspections);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/summary-report", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const reportData = await inspectionService.getInspectionListReportData(appDb, authUser.id, ctx, projectId);
+      const pdfBytes = await generateInspectionListPdf(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="inspection-register.pdf"`);
+      res.send(Buffer.from(pdfBytes));
     } catch (err) {
       next(err);
     }

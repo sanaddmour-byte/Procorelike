@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -188,6 +188,18 @@ export default function ChangeOrdersPage() {
 
   const targetOptions = coTargetType === "prime" ? budgetLineItems.map((li) => ({ id: li.id, label: budgetLineItemLabel(li) })) : commitments.map((c) => ({ id: c.id, label: `${c.number} — ${c.title}` }));
 
+  async function handleDownloadAllReport(): Promise<void> {
+    try {
+      const res = await apiFetch(`/change-orders/summary-report?projectId=${params.id}`);
+      if (!res.ok) throw new Error("report_failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError(tc("errorGeneric"));
+    }
+  }
+
   return (
     <>
       <Header />
@@ -265,9 +277,17 @@ export default function ChangeOrdersPage() {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-navy-900">{t("changeOrders")}</h2>
-            <button onClick={() => setShowCoForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white">
-              {t("newChangeOrder")}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => void handleDownloadAllReport()}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
+              >
+                {tc("exportAllPdf")}
+              </button>
+              <button onClick={() => setShowCoForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white">
+                {t("newChangeOrder")}
+              </button>
+            </div>
           </div>
 
           {showCoForm && (

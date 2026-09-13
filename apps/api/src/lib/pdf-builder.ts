@@ -1,7 +1,7 @@
 import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from "pdf-lib";
 
-const PAGE_WIDTH = 612; // US Letter, points
-const PAGE_HEIGHT = 792;
+const PAGE_WIDTH = 595.28; // A4, points -- the default page size for every export (RFI/Submittal/Change Order/Correspondence/Inspection, single-item and summary alike)
+const PAGE_HEIGHT = 841.89;
 const MARGIN = 50;
 
 export interface DrawLineOptions {
@@ -9,6 +9,12 @@ export interface DrawLineOptions {
   bold?: boolean;
   color?: [number, number, number];
   gap?: number;
+}
+
+export interface TableColumn {
+  header: string;
+  /** Column width in points; a table's column widths should sum to at most PAGE_WIDTH - MARGIN*2 (495.28 at A4). */
+  width: number;
 }
 
 /**
@@ -45,9 +51,8 @@ export class PdfBuilder {
     }
   }
 
-  /** Greedy word-wrap to the page's text width -- without this, a line longer than the margins (any real RFI question or correspondence body, not just short checklist prompts) just runs off the page edge and gets clipped rather than wrapping. */
-  private wrapText(text: string, size: number, font: PDFFont): string[] {
-    const maxWidth = PAGE_WIDTH - MARGIN * 2;
+  /** Greedy word-wrap to a given width (defaults to the page's full text width) -- without this, a line longer than the available width (any real RFI question or correspondence body, or a table cell) just runs off the edge and gets clipped rather than wrapping. */
+  private wrapText(text: string, size: number, font: PDFFont, maxWidth: number = PAGE_WIDTH - MARGIN * 2): string[] {
     if (font.widthOfTextAtSize(text, size) <= maxWidth) return [text];
 
     const words = text.split(" ");
@@ -94,6 +99,61 @@ export class PdfBuilder {
   addSpacer(gap: number): void {
     this.ensureSpace(gap);
     this.y -= gap;
+  }
+
+  /**
+   * A register/summary table -- a header row plus one row per item, each cell
+   * word-wrapped to its column's width. Used by the "export all" list reports
+   * (RFI/Submittal/Change Order/Correspondence/Inspection registers) alongside
+   * the five single-item report generators. Repeats the header on every page
+   * the table spans, so a long register stays readable across a page break.
+   */
+  drawTable(columns: TableColumn[], rows: string[][]): void {
+    const headerSize = 9;
+    const cellSize = 9;
+    const lineHeight = cellSize + 3;
+    const rowPadding = 6;
+    const startX = MARGIN;
+    const totalWidth = columns.reduce((sum, col) => sum + col.width, 0);
+
+    const drawHeaderRow = (): void => {
+      this.ensureSpace(headerSize + rowPadding + 8);
+      let x = startX;
+      for (const col of columns) {
+        this.page.drawText(col.header, { x, y: this.y, size: headerSize, font: this.boldFont, color: rgb(0.06, 0.09, 0.16) });
+        x += col.width;
+      }
+      this.y -= headerSize + 4;
+      this.page.drawLine({
+        start: { x: startX, y: this.y },
+        end: { x: startX + totalWidth, y: this.y },
+        thickness: 0.75,
+        color: rgb(0.6, 0.65, 0.72),
+      });
+      this.y -= rowPadding;
+    };
+
+    drawHeaderRow();
+
+    for (const row of rows) {
+      const wrappedCells = row.map((cell, i) => this.wrapText(cell, cellSize, this.font, columns[i]!.width - 6));
+      const lineCount = Math.max(...wrappedCells.map((lines) => lines.length), 1);
+      const rowHeight = lineCount * lineHeight + rowPadding;
+
+      const pageBefore = this.page;
+      this.ensureSpace(rowHeight);
+      if (this.page !== pageBefore) drawHeaderRow();
+
+      let x = startX;
+      const rowTopY = this.y;
+      columns.forEach((col, i) => {
+        wrappedCells[i]!.forEach((line, lineIndex) => {
+          this.page.drawText(line, { x, y: rowTopY - lineIndex * lineHeight, size: cellSize, font: this.font, color: rgb(0.15, 0.18, 0.24) });
+        });
+        x += col.width;
+      });
+      this.y = rowTopY - lineCount * lineHeight - rowPadding;
+    }
   }
 
   /**

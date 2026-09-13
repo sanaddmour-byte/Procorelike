@@ -307,3 +307,48 @@ export async function getRfiReportData(appDb: Database, userId: string, ctx: Per
     };
   });
 }
+
+export interface RfiListRow {
+  number: string;
+  subject: string;
+  status: RfiStatus;
+  ballInCourtName: string | null;
+  dueDate: Date | null;
+}
+
+export interface RfiListReportData extends ReportBranding {
+  projectName: string;
+  rows: RfiListRow[];
+}
+
+/** "Export all" register for the project's RFIs (Phase 13) -- one row per RFI, branded with the requesting user's own company rather than each RFI's individual author (a single register spans many authors). */
+export async function getRfiListReportData(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  projectId: string,
+): Promise<RfiListReportData> {
+  requirePermission(ctx, "rfis", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, projectId)).limit(1);
+    const rfis = await tx.select().from(schema.rfis).where(eq(schema.rfis.projectId, projectId)).orderBy(schema.rfis.number);
+
+    const ballInCourtIds = [...new Set(rfis.map((r) => r.ballInCourtUserId).filter((id): id is string => id !== null))];
+    const ballInCourtUsers = ballInCourtIds.length > 0 ? await tx.select().from(schema.users).where(inArray(schema.users.id, ballInCourtIds)) : [];
+    const nameById = new Map(ballInCourtUsers.map((u) => [u.id, u.name]));
+
+    const branding = await resolveAuthorCompanyBranding(tx, projectId, userId);
+
+    return {
+      ...branding,
+      projectName: project?.name ?? "",
+      rows: rfis.map((r) => ({
+        number: r.number,
+        subject: r.subject,
+        status: r.status,
+        ballInCourtName: r.ballInCourtUserId ? (nameById.get(r.ballInCourtUserId) ?? null) : null,
+        dueDate: r.dueDate,
+      })),
+    };
+  });
+}

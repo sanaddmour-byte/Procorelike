@@ -2211,6 +2211,99 @@ on.
   name is typed, and after signing, the page correctly shows status
   "Sent" and "Signed by: Sara Haddad" in place of the signature form.
 
+## Phase 13 gate report
+
+**Gate** (user-directed follow-up to Phase 12: "There also should be an
+export button to export all change orders/RFI's/submittals etc..., it
+would export a table summary of all existing items[;] make export size as
+A4 for all exports as a default") — **PASSED**, see Verification.
+
+**What was built:**
+- **A4 as the default page size for every PDF export, not just new ones.**
+  `PdfBuilder`'s `PAGE_WIDTH`/`PAGE_HEIGHT` constants changed from US
+  Letter (612×792pt) to A4 (595.28×841.89pt) — the one place every report
+  generator (Inspection, RFI, Submittal, Change Order, Correspondence, and
+  this phase's five new registers) gets its page size from, so the change
+  applies uniformly with no per-generator edits. Safe only because of
+  Phase 12's word-wrap fix to `drawLine()`: without it, A4's ~17pt-narrower
+  usable width would have re-clipped the longest lines that just barely
+  fit on Letter.
+- **`PdfBuilder.drawTable()`** (new): a header row plus one row per item,
+  each cell greedily word-wrapped to its own column width (the existing
+  `wrapText()` private method, now parameterized by width instead of
+  hardcoded to the full page). Repeats the header row on every page the
+  table spans — exercised for real by the RFI register during manual
+  verification (355 seeded RFIs across 10 pages, see Verification), not
+  just a short synthetic table.
+- **Five "export all" list-report data functions**, one per module with an
+  existing single-item PDF export (`get*ListReportData()` in
+  `rfi.service.ts`, `submittal.service.ts`, `change-management.service.ts`,
+  `correspondence.service.ts`, `inspection.service.ts`), each resolving
+  every foreign key on every row for the project in batched `inArray`
+  queries (not N+1 per row) — the same "one place resolves every name"
+  discipline as the single-item `get*ReportData()` functions. Branding for
+  a register uses the **requesting user's own company** on the project
+  (`resolveAuthorCompanyBranding()`, reused as-is by passing the caller's
+  own `userId` instead of a record's creator) rather than any one row's
+  author or from-company, since a register spans many of both. Inspection's
+  register stays unbranded, matching its existing single-item report
+  (Phase 5 predates Phase 12's letterhead; not retrofitted here as it's
+  outside this phase's ask).
+- **Five `generate*ListPdf()` generators** in `apps/api/src/lib/` and a
+  `GET /{rfis,submittals,change-orders,correspondence,inspections}/summary-report?projectId=`
+  route on each, registered **before** that router's `/:id` route where one
+  exists (`rfis`, `submittals`, `change-orders`, `inspections`) so Express's
+  first-match routing doesn't swallow the literal path as an `:id` value.
+- **"Export All (PDF)" button** on all five list pages
+  (`rfis`/`submittals`/`change-orders`/`correspondence`/`inspections`),
+  using the same fetch-as-blob-then-`window.open` pattern every other
+  export button already uses.
+- **Change orders / RFIs / submittals / correspondence** were the modules
+  the user named; **Inspections** was added for consistency (it already
+  had a single-item PDF export from Phase 5) rather than leaving one
+  module without the same "export all" the other four just got.
+- **A real bug found and fixed via the gate test, not eyeballing**: the
+  correspondence register's "From → To" column used a Unicode arrow, which
+  pdf-lib's standard Helvetica (WinAnsi encoding) cannot encode —
+  `generateCorrespondenceListPdf` threw and the route 500'd the instant a
+  real row existed. The gate test caught this on its first run (an empty
+  register never exercises the arrow, so a smaller/less deliberate test
+  could have missed it). Fixed by using an ASCII `->` separator instead.
+
+**Scope decisions:**
+- **No column/sort/status filtering on the summary endpoints** — each
+  register exports every item on the project, matching the "export all"
+  the user asked for literally. A filtered export is a reasonable future
+  add but wasn't requested.
+- **No CSV/Excel export** — the user asked for "a table summary" as a PDF
+  (this request followed directly from Phase 12's PDF-export work); a
+  spreadsheet-format export is a different, unrequested feature.
+- **Inspection's register left unbranded** rather than retrofitting Phase
+  12's letterhead onto Phase 5's report generator — a real gap, but
+  extending it was outside what this phase's request asked for.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test` all green in `apps/api` and
+  `apps/web` (60 `apps/api` tests — one new file this phase,
+  `summary-report.test.ts` — up from 59; full suite re-run twice
+  consecutively to confirm idempotency).
+- **The Phase 13 API gate test**
+  (`apps/api/src/routes/summary-report.test.ts`): seeds one new item in
+  each of the five modules, then asserts every `/summary-report` endpoint
+  returns `application/pdf` bytes starting with the `%PDF-` magic header
+  and over 500 bytes. This is what caught the "→" encoding bug above.
+- **Manual, real-PDF verification** (not just status-code assertions —
+  the actual rendered output was read): re-fetched all five registers
+  against the live dev API and read each PDF's content directly. Confirmed
+  the RFI register (355 rows, seeded across many earlier phases' test
+  runs) paginates correctly across 10 pages with the header row correctly
+  repeated on every page; the Change Order register's currency formatting
+  ($3,000, $1,500, …) renders correctly; the Correspondence register's
+  `->` fix renders cleanly with no crash; the company logo (a demo PNG,
+  re-uploaded after an earlier test run's `resetCompanyLogo()` had cleared
+  it) renders correctly in the letterhead on the branded registers; the
+  unbranded Inspection register correctly omits the letterhead.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

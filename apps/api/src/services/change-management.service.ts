@@ -5,6 +5,7 @@ import {
   requiresSecondApprover,
   requirePermission,
   type Approver,
+  type ChangeOrderTargetType,
   type ChangeStatus,
   type CreateChangeEventInput,
   type CreateChangeOrderInput,
@@ -436,6 +437,51 @@ export async function getChangeOrderReportData(
         companyName: companyNameById.get(a.companyId) ?? "Unknown",
         role: a.role,
         approvedAt: a.approvedAt,
+      })),
+    };
+  });
+}
+
+export interface ChangeOrderListRow {
+  number: string;
+  targetType: ChangeOrderTargetType;
+  status: ChangeStatus;
+  costImpact: string;
+  timeImpactDays: number;
+}
+
+export interface ChangeOrderListReportData extends ReportBranding {
+  projectName: string;
+  rows: ChangeOrderListRow[];
+}
+
+/** "Export all" register for the project's change orders (Phase 13), branded with the requesting user's own company. */
+export async function getChangeOrderListReportData(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  projectId: string,
+): Promise<ChangeOrderListReportData> {
+  requirePermission(ctx, "change_management", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, projectId)).limit(1);
+    const changeOrders = await tx
+      .select()
+      .from(schema.changeOrders)
+      .where(eq(schema.changeOrders.projectId, projectId))
+      .orderBy(schema.changeOrders.number);
+
+    const branding = await resolveAuthorCompanyBranding(tx, projectId, userId);
+
+    return {
+      ...branding,
+      projectName: project?.name ?? "",
+      rows: changeOrders.map((co) => ({
+        number: co.number,
+        targetType: co.targetType,
+        status: co.status,
+        costImpact: co.costImpact,
+        timeImpactDays: co.timeImpactDays,
       })),
     };
   });

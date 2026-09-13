@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { CorrespondenceDirection, CorrespondenceStatus, CorrespondenceType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -79,6 +79,18 @@ export default function CorrespondencePage() {
     return companies.find((c) => c.companyId === id)?.name ?? id;
   }
 
+  async function handleDownloadAllReport(): Promise<void> {
+    try {
+      const res = await apiFetch(`/correspondence/summary-report?projectId=${params.id}`);
+      if (!res.ok) throw new Error("report_failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError(tc("errorGeneric"));
+    }
+  }
+
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
     setCreating(true);
@@ -115,12 +127,20 @@ export default function CorrespondencePage() {
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-          >
-            {t("newButton")}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => void handleDownloadAllReport()}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
+            >
+              {tc("exportAllPdf")}
+            </button>
+            <button
+              onClick={() => setShowForm((s) => !s)}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+            >
+              {t("newButton")}
+            </button>
+          </div>
         </div>
 
         {showForm && (

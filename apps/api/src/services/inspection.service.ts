@@ -499,3 +499,53 @@ export async function listInspectionsSince(
     return rows.filter((r) => r.serverRevision > sinceRevision);
   });
 }
+
+export interface InspectionListRow {
+  templateTitle: string;
+  locationName: string | null;
+  status: InspectionStatus;
+  performedByName: string | null;
+  scheduledAt: Date | null;
+}
+
+export interface InspectionListReportData {
+  projectName: string;
+  rows: InspectionListRow[];
+}
+
+/** "Export all" register for the project's inspections (Phase 13) -- unbranded, matching the existing single-item inspection report (Phase 5 predates the Phase 12 company-logo letterhead). */
+export async function getInspectionListReportData(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  projectId: string,
+): Promise<InspectionListReportData> {
+  requirePermission(ctx, "inspections", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, projectId)).limit(1);
+    const inspections = await tx.select().from(schema.inspections).where(eq(schema.inspections.projectId, projectId));
+
+    const templateIds = [...new Set(inspections.map((i) => i.templateId))];
+    const locationIds = [...new Set(inspections.map((i) => i.locationId).filter((id): id is string => id !== null))];
+    const performerIds = [...new Set(inspections.map((i) => i.performedBy).filter((id): id is string => id !== null))];
+    const [templates, locations, performers] = await Promise.all([
+      templateIds.length > 0 ? tx.select().from(schema.checklistTemplates).where(inArray(schema.checklistTemplates.id, templateIds)) : [],
+      locationIds.length > 0 ? tx.select().from(schema.locations).where(inArray(schema.locations.id, locationIds)) : [],
+      performerIds.length > 0 ? tx.select().from(schema.users).where(inArray(schema.users.id, performerIds)) : [],
+    ]);
+    const templateTitleById = new Map(templates.map((t) => [t.id, t.title]));
+    const locationNameById = new Map(locations.map((l) => [l.id, l.name]));
+    const performerNameById = new Map(performers.map((u) => [u.id, u.name]));
+
+    return {
+      projectName: project?.name ?? "",
+      rows: inspections.map((i) => ({
+        templateTitle: templateTitleById.get(i.templateId) ?? "",
+        locationName: i.locationId ? (locationNameById.get(i.locationId) ?? null) : null,
+        status: i.status,
+        performedByName: i.performedBy ? (performerNameById.get(i.performedBy) ?? null) : null,
+        scheduledAt: i.scheduledAt,
+      })),
+    };
+  });
+}

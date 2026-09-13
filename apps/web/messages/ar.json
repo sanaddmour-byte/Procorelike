@@ -8,7 +8,8 @@
     "errorBoundaryBody": "واجهت هذه الصفحة خطأً غير متوقع. عملك في علامات التبويب الأخرى غير متأثر.",
     "retry": "حاول مرة أخرى",
     "backToProjects": "العودة إلى المشاريع",
-    "exportPdf": "تصدير PDF"
+    "exportPdf": "تصدير PDF",
+    "exportAllPdf": "تصدير الكل (PDF)"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",

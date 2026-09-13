@@ -7,6 +7,7 @@ import {
 } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
+import { generateChangeOrderListPdf } from "../lib/change-order-list-report";
 import { generateChangeOrderPdf } from "../lib/change-order-report";
 import { NotFoundError } from "../lib/errors";
 import { paramAsString } from "../lib/params";
@@ -137,6 +138,23 @@ export function changeOrdersRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const rows = await changeManagementService.listChangeOrders(appDb, authUser.id, ctx, projectId);
       res.json(rows);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/summary-report", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const reportData = await changeManagementService.getChangeOrderListReportData(appDb, authUser.id, ctx, projectId);
+      const pdfBytes = await generateChangeOrderListPdf(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="change-order-register.pdf"`);
+      res.send(Buffer.from(pdfBytes));
     } catch (err) {
       next(err);
     }

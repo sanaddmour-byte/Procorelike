@@ -10,10 +10,10 @@ import {
   type PermissionContext,
   type TransitionCorrespondenceStatusInput,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
-import { getCompanyBranding, type ReportBranding } from "../lib/report-branding";
+import { getCompanyBranding, resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { withUserContext } from "./permission.service";
 
 type CorrespondenceRow = typeof schema.correspondence.$inferSelect;
@@ -170,6 +170,57 @@ export async function getCorrespondenceReportData(
       sentDate: row.sentDate,
       responseRequiredBy: row.responseRequiredBy,
       senderSignatureName: row.senderSignatureName,
+    };
+  });
+}
+
+export interface CorrespondenceListRow {
+  correspondenceNumber: string;
+  subject: string;
+  fromCompanyName: string;
+  toCompanyName: string;
+  status: CorrespondenceStatus;
+  sentDate: Date | null;
+}
+
+export interface CorrespondenceListReportData extends ReportBranding {
+  projectName: string;
+  rows: CorrespondenceListRow[];
+}
+
+/** "Export all" register for the project's correspondence (Phase 13), branded with the requesting user's own company rather than each item's from-company (a register spans many senders). */
+export async function getCorrespondenceListReportData(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  projectId: string,
+): Promise<CorrespondenceListReportData> {
+  requirePermission(ctx, "correspondence", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, projectId)).limit(1);
+    const rows = await tx
+      .select()
+      .from(schema.correspondence)
+      .where(eq(schema.correspondence.projectId, projectId))
+      .orderBy(schema.correspondence.correspondenceNumber);
+
+    const companyIds = [...new Set(rows.flatMap((r) => [r.fromCompanyId, r.toCompanyId]))];
+    const companies = companyIds.length > 0 ? await tx.select().from(schema.companies).where(inArray(schema.companies.id, companyIds)) : [];
+    const companyNameById = new Map(companies.map((c) => [c.id, c.name]));
+
+    const branding = await resolveAuthorCompanyBranding(tx, projectId, userId);
+
+    return {
+      ...branding,
+      projectName: project?.name ?? "",
+      rows: rows.map((r) => ({
+        correspondenceNumber: r.correspondenceNumber,
+        subject: r.subject,
+        fromCompanyName: companyNameById.get(r.fromCompanyId) ?? "Unknown",
+        toCompanyName: companyNameById.get(r.toCompanyId) ?? "Unknown",
+        status: r.status,
+        sentDate: r.sentDate,
+      })),
     };
   });
 }

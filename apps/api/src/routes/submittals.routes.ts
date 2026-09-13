@@ -4,6 +4,7 @@ import { Router, type NextFunction, type Request, type Response } from "express"
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
 import { paramAsString } from "../lib/params";
+import { generateSubmittalListPdf } from "../lib/submittal-list-report";
 import { generateSubmittalPdf } from "../lib/submittal-report";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
@@ -49,6 +50,23 @@ export function submittalsRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const submittals = await submittalService.listSubmittals(appDb, authUser.id, ctx, projectId);
       res.json(submittals);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/summary-report", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const reportData = await submittalService.getSubmittalListReportData(appDb, authUser.id, ctx, projectId);
+      const pdfBytes = await generateSubmittalListPdf(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="submittal-register.pdf"`);
+      res.send(Buffer.from(pdfBytes));
     } catch (err) {
       next(err);
     }

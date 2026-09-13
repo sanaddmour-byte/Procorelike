@@ -8,7 +8,8 @@
     "errorBoundaryBody": "This page ran into an unexpected error. Your work in other tabs is unaffected.",
     "retry": "Try again",
     "backToProjects": "Back to projects",
-    "exportPdf": "Export PDF"
+    "exportPdf": "Export PDF",
+    "exportAllPdf": "Export All (PDF)"
   },
   "Login": {
     "title": "Sign in to SiteOps",

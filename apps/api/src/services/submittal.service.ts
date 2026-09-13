@@ -493,3 +493,48 @@ export async function getSubmittalReportData(
     };
   });
 }
+
+export interface SubmittalListRow {
+  number: string;
+  title: string;
+  status: SubmittalStatus;
+  ballInCourtName: string | null;
+  requiredOnSiteDate: Date | null;
+}
+
+export interface SubmittalListReportData extends ReportBranding {
+  projectName: string;
+  rows: SubmittalListRow[];
+}
+
+/** "Export all" register for the project's submittals (Phase 13), branded with the requesting user's own company. */
+export async function getSubmittalListReportData(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  projectId: string,
+): Promise<SubmittalListReportData> {
+  requirePermission(ctx, "submittals", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, projectId)).limit(1);
+    const submittals = await tx.select().from(schema.submittals).where(eq(schema.submittals.projectId, projectId)).orderBy(schema.submittals.number);
+
+    const ballInCourtIds = [...new Set(submittals.map((s) => s.ballInCourtUserId).filter((id): id is string => id !== null))];
+    const ballInCourtUsers = ballInCourtIds.length > 0 ? await tx.select().from(schema.users).where(inArray(schema.users.id, ballInCourtIds)) : [];
+    const nameById = new Map(ballInCourtUsers.map((u) => [u.id, u.name]));
+
+    const branding = await resolveAuthorCompanyBranding(tx, projectId, userId);
+
+    return {
+      ...branding,
+      projectName: project?.name ?? "",
+      rows: submittals.map((s) => ({
+        number: s.number,
+        title: s.title,
+        status: s.status,
+        ballInCourtName: s.ballInCourtUserId ? (nameById.get(s.ballInCourtUserId) ?? null) : null,
+        requiredOnSiteDate: s.requiredOnSiteDate,
+      })),
+    };
+  });
+}

@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -64,6 +64,18 @@ export default function InspectionsPage() {
     return templates.find((tpl) => tpl.id === id)?.title ?? id;
   }
 
+  async function handleDownloadAllReport(): Promise<void> {
+    try {
+      const res = await apiFetch(`/inspections/summary-report?projectId=${params.id}`);
+      if (!res.ok) throw new Error("report_failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError(tc("errorGeneric"));
+    }
+  }
+
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
     if (!templateId) return;
@@ -98,6 +110,12 @@ export default function InspectionsPage() {
             <Link href={`/${locale}/projects/${params.id}/inspections/templates`} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
               {t("manageTemplates")}
             </Link>
+            <button
+              onClick={() => void handleDownloadAllReport()}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
+            >
+              {tc("exportAllPdf")}
+            </button>
             <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
               {t("newButton")}
             </button>
