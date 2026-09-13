@@ -26,7 +26,10 @@
  */
 body {
   font-family: var(--font-poppins);
-  background-color: #fbf4e8;
+  /* A faint linear gradient instead of a flat fill -- the paper/material
+     backdrop skeuomorphism expects behind raised, shadowed panels. */
+  background: linear-gradient(180deg, #fdf9f0 0%, #fbf4e8 40%, #f5e9d5 100%);
+  background-attachment: fixed;
   color: #080f1c;
 }
 
@@ -63,6 +66,9 @@ body {
   textarea {
     font-family: inherit;
     background-color: #fff;
+    /* Recessed/"carved in" field, the skeuomorphic counterpart to a
+       raised panel -- an inner shadow instead of an outer one. */
+    box-shadow: inset 0 1px 3px rgba(23, 19, 16, 0.14), inset 0 1px 0 rgba(23, 19, 16, 0.06);
   }
 
   input::placeholder,
@@ -72,16 +78,18 @@ body {
 }
 
 @layer components {
-  /* Shared Neubrutalism primitives: thick ink border + hard offset shadow,
-     a small lift-and-drop-shadow interaction on press/hover. Tailwind
-     utility classes across the app compose these by hand (border-3
-     border-ink shadow-brutal); these two classes exist for the few spots
-     that want the whole package as one class. */
+  /* Shared skeuomorphism primitives (names kept from the earlier
+     Neubrutalism build -- see the boxShadow comment in tailwind.config.ts
+     for why). A raised panel now reads as a subtle paper gradient +
+     soft shadow instead of a flat fill + hard offset; the interactive
+     variant brightens slightly on hover (a glossy highlight catching
+     light) and inverts to an inset shadow on press, simulating the
+     surface actually being pushed in rather than just lifting/dropping. */
   .brutal-panel {
-    @apply rounded-xl border-3 border-ink bg-white shadow-brutal;
+    @apply rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal;
   }
 
   .brutal-interactive {
-    @apply shadow-brutal transition-transform duration-100 ease-out hover:-translate-y-0.5 hover:shadow-brutal-lg active:translate-y-0 active:shadow-brutal-sm;
+    @apply shadow-brutal transition-all duration-150 ease-out hover:brightness-105 hover:shadow-brutal-lg active:brightness-95 active:shadow-brutal-inset;
   }
 }

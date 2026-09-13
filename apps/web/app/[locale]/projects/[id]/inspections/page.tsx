@@ -98,14 +98,14 @@ export default function InspectionsPage() {
             <Link href={`/${locale}/projects/${params.id}/inspections/templates`} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
               {t("manageTemplates")}
             </Link>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
+            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
               {t("newButton")}
             </button>
           </div>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             {templates.length === 0 ? (
               <p className="text-sm text-navy-600">{t("noTemplates")}</p>
             ) : (
@@ -124,7 +124,7 @@ export default function InspectionsPage() {
                   {t("scheduledDate")}
                   <input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
                 </label>
-                <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+                <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                   {t("create")}
                 </button>
               </>
@@ -140,7 +140,7 @@ export default function InspectionsPage() {
             <li key={inspection.id}>
               <Link
                 href={`/${locale}/projects/${params.id}/inspections/${inspection.id}`}
-                className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive"
+                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{templateTitle(inspection.templateId)}</span>

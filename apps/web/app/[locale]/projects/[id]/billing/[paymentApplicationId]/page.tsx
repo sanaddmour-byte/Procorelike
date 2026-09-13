@@ -134,7 +134,7 @@ export default function PaymentApplicationDetailPage() {
         <Link href={`/${locale}/projects/${params.id}/billing`} className="mb-4 inline-block text-sm text-maroon-700 underline">
           {t("back")}
         </Link>
-        {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
+        {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-gradient-to-b from-maroon-50 to-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
         {application && (
           <>
             <div className="mb-4 flex items-center justify-between">
@@ -152,7 +152,7 @@ export default function PaymentApplicationDetailPage() {
                     const detail = application.lines.find((l) => l.sovLineId === li.id);
                     const editable = application.status === "draft";
                     return (
-                      <div key={li.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
+                      <div key={li.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
                         <div className="mb-2 flex items-center justify-between">
                           <span className="font-medium">{li.description}</span>
                           <span className="text-sm text-navy-600">{Number(li.scheduleOfValuesAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -202,7 +202,7 @@ export default function PaymentApplicationDetailPage() {
                 </div>
 
                 {application.status === "draft" && (
-                  <button onClick={() => void handleSaveLines()} disabled={saving} className="mb-6 rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+                  <button onClick={() => void handleSaveLines()} disabled={saving} className="mb-6 rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                     {t("saveLines")}
                   </button>
                 )}
@@ -218,17 +218,17 @@ export default function PaymentApplicationDetailPage() {
 
             <div className="flex gap-2">
               {application.status === "draft" && (
-                <button onClick={() => void handleTransition("submitted")} disabled={saving} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+                <button onClick={() => void handleTransition("submitted")} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                   {t("submitApplication")}
                 </button>
               )}
               {application.status === "submitted" && (
-                <button onClick={() => void handleTransition("certified")} disabled={saving} className="rounded-lg border-3 border-ink bg-orange-500 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
+                <button onClick={() => void handleTransition("certified")} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
                   {t("certify")}
                 </button>
               )}
               {application.status === "certified" && (
-                <button onClick={() => void handleTransition("paid")} disabled={saving} className="rounded-lg border-3 border-ink bg-orange-500 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
+                <button onClick={() => void handleTransition("paid")} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
                   {t("markPaid")}
                 </button>
               )}

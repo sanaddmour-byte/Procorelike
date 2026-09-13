@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   empty: { fontSize: 13, color: "#182a51" },
   packageBlock: { marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", marginBottom: 6 },
-  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 12, gap: 6, marginBottom: 8 },
+  card: { borderWidth: 1, borderColor: "#171310", borderRadius: 8, backgroundColor: "#ffffff", shadowColor: "#171310", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 4, padding: 12, gap: 6, marginBottom: 8 },
   cardTitle: { fontSize: 13, fontWeight: "600", fontFamily: "Poppins_600SemiBold", color: "#080f1c" },
   reviewRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   reviewText: { fontSize: 12, color: "#13213f" },

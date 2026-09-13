@@ -200,7 +200,7 @@ export default function DocumentsPage() {
 
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <label className="cursor-pointer rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
+              <label className="cursor-pointer rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
                 {uploading ? t("uploading") : t("uploadButton")}
                 <input
                   ref={uploadInputRef}
@@ -218,7 +218,7 @@ export default function DocumentsPage() {
             {documents && documents.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
             <ul className="flex flex-col gap-2">
               {documents?.map((doc) => (
-                <li key={doc.id} className="flex items-center justify-between gap-2 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
+                <li key={doc.id} className="flex items-center justify-between gap-2 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
                   <span className="truncate font-medium">{doc.title}</span>
                   <div className="flex shrink-0 items-center gap-2">
                     <button

@@ -148,7 +148,7 @@ export default function RfiDetailScreen() {
         </p>
         {error && <p className="text-maroon-700">{error}</p>}
 
-        <div className="mb-6 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+        <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
           <p className="whitespace-pre-wrap">{rfi.question}</p>
           <div className="mt-3 flex gap-3 text-xs text-navy-600">
             {rfi.costImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("costImpact")}</span>}
@@ -163,7 +163,7 @@ export default function RfiDetailScreen() {
                 key={next}
                 onClick={() => void handleTransition(next)}
                 disabled={transitioning}
-                className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
               >
                 {transitionLabel(rfi.status, next, t)}
               </button>
@@ -175,7 +175,7 @@ export default function RfiDetailScreen() {
         {rfi.responses.length === 0 && <p className="mb-4 text-navy-600">{t("noResponses")}</p>}
         <ul className="mb-4 flex flex-col gap-2">
           {rfi.responses.map((r) => (
-            <li key={r.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
+            <li key={r.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-xs text-navy-600">{memberName(r.respondedBy)}</span>
                 {r.isOfficial && <span className="rounded-full bg-navy-700 px-2 py-0.5 text-xs text-white">{t("official")}</span>}
@@ -186,7 +186,7 @@ export default function RfiDetailScreen() {
         </ul>
 
         {rfi.status !== "closed" && (
-          <form onSubmit={(e) => void handleAddResponse(e)} className="flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+          <form onSubmit={(e) => void handleAddResponse(e)} className="flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             <label className="flex flex-col gap-1 text-sm">
               {t("responseText")}
               <textarea
@@ -204,7 +204,7 @@ export default function RfiDetailScreen() {
             <button
               type="submit"
               disabled={submittingResponse}
-              className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
+              className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
             >
               {t("addResponse")}
             </button>

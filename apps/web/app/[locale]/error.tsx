@@ -23,13 +23,13 @@ export default function LocaleError({ error, reset }: { error: Error & { digest?
           <button
             type="button"
             onClick={() => reset()}
-            className="rounded-lg border-3 border-ink bg-orange-500 brutal-interactive px-3 py-2 font-bold text-ink"
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-3 py-2 font-bold text-ink"
           >
             {t("retry")}
           </button>
           <Link
             href={`/${locale}/projects`}
-            className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 font-semibold text-white"
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 font-semibold text-white"
           >
             {t("backToProjects")}
           </Link>

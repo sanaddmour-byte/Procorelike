@@ -166,13 +166,13 @@ export default function DrawingDetailScreen() {
         <section>
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-lg font-medium">{t("revisionHistory")}</h2>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
+            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
               {t("uploadRevision")}
             </button>
           </div>
 
           {showForm && (
-            <form onSubmit={(e) => void handleUploadRevision(e)} className="mb-4 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+            <form onSubmit={(e) => void handleUploadRevision(e)} className="mb-4 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
               <label className="flex flex-col gap-1 text-sm">
                 {t("revisionCode")}
                 <input
@@ -202,7 +202,7 @@ export default function DrawingDetailScreen() {
               <button
                 type="submit"
                 disabled={uploading || !file}
-                className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
+                className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
               >
                 {uploading ? t("uploading") : t("uploadRevision")}
               </button>
@@ -214,7 +214,7 @@ export default function DrawingDetailScreen() {
             {revisions.map((rev) => (
               <li
                 key={rev.id}
-                className="flex items-center justify-between gap-2 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3 text-sm"
+                className="flex items-center justify-between gap-2 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3 text-sm"
               >
                 <span>
                   {t("revisionCode")} {rev.revisionCode} — {rev.issuedDate.slice(0, 10)}

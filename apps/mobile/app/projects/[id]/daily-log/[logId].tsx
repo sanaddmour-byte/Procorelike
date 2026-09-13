@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   error: { padding: 16, color: "#5c1620" },
   label: { fontSize: 13, color: "#13213f", marginTop: 12 },
   value: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
-  input: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
+  input: { borderWidth: 1, borderColor: "#171310", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
   textArea: { minHeight: 160, textAlignVertical: "top" },
   conflictBanner: { backgroundColor: "#fbebec", borderRadius: 8, padding: 12, gap: 4, marginBottom: 8 },
   conflictTitle: { color: "#5c1620", fontWeight: "700", fontFamily: "Poppins_700Bold" },

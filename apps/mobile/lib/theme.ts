@@ -1,8 +1,17 @@
 /**
- * Neubrutalism design tokens shared across the mobile app: thick ink
- * borders, hard offset shadows, and the maroon / navy / orange palette.
- * Kept in one file so every screen's StyleSheet pulls the same values
- * instead of re-declaring hex literals.
+ * Skeuomorphism design tokens shared across the mobile app: hairline
+ * borders, soft blurred shadows for a raised-panel look, and the same
+ * maroon / navy / orange palette carried over from the earlier
+ * Neubrutalism build. Kept in one file so every screen's StyleSheet
+ * pulls the same values instead of re-declaring hex literals.
+ *
+ * React Native's shadow API (iOS shadowColor/Offset/Opacity/Radius,
+ * Android elevation) has no inset-shadow or multi-layer support the way
+ * CSS box-shadow does, so this can't fully match the web redesign's
+ * "raised panel with a glossy highlight" or "recessed input" look --
+ * this gets as close as native shadows allow (a soft blurred drop
+ * shadow) and documents the gap rather than reaching for a shadow
+ * library or gradient library this app doesn't otherwise need.
  */
 
 export const colors = {
@@ -40,18 +49,20 @@ export const fonts = {
   extrabold: "Poppins_800ExtraBold",
 } as const;
 
-/** Hard offset shadow: crisp on iOS; falls back to a standard Android elevation shadow (no offset control on that platform). */
+/** Soft, blurred, downward drop shadow -- the closest native equivalent to the web redesign's raised-panel shadow. Kept the "brutal" name since every screen already imports it; see the file-level comment for why the value changed instead. */
 export function brutalShadow(size: 2 | 3 | 4 = 3) {
   return {
     shadowColor: colors.ink,
-    shadowOffset: { width: size, height: size },
-    shadowOpacity: 1,
-    shadowRadius: 0,
+    shadowOffset: { width: 0, height: size },
+    shadowOpacity: 0.18,
+    shadowRadius: size * 2,
     elevation: size + 1,
   };
 }
 
 export const borders = {
-  thick: 3,
+  // Was a flat 3px Neubrutalism border; skeuomorphism signals depth with
+  // shadow instead, so this is now a hairline edge.
+  thick: 1,
   radius: 12,
 };

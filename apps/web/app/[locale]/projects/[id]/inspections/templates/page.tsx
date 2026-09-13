@@ -92,13 +92,13 @@ export default function ChecklistTemplatesPage() {
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("manageTemplates")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
+          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
             {t("newTemplate")}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             <label className="flex flex-col gap-1 text-sm">
               {t("templateTitle")}
               <input required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
@@ -134,7 +134,7 @@ export default function ChecklistTemplatesPage() {
               {t("addItem")}
             </button>
 
-            <button type="submit" disabled={creating || !title.trim()} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+            <button type="submit" disabled={creating || !title.trim()} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
             </button>
           </form>
@@ -145,7 +145,7 @@ export default function ChecklistTemplatesPage() {
         {templates && templates.length === 0 && <p className="text-navy-600">{t("noTemplates")}</p>}
         <ul className="flex flex-col gap-2">
           {templates?.map((tpl) => (
-            <li key={tpl.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3 text-sm font-medium">
+            <li key={tpl.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3 text-sm font-medium">
               {tpl.title}
             </li>
           ))}

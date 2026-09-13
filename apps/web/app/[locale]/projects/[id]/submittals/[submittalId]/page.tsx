@@ -205,7 +205,7 @@ export default function SubmittalDetailScreen() {
             {submittal.number} — {submittal.title}
           </h1>
           {submittal.status === "approved" && (
-            <button onClick={() => void handleClose()} disabled={busy} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+            <button onClick={() => void handleClose()} disabled={busy} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("close")}
             </button>
           )}
@@ -225,7 +225,7 @@ export default function SubmittalDetailScreen() {
         {submittal.packages.length === 0 && <p className="text-navy-600">{t("noPackages")}</p>}
         <div className="flex flex-col gap-6">
           {submittal.packages.map((pkg) => (
-            <div key={pkg.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+            <div key={pkg.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="font-medium">
                   {t("package")} #{pkg.packageNumber}
@@ -291,7 +291,7 @@ export default function SubmittalDetailScreen() {
                     </button>
                   </div>
 
-                  <button type="submit" disabled={busy || !file} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+                  <button type="submit" disabled={busy || !file} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                     {busy ? t("uploading") : t("uploadRevision")}
                   </button>
                 </form>

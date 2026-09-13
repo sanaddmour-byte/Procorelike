@@ -43,14 +43,14 @@ export default function ProjectsPage() {
         {projects && projects.length === 0 && <p>{t("empty")}</p>}
         <ul className="flex flex-col gap-4">
           {projects?.map((p) => (
-            <li key={p.id} className="overflow-hidden rounded-xl border-3 border-ink bg-white shadow-brutal">
+            <li key={p.id} className="overflow-hidden rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal">
               <div className="h-2 bg-orange-500" aria-hidden="true" />
               <div className="p-4">
                 <div className="text-lg font-bold text-navy-900">{p.name}</div>
                 {p.address && <div className="text-sm text-navy-600">{p.address}</div>}
                 <Link
                   href={`/${locale}/projects/${p.id}/directory`}
-                  className="mt-3 inline-block rounded-lg border-3 border-ink bg-maroon-700 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive"
+                  className="mt-3 inline-block rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive"
                 >
                   {t("viewDirectory")}
                 </Link>

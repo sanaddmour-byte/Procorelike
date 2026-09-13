@@ -100,13 +100,13 @@ export default function BillingPage() {
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
+          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
             {t("newButton")}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             <label className="flex flex-col gap-1 text-sm">
               {t("commitment")}
               <select value={commitmentId} onChange={(e) => setCommitmentId(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
@@ -130,7 +130,7 @@ export default function BillingPage() {
               {t("retentionPct")}
               <input type="number" step="0.01" min="0" max="100" value={retentionPct} onChange={(e) => setRetentionPct(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
-            <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+            <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
             </button>
           </form>
@@ -143,7 +143,7 @@ export default function BillingPage() {
         <ul className="flex flex-col gap-3">
           {applications?.map((app) => (
             <li key={app.id}>
-              <Link href={`/${locale}/projects/${params.id}/billing/${app.id}`} className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive">
+              <Link href={`/${locale}/projects/${params.id}/billing/${app.id}`} className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-navy-900">{commitmentLabel(app.commitmentId)}</span>
                   <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{t(statusKey(app.status))}</span>

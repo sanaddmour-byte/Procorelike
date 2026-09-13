@@ -92,13 +92,13 @@ export default function PunchListPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <Link
             href={`/${locale}/projects/${params.id}/punch-list/new`}
-            className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white"
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
           >
             {t("newButton")}
           </Link>
         </div>
 
-        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
+        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
           <label className="flex flex-col gap-1 text-sm">
             {t("filterByStatus")}
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
@@ -113,7 +113,7 @@ export default function PunchListPage() {
             {t("saveViewAs")}
             <input value={newViewName} onChange={(e) => setNewViewName(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" placeholder={t("viewNamePlaceholder")} />
           </label>
-          <button onClick={() => void handleSaveView()} disabled={savingView || !newViewName.trim()} className="rounded-lg border-3 border-ink bg-orange-500 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
+          <button onClick={() => void handleSaveView()} disabled={savingView || !newViewName.trim()} className="rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
             {t("saveView")}
           </button>
           {savedViews.map((view) => (
@@ -135,7 +135,7 @@ export default function PunchListPage() {
             <li key={item.id}>
               <Link
                 href={`/${locale}/projects/${params.id}/punch-list/${item.id}`}
-                className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive"
+                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">

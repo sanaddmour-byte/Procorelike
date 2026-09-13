@@ -51,7 +51,7 @@ export default function DashboardPage() {
         {dashboard && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {dashboard.rfis && (
-              <div className="rounded-xl border-3 border-ink bg-white shadow-brutal p-5">
+              <div className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal p-5">
                 <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("rfis")}</h2>
                 <div className="flex gap-6">
                   <Tile label={t("rfisTotal")} value={dashboard.rfis.total} />
@@ -62,7 +62,7 @@ export default function DashboardPage() {
             )}
 
             {dashboard.punchList && (
-              <div className="rounded-xl border-3 border-ink bg-white shadow-brutal p-5">
+              <div className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal p-5">
                 <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("punchList")}</h2>
                 <div className="flex flex-wrap gap-6">
                   {Object.entries(dashboard.punchList.byStatus).map(([status, count]) => (
@@ -84,7 +84,7 @@ export default function DashboardPage() {
             )}
 
             {dashboard.changeOrders && (
-              <div className="rounded-xl border-3 border-ink bg-white shadow-brutal p-5">
+              <div className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal p-5">
                 <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("changeOrders")}</h2>
                 <div className="flex flex-wrap gap-6">
                   {Object.entries(dashboard.changeOrders.byStatus).map(([status, count]) => (

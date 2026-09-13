@@ -199,13 +199,13 @@ export default function ChangeOrdersPage() {
         <section className="mb-8">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-navy-900">{t("changeEvents")}</h2>
-            <button onClick={() => setShowEventForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-1.5 text-sm text-white">
+            <button onClick={() => setShowEventForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white">
               {t("newChangeEvent")}
             </button>
           </div>
 
           {showEventForm && (
-            <form onSubmit={(e) => void handleCreateEvent(e)} className="mb-4 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+            <form onSubmit={(e) => void handleCreateEvent(e)} className="mb-4 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
               <label className="flex flex-col gap-1 text-sm">
                 {t("eventTitle")}
                 <input required value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
@@ -218,7 +218,7 @@ export default function ChangeOrdersPage() {
                 {t("potentialCostImpact")}
                 <input type="number" step="0.01" value={eventCostImpact} onChange={(e) => setEventCostImpact(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
               </label>
-              <button type="submit" disabled={saving} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+              <button type="submit" disabled={saving} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                 {t("create")}
               </button>
             </form>
@@ -228,7 +228,7 @@ export default function ChangeOrdersPage() {
           {events && events.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
           <ul className="flex flex-col gap-3">
             {events?.map((ev) => (
-              <li key={ev.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+              <li key={ev.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
                 <div className="mb-1 font-bold text-navy-900">{ev.title}</div>
                 {ev.description && <p className="mb-2 text-sm text-navy-600">{ev.description}</p>}
                 <div className="mb-2 flex flex-wrap gap-2">
@@ -248,7 +248,7 @@ export default function ChangeOrdersPage() {
                       {t("timeImpactDays")}
                       <input type="number" value={pcoTimeImpact} onChange={(e) => setPcoTimeImpact(e.target.value)} className="rounded-lg border-3 border-ink px-2 py-1" />
                     </label>
-                    <button onClick={() => void handleAddPco(ev.id)} disabled={saving} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-1.5 text-xs text-white disabled:opacity-50">
+                    <button onClick={() => void handleAddPco(ev.id)} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-xs text-white disabled:opacity-50">
                       {t("create")}
                     </button>
                   </div>
@@ -265,13 +265,13 @@ export default function ChangeOrdersPage() {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-navy-900">{t("changeOrders")}</h2>
-            <button onClick={() => setShowCoForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-1.5 text-sm text-white">
+            <button onClick={() => setShowCoForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white">
               {t("newChangeOrder")}
             </button>
           </div>
 
           {showCoForm && (
-            <form onSubmit={(e) => void handleCreateChangeOrder(e)} className="mb-4 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+            <form onSubmit={(e) => void handleCreateChangeOrder(e)} className="mb-4 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
               <label className="flex flex-col gap-1 text-sm">
                 {t("targetType")}
                 <select
@@ -307,7 +307,7 @@ export default function ChangeOrdersPage() {
                 {t("timeImpactDays")}
                 <input type="number" value={coTimeImpact} onChange={(e) => setCoTimeImpact(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
               </label>
-              <button type="submit" disabled={saving} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+              <button type="submit" disabled={saving} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                 {t("create")}
               </button>
             </form>
@@ -318,7 +318,7 @@ export default function ChangeOrdersPage() {
           <ul className="flex flex-col gap-3">
             {changeOrders?.map((co) => (
               <li key={co.id}>
-                <Link href={`/${locale}/projects/${params.id}/change-orders/${co.id}`} className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive">
+                <Link href={`/${locale}/projects/${params.id}/change-orders/${co.id}`} className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-bold text-navy-900">{co.number}</span>
                     <span

@@ -45,7 +45,7 @@ export default function DailyLogListPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <Link
             href={`/${locale}/projects/${params.id}/daily-log/new`}
-            className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white"
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
           >
             {t("newButton")}
           </Link>
@@ -58,7 +58,7 @@ export default function DailyLogListPage() {
             <li key={log.id}>
               <Link
                 href={`/${locale}/projects/${params.id}/daily-log/${log.id}`}
-                className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive"
+                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{log.logDate}</span>

@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
   viewOnlyNote: { fontSize: 11, color: colors.orange900, backgroundColor: colors.orange50, padding: 10, margin: 16, marginBottom: 0, borderRadius: 8 },
   list: { padding: 16, gap: 12 },
-  card: { borderWidth: 3, borderColor: colors.ink, borderRadius: 8, padding: 16, gap: 4, backgroundColor: colors.white },
+  card: { borderWidth: 1, borderColor: colors.ink, borderRadius: 8, shadowColor: colors.ink, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 4, padding: 16, gap: 4, backgroundColor: colors.white },
   cardTitle: { fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold", color: colors.navy900 },
   cardSubtitle: { fontSize: 12, color: colors.navy600 },
   empty: { padding: 16, color: colors.navy600 },

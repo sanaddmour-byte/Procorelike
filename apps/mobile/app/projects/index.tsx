@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   list: { padding: 16, gap: 14 },
   card: {
     flexDirection: "row",
-    borderWidth: 3,
+    borderWidth: 1,
     borderColor: colors.ink,
     borderRadius: 12,
     backgroundColor: colors.white,

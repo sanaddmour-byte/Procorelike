@@ -31,14 +31,35 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-poppins)", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif"],
       },
+      /*
+       * Skeuomorphism pass (same maroon/navy/orange/ink/cream palette as
+       * the Neubrutalism build): these keys keep their original "brutal"
+       * names on purpose -- every page composes them by hand
+       * (`border-3 border-ink shadow-brutal-sm`), so retexturing the
+       * *values* here reskins the whole app without touching call sites.
+       * Renaming would mean re-editing every one of those call sites for
+       * zero visual gain.
+       */
       boxShadow: {
-        brutal: "4px 4px 0 0 #171310",
-        "brutal-sm": "2px 2px 0 0 #171310",
-        "brutal-lg": "7px 7px 0 0 #171310",
-        "brutal-orange": "4px 4px 0 0 #c2470a",
+        // Soft ambient + directional shadow with a glossy top highlight,
+        // replacing the old hard 0-blur offset shadow.
+        brutal: "0 2px 4px rgba(23,19,16,0.18), 0 6px 14px rgba(23,19,16,0.16), inset 0 1px 0 rgba(255,255,255,0.55)",
+        "brutal-sm": "0 1px 2px rgba(23,19,16,0.16), 0 2px 5px rgba(23,19,16,0.12), inset 0 1px 0 rgba(255,255,255,0.5)",
+        "brutal-lg": "0 4px 8px rgba(23,19,16,0.20), 0 12px 28px rgba(23,19,16,0.18), inset 0 1px 0 rgba(255,255,255,0.6)",
+        "brutal-orange": "0 2px 4px rgba(194,71,10,0.35), 0 6px 14px rgba(194,71,10,0.25)",
+        // Pressed-in look for a button's active state -- the inverse of
+        // "brutal": shadow turns inward instead of casting outward.
+        "brutal-inset": "inset 0 2px 5px rgba(0,0,0,0.35), inset 0 -1px 0 rgba(255,255,255,0.12)",
+        // A visible colored glow for :focus, now that shadow-brutal-sm on
+        // its own reads too soft to double as a focus ring.
+        focus: "0 0 0 3px rgba(140,35,50,0.35)",
       },
       borderWidth: {
-        3: "3px",
+        // Thick flat ink borders were the Neubrutalism signature;
+        // skeuomorphism signals depth with shadow + gradient instead, so
+        // this now renders as a hairline edge everywhere `border-3` is
+        // already used.
+        3: "1px",
       },
     },
   },

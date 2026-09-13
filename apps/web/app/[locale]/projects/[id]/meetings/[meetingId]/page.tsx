@@ -142,7 +142,7 @@ export default function MeetingDetailPage() {
         <Link href={`/${locale}/projects/${params.id}/meetings`} className="mb-4 inline-block text-sm text-maroon-700 underline">
           {t("back")}
         </Link>
-        {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
+        {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-gradient-to-b from-maroon-50 to-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
         {meeting && (
           <>
             <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{meeting.title}</h1>
@@ -156,7 +156,7 @@ export default function MeetingDetailPage() {
                 placeholder={t("description")}
                 className="flex-1 rounded-lg border-3 border-ink px-3 py-2"
               />
-              <button type="submit" disabled={adding || !newItemDescription.trim()} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+              <button type="submit" disabled={adding || !newItemDescription.trim()} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                 {t("addItem")}
               </button>
             </form>
@@ -164,7 +164,7 @@ export default function MeetingDetailPage() {
             {meeting.items.length === 0 && <p className="text-navy-600">{t("noActionItems")}</p>}
             <ul className="flex flex-col gap-3">
               {meeting.items.map((item) => (
-                <li key={item.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+                <li key={item.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <span className="font-medium">{item.description}</span>
                     <span
@@ -180,7 +180,7 @@ export default function MeetingDetailPage() {
                       <button onClick={() => void handleClose(item.id)} disabled={busyItemId === item.id} className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800 disabled:opacity-50">
                         {t("close")}
                       </button>
-                      <button onClick={() => void handleConvert(item.id)} disabled={busyItemId === item.id} className="rounded-lg border-3 border-ink bg-orange-500 brutal-interactive px-2 py-1 text-xs font-bold text-ink disabled:opacity-50">
+                      <button onClick={() => void handleConvert(item.id)} disabled={busyItemId === item.id} className="rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2 py-1 text-xs font-bold text-ink disabled:opacity-50">
                         {t("convertToPunchItem")}
                       </button>
                       <select

@@ -70,13 +70,13 @@ export default function MeetingsPage() {
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
+          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
             {t("newButton")}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             <label className="flex flex-col gap-1 text-sm">
               {t("titleField")}
               <input required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
@@ -85,7 +85,7 @@ export default function MeetingsPage() {
               {t("occurredAt")}
               <input required type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
-            <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+            <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
             </button>
           </form>
@@ -98,7 +98,7 @@ export default function MeetingsPage() {
         <ul className="flex flex-col gap-3">
           {meetings?.map((m) => (
             <li key={m.id}>
-              <Link href={`/${locale}/projects/${params.id}/meetings/${m.id}`} className="block rounded-xl border-3 border-ink bg-white p-4 shadow-brutal-sm brutal-interactive">
+              <Link href={`/${locale}/projects/${params.id}/meetings/${m.id}`} className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive">
                 <div className="font-bold text-navy-900">{m.title}</div>
                 <p className="mt-1 text-sm text-navy-600">{new Date(m.occurredAt).toLocaleString()}</p>
               </Link>

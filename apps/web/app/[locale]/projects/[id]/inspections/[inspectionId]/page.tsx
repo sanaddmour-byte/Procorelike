@@ -200,7 +200,7 @@ export default function InspectionDetailScreen() {
         {error && <p className="text-maroon-700">{error}</p>}
 
         {inspection.status === "scheduled" && (
-          <button onClick={() => void handleStart()} disabled={busy} className="mb-6 rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+          <button onClick={() => void handleStart()} disabled={busy} className="mb-6 rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
             {t("start")}
           </button>
         )}
@@ -213,7 +213,7 @@ export default function InspectionDetailScreen() {
                 const draft = drafts[item.id];
                 const response = responseByItem(item.id);
                 return (
-                  <li key={item.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-3">
+                  <li key={item.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <span className="text-sm font-medium">{item.prompt}</span>
                       <span className="text-xs text-navy-500">{responseTypeLabel(item.responseType)}</span>
@@ -310,13 +310,13 @@ export default function InspectionDetailScreen() {
             </ul>
 
             {editable && (
-              <button onClick={() => void handleSaveAnswers()} disabled={busy} className="mb-8 rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+              <button onClick={() => void handleSaveAnswers()} disabled={busy} className="mb-8 rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                 {t("saveAnswers")}
               </button>
             )}
 
             {editable && (
-              <div className="mb-6 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+              <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
                 <label className="mb-2 flex flex-col gap-1 text-sm">
                   {t("signedByName")}
                   <input
@@ -329,7 +329,7 @@ export default function InspectionDetailScreen() {
                 <button
                   onClick={() => void handleComplete()}
                   disabled={busy || !signedByName.trim()}
-                  className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
+                  className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
                 >
                   {t("completeInspection")}
                 </button>
@@ -342,7 +342,7 @@ export default function InspectionDetailScreen() {
                   {t("signedOffBy")}: <span className="font-medium">{inspection.signedByName}</span>
                   {inspection.signedAt && ` — ${inspection.signedAt.replace("T", " ").slice(0, 16)}`}
                 </p>
-                <button onClick={() => void handleDownloadReport()} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
+                <button onClick={() => void handleDownloadReport()} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
                   {t("downloadReport")}
                 </button>
               </div>

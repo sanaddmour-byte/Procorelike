@@ -63,7 +63,7 @@ export default function NewDailyLogPage() {
           </label>
           {error && <p className="text-sm text-maroon-700">{error}</p>}
           <div className="flex gap-2">
-            <button type="submit" disabled={submitting} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-white disabled:opacity-50">
+            <button type="submit" disabled={submitting} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-white disabled:opacity-50">
               {t("save")}
             </button>
             <button

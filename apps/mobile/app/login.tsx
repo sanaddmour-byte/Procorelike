@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   card: {
     gap: 8,
     padding: 20,
-    borderWidth: 3,
+    borderWidth: 1,
     borderColor: colors.ink,
     borderRadius: 16,
     backgroundColor: colors.white,
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", color: colors.navy800, textAlign: "center", marginBottom: 12 },
   label: { fontSize: 13, fontWeight: "600", fontFamily: "Poppins_600SemiBold", color: colors.navy800, marginTop: 8 },
   input: {
-    borderWidth: 3,
+    borderWidth: 1,
     borderColor: colors.ink,
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   error: {
     color: colors.maroon800,
     backgroundColor: colors.maroon100,
-    borderWidth: 3,
+    borderWidth: 1,
     borderColor: colors.maroon700,
     borderRadius: 8,
     padding: 8,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 20,
     backgroundColor: colors.orange500,
-    borderWidth: 3,
+    borderWidth: 1,
     borderColor: colors.ink,
     borderRadius: 8,
     paddingVertical: 12,

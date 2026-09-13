@@ -107,7 +107,7 @@ export default function PhotosPage() {
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <label className="cursor-pointer rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white">
+          <label className="cursor-pointer rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
             {uploading ? t("uploading") : t("uploadButton")}
             <input
               ref={fileInputRef}
@@ -127,7 +127,7 @@ export default function PhotosPage() {
         {photos && photos.length === 0 && <p>{t("empty")}</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {photos?.map((photo) => (
-            <div key={photo.id} className="flex aspect-square items-center justify-center rounded-xl border-3 border-ink bg-white shadow-brutal-sm bg-orange-50 p-2 text-center text-xs text-navy-600">
+            <div key={photo.id} className="flex aspect-square items-center justify-center rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm bg-orange-50 p-2 text-center text-xs text-navy-600">
               {photo.attachmentId.slice(0, 8)}
             </div>
           ))}

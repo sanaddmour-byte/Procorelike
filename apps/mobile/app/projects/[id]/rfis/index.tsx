@@ -71,7 +71,7 @@ export default function MobileRfisListScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff" },
   list: { padding: 16, gap: 12 },
-  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 16, gap: 4 },
+  card: { borderWidth: 1, borderColor: "#171310", borderRadius: 8, backgroundColor: "#ffffff", shadowColor: "#171310", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 4, padding: 16, gap: 4 },
   cardRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   cardTitle: { fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold", flex: 1 },
   badgeRow: { flexDirection: "row", gap: 6 },

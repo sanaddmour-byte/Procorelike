@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, color: colors.navy600, marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", marginBottom: 8, color: colors.navy900 },
   list: { gap: 8, paddingBottom: 24 },
-  itemCard: { borderWidth: 3, borderColor: colors.ink, borderRadius: 8, padding: 12, backgroundColor: colors.white, gap: 4 },
+  itemCard: { borderWidth: 1, borderColor: colors.ink, borderRadius: 8, shadowColor: colors.ink, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 4, padding: 12, backgroundColor: colors.white, gap: 4 },
   itemDescription: { fontSize: 14, color: colors.navy900 },
   itemStatus: { fontSize: 11, fontFamily: "Poppins_600SemiBold", color: colors.orange900, backgroundColor: colors.orange100, alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
   error: { padding: 16, color: colors.maroon700 },

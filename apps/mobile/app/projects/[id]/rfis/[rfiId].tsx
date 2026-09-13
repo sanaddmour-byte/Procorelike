@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: "700", fontFamily: "Poppins_700Bold" },
   subtitle: { fontSize: 13, color: "#182a51" },
   viewOnlyNote: { fontSize: 12, color: "#9a3412", backgroundColor: "#fff4e6", padding: 10, borderRadius: 8, marginVertical: 8 },
-  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 12, gap: 4, marginBottom: 4 },
+  card: { borderWidth: 1, borderColor: "#171310", borderRadius: 8, backgroundColor: "#ffffff", shadowColor: "#171310", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 4, padding: 12, gap: 4, marginBottom: 4 },
   cardText: { fontSize: 14, color: "#080f1c" },
   sectionTitle: { fontSize: 16, fontWeight: "600", fontFamily: "Poppins_600SemiBold", marginTop: 12, marginBottom: 4 },
   hint: { fontSize: 13, color: "#182a51" },

@@ -53,6 +53,6 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, color: "#13213f", padding: 16, paddingBottom: 0 },
   hint: { margin: 16, color: "#9a3412", backgroundColor: "#fff4e6", padding: 10, borderRadius: 8, fontSize: 12 },
   list: { padding: 16, gap: 10 },
-  card: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, padding: 16 },
+  card: { borderWidth: 1, borderColor: "#171310", borderRadius: 8, backgroundColor: "#ffffff", shadowColor: "#171310", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 4, padding: 16 },
   cardTitle: { fontSize: 15, fontWeight: "600", fontFamily: "Poppins_600SemiBold" },
 });

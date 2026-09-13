@@ -76,10 +76,10 @@ export default function NewPunchItemScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff", padding: 16, gap: 6 },
   label: { fontSize: 13, color: "#13213f", marginTop: 8 },
-  input: { borderWidth: 3, borderColor: "#171310", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
+  input: { borderWidth: 1, borderColor: "#171310", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15 },
   textArea: { minHeight: 100, textAlignVertical: "top" },
   priorityRow: { flexDirection: "row", gap: 8 },
-  priorityChip: { borderWidth: 3, borderColor: "#171310", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  priorityChip: { borderWidth: 1, borderColor: "#171310", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
   priorityChipActive: { backgroundColor: "#182a51", borderColor: "#171310" },
   priorityChipText: { fontSize: 13, color: "#13213f" },
   priorityChipTextActive: { color: "#fff" },

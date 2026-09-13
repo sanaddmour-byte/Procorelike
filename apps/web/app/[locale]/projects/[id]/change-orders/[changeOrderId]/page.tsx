@@ -92,7 +92,7 @@ export default function ChangeOrderDetailPage() {
         <Link href={`/${locale}/projects/${params.id}/change-orders`} className="mb-4 inline-block text-sm text-maroon-700 underline">
           {t("back")}
         </Link>
-        {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
+        {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-gradient-to-b from-maroon-50 to-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
         {co && (
           <>
             <div className="mb-4 flex items-center justify-between">
@@ -106,7 +106,7 @@ export default function ChangeOrderDetailPage() {
               </span>
             </div>
 
-            <div className="mb-6 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+            <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <div className="text-navy-600">{t("targetType")}</div>
@@ -129,7 +129,7 @@ export default function ChangeOrderDetailPage() {
             ) : (
               <ul className="mb-4 flex flex-col gap-2">
                 {co.approvalChain.map((a, i) => (
-                  <li key={i} className="rounded-lg border-3 border-ink bg-white shadow-brutal-sm p-3 text-sm">
+                  <li key={i} className="rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3 text-sm">
                     {a.role} — {new Date(a.approvedAt).toLocaleString()}
                   </li>
                 ))}
@@ -138,13 +138,13 @@ export default function ChangeOrderDetailPage() {
 
             <div className="flex gap-2">
               {co.status === "draft" && (
-                <button onClick={() => void handleAction("submit")} disabled={busy} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+                <button onClick={() => void handleAction("submit")} disabled={busy} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                   {t("submit")}
                 </button>
               )}
               {co.status === "pending_approval" && (
                 <>
-                  <button onClick={() => void handleAction("approve")} disabled={busy} className="rounded-lg border-3 border-ink bg-orange-500 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
+                  <button onClick={() => void handleAction("approve")} disabled={busy} className="rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
                     {t("approve")}
                   </button>
                   <button onClick={() => void handleAction("reject")} disabled={busy} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-maroon-700 disabled:opacity-50">

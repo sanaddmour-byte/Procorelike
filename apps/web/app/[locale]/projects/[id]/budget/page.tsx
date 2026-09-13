@@ -128,14 +128,14 @@ export default function BudgetPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <button
             onClick={() => setShowForm((s) => !s)}
-            className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white"
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
           >
             {t("newButton")}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+          <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             <label className="flex flex-col gap-1 text-sm">
               {t("costCode")}
               <select required value={costCodeId} onChange={(e) => setCostCodeId(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
@@ -154,7 +154,7 @@ export default function BudgetPage() {
               {t("forecastToComplete")}
               <input type="number" step="0.01" value={forecastToComplete} onChange={(e) => setForecastToComplete(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
-            <button type="submit" disabled={saving} className="self-start rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+            <button type="submit" disabled={saving} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
             </button>
           </form>
@@ -170,7 +170,7 @@ export default function BudgetPage() {
             const variance = revised - Number(li.projectedAmount);
             const editing = editingId === li.id;
             return (
-              <div key={li.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-4">
+              <div key={li.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="font-bold text-navy-900">{costCodeLabel(li.costCodeId)}</span>
                   {!editing && (
@@ -190,7 +190,7 @@ export default function BudgetPage() {
                       <input type="number" step="0.01" value={editForecast} onChange={(e) => setEditForecast(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
                     </label>
                     <div className="flex gap-2">
-                      <button onClick={() => void handleSaveEdit(li.id)} disabled={saving} className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-1.5 text-sm text-white disabled:opacity-50">
+                      <button onClick={() => void handleSaveEdit(li.id)} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white disabled:opacity-50">
                         {t("save")}
                       </button>
                       <button onClick={() => setEditingId(null)} className="rounded-lg border-3 border-ink px-3 py-1.5 text-sm text-navy-800">

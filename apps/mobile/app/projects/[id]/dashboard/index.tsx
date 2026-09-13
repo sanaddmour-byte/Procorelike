@@ -95,7 +95,7 @@ function Tile({ label, value, negative }: { label: string; value: string; negati
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
   content: { padding: 16, gap: 14 },
-  card: { borderWidth: 3, borderColor: colors.ink, borderRadius: 12, backgroundColor: colors.white, padding: 16, gap: 10 },
+  card: { borderWidth: 1, borderColor: colors.ink, borderRadius: 12, shadowColor: colors.ink, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 4, backgroundColor: colors.white, padding: 16, gap: 10 },
   budgetCard: { backgroundColor: colors.orange50 },
   cardTitle: { fontSize: 13, fontWeight: "700", fontFamily: "Poppins_700Bold", color: colors.navy700, textTransform: "uppercase" },
   tileRow: { flexDirection: "row", flexWrap: "wrap", gap: 20 },

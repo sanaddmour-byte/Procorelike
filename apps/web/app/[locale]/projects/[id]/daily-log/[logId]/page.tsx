@@ -119,7 +119,7 @@ export default function DailyLogDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => void saveNotes()}
-                  className="rounded-lg border-3 border-ink bg-maroon-700 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
+                  className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
                 >
                   {t("save")}
                 </button>
@@ -150,7 +150,7 @@ export default function DailyLogDetailPage() {
                 <h2 className="mb-2 text-sm font-medium text-navy-800">{t("manpowerSection")}</h2>
                 <ul className="flex flex-col gap-2">
                   {log.manpower.map((row) => (
-                    <li key={row.id} className="rounded-xl border-3 border-ink bg-white shadow-brutal-sm p-2 text-sm">
+                    <li key={row.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-2 text-sm">
                       {t("headcount")}: {row.headcount} · {t("hours")}: {row.hours}
                     </li>
                   ))}
