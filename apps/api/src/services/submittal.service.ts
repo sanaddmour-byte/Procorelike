@@ -6,11 +6,14 @@ import {
   type CreateSubmittalInput,
   type CreateSubmittalRevisionInput,
   type PermissionContext,
+  type SubmittalResponseCode,
+  type SubmittalStatus,
   type SubmitSubmittalReviewInput,
 } from "@siteops/shared";
-import { asc, eq, max } from "drizzle-orm";
+import { asc, eq, inArray, max } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { withUserContext } from "./permission.service";
 
 type SubmittalRow = typeof schema.submittals.$inferSelect;
@@ -382,5 +385,111 @@ export async function closeSubmittal(
       .returning();
     if (!updated) throw new Error("Failed to close submittal");
     return updated;
+  });
+}
+
+export interface SubmittalReportReview {
+  reviewerName: string;
+  sequenceOrder: number;
+  isParallel: boolean;
+  responseCode: SubmittalResponseCode | null;
+  reviewedAt: Date | null;
+}
+
+export interface SubmittalReportRevision {
+  revisionNumber: number;
+  submittedDate: Date;
+  reviews: SubmittalReportReview[];
+}
+
+export interface SubmittalReportData extends ReportBranding {
+  projectName: string;
+  number: string;
+  title: string;
+  specSectionLabel: string;
+  status: SubmittalStatus;
+  ballInCourtName: string | null;
+  leadTimeDays: number | null;
+  requiredOnSiteDate: Date | null;
+  revisions: SubmittalReportRevision[];
+}
+
+/** Assembles everything the PDF report needs, mirroring inspection.service.ts's getInspectionReportData pattern. */
+export async function getSubmittalReportData(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  submittalId: string,
+): Promise<SubmittalReportData> {
+  requirePermission(ctx, "submittals", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [submittal] = await tx.select().from(schema.submittals).where(eq(schema.submittals.id, submittalId)).limit(1);
+    if (!submittal) throw new NotFoundError("Submittal not found");
+
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, submittal.projectId)).limit(1);
+    const [specSection] = await tx
+      .select()
+      .from(schema.specificationsSections)
+      .where(eq(schema.specificationsSections.id, submittal.specSectionId))
+      .limit(1);
+    const [ballInCourtUser] = submittal.ballInCourtUserId
+      ? await tx.select().from(schema.users).where(eq(schema.users.id, submittal.ballInCourtUserId)).limit(1)
+      : [undefined];
+
+    const packages = await tx
+      .select()
+      .from(schema.submittalPackages)
+      .where(eq(schema.submittalPackages.submittalId, submittalId))
+      .orderBy(asc(schema.submittalPackages.packageNumber));
+    const packageIds = packages.map((p) => p.id);
+    const revisionRows =
+      packageIds.length > 0
+        ? await tx
+            .select()
+            .from(schema.submittalRevisions)
+            .where(inArray(schema.submittalRevisions.packageId, packageIds))
+            .orderBy(asc(schema.submittalRevisions.revisionNumber))
+        : [];
+    const revisionIds = revisionRows.map((r) => r.id);
+    const reviewRows =
+      revisionIds.length > 0
+        ? await tx
+            .select()
+            .from(schema.submittalReviews)
+            .where(inArray(schema.submittalReviews.revisionId, revisionIds))
+            .orderBy(asc(schema.submittalReviews.sequenceOrder))
+        : [];
+    const reviewerIds = [...new Set(reviewRows.map((r) => r.reviewerUserId))];
+    const reviewers = reviewerIds.length > 0 ? await tx.select().from(schema.users).where(inArray(schema.users.id, reviewerIds)) : [];
+    const reviewerNameById = new Map(reviewers.map((u) => [u.id, u.name]));
+
+    const revisions: SubmittalReportRevision[] = revisionRows.map((rev) => ({
+      revisionNumber: rev.revisionNumber,
+      submittedDate: rev.submittedDate,
+      reviews: reviewRows
+        .filter((r) => r.revisionId === rev.id)
+        .map((r) => ({
+          reviewerName: reviewerNameById.get(r.reviewerUserId) ?? "Unknown",
+          sequenceOrder: r.sequenceOrder,
+          isParallel: r.isParallel,
+          responseCode: r.responseCode,
+          reviewedAt: r.reviewedAt,
+        })),
+    }));
+
+    const branding = await resolveAuthorCompanyBranding(tx, submittal.projectId, submittal.createdBy);
+
+    return {
+      ...branding,
+      projectName: project?.name ?? "",
+      number: submittal.number,
+      title: submittal.title,
+      specSectionLabel: specSection ? `${specSection.csiCode} — ${specSection.title}` : "",
+      status: submittal.status,
+      ballInCourtName: ballInCourtUser?.name ?? null,
+      leadTimeDays: submittal.leadTimeDays,
+      requiredOnSiteDate: submittal.requiredOnSiteDate,
+      revisions,
+    };
   });
 }

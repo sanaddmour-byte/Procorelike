@@ -10,9 +10,10 @@ import {
   type TransitionRfiStatusInput,
   type UpdateRfiInput,
 } from "@siteops/shared";
-import { desc, eq } from "drizzle-orm";
-import { ApiError } from "../lib/errors";
+import { desc, eq, inArray } from "drizzle-orm";
+import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { withUserContext } from "./permission.service";
 
 type RfiRow = typeof schema.rfis.$inferSelect;
@@ -233,5 +234,76 @@ export async function transitionRfiStatus(
       after: { status: updated.status },
     });
     return withOverdue(updated);
+  });
+}
+
+export interface RfiReportResponse {
+  respondedByName: string;
+  responseText: string;
+  isOfficial: boolean;
+  createdAt: Date;
+}
+
+export interface RfiReportData extends ReportBranding {
+  projectName: string;
+  number: string;
+  subject: string;
+  question: string;
+  status: RfiStatus;
+  isOverdue: boolean;
+  ballInCourtName: string | null;
+  ballInCourtCompanyName: string | null;
+  dueDate: Date | null;
+  costImpactFlag: boolean;
+  scheduleImpactFlag: boolean;
+  responses: RfiReportResponse[];
+}
+
+/** Assembles everything the PDF report needs, mirroring inspection.service.ts's getInspectionReportData pattern -- one place that resolves every foreign key into a human-readable name. */
+export async function getRfiReportData(appDb: Database, userId: string, ctx: PermissionContext, rfiId: string): Promise<RfiReportData> {
+  requirePermission(ctx, "rfis", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [rfi] = await tx.select().from(schema.rfis).where(eq(schema.rfis.id, rfiId)).limit(1);
+    if (!rfi) throw new NotFoundError("RFI not found");
+
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, rfi.projectId)).limit(1);
+    const [ballInCourtUser] = rfi.ballInCourtUserId
+      ? await tx.select().from(schema.users).where(eq(schema.users.id, rfi.ballInCourtUserId)).limit(1)
+      : [undefined];
+    const [ballInCourtCompany] = rfi.ballInCourtCompanyId
+      ? await tx.select().from(schema.companies).where(eq(schema.companies.id, rfi.ballInCourtCompanyId)).limit(1)
+      : [undefined];
+
+    const responseRows = await tx
+      .select()
+      .from(schema.rfiResponses)
+      .where(eq(schema.rfiResponses.rfiId, rfiId))
+      .orderBy(schema.rfiResponses.createdAt);
+    const responderIds = [...new Set(responseRows.map((r) => r.respondedBy))];
+    const responders = responderIds.length > 0 ? await tx.select().from(schema.users).where(inArray(schema.users.id, responderIds)) : [];
+    const responderNameById = new Map(responders.map((u) => [u.id, u.name]));
+
+    const branding = await resolveAuthorCompanyBranding(tx, rfi.projectId, rfi.createdBy);
+
+    return {
+      ...branding,
+      projectName: project?.name ?? "",
+      number: rfi.number,
+      subject: rfi.subject,
+      question: rfi.question,
+      status: rfi.status,
+      isOverdue: withOverdue(rfi).isOverdue,
+      ballInCourtName: ballInCourtUser?.name ?? null,
+      ballInCourtCompanyName: ballInCourtCompany?.name ?? null,
+      dueDate: rfi.dueDate,
+      costImpactFlag: rfi.costImpactFlag,
+      scheduleImpactFlag: rfi.scheduleImpactFlag,
+      responses: responseRows.map((r) => ({
+        respondedByName: responderNameById.get(r.respondedBy) ?? "Unknown",
+        responseText: r.responseText,
+        isOfficial: r.isOfficial,
+        createdAt: r.createdAt,
+      })),
+    };
   });
 }

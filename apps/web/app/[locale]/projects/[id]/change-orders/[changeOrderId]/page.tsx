@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -59,6 +59,18 @@ export default function ChangeOrderDetailPage() {
     load();
   }, [router, locale, params.changeOrderId]);
 
+  async function handleDownloadReport(): Promise<void> {
+    try {
+      const res = await apiFetch(`/change-orders/${params.changeOrderId}/report`);
+      if (!res.ok) throw new Error("report_failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError(tc("errorGeneric"));
+    }
+  }
+
   async function handleAction(action: "submit" | "approve" | "reject"): Promise<void> {
     setBusy(true);
     setError(null);
@@ -89,9 +101,18 @@ export default function ChangeOrderDetailPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-2xl px-4 py-8">
-        <Link href={`/${locale}/projects/${params.id}/change-orders`} className="mb-4 inline-block text-sm text-maroon-700 underline">
-          {t("back")}
-        </Link>
+        <div className="mb-4 flex items-center justify-between">
+          <Link href={`/${locale}/projects/${params.id}/change-orders`} className="inline-block text-sm text-maroon-700 underline">
+            {t("back")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => void handleDownloadReport()}
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
+          >
+            {tc("exportPdf")}
+          </button>
+        </div>
         {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-gradient-to-b from-maroon-50 to-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
         {co && (
           <>

@@ -2062,6 +2062,155 @@ with an end-to-end sync round trip) **— PASSED**, see Verification.
   as code-complete-but-unrun until verified on a real device or
   simulator, exactly like every mobile screen since Phase 2.
 
+## Phase 12 gate report
+
+**Gate** (user-directed, not from the original addendum plan: "is there PDF
+export for Change Orders/RFIs/Submittals? If not there should be one";
+"a portal for formal correspondence with owner/consultant/subcontractor
+with signature available for the sender"; "when exporting PDFs, the admin
+or contractor should be able to insert a PNG of the company logo") —
+**PASSED**, see Verification. Two design decisions were made with the user
+before building, via AskUserQuestion: the signature is a **typed name +
+timestamp** (matching Inspections' existing sign-off pattern), not a drawn
+signature; the logo lives **per-company**, not per-project, so a GC's
+branding is set once and reused across every project that company works
+on.
+
+**What was built:**
+- **`packages/db`**: `companies` gained `logoDataBase64`/`logoMime` (a PNG
+  stored inline as base64, not through the project-scoped `attachments`/S3
+  pipeline — a company isn't tied to any one project, and `companies` has
+  no RLS policy for the same reason); `correspondence` gained
+  `senderSignatureName`, captured at the same moment `sentDate` already
+  was (the draft→sent transition). A `companies_member_update` RLS policy
+  was added (the table previously had SELECT/INSERT only — no UPDATE
+  policy existed for it at all) so the logo write actually reaches the
+  row, scoped to `user_companies` membership specifically (stricter than
+  the SELECT policy's `is_company_visible`, which also admits anyone
+  sharing a project with the company — a collaborator viewing a company's
+  logo shouldn't be able to overwrite it).
+- **`apps/api/src/lib/pdf-builder.ts`** (new): a `PdfBuilder` class
+  extracted from Phase 5's `inspection-report.ts` (same drawLine/
+  ensureSpace/pagination logic, now shared) plus a new `drawLetterhead()`
+  that embeds a PNG logo via pdf-lib's `embedPng()` top-left with the
+  company name beside it — falling back to a plain bold company-name line
+  (or nothing) if there's no logo or it fails to embed, so a bad/missing
+  logo never breaks report generation. `inspection-report.ts` was
+  refactored onto this builder with no output change (verified by its
+  existing test still passing unmodified).
+- **Company logo endpoints**: `uploadCompanyLogo`/`getCompanyLogo` in
+  `company.service.ts`, `POST /companies/:id/logo` + `GET /companies/:id/logo`.
+  List/create/upload responses all strip the (~1.4MB max) base64 blob down
+  to a `hasLogo` boolean — only the dedicated GET-logo endpoint returns
+  actual bytes — so `GET /companies` stays small regardless of how many
+  companies have branding.
+- **Branded PDF exports for RFI, Submittal, Change Order**: each gets a
+  `get*ReportData()` in its own service (mirroring Inspection's
+  `getInspectionReportData` pattern — one place that resolves every
+  foreign key into a human-readable name) plus a `generate*Pdf()` in
+  `apps/api/src/lib/`, and a `GET /{rfis,submittals,change-orders}/:id/report`
+  route. None of these three record types has a direct "author company"
+  column, so branding resolves via `project_users.companyId` for whoever
+  created the record (`resolveAuthorCompanyBranding()`, shared helper) —
+  the same join lookahead.service.ts already uses for commitment
+  company-matching. Change Order's PDF also resolves every name/company in
+  its existing JSONB `approvalChain` (untouched by this phase, from Phase
+  6) for the approval-chain section.
+- **Correspondence signature + PDF**: `transitionCorrespondenceStatusSchema`
+  now requires `senderSignatureName` exactly when `toStatus` is `"sent"`
+  (a zod `.refine()`, mirroring the shape of other conditional-validation
+  rules already in the codebase); the service stores it alongside
+  `sentDate`. Correspondence's branding is simpler than the other three --
+  `fromCompanyId` is already a direct column, no `project_users` join
+  needed. `GET /correspondence/:id/report` renders the letter with a
+  signature block (signed name + underline + sent date, or "Not yet sent/
+  signed" in red — same visual pattern as Inspection's own sign-off
+  block).
+- **`apps/web`**: a new `/companies` settings page (reachable via a
+  "Manage company logo" link on the projects list) listing every company
+  the caller belongs to or shares a project with, each with a PNG file
+  picker + live preview (fetched as a blob and rendered via
+  `URL.createObjectURL`, since the logo endpoint requires an auth header
+  a plain `<img src>` can't carry) and an upload button. "Export PDF"
+  buttons (fetch-as-blob-then-`window.open`, the same pattern Phase 5's
+  Inspection report button already used) were added to the RFI, Submittal,
+  and Change Order detail pages, and to Correspondence's detail page —
+  which also gained a signature-name input that gates the "Sign & send"
+  button (disabled until a name is typed) in place of the old plain "sent"
+  transition button.
+- **A real cross-test-suite bug found and fixed while adding this phase's
+  gate test**: `cpm-schedule.test.ts`'s cleanup routine predates
+  `scheduleProgressUpdates`/`scheduleConstraints`/`lookaheadCommitments`
+  (all added in Phase 11c) and never deleted them before deleting the
+  `cpmScheduleTasks` rows they reference — invisible until this session's
+  earlier manual screenshot work happened to leave a progress-update row
+  on Amman Heights, which then made the *next* full-suite run fail on a
+  foreign-key violation. Fixed by extending that cleanup to match
+  `lookahead.test.ts`'s (Phase 11c) already-correct deletion order.
+  Unrelated to Phase 12's own code, but found and fixed in the course of
+  it, per the project's standing corrections practice.
+
+**Scope decisions:**
+- **Typed-name signature, not a drawn one** — the user's explicit choice
+  (see Gate above). A canvas signature-pad would need capture UI, image
+  storage, and mobile touch handling for a visual flourish with no
+  functional difference in what it proves; the typed-name + timestamp
+  pattern was already proven out by Inspections.
+- **Per-company logo, not per-project** — the user's explicit choice. A
+  GC running several jobs sets its branding once rather than re-uploading
+  it per project.
+- **Logo stored inline in Postgres as base64 text, not through the
+  attachments/S3 pipeline.** `attachments.projectId` is `NOT NULL` and
+  RLS-scoped by project membership; a company logo is deliberately
+  project-independent, so reusing that table would fight its own access
+  model. A ~1.4MB base64 cap keeps this proportionate to "a logo," not a
+  general image-upload feature.
+- **No PDF export for Punch Items, Meetings, T&M Tickets, Daily Logs, or
+  other modules.** The user asked specifically about Change Orders, RFIs,
+  and Submittals; extending the same `PdfBuilder` pattern to any other
+  module is now a small, mechanical addition (one report-data function +
+  one generator + one route) whenever it's actually needed, not
+  spec'd out speculatively here.
+- **No draft-state PDF watermarking** ("DRAFT" stamped across a
+  not-yet-approved document) — every export renders the record's current
+  status as plain text in the header instead. A reasonable follow-up, not
+  built speculatively.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (190 tests total: 108 `packages/shared`, 59
+  `apps/api` — one new test this phase, `branded-pdf.test.ts` — 22
+  `apps/web`, 1 `packages/db`, 0 `apps/mobile`), including a full
+  production `next build` of `apps/web` (`/companies` compiles at 2.14
+  kB).
+- **The Phase 12 API gate test** (`apps/api/src/routes/branded-pdf.test.ts`):
+  uploads a real PNG to a company via `POST /companies/:id/logo`; confirms
+  a user on a *different* company gets 403 attempting the same upload;
+  confirms `GET /companies` never carries the base64 blob (`hasLogo` only)
+  while `GET /companies/:id/logo` returns real `image/png` bytes; creates
+  an RFI, a Submittal, and a Change Order (submitted and approved, so its
+  `approvalChain` has a real entry to resolve names for) and asserts each
+  `/report` endpoint returns `application/pdf` bytes starting with the
+  `%PDF-` magic header and over 500 bytes; creates a Correspondence item
+  and asserts sending it without `senderSignatureName` 400s, sending it
+  with one succeeds and the name is stored and returned, and its `/report`
+  endpoint likewise returns a real PDF. Verified idempotent by running the
+  full suite twice consecutively (a `resetCompanyLogo()` helper clears the
+  test company's logo columns in `beforeAll`, since companies aren't
+  project-scoped and so have no per-project cleanup hook to piggyback on
+  like every other gate test's fixtures do).
+- **Manual, real-browser verification** (Playwright against the live dev
+  API, not just automated assertions): the `/companies` page correctly
+  shows "No logo uploaded yet." for every company without one and a live
+  image preview for the one with one; attempting to upload to a company
+  the logged-in user does **not** belong to shows the 403 as a visible
+  error message in the UI (the same "security boundary demonstrated live"
+  pattern Phase 11c's screenshot session hit by accident); the RFI detail
+  page's "Export PDF" button opens a populated PDF in a new tab; the
+  Correspondence detail page's "Sign & send" button is disabled until a
+  name is typed, and after signing, the page correctly shows status
+  "Sent" and "Signed by: Sara Haddad" in place of the signature form.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

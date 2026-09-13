@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { RFI_STATUS_TRANSITIONS, type RfiStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -105,6 +105,18 @@ export default function RfiDetailScreen() {
     }
   }
 
+  async function handleDownloadReport(): Promise<void> {
+    try {
+      const res = await apiFetch(`/rfis/${params.rfiId}/report`);
+      if (!res.ok) throw new Error("report_failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError(tc("errorGeneric"));
+    }
+  }
+
   async function handleTransition(toStatus: RfiStatus): Promise<void> {
     setTransitioning(true);
     try {
@@ -132,9 +144,18 @@ export default function RfiDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <Link href={`/${locale}/projects/${params.id}/rfis`} className="mb-4 inline-block text-sm text-navy-600 underline">
-          {t("back")}
-        </Link>
+        <div className="mb-4 flex items-center justify-between">
+          <Link href={`/${locale}/projects/${params.id}/rfis`} className="inline-block text-sm text-navy-600 underline">
+            {t("back")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => void handleDownloadReport()}
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
+          >
+            {tc("exportPdf")}
+          </button>
+        </div>
 
         <div className="mb-1 flex items-center gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">

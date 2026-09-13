@@ -109,6 +109,21 @@ $$;
 
 GRANT EXECUTE ON FUNCTION is_company_visible(uuid) TO siteops_app;
 
+-- Stricter than is_company_visible (which also admits anyone sharing a
+-- project with the company) -- used for UPDATE, e.g. the Phase 12 logo
+-- upload, where "a collaborator on the same project" should not be able
+-- to edit another company's own record.
+CREATE OR REPLACE FUNCTION is_company_member(p_company_id uuid)
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_companies
+    WHERE company_id = p_company_id AND user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION is_company_member(uuid) TO siteops_app;
+
 -- Same cycle again: rfis' own subcontractor-scoping policy (below) needs to
 -- check rfi_distribution, but rfi_distribution's policy (section 5) checks
 -- rfis for project membership — a two-table cycle, same fix.
@@ -192,6 +207,10 @@ CREATE POLICY companies_visible_select ON companies FOR SELECT USING (
 DROP POLICY IF EXISTS companies_authenticated_insert ON companies;
 CREATE POLICY companies_authenticated_insert ON companies FOR INSERT WITH CHECK (
   current_setting('app.user_id', true) IS NOT NULL
+);
+DROP POLICY IF EXISTS companies_member_update ON companies;
+CREATE POLICY companies_member_update ON companies FOR UPDATE USING (
+  is_company_member(id)
 );
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;

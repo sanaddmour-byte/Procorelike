@@ -7,6 +7,7 @@ import {
 } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
+import { generateChangeOrderPdf } from "../lib/change-order-report";
 import { NotFoundError } from "../lib/errors";
 import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
@@ -201,6 +202,25 @@ export function changeOrdersRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, co.projectId);
       const updated = await changeManagementService.rejectChangeOrder(appDb, authUser.id, ctx, id);
       res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/:id/report", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Change order not found");
+      const co = await changeManagementService.findChangeOrderById(appDb, authUser.id, id);
+      if (!co) throw new NotFoundError("Change order not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, co.projectId);
+      const reportData = await changeManagementService.getChangeOrderReportData(appDb, authUser.id, ctx, id);
+      const pdfBytes = await generateChangeOrderPdf(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="change-order-${reportData.number}.pdf"`);
+      res.send(Buffer.from(pdfBytes));
     } catch (err) {
       next(err);
     }

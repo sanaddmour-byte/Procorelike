@@ -5,15 +5,17 @@ import {
   requiresSecondApprover,
   requirePermission,
   type Approver,
+  type ChangeStatus,
   type CreateChangeEventInput,
   type CreateChangeOrderInput,
   type CreatePotentialChangeOrderInput,
   type PermissionContext,
   type UpdatePotentialChangeOrderStatusInput,
 } from "@siteops/shared";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { applyApprovedPrimeChangeToLineItem } from "./budget.service";
 import { withUserContext } from "./permission.service";
 
@@ -361,5 +363,80 @@ export async function rejectChangeOrder(
       after: { status: updated.status },
     });
     return updated;
+  });
+}
+
+export interface ChangeOrderReportApproval {
+  userName: string;
+  companyName: string;
+  role: string;
+  approvedAt: string;
+}
+
+export interface ChangeOrderReportData extends ReportBranding {
+  projectName: string;
+  number: string;
+  title: string | null;
+  description: string | null;
+  targetType: "prime" | "commitment";
+  costImpact: string;
+  timeImpactDays: number;
+  status: ChangeStatus;
+  approvals: ChangeOrderReportApproval[];
+}
+
+/** Assembles everything the PDF report needs, mirroring inspection.service.ts's getInspectionReportData pattern. `title`/`description` come from the linked change event via its potential change order, if any -- a change order created without one (pcoId is nullable) just shows no title/description. */
+export async function getChangeOrderReportData(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  changeOrderId: string,
+): Promise<ChangeOrderReportData> {
+  requirePermission(ctx, "change_management", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [co] = await tx.select().from(schema.changeOrders).where(eq(schema.changeOrders.id, changeOrderId)).limit(1);
+    if (!co) throw new NotFoundError("Change order not found");
+
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, co.projectId)).limit(1);
+
+    let title: string | null = null;
+    let description: string | null = null;
+    if (co.pcoId) {
+      const [pco] = await tx.select().from(schema.potentialChangeOrders).where(eq(schema.potentialChangeOrders.id, co.pcoId)).limit(1);
+      if (pco) {
+        const [event] = await tx.select().from(schema.changeEvents).where(eq(schema.changeEvents.id, pco.changeEventId)).limit(1);
+        title = event?.title ?? null;
+        description = event?.description ?? null;
+      }
+    }
+
+    const approverIds = [...new Set(co.approvalChain.map((a) => a.userId))];
+    const companyIds = [...new Set(co.approvalChain.map((a) => a.companyId))];
+    const [approverUsers, approverCompanies] = await Promise.all([
+      approverIds.length > 0 ? tx.select().from(schema.users).where(inArray(schema.users.id, approverIds)) : Promise.resolve([]),
+      companyIds.length > 0 ? tx.select().from(schema.companies).where(inArray(schema.companies.id, companyIds)) : Promise.resolve([]),
+    ]);
+    const userNameById = new Map(approverUsers.map((u) => [u.id, u.name]));
+    const companyNameById = new Map(approverCompanies.map((c) => [c.id, c.name]));
+
+    const branding = await resolveAuthorCompanyBranding(tx, co.projectId, co.createdBy);
+
+    return {
+      ...branding,
+      projectName: project?.name ?? "",
+      number: co.number,
+      title,
+      description,
+      targetType: co.targetType,
+      costImpact: co.costImpact,
+      timeImpactDays: co.timeImpactDays,
+      status: co.status,
+      approvals: co.approvalChain.map((a) => ({
+        userName: userNameById.get(a.userId) ?? "Unknown",
+        companyName: companyNameById.get(a.companyId) ?? "Unknown",
+        role: a.role,
+        approvedAt: a.approvedAt,
+      })),
+    };
   });
 }

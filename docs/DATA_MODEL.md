@@ -275,6 +275,49 @@ unlike `daily_log`) wired into `sync.service.ts`'s two exhaustive
   confirm/decline screens only -- no mobile constraint-log or
   delay-register views (planner/PM tools, already on web).
 
+## 9h. Branded PDF exports, company logo, correspondence signature (user-directed, Phase 12)
+
+Not part of the original functional-spec phase plan -- added on explicit
+user request (PDF export for RFI/Submittal/Change Order; a company logo
+on those PDFs; a signature requirement to send formal Correspondence).
+Full detail in `docs/ROADMAP.md`'s Phase 12 gate report.
+
+| Table | Key fields | Relationships | Notes |
+|---|---|---|---|
+| `companies` | *(existing, extended)* + logo_data_base64?, logo_mime? | none (no FK; a company's own record) | Inline base64 PNG, not the `attachments`/S3 pipeline -- a company isn't project-scoped, unlike every attachment. `logo_data_base64` is stripped from every list/detail JSON response (only `GET /companies/:id/logo` returns it) via a `hasLogo` boolean instead |
+| `correspondence` | *(existing, extended)* + sender_signature_name? | none (new column only) | Typed-name signature, captured at the same draft->sent transition that already sets `sent_date` |
+
+**RLS change**: `companies` previously had SELECT (`is_company_visible` --
+member, or shares a project with the company) and INSERT policies only,
+no UPDATE policy at all (an open gap since Phase 1, invisible until this
+phase needed to actually write to the table). Added
+`companies_member_update`, scoped to the **stricter**
+`is_company_member` (a real `user_companies` row, not merely
+project-sharing visibility) -- a collaborator who can see a company's
+branding should not be able to overwrite it.
+
+**API surface**: `POST /companies/:id/logo` + `GET /companies/:id/logo`;
+`GET /rfis/:id/report`, `GET /submittals/:id/report`, `GET
+/change-orders/:id/report`, `GET /correspondence/:id/report` (all
+`application/pdf`, built with a new shared `PdfBuilder`
+(`apps/api/src/lib/pdf-builder.ts`) extracted from Phase 5's Inspection
+report generator). RFI/Submittal/Change Order have no direct "author
+company" column, so their PDF branding resolves via `project_users
+.companyId` for the record's creator; Correspondence already has
+`from_company_id` directly.
+
+**Scope cuts, documented rather than silently incomplete:**
+- Signature is a typed name + timestamp, not a drawn signature (explicit
+  user choice, see gate report).
+- Logo is per-company, not per-project (explicit user choice) -- set once
+  on the company record (Companies settings page in `apps/web`), reused
+  across every project that company works on.
+- No PDF export added for Punch Items, Meetings, T&M Tickets, Daily Logs,
+  or any other module -- only the three the user named. The `PdfBuilder`
+  pattern makes adding one elsewhere a small, mechanical follow-up.
+- No "DRAFT" watermark on a not-yet-approved document's PDF -- status is
+  shown as plain header text instead.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

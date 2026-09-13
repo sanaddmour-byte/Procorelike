@@ -3,6 +3,9 @@ import {
   CORRESPONDENCE_STATUS_TRANSITIONS,
   formatCorrespondenceNumber,
   requirePermission,
+  type CorrespondenceDirection,
+  type CorrespondenceStatus,
+  type CorrespondenceType,
   type CreateCorrespondenceInput,
   type PermissionContext,
   type TransitionCorrespondenceStatusInput,
@@ -10,6 +13,7 @@ import {
 import { eq } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { getCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { withUserContext } from "./permission.service";
 
 type CorrespondenceRow = typeof schema.correspondence.$inferSelect;
@@ -95,6 +99,7 @@ export async function transitionCorrespondenceStatus(
       .set({
         status: input.toStatus,
         sentDate: input.toStatus === "sent" ? new Date() : existing.sentDate,
+        senderSignatureName: input.toStatus === "sent" ? input.senderSignatureName : existing.senderSignatureName,
         acknowledgedBy: input.toStatus === "acknowledged" ? userId : existing.acknowledgedBy,
         acknowledgedAt: input.toStatus === "acknowledged" ? new Date() : existing.acknowledgedAt,
         closedBy: input.toStatus === "closed" ? userId : existing.closedBy,
@@ -116,5 +121,55 @@ export async function transitionCorrespondenceStatus(
       after: { status: updated.status },
     });
     return updated;
+  });
+}
+
+export interface CorrespondenceReportData extends ReportBranding {
+  projectName: string;
+  correspondenceNumber: string;
+  direction: CorrespondenceDirection;
+  type: CorrespondenceType;
+  subject: string;
+  body: string;
+  fromCompanyName: string;
+  toCompanyName: string;
+  status: CorrespondenceStatus;
+  sentDate: Date | null;
+  responseRequiredBy: Date | null;
+  senderSignatureName: string | null;
+}
+
+/** Assembles everything the PDF letter needs, mirroring inspection.service.ts's getInspectionReportData pattern. Branding is the *sending* company's own logo -- `fromCompanyId` is already a direct column here, unlike RFI/Submittal/Change Order, which have no such column and resolve the author's company via project_users instead. */
+export async function getCorrespondenceReportData(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  correspondenceId: string,
+): Promise<CorrespondenceReportData> {
+  requirePermission(ctx, "correspondence", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [row] = await tx.select().from(schema.correspondence).where(eq(schema.correspondence.id, correspondenceId)).limit(1);
+    if (!row) throw new NotFoundError("Correspondence not found");
+
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, row.projectId)).limit(1);
+    const [fromCompany] = await tx.select().from(schema.companies).where(eq(schema.companies.id, row.fromCompanyId)).limit(1);
+    const [toCompany] = await tx.select().from(schema.companies).where(eq(schema.companies.id, row.toCompanyId)).limit(1);
+    const branding = await getCompanyBranding(tx, row.fromCompanyId);
+
+    return {
+      ...branding,
+      projectName: project?.name ?? "",
+      correspondenceNumber: row.correspondenceNumber,
+      direction: row.direction,
+      type: row.type,
+      subject: row.subject,
+      body: row.body,
+      fromCompanyName: fromCompany?.name ?? "Unknown",
+      toCompanyName: toCompany?.name ?? "Unknown",
+      status: row.status,
+      sentDate: row.sentDate,
+      responseRequiredBy: row.responseRequiredBy,
+      senderSignatureName: row.senderSignatureName,
+    };
   });
 }

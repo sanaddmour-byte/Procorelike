@@ -4,6 +4,7 @@ import { Router, type NextFunction, type Request, type Response } from "express"
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
 import { paramAsString } from "../lib/params";
+import { generateSubmittalPdf } from "../lib/submittal-report";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { loadPermissionContext } from "../services/permission.service";
@@ -135,6 +136,25 @@ export function submittalsRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, submittal.projectId);
       const closed = await submittalService.closeSubmittal(appDb, authUser.id, ctx, id);
       res.json(closed);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/:id/report", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Submittal not found");
+      const submittal = await submittalService.findSubmittalById(appDb, authUser.id, id);
+      if (!submittal) throw new NotFoundError("Submittal not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, submittal.projectId);
+      const reportData = await submittalService.getSubmittalReportData(appDb, authUser.id, ctx, id);
+      const pdfBytes = await generateSubmittalPdf(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="submittal-${reportData.number}.pdf"`);
+      res.send(Buffer.from(pdfBytes));
     } catch (err) {
       next(err);
     }

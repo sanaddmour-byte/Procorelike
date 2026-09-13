@@ -108,6 +108,8 @@ export const correspondence = pgTable(
       .references(() => companies.id),
     sentDate: timestamp("sent_date", { withTimezone: false, mode: "date" }),
     responseRequiredBy: timestamp("response_required_by", { withTimezone: false, mode: "date" }),
+    /** Typed-name signature the sender enters to certify/send (Phase 12) -- required at the draft->sent transition; `sentDate` doubles as the signed-at timestamp. */
+    senderSignatureName: varchar("sender_signature_name", { length: 200 }),
     status: correspondenceStatusEnum("status").notNull().default("draft"),
     acknowledgedBy: uuid("acknowledged_by").references(() => users.id),
     acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),

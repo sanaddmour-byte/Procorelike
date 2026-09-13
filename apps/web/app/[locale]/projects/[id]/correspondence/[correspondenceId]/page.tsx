@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import {
   CORRESPONDENCE_STATUS_TRANSITIONS,
@@ -28,6 +28,7 @@ interface CorrespondenceDetail {
   status: CorrespondenceStatus;
   sentDate: string | null;
   responseRequiredBy: string | null;
+  senderSignatureName: string | null;
 }
 
 interface ProjectCompany {
@@ -54,6 +55,7 @@ export default function CorrespondenceDetailScreen() {
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState(false);
+  const [signatureName, setSignatureName] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -79,14 +81,35 @@ export default function CorrespondenceDetailScreen() {
   }
 
   async function handleTransition(toStatus: CorrespondenceStatus): Promise<void> {
+    if (toStatus === "sent" && !signatureName.trim()) {
+      setError(t("signatureRequired"));
+      return;
+    }
     setTransitioning(true);
+    setError(null);
     try {
-      await apiJson(`/correspondence/${params.correspondenceId}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
+      await apiJson(`/correspondence/${params.correspondenceId}/transition`, {
+        method: "POST",
+        body: JSON.stringify(toStatus === "sent" ? { toStatus, senderSignatureName: signatureName.trim() } : { toStatus }),
+      });
+      setSignatureName("");
       await load();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
       setTransitioning(false);
+    }
+  }
+
+  async function handleDownloadReport(): Promise<void> {
+    try {
+      const res = await apiFetch(`/correspondence/${params.correspondenceId}/report`);
+      if (!res.ok) throw new Error("report_failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError(tc("errorGeneric"));
     }
   }
 
@@ -105,9 +128,18 @@ export default function CorrespondenceDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <Link href={`/${locale}/projects/${params.id}/correspondence`} className="mb-4 inline-block text-sm text-navy-600 underline">
-          {t("back")}
-        </Link>
+        <div className="mb-4 flex items-center justify-between">
+          <Link href={`/${locale}/projects/${params.id}/correspondence`} className="inline-block text-sm text-navy-600 underline">
+            {t("back")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => void handleDownloadReport()}
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
+          >
+            {tc("exportPdf")}
+          </button>
+        </div>
 
         <div className="mb-1 flex items-center gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
@@ -118,6 +150,7 @@ export default function CorrespondenceDetailScreen() {
         <p className="mb-4 text-sm text-navy-600">
           {typeLabel(item.type, t)} · {companyName(item.fromCompanyId)} → {companyName(item.toCompanyId)}
           {item.responseRequiredBy && ` · ${t("responseRequiredBy")}: ${item.responseRequiredBy.slice(0, 10)}`}
+          {item.senderSignatureName && ` · ${t("signedBy")}: ${item.senderSignatureName}`}
         </p>
         {error && <p className="text-maroon-700">{error}</p>}
 
@@ -125,11 +158,35 @@ export default function CorrespondenceDetailScreen() {
           <p className="whitespace-pre-wrap">{item.body}</p>
         </div>
 
-        {CORRESPONDENCE_STATUS_TRANSITIONS[item.status].length > 0 && (
+        {CORRESPONDENCE_STATUS_TRANSITIONS[item.status].includes("sent") && (
+          <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
+            <label className="mb-2 flex flex-col gap-1 text-sm">
+              {t("signatureName")}
+              <input
+                type="text"
+                value={signatureName}
+                onChange={(e) => setSignatureName(e.target.value)}
+                placeholder={t("signaturePlaceholder")}
+                className="rounded-lg border-3 border-ink px-3 py-2"
+              />
+            </label>
+            <button
+              onClick={() => void handleTransition("sent")}
+              disabled={transitioning || !signatureName.trim()}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
+            >
+              {t("signAndSend")}
+            </button>
+          </div>
+        )}
+
+        {CORRESPONDENCE_STATUS_TRANSITIONS[item.status].filter((s) => s !== "sent").length > 0 && (
           <div className="mb-6">
             <p className="mb-2 text-sm text-navy-600">{t("moveTo")}</p>
             <div className="flex flex-wrap gap-2">
-              {CORRESPONDENCE_STATUS_TRANSITIONS[item.status].map((next) => (
+              {CORRESPONDENCE_STATUS_TRANSITIONS[item.status]
+                .filter((next) => next !== "sent")
+                .map((next) => (
                 <button
                   key={next}
                   onClick={() => void handleTransition(next)}

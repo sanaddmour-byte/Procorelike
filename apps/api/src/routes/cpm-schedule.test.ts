@@ -38,10 +38,15 @@ async function resetProjectSchedule(): Promise<void> {
     const tasks = await clients.authDb.db.select().from(schema.cpmScheduleTasks).where(inArray(schema.cpmScheduleTasks.versionId, versionIds));
     const taskIds = tasks.map((t) => t.id);
     if (taskIds.length > 0) {
+      await clients.authDb.db.update(schema.dailyLogDelays).set({ scheduleTaskId: null }).where(inArray(schema.dailyLogDelays.scheduleTaskId, taskIds));
+      await clients.authDb.db.delete(schema.scheduleProgressUpdates).where(inArray(schema.scheduleProgressUpdates.taskId, taskIds));
+      await clients.authDb.db.delete(schema.scheduleConstraints).where(inArray(schema.scheduleConstraints.taskId, taskIds));
+      await clients.authDb.db.delete(schema.lookaheadCommitments).where(inArray(schema.lookaheadCommitments.taskId, taskIds));
       await clients.authDb.db.delete(schema.taskDependencies).where(inArray(schema.taskDependencies.successorId, taskIds));
       await clients.authDb.db.delete(schema.recordLinks).where(inArray(schema.recordLinks.targetId, taskIds));
       await clients.authDb.db.delete(schema.cpmScheduleTasks).where(inArray(schema.cpmScheduleTasks.id, taskIds));
     }
+    await clients.authDb.db.delete(schema.lookaheadPlans).where(eq(schema.lookaheadPlans.projectId, projectId));
     await clients.authDb.db.delete(schema.scheduleVersions).where(inArray(schema.scheduleVersions.id, versionIds));
   }
   await clients.authDb.db.delete(schema.calendars).where(eq(schema.calendars.projectId, projectId));

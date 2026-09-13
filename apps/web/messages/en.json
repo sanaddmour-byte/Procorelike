@@ -7,7 +7,8 @@
     "errorBoundaryTitle": "Something broke on our end",
     "errorBoundaryBody": "This page ran into an unexpected error. Your work in other tabs is unaffected.",
     "retry": "Try again",
-    "backToProjects": "Back to projects"
+    "backToProjects": "Back to projects",
+    "exportPdf": "Export PDF"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -21,7 +22,20 @@
   "Projects": {
     "title": "Your projects",
     "empty": "You are not assigned to any projects yet.",
-    "viewDirectory": "View directory"
+    "viewDirectory": "View directory",
+    "manageCompanyLogo": "Manage company logo"
+  },
+  "Companies": {
+    "title": "Company branding",
+    "back": "Back to projects",
+    "intro": "Upload a PNG logo for each company you belong to — it appears on the letterhead of RFI, Submittal, Change Order, and Correspondence PDF exports for any project that company works on.",
+    "empty": "You don't belong to any companies yet.",
+    "chooseFile": "Choose a PNG file",
+    "upload": "Upload logo",
+    "uploading": "Uploading…",
+    "noLogo": "No logo uploaded yet.",
+    "pngOnly": "Only PNG files are supported.",
+    "uploadFailed": "Couldn't upload the logo. Please try again."
   },
   "Directory": {
     "title": "Project directory",
@@ -612,7 +626,12 @@
     "statusAcknowledged": "Acknowledged",
     "statusClosed": "Closed",
     "moveTo": "Move to",
-    "back": "Back to correspondence"
+    "back": "Back to correspondence",
+    "signatureName": "Type your name to sign & send",
+    "signaturePlaceholder": "Full name",
+    "signAndSend": "Sign & send",
+    "signatureRequired": "Type your name to send this correspondence.",
+    "signedBy": "Signed by"
   },
   "Language": {
     "english": "English",

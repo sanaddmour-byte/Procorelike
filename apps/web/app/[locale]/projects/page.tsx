@@ -37,7 +37,12 @@ export default function ProjectsPage() {
     <>
       <Header />
       <main className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+          <Link href={`/${locale}/companies`} className="text-sm font-semibold text-navy-700 underline">
+            {t("manageCompanyLogo")}
+          </Link>
+        </div>
         {error && <p className="text-maroon-700">{error}</p>}
         {!projects && !error && <p>{tc("loading")}</p>}
         {projects && projects.length === 0 && <p>{t("empty")}</p>}

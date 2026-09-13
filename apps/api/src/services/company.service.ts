@@ -1,25 +1,76 @@
+import { eq } from "drizzle-orm";
 import { schema, withRequestContext, type Database } from "@siteops/db";
-import type { CreateCompanyInput } from "@siteops/shared";
+import type { CreateCompanyInput, UploadCompanyLogoInput } from "@siteops/shared";
+import { ApiError, NotFoundError } from "../lib/errors";
+
+type CompanyRow = typeof schema.companies.$inferSelect;
+export type CompanyListItem = Omit<CompanyRow, "logoDataBase64"> & { hasLogo: boolean };
+
+/** Every list/detail response strips the (potentially ~1.4MB) base64 logo blob -- only `GET /companies/:id/logo` returns the actual bytes. `hasLogo` is all a list view needs to decide whether to render a preview. */
+function stripLogoData(company: CompanyRow): CompanyListItem {
+  const { logoDataBase64, ...rest } = company;
+  return { ...rest, hasLogo: Boolean(logoDataBase64) };
+}
 
 export async function createCompany(
   appDb: Database,
   creatorUserId: string,
   input: CreateCompanyInput,
-): Promise<typeof schema.companies.$inferSelect> {
+): Promise<CompanyListItem> {
   return withRequestContext(appDb, { userId: creatorUserId }, async (tx) => {
     const [company] = await tx.insert(schema.companies).values(input).returning();
     if (!company) throw new Error("Failed to create company");
     await tx.insert(schema.userCompanies).values({ userId: creatorUserId, companyId: company.id });
-    return company;
+    return stripLogoData(company);
   });
 }
 
 /** RLS scopes this to companies the caller belongs to or shares a project with. */
-export async function listMyCompanies(
+export async function listMyCompanies(appDb: Database, userId: string): Promise<CompanyListItem[]> {
+  return withRequestContext(appDb, { userId }, async (tx) => {
+    const rows = await tx.select().from(schema.companies);
+    return rows.map(stripLogoData);
+  });
+}
+
+/**
+ * PNG logo for branded PDF letterheads (Phase 12). RLS's
+ * `companies_member_update` policy already restricts the UPDATE to actual
+ * `user_companies` members (stricter than the SELECT policy, which also
+ * admits anyone sharing a project with the company) -- a 0-row result
+ * despite the company existing means "visible but not a member", not
+ * "not found".
+ */
+export async function uploadCompanyLogo(
   appDb: Database,
   userId: string,
-): Promise<(typeof schema.companies.$inferSelect)[]> {
+  companyId: string,
+  input: UploadCompanyLogoInput,
+): Promise<CompanyListItem> {
   return withRequestContext(appDb, { userId }, async (tx) => {
-    return tx.select().from(schema.companies);
+    const [existing] = await tx.select().from(schema.companies).where(eq(schema.companies.id, companyId)).limit(1);
+    if (!existing) throw new NotFoundError("Company not found");
+
+    const [updated] = await tx
+      .update(schema.companies)
+      .set({ logoDataBase64: input.dataBase64, logoMime: input.mime, updatedAt: new Date(), serverRevision: existing.serverRevision + 1 })
+      .where(eq(schema.companies.id, companyId))
+      .returning();
+    if (!updated) throw new ApiError(403, "not_company_member", "You are not a member of this company");
+    return stripLogoData(updated);
+  });
+}
+
+export interface CompanyLogo {
+  mime: string;
+  dataBase64: string;
+}
+
+/** Branding isn't sensitive -- any authenticated caller who can see the company (RLS's is_company_visible: a member, or shares a project with it) can fetch its logo, so a PDF can render a collaborating company's letterhead without membership friction. */
+export async function getCompanyLogo(appDb: Database, userId: string, companyId: string): Promise<CompanyLogo | null> {
+  return withRequestContext(appDb, { userId }, async (tx) => {
+    const [company] = await tx.select().from(schema.companies).where(eq(schema.companies.id, companyId)).limit(1);
+    if (!company || !company.logoDataBase64 || !company.logoMime) return null;
+    return { mime: company.logoMime, dataBase64: company.logoDataBase64 };
   });
 }

@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { uploadAttachment } from "@/lib/upload";
 import type { SubmittalResponseCode } from "@siteops/shared";
@@ -169,6 +169,18 @@ export default function SubmittalDetailScreen() {
     }
   }
 
+  async function handleDownloadReport(): Promise<void> {
+    try {
+      const res = await apiFetch(`/submittals/${params.submittalId}/report`);
+      if (!res.ok) throw new Error("report_failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError(tc("errorGeneric"));
+    }
+  }
+
   async function handleClose(): Promise<void> {
     setBusy(true);
     try {
@@ -196,9 +208,18 @@ export default function SubmittalDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <Link href={`/${locale}/projects/${params.id}/submittals`} className="mb-4 inline-block text-sm text-navy-600 underline">
-          {t("back")}
-        </Link>
+        <div className="mb-4 flex items-center justify-between">
+          <Link href={`/${locale}/projects/${params.id}/submittals`} className="inline-block text-sm text-navy-600 underline">
+            {t("back")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => void handleDownloadReport()}
+            className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
+          >
+            {tc("exportPdf")}
+          </button>
+        </div>
 
         <div className="mb-1 flex items-center justify-between">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">

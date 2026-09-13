@@ -68,6 +68,16 @@ export const companies = pgTable("companies", {
   id: idColumn(),
   name: varchar("name", { length: 200 }).notNull(),
   type: companyTypeEnum("type").notNull(),
+  /**
+   * Branding for PDF letterheads (RFI/Submittal/Change Order/Correspondence
+   * exports) -- stored inline as base64 rather than through the
+   * project-scoped `attachments`/S3 pipeline, since a company's logo is
+   * deliberately not tied to any one project (companies has no RLS policy
+   * for the same reason). Small PNGs only; see uploadCompanyLogoSchema's
+   * size cap.
+   */
+  logoDataBase64: text("logo_data_base64"),
+  logoMime: varchar("logo_mime", { length: 100 }),
   ...auditColumns(),
 });
 

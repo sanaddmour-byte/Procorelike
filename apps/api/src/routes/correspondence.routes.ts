@@ -2,6 +2,7 @@ import type { Database } from "@siteops/db";
 import { createCorrespondenceSchema, transitionCorrespondenceStatusSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
+import { generateCorrespondencePdf } from "../lib/correspondence-report";
 import { NotFoundError } from "../lib/errors";
 import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
@@ -62,6 +63,23 @@ export function correspondenceRouter(appDb: Database, env: Env): Router {
       }
     },
   );
+
+  router.get("/:id/report", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Correspondence not found");
+      const { ctx } = await loadCtx(authUser.id, id);
+      const reportData = await correspondenceService.getCorrespondenceReportData(appDb, authUser.id, ctx, id);
+      const pdfBytes = await generateCorrespondencePdf(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="correspondence-${reportData.correspondenceNumber}.pdf"`);
+      res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+      next(err);
+    }
+  });
 
   return router;
 }

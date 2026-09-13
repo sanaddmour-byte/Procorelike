@@ -23,11 +23,17 @@ export const createCorrespondenceSchema = z
   .strict();
 export type CreateCorrespondenceInput = z.infer<typeof createCorrespondenceSchema>;
 
+/** `senderSignatureName` is required exactly when moving to "sent" -- a formal letter/notice/transmittal/memo can't go out unsigned (Phase 12). It's the sender typing their own name to certify/send, not a drawn signature. */
 export const transitionCorrespondenceStatusSchema = z
   .object({
     toStatus: correspondenceStatusSchema,
+    senderSignatureName: z.string().min(1).max(200).optional(),
   })
-  .strict();
+  .strict()
+  .refine((data) => data.toStatus !== "sent" || Boolean(data.senderSignatureName?.trim()), {
+    message: "senderSignatureName is required when sending correspondence",
+    path: ["senderSignatureName"],
+  });
 export type TransitionCorrespondenceStatusInput = z.infer<typeof transitionCorrespondenceStatusSchema>;
 
 /** Sent can be acknowledged or closed directly (not every letter needs a formal acknowledgment); closed can reopen back to sent if follow-up is needed. */

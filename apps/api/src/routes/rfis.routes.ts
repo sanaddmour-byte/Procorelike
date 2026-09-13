@@ -4,6 +4,7 @@ import { Router, type NextFunction, type Request, type Response } from "express"
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
 import { paramAsString } from "../lib/params";
+import { generateRfiPdf } from "../lib/rfi-report";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { loadPermissionContext } from "../services/permission.service";
@@ -112,6 +113,25 @@ export function rfisRouter(appDb: Database, env: Env): Router {
       }
     },
   );
+
+  router.get("/:id/report", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("RFI not found");
+      const rfi = await rfiService.findRfiById(appDb, authUser.id, id);
+      if (!rfi) throw new NotFoundError("RFI not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, rfi.projectId);
+      const reportData = await rfiService.getRfiReportData(appDb, authUser.id, ctx, id);
+      const pdfBytes = await generateRfiPdf(reportData);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="rfi-${reportData.number}.pdf"`);
+      res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+      next(err);
+    }
+  });
 
   return router;
 }

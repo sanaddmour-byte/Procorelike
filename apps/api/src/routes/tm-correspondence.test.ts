@@ -192,12 +192,19 @@ describe("Correspondence", () => {
     expect(create.body.status).toBe("draft");
     const correspondenceId = create.body.id as string;
 
-    const toSent = await request(app)
+    const missingSignature = await request(app)
       .post(`/correspondence/${correspondenceId}/transition`)
       .set("authorization", `Bearer ${token}`)
       .send({ toStatus: "sent" });
+    expect(missingSignature.status).toBe(400); // a formal letter can't go out unsigned (Phase 12)
+
+    const toSent = await request(app)
+      .post(`/correspondence/${correspondenceId}/transition`)
+      .set("authorization", `Bearer ${token}`)
+      .send({ toStatus: "sent", senderSignatureName: "Rana Odeh" });
     expect(toSent.status).toBe(200);
     expect(toSent.body.sentDate).toBeTruthy();
+    expect(toSent.body.senderSignatureName).toBe("Rana Odeh");
 
     const toAcknowledged = await request(app)
       .post(`/correspondence/${correspondenceId}/transition`)
