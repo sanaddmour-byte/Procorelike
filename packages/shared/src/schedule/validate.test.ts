@@ -77,4 +77,32 @@ describe("validateParsedSchedule", () => {
     });
     expect(validateParsedSchedule(s)).toEqual([]);
   });
+
+  it("does not blow the call stack on a long unbroken FS chain (P6/MSP schedules routinely chain thousands of activities)", () => {
+    const count = 20_000;
+    const tasks: ParsedTask[] = [];
+    const dependencies: ParsedSchedule["dependencies"] = [];
+    for (let i = 1; i <= count; i++) {
+      tasks.push(task(String(i)));
+      if (i > 1) dependencies.push({ predecessorExternalId: String(i - 1), successorExternalId: String(i), type: "FS", lagMinutes: 0 });
+    }
+    const s = schedule({ tasks, dependencies });
+    expect(validateParsedSchedule(s)).toEqual([]);
+  });
+
+  it("still finds the cycle at the far end of a long chain", () => {
+    const count = 20_000;
+    const tasks: ParsedTask[] = [];
+    const dependencies: ParsedSchedule["dependencies"] = [];
+    for (let i = 1; i <= count; i++) {
+      tasks.push(task(String(i)));
+      if (i > 1) dependencies.push({ predecessorExternalId: String(i - 1), successorExternalId: String(i), type: "FS", lagMinutes: 0 });
+    }
+    dependencies.push({ predecessorExternalId: String(count), successorExternalId: "1", type: "FS", lagMinutes: 0 });
+    const s = schedule({ tasks, dependencies });
+    const errors = validateParsedSchedule(s);
+    const cycleError = errors.find((e) => e.code === "circular_dependency");
+    expect(cycleError).toBeDefined();
+    expect(cycleError!.taskExternalIds).toHaveLength(count + 1);
+  });
 });

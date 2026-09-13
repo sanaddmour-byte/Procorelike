@@ -208,6 +208,15 @@ describe("Scheduling & Gantt import (Phase 11a gate)", () => {
     expect(linksRes.body[0].id).toBe(linkId);
     expect(linksRes.body[0].targetId).toBe(newTargetTask.id);
     expect(linksRes.body[0].targetId).not.toBe(targetTask.id);
+
+    const currentRes = await request(app).get(`/schedules/current?projectId=${projectId}`).set("authorization", `Bearer ${token}`);
+    expect(currentRes.status).toBe(200);
+    expect(currentRes.body.version.id).toBe(secondVersionId);
+    expect(currentRes.body.tasks).toHaveLength(TASK_COUNT + 1); // 1 WBS node + (TASK_COUNT - 1 + 1 new) activities
+    expect(currentRes.body.dependencies.length).toBeGreaterThan(0);
+    // A calendar row is created per import (documented Phase 11a scope cut --
+    // no dedup-by-name across re-imports), so this is >=1, not necessarily 1.
+    expect(currentRes.body.calendars.length).toBeGreaterThanOrEqual(1);
   }, 30_000);
 
   it("rejects an import with a circular dependency", async () => {

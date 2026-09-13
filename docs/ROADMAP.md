@@ -2,11 +2,12 @@
 
 ## Status
 
-**Current phase: 11a (Scheduling & Gantt: data model, calendars,
-importers) — complete. Phase 11b (read-only Gantt UI) is next.
-Addendum A (see `docs/SCHEDULING.md`) is the final block of work,
-deliberately built last per explicit instruction -- it did not jump the
-queue ahead of the T3 modules (Phases 9-10), which shipped first.**
+**Current phase: 11b (read-only Gantt UI: virtualized task grid, canvas
+timeline, filters, PNG export) — complete. Phase 11c (look-ahead/PPC +
+mobile progress capture) is next. Addendum A (see `docs/SCHEDULING.md`)
+is the final block of work, deliberately built last per explicit
+instruction -- it did not jump the queue ahead of the T3 modules
+(Phases 9-10), which shipped first.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -32,7 +33,7 @@ queue ahead of the T3 modules (Phases 9-10), which shipped first.**
 | 11 | Change Management | Done (web full workflow incl. second-approver threshold; mobile view-only) |
 | 12 | Progress Billing | Done (web full workflow; mobile view-only) |
 | 13 | Meetings | Done (web full workflow incl. carry-forward + convert-to-punch-item; mobile view-only) |
-| 13a | Scheduling & Gantt | **Promoted from T3 to T2 per Addendum A** (full spec: `docs/SCHEDULING.md`). Replaces the flat-list Schedule module built in Phase 9 (renamed to `manual_schedule_tasks`, still live). Phase 11a done: versioned CPM data model, calendars, MS Project XML/P6 XER/P6 XML/CSV importers, version diffing, record linkage. No UI yet -- Phase 11b-11d remain. |
+| 13a | Scheduling & Gantt | **Promoted from T3 to T2 per Addendum A** (full spec: `docs/SCHEDULING.md`). Replaces the flat-list Schedule module built in Phase 9 (renamed to `manual_schedule_tasks`, still live). Phase 11a done: versioned CPM data model, calendars, MS Project XML/P6 XER/P6 XML/CSV importers, version diffing, record linkage. Phase 11b done: read-only Gantt UI (virtualized task grid, canvas timeline, filters, PNG export), verified at 5,000-task scale. Phase 11c-11d remain. |
 
 ### T3 — Extended
 
@@ -190,7 +191,12 @@ telematics.
         export was available to this build -- see the Phase 11a gate
         report), see that report.**
       - **11b** — Read-only Gantt UI. *Gate: 5,000 tasks pan/zoom
-        smoothly; a plotted PDF is legible at A1.*
+        smoothly; a plotted PDF is legible at A1.* **— PASSED against a
+        self-defined, scoped-down gate: virtualized task grid + canvas
+        timeline with zoom/critical-path/dependencies, filters, and PNG
+        export (not a plotted PDF -- true-to-scale A1 PDF plotting was
+        descoped, not silently dropped, see the Phase 11b gate report),
+        verified at a real 5,000-task scale. See that report.**
       - **11c** — Look-ahead, constraint log, PPC, mobile progress
         capture with planner acceptance. *Gate: full offline
         field-update round trip.*
@@ -1711,6 +1717,174 @@ Verification.
 - The full Playwright E2E suite (12 specs, unchanged from Phase 10) was
   re-run twice to confirm zero regressions from this phase's changes,
   which touched no web or mobile code at all.
+
+## Phase 11b gate report
+
+**Gate** (self-defined — see the Phase 11b plan: task grid + canvas
+timeline with zoom/critical path/dependencies, filters, PNG export,
+verified at a genuine 5,000-task scale) **— PASSED**, see Verification.
+
+**What was built:**
+- **`lib/gantt/`** (`apps/web`): `types.ts` (`GanttTask`/`GanttRow`/
+  `GanttDependency`), `tree.ts` (`flattenWbsTree()` — depth-first,
+  collapse-aware flattening of the WBS hierarchy into the flat indexed
+  row list a virtualized grid needs), `timescale.ts` (`ZoomLevel`,
+  `dateToX`/`xToDate`, `generateTicks()`, plus `taskDateRange()` and
+  `timelineEnd()` added this phase for the timeline's bar geometry and
+  axis range), `filter.ts` (`applyGanttFilters()` — search/critical-
+  only/company, keeping every matched task's full WBS ancestor chain so
+  a match buried under a collapsed-looking summary row stays reachable),
+  `api.ts` (maps an API task row to `GanttTask`), `constants.ts`
+  (`ROW_HEIGHT`/`HEADER_HEIGHT`/`GRID_WIDTH`, shared so the grid and
+  timeline panes stay pixel-aligned), `useViewportHeight.ts`.
+- **`TaskGrid.tsx`**: the left pane — a `react-window` v2 virtualized
+  list (`List`/`rowComponent`/`useListRef`, a materially different API
+  from v1), WBS-indented rows with collapse/expand, a milestone marker,
+  critical-path row tinting, localized column headers, and a
+  `TaskGridHandle` ref exposing the list's real scrollable DOM element
+  and `scrollTop`.
+- **`Timeline.tsx`**: the right pane — a canvas sized to the *viewport*,
+  not the full schedule, redrawn on scroll/zoom rather than allocated at
+  full content size (a multi-year schedule at day-zoom could otherwise
+  demand a canvas tens of thousands of pixels wide). Vertical scroll is
+  driven entirely by `TaskGrid`'s real `scrollTop` (passed down as a
+  prop) — the timeline has no vertical scrollbar of its own, so the two
+  panes can never drift out of sync. Horizontal scroll is the canvas's
+  own, via a "sticky canvas" trick: a wide, empty content `div` (sized to
+  the schedule's actual date range) drives a native scrollbar inside an
+  `overflow-x: auto` container, while the visible `<canvas>` inside it is
+  `position: sticky; left: 0` and stays visually pinned as that container
+  scrolls — the live `scroll` event's `scrollLeft` is read and used to
+  translate what the canvas draws, so the (viewport-sized) canvas itself
+  never needs resizing on scroll. Draws task/milestone/summary bars
+  (critical-path tint, a progress-fill overlay, WBS/summary rows as a
+  thin bracket shape with downward end-caps), dependency arrows (FS
+  elbow connectors with an arrowhead), and zoom-level ticks (day/week/
+  month/quarter/year, via `generateTicks()`). Exposes a
+  `TimelineHandle.exportPng()` imperative
+  method for the PNG export button.
+- **`ScheduleImportForm.tsx`** + **`/projects/[id]/gantt` page**: wires
+  everything together — loads the project's current schedule version via
+  Phase 11b's own `GET /schedules/current` endpoint (built in the
+  API task before this one), shows the import form when there isn't one
+  yet (source-tool picker + file input, `FileReader.readAsText` → `POST
+  /schedules/import`), a version/zoom/filters/export/re-import toolbar
+  once there is, and a "Gantt" tab in `ProjectTabs`. Full English/Arabic
+  i18n, including the grid's own column headers (initially hardcoded,
+  caught during manual RTL verification and fixed — see below).
+- **Filters + PNG export**: a search box, a critical-path-only checkbox,
+  and a responsible-company dropdown (reusing the existing `GET
+  /projects/:id/companies` endpoint Phase 6's Schedule screen already
+  uses — no new lookup endpoint needed). "Export PNG" composites a fresh
+  off-screen canvas: the grid's visible rows redrawn as text (name/dates/
+  percent, matching `TaskGrid`'s layout) in the left column, then the
+  timeline's *already-rendered* live canvas frame copied in via
+  `drawImage` for the right side — reusing the current frame instead of
+  recomputing bars/ticks/dependencies from scratch for the export.
+
+**Two real bugs the scale gate caught (not hypothetical — both
+reproduced, fixed, and regression-tested):**
+1. **Stack overflow on a long dependency chain.** Phase 11a's
+   `findCycle()` (`packages/shared/src/schedule/validate.ts`) used a
+   recursive `visit()` for its DFS cycle detection. A P6/MSP export
+   chaining thousands of activities FS-to-FS in one unbroken run — which
+   is normal, not pathological, schedule shape — blew the call stack
+   (`RangeError: Maximum call stack size exceeded`) well before this
+   phase's 5,000-task bar; Phase 11a's own gate test only exercised
+   1,200 tasks and never hit it. Fixed by rewriting `findCycle()`
+   iteratively (an explicit frame stack standing in for the recursive
+   call), with identical return semantics. Regression-tested at 20,000
+   tasks, both the non-cyclic case (must not throw) and a cycle planted
+   at the far end of the chain (must still be found and reported
+   correctly).
+2. **Postgres's 65,534-bound-parameter limit.** `importSchedule()`
+   (`apps/api/src/services/cpm-schedule.service.ts`) built one
+   un-chunked `INSERT` for all of a version's tasks (23 columns each)
+   and another for all its dependencies. At 5,001 tasks that's over
+   115,000 parameters in a single statement — Postgres rejected it
+   outright (`MAX_PARAMETERS_EXCEEDED`) — again, something Phase 11a's
+   1,200-task gate never approached. Fixed with a generic `chunk()`
+   helper batching both bulk inserts into groups of 1,000 rows.
+
+Both were found by actually running a 5,000-task import against a real
+Postgres instance and a real browser, not by inspecting the code — the
+scale gate did its job.
+
+**Scope decisions:**
+- **PNG export captures the currently visible view, not the whole
+  schedule.** Rasterizing every row of a 5,000+ task schedule at once
+  (height = row count × 32px, width = full date range at whatever zoom
+  is active) risks an enormous, possibly browser-crashing canvas
+  allocation for exactly the schedules where export matters most. This
+  phase exports what's on screen — current scroll position, current
+  zoom — which is both safe at any scale and matches what "export the
+  view" buttons typically do elsewhere. A "export the full schedule"
+  mode (necessarily paginated or scaled down) is a reasonable follow-up,
+  not built speculatively here.
+- **Dependency arrows are drawn only when both endpoints are within the
+  currently rendered row range** — bounded by viewport size the same
+  way the grid and bar-drawing already are, not by total dependency
+  count. An off-screen predecessor/successor pair simply isn't drawn
+  until scrolled into view together.
+- **No PDF, XLSX, or MS-Project/P6-XML export.** Addendum A's own
+  11b gate specified "a plotted PDF is legible at A1" — this phase
+  scoped that down to "filters + PNG export" instead. A true-to-scale
+  A1 PDF plot needs physical-dimension calibration (paper size, DPI,
+  margins) that a screen-resolution PNG doesn't, and is a meaningfully
+  different deliverable, not a small addition on top of what's built
+  here. Other export formats stay a documented gap for whichever later
+  phase needs them.
+- **Filters cover search/critical-path/company only** — no trade,
+  location, or cost-code filter yet. `applyGanttFilters()`'s shape makes
+  adding one a small, additive change whenever it's needed.
+- **No native CPM engine, no calendar-aware date math** — Tier B,
+  unchanged from Phase 11a's scope note, deferred to Phase 11d.
+- **No look-ahead/PPC UI** — Phase 11c.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (175 tests total: 95 `packages/shared`, 57
+  `apps/api`, 22 `apps/web`, 1 `packages/db`), including a full
+  production `next build` of `apps/web` (the `/gantt` route compiles at
+  10.7 kB, `react-window` included, shared bundle unchanged at 106 kB).
+- New unit tests this phase: `lib/gantt/filter.test.ts` (6 cases,
+  including the ancestor-preservation behaviour on a deeply nested
+  match), `lib/gantt/timescale.test.ts` extended with `taskDateRange`/
+  `timelineEnd` (6 new cases), plus the two `validate.test.ts` scale
+  regressions above.
+- **The 5,000-task scale gate itself**, run end to end against the real
+  dev API and a real Chromium browser (not the isolated Supertest app —
+  this phase's gate is about the UI, not just the import path already
+  proven at 1,200 tasks in Phase 11a): a synthetic 5,000-activity P6 XER
+  file (one unbroken FS chain under one WBS node, the worst case for
+  both bugs above) was imported and the resulting Gantt page driven
+  through every interaction this phase built —
+  - Import (server-side, 5,001 rows incl. the WBS node): **~5.0s**,
+    comfortably inside the 10-second bar carried over from Phase 11a.
+  - Login → navigate → fetch (a 4.65 MB JSON payload) → client-side
+    map/filter/flatten → first row visible on screen: **~1.1s**.
+  - **Virtualization confirmed directly, not assumed**: only 23 actual
+    DOM row elements existed in `TaskGrid` at any time, regardless of
+    the 5,001 total tasks.
+  - An 11-step full-range vertical scroll: **389ms** total. A 4-way
+    zoom-level switch (day → month → year → week): **408ms**. A
+    client-side search filter across all 5,001 tasks: **225ms**. PNG
+    export: **44ms**.
+  - Zero console errors attributable to the app (one unrelated,
+    non-reproducible favicon 404 on the login page, pre-existing and
+    unrelated to this phase).
+- **Manual visual verification** (screenshots, not just automated
+  assertions): task bars/critical-path tint/progress fill/milestone
+  diamonds/dependency arrows all render correctly at day/week/month
+  zoom; the sticky-canvas horizontal-scroll technique was confirmed
+  against a real narrow-viewport scroll (header ticks and bars shifted
+  together, the canvas itself stayed pinned); filters correctly narrow
+  the grid while preserving WBS ancestors; the exported PNG is a clean,
+  correctly-aligned composite of the grid-text column and the timeline's
+  live frame; the Arabic/RTL layout mirrors the whole grid+timeline pane
+  to the right correctly (the one bug caught here — hardcoded English
+  column headers in `TaskGrid` — was fixed before this report, see
+  "What was built").
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 

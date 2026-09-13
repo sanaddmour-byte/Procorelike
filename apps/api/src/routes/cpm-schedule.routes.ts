@@ -40,6 +40,21 @@ export function cpmScheduleRouter(appDb: Database, env: Env): Router {
     }
   });
 
+  router.get("/current", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const result = await cpmScheduleService.getCurrentScheduleWithTasks(appDb, authUser.id, ctx, projectId);
+      if (!result) throw new NotFoundError("No schedule found for this project");
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.get("/versions/:versionId/tasks", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authUser = req.authUser;

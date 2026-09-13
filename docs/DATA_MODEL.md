@@ -212,6 +212,31 @@ dependency, orphaned predecessor, negative duration).
 - No web or mobile UI this phase -- the Gantt UI (including any import
   form) is explicitly Phase 11b in the addendum's own phase breakdown.
 
+## 9f. Scheduling & Gantt UI (Addendum A, Phase 11b)
+
+No schema changes this phase (one new read endpoint, `GET
+/schedules/current`, reusing 9e's tables as-is). Full detail in
+`docs/ROADMAP.md`'s Phase 11b gate report; summarised here for the
+data-model-adjacent parts:
+
+- **Two scale bugs in the 9e data layer, found by this phase's
+  5,000-task verification and fixed here**: the importer's cycle
+  detection (`findCycle()` in `packages/shared/src/schedule/validate.ts`)
+  was recursive and overflowed the call stack on a long unbroken
+  dependency chain -- rewritten iteratively. The bulk task/dependency
+  `INSERT`s in `importSchedule()` built one un-chunked statement each,
+  exceeding Postgres's 65,534-bound-parameter limit at ~5,000 tasks --
+  now batched in groups of 1,000 rows. Neither was reachable at Phase
+  11a's 1,200-task gate scale.
+- **`GET /schedules/current?projectId=`** (new): the one-call
+  convenience read the Gantt page needs -- the project's current
+  version plus every task/dependency/calendar it owns -- instead of the
+  two-round-trip `GET /schedules` + `GET /schedules/versions/:id/tasks`
+  path 9e shipped.
+- The UI itself (virtualized task grid, canvas timeline, filters, PNG
+  export) is pure client-side rendering against that read -- no new
+  tables, no write path beyond the existing `POST /schedules/import`.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

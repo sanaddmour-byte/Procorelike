@@ -36,6 +36,13 @@ export interface ImportScheduleResult {
   diff?: ScheduleDiff;
 }
 
+/** Postgres caps bound parameters at 65,534 per query -- a single bulk INSERT of a large schedule's tasks (20+ columns each) blows past that well before docs/SCHEDULING.md A2's 5,000-task bar, so every bulk insert here goes through this in batches instead. */
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+}
+
 function parseByTool(input: ImportScheduleInput): ParsedSchedule {
   switch (input.sourceTool) {
     case "csv":
@@ -163,39 +170,36 @@ export async function importSchedule(
       if (row) calendarIdByExternalId.set(cal.externalId, row.id);
     }
 
-    const insertedTasks =
-      parsed.tasks.length > 0
-        ? await tx
-            .insert(schema.cpmScheduleTasks)
-            .values(
-              parsed.tasks.map((t) => ({
-                versionId: version.id,
-                externalId: t.externalId,
-                wbsCode: t.wbsCode,
-                name: t.name,
-                taskType: t.taskType,
-                durationMinutes: t.durationMinutes,
-                calendarId: t.calendarExternalId ? calendarIdByExternalId.get(t.calendarExternalId) : undefined,
-                earlyStart: t.earlyStart ? new Date(t.earlyStart) : undefined,
-                earlyFinish: t.earlyFinish ? new Date(t.earlyFinish) : undefined,
-                lateStart: t.lateStart ? new Date(t.lateStart) : undefined,
-                lateFinish: t.lateFinish ? new Date(t.lateFinish) : undefined,
-                plannedStart: t.plannedStart ? new Date(t.plannedStart) : undefined,
-                plannedFinish: t.plannedFinish ? new Date(t.plannedFinish) : undefined,
-                actualStart: t.actualStart ? new Date(t.actualStart) : undefined,
-                actualFinish: t.actualFinish ? new Date(t.actualFinish) : undefined,
-                totalFloatMinutes: t.totalFloatMinutes,
-                freeFloatMinutes: t.freeFloatMinutes,
-                isCritical: t.isCritical ?? false,
-                percentComplete: t.percentComplete,
-                physicalPercentComplete: t.physicalPercentComplete,
-                constraintType: t.constraintType,
-                constraintDate: t.constraintDate ? new Date(t.constraintDate) : undefined,
-                sortOrder: t.sortOrder,
-              })),
-            )
-            .returning()
-        : [];
+    const taskValues = parsed.tasks.map((t) => ({
+      versionId: version.id,
+      externalId: t.externalId,
+      wbsCode: t.wbsCode,
+      name: t.name,
+      taskType: t.taskType,
+      durationMinutes: t.durationMinutes,
+      calendarId: t.calendarExternalId ? calendarIdByExternalId.get(t.calendarExternalId) : undefined,
+      earlyStart: t.earlyStart ? new Date(t.earlyStart) : undefined,
+      earlyFinish: t.earlyFinish ? new Date(t.earlyFinish) : undefined,
+      lateStart: t.lateStart ? new Date(t.lateStart) : undefined,
+      lateFinish: t.lateFinish ? new Date(t.lateFinish) : undefined,
+      plannedStart: t.plannedStart ? new Date(t.plannedStart) : undefined,
+      plannedFinish: t.plannedFinish ? new Date(t.plannedFinish) : undefined,
+      actualStart: t.actualStart ? new Date(t.actualStart) : undefined,
+      actualFinish: t.actualFinish ? new Date(t.actualFinish) : undefined,
+      totalFloatMinutes: t.totalFloatMinutes,
+      freeFloatMinutes: t.freeFloatMinutes,
+      isCritical: t.isCritical ?? false,
+      percentComplete: t.percentComplete,
+      physicalPercentComplete: t.physicalPercentComplete,
+      constraintType: t.constraintType,
+      constraintDate: t.constraintDate ? new Date(t.constraintDate) : undefined,
+      sortOrder: t.sortOrder,
+    }));
+
+    const insertedTasks: CpmScheduleTaskRow[] = [];
+    for (const batch of chunk(taskValues, 1000)) {
+      insertedTasks.push(...(await tx.insert(schema.cpmScheduleTasks).values(batch).returning()));
+    }
 
     // parentTaskId is a self-reference resolved in a second pass, once every task has a real row id.
     const idByExternalId = new Map(insertedTasks.filter((t) => t.externalId).map((t) => [t.externalId!, t.id]));
@@ -219,7 +223,9 @@ export async function importSchedule(
         .filter((d): d is { predecessorId: string; successorId: string; type: (typeof parsed.dependencies)[number]["type"]; lagMinutes: number } =>
           Boolean(d.predecessorId && d.successorId),
         );
-      if (depValues.length > 0) await tx.insert(schema.taskDependencies).values(depValues);
+      for (const batch of chunk(depValues, 1000)) {
+        await tx.insert(schema.taskDependencies).values(batch);
+      }
     }
 
     // Carry forward record_links: a link pointing at a previous-version task
@@ -278,6 +284,47 @@ export async function getScheduleForProject(
     if (!scheduleRow) return undefined;
     const versions = await tx.select().from(schema.scheduleVersions).where(eq(schema.scheduleVersions.scheduleId, scheduleRow.id));
     return { schedule: scheduleRow, versions };
+  });
+}
+
+export interface CurrentScheduleWithTasks {
+  schedule: ScheduleRow;
+  version: ScheduleVersionRow;
+  tasks: CpmScheduleTaskRow[];
+  dependencies: (typeof schema.taskDependencies.$inferSelect)[];
+  calendars: (typeof schema.calendars.$inferSelect)[];
+}
+
+/** One-call convenience for a Gantt view: the project's current version plus every task/dependency/calendar it needs, instead of two round trips. */
+export async function getCurrentScheduleWithTasks(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  projectId: string,
+): Promise<CurrentScheduleWithTasks | undefined> {
+  requirePermission(ctx, "schedule", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [scheduleRow] = await tx.select().from(schema.schedules).where(eq(schema.schedules.projectId, projectId)).limit(1);
+    if (!scheduleRow || !scheduleRow.currentVersionId) return undefined;
+    const [version] = await tx.select().from(schema.scheduleVersions).where(eq(schema.scheduleVersions.id, scheduleRow.currentVersionId)).limit(1);
+    if (!version) return undefined;
+
+    const tasks = await tx.select().from(schema.cpmScheduleTasks).where(eq(schema.cpmScheduleTasks.versionId, version.id));
+    const dependencies =
+      tasks.length > 0
+        ? await tx
+            .select()
+            .from(schema.taskDependencies)
+            .where(
+              inArray(
+                schema.taskDependencies.successorId,
+                tasks.map((t) => t.id),
+              ),
+            )
+        : [];
+    const calendars = await tx.select().from(schema.calendars).where(eq(schema.calendars.projectId, projectId));
+
+    return { schedule: scheduleRow, version, tasks, dependencies, calendars };
   });
 }
 
