@@ -25,6 +25,8 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { key: "change-orders", label: t("changeOrders"), href: `/${locale}/projects/${projectId}/change-orders` },
     { key: "billing", label: t("billing"), href: `/${locale}/projects/${projectId}/billing` },
     { key: "meetings", label: t("meetings"), href: `/${locale}/projects/${projectId}/meetings` },
+    { key: "schedule", label: t("schedule"), href: `/${locale}/projects/${projectId}/schedule` },
+    { key: "safety", label: t("safety"), href: `/${locale}/projects/${projectId}/safety` },
   ];
 
   return (

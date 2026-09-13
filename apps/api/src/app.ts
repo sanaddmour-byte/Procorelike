@@ -25,6 +25,8 @@ import { photosRouter } from "./routes/photos.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { punchItemsRouter } from "./routes/punch-items.routes";
 import { rfisRouter } from "./routes/rfis.routes";
+import { scheduleRouter } from "./routes/schedule.routes";
+import { safetyIncidentsRouter, safetyObservationsRouter } from "./routes/safety.routes";
 import { submittalsRouter } from "./routes/submittals.routes";
 import { syncRouter } from "./routes/sync.routes";
 import { createS3Client } from "./lib/s3";
@@ -64,6 +66,9 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/drawings", drawingsRouter(clients.appDb.db, env));
   app.use("/rfis", rfisRouter(clients.appDb.db, env));
   app.use("/submittals", submittalsRouter(clients.appDb.db, env));
+  app.use("/schedule-tasks", scheduleRouter(clients.appDb.db, env));
+  app.use("/safety-incidents", safetyIncidentsRouter(clients.appDb.db, env));
+  app.use("/safety-observations", safetyObservationsRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 

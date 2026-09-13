@@ -24,6 +24,8 @@ export default function ProjectHomeScreen() {
     { href: `/projects/${id}/change-orders`, label: i18n.t("changeManagement.title") },
     { href: `/projects/${id}/billing`, label: i18n.t("billing.title") },
     { href: `/projects/${id}/meetings`, label: i18n.t("meetings.title") },
+    { href: `/projects/${id}/schedule`, label: i18n.t("schedule.title") },
+    { href: `/projects/${id}/safety`, label: i18n.t("safety.title") },
   ];
 
   return (

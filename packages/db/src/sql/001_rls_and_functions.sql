@@ -310,7 +310,8 @@ DECLARE
     'rfis', 'submittals', 'daily_logs', 'punch_items', 'photo_albums',
     'photos', 'inspections',
     'budget_line_items', 'commitments', 'change_events', 'change_orders',
-    'payment_applications', 'meetings'
+    'payment_applications', 'meetings',
+    'schedule_tasks', 'safety_incidents', 'safety_observations'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP

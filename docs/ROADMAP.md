@@ -2,7 +2,7 @@
 
 ## Status
 
-**Current phase: 7 (Meetings, dashboards, saved views, scheduled digests) — complete. Phase 8 (Hardening) is next.**
+**Current phase: 9 (Schedule & Safety) — complete. T&M Tickets + Correspondence (the remaining two T3 modules) are next.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -33,8 +33,8 @@
 
 | # | Module | Status |
 |---|---|---|
-| 14 | Schedule | Not started |
-| 15 | Safety | Not started |
+| 14 | Schedule | Done (web full CRUD + status/percent-complete; mobile view-only) |
+| 15 | Safety | Done (web full incident + observation workflow; mobile view-only) |
 | 16 | T&M Tickets / Field Productivity | Not started |
 | 17 | Reports & Dashboards | Partially done: a per-project rollup dashboard (RFIs/Punch List/Budget/Change Orders) exists on web and mobile; no saved custom reports or org-wide dashboards yet |
 | 18 | Correspondence / Transmittals | Not started |
@@ -129,6 +129,25 @@ telematics.
       of the three silent; and deployment + backup/restore runbooks
       specific enough that someone who has never run this stack could
       follow them.* **— PASSED, see the Phase 8 gate report.**
+- [x] **Phase 9 — Schedule & Safety (T3).** First two of the four
+      remaining T3 modules, taken in the same "2 modules per phase"
+      cadence as Phase 4 (RFIs+Submittals). Schedule: a project task
+      list with dates, percent-complete, and status -- no dependency
+      graph or critical-path engine. Safety: incidents (severity,
+      investigation, corrective action, closure) and lighter-weight
+      observations (hazard/near-miss/good-catch), both project-wide and
+      independent of the existing Daily Log quick-capture field.
+      *Gate (not specified in the original brief -- defined here before
+      building, same precedent as Phases 0/7/8): create a schedule task
+      and move it through not_started → in_progress → complete on web;
+      log a safety incident, investigate it, and close it with a
+      corrective action on record; log a safety observation and resolve
+      it; and confirm every seeded role sees exactly the schedule/safety
+      access level its permission template already assigns (this
+      permission plumbing was scaffolded in Phase 1 ahead of need --
+      the gate is proving it actually gates these two new modules, not
+      building it from scratch).* **— PASSED, see the Phase 9 gate
+      report.**
 
 ## Phase 1 gate report
 
@@ -1199,7 +1218,126 @@ used, and was reverted cleanly rather than pulled further into
 infrastructure work outside this pass's scope (`git status` confirmed
 zero leftover diff from the attempt).
 
-## Assumptions (numbered — flag any that need correction before Phase 1)
+## Phase 9 gate report
+
+**Gate** (self-defined -- see the Phase 9 checklist entry above): create
+a schedule task and move it through not_started → in_progress →
+complete on web; log a safety incident, investigate it, and close it
+with a corrective action on record; log a safety observation and
+resolve it; and confirm every seeded role sees exactly the
+schedule/safety access level its permission template already assigns.
+**— PASSED**, see Verification.
+
+**What was built:**
+- **Schema**: two new tables. `schedule_tasks` (`packages/db/src/schema/
+  schedule.ts`) -- name, description, start/end date, `assignedCompanyId`,
+  `sortOrder`, `percentComplete`, and a `status` enum
+  (not_started/in_progress/complete/delayed). `safety_incidents` and
+  `safety_observations` (`packages/db/src/schema/safety.ts`) --
+  incidents carry severity (near_miss/minor/serious/critical),
+  description, optional involved company + injured person name, a
+  status enum (open/investigating/closed), and `correctiveAction`/
+  `closedBy`/`closedAt`; observations are the lighter-weight sibling
+  (category: unsafe_condition/unsafe_act/near_miss/good_catch, status:
+  open/resolved) with no investigation workflow. Both are direct
+  `project_id`-scoped tables, so they only needed adding to the generic
+  `direct_project_tables` RLS loop (`001_rls_and_functions.sql`) rather
+  than any new policy code. Migrations `0011`/`0012` generated and
+  applied cleanly against the dev database.
+- **Status transition rules**: `packages/shared/src/schemas/
+  schedule.schema.ts` and `safety.schema.ts` each export a
+  `Record<Status, readonly Status[]>` transition table, enforced
+  server-side (409 on an invalid edge) the same way every other
+  status-driven module in this codebase already works. Schedule's table
+  models a manual progress signal, not an approval chain -- any status
+  can reach any other (e.g. a delayed task moving straight back to
+  in_progress) rather than a strict linear sequence. Safety incidents
+  require `correctiveAction` specifically when transitioning to
+  `closed` (422 without it, checked in the service layer since it
+  depends on the target status, not just the schema shape) and can
+  reopen from closed; observations are a simple open/resolved toggle.
+- **API**: `schedule.service.ts`/`schedule.routes.ts` (create, list,
+  patch for percent-complete/details, status transition) and
+  `safety.service.ts`/`safety.routes.ts` (create + list + transition for
+  incidents; create + list + toggle-resolved for observations), wired
+  into `app.ts` at `/schedule-tasks`, `/safety-incidents`, and
+  `/safety-observations`. No new permission-engine code was needed --
+  Phase 1 had already scaffolded `schedule` and `safety` into `MODULES`
+  and every seeded role's `DEFAULT_ROLE_TEMPLATE_LEVELS` ahead of need
+  (`project_manager`: admin on schedule, standard on safety;
+  `safety_officer`: read on schedule, admin on safety; most other roles
+  read-only on both), so this phase's job was proving that plumbing
+  actually gates two new modules, not building it.
+- **Web**: `/projects/[id]/schedule` (list with an inline create form and
+  a percent-complete progress bar per task, matching the RFI list's
+  inline-form pattern) and `/schedule/[taskId]` (detail with a percent-
+  complete slider + save, and status-transition buttons driven directly
+  off `SCHEDULE_TASK_STATUS_TRANSITIONS` the same way the RFI detail
+  screen drives its buttons off `RFI_STATUS_TRANSITIONS`). `/safety`
+  (incidents list, the default view, with a link across to
+  `/safety/observations`) and `/safety/[incidentId]` (detail with
+  transition buttons plus a corrective-action textarea that only appears
+  when a transition to `closed` is available, disabled until non-empty
+  text is entered -- the UI enforces the same rule the API enforces,
+  rather than letting a user hit the 422 blind). `/safety/observations`
+  (list with inline create + a per-row resolve/reopen toggle button).
+  Both `ProjectTabs` and the `en`/`ar` message catalogs got `schedule`/
+  `safety` entries alongside the rest of the nav.
+- **Mobile**: view-only screens for both modules, the same standing
+  scope line every T2/T3 module has drawn on mobile since Phase 4 --
+  `/schedule` (list with a progress bar) + `/schedule/[taskId]` (detail),
+  `/safety` (incidents list, linking to `/safety/observations`) +
+  `/safety/[incidentId]` (detail), and `/safety/observations` (list).
+  Each carries the same `viewOnlyNote` banner pattern already used by
+  every other view-only mobile module, added to both project-home link
+  lists and `lib/i18n.ts`'s `en`/`ar` translation tables.
+
+**Scope decisions:**
+- No dependency graph, critical path, or Gantt-style scheduling logic --
+  Schedule here is a flat task list with dates and a manual
+  percent-complete, matching the phase plan's explicit scope cut.
+- `safety_incidents`/`safety_observations` are deliberately not unified
+  with the existing Daily Log quick-capture safety notes
+  (`daily_log_safety_incidents` from Phase 1/T1) -- the two lists don't
+  cross-populate each other in v1. Documented in a code comment on the
+  `safetyIncidents` table definition and in `docs/DATA_MODEL.md` §13,
+  not a silent gap.
+- Mobile stays view-only, consistent with every other T2/T3 module;
+  verified by `tsc`/`eslint` only, the same standing mobile-visual-
+  verification limitation noted in every prior phase (no simulator or
+  device in this sandbox).
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`@siteops/shared`, `@siteops/db`,
+  `@siteops/api`, `@siteops/web`, `@siteops/mobile`).
+- `apps/api/src/routes/schedule-safety.test.ts` (6 Supertest cases):
+  the full not_started → in_progress → complete lifecycle including the
+  auto-fill of `percentComplete` to 100 on completion, a rejected
+  invalid transition (409), a `client_viewer` 403 on create for both
+  schedule and safety, the full incident lifecycle including the 422 on
+  closing without a corrective action, and an observation's create →
+  resolve round trip. Full API suite: 47/47 passing.
+- A new Playwright spec, `apps/web/e2e/schedule-safety.spec.ts` (3
+  cases), drives the actual gate scenario end-to-end against the live
+  Next.js + Express + Postgres stack: creates a schedule task and walks
+  it not_started → in_progress → complete on web; logs a safety
+  incident as `fadi.salameh@siteops.test` (the seeded `safety_officer`),
+  investigates it, and closes it with a corrective action on record;
+  logs and resolves a safety observation. Full E2E suite: 10/10 passing
+  (the prior 7 Phase 8 specs unchanged plus these 3).
+- The permission-gating clause of the gate was confirmed two ways
+  rather than re-tested per role from scratch: the API test suite's
+  `client_viewer` 403 on both `POST /schedule-tasks` and
+  `POST /safety-incidents` proves the generic permission engine (already
+  fully tested in Phase 1) correctly reads the Phase-1-scaffolded
+  `schedule`/`safety` entries in `DEFAULT_ROLE_TEMPLATE_LEVELS`; and the
+  E2E spec's use of `project_manager` (schedule admin) vs
+  `safety_officer` (safety admin) for the respective create+transition
+  flows exercises the two roles that actually own each module day to
+  day.
+
+
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the
    Git remote and unrelated to the product name).

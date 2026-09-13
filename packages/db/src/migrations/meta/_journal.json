@@ -78,6 +78,20 @@
       "when": 1789246490143,
       "tag": "0010_ambiguous_baron_strucker",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789279646593,
+      "tag": "0011_lively_nomad",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789279932474,
+      "tag": "0012_charming_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }

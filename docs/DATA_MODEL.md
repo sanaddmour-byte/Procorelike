@@ -87,10 +87,11 @@ One `daily_logs` row per project per calendar day (unique constraint on
 | `daily_log_deliveries` | daily_log_id, description, received_by | fk daily_logs | Also covers visitors (type discriminator) |
 | `daily_log_delays` | daily_log_id, cause_code, description, hours_impact | fk daily_logs | |
 
-Safety incidents recorded in Daily Log free text in T1; a dedicated
-`safety_incidents` table (linked from Daily Log) arrives with the T3 Safety
-module — flagged as an Assumption below on whether T1 needs a minimal
-structured incident record earlier.
+T1 resolved the open question below as a structured-but-minimal
+`daily_log_safety_incidents` sub-record from the start (not free text).
+The T3 Safety module (§9b, Phase 9) added its own independent
+`safety_incidents` table rather than promoting/migrating this one -- see
+the Phase 9 gate report for why the two lists stay separate in v1.
 
 ## 6. T1 — Punch List / Snags
 
@@ -129,6 +130,19 @@ structured incident record earlier.
 | `payment_application_lines` | payment_application_id, sov_line_id, pct_complete_previous, pct_complete_this_period | fk payment_applications | Previous/this-period/to-date computed, not stored redundantly where derivable |
 | `meetings` | project_id, title, occurred_at, attendees jsonb | — | |
 | `meeting_items` | meeting_id, description, owner_user_id, status, carried_forward_from_item_id?, converted_to_type/id? | fk meetings | Self-link for carry-forward; polymorphic convert-to-task/RFI |
+
+## 9a. T3 — Schedule (Phase 9)
+
+| Table | Key fields | Relationships | Notes |
+|---|---|---|---|
+| `schedule_tasks` | project_id, name, start_date, end_date, percent_complete, status (`not_started/in_progress/complete/delayed`), assigned_company_id, sort_order | fk companies | Flat task list, deliberately no predecessor/successor dependency graph or critical-path engine -- see Phase 9 gate report |
+
+## 9b. T3 — Safety (Phase 9)
+
+| Table | Key fields | Relationships | Notes |
+|---|---|---|---|
+| `safety_incidents` | project_id, occurred_at, location_id, severity (`near_miss/minor/serious/critical`), description, involved_company_id, injured_person_name?, status (`open/investigating/closed`), corrective_action?, reported_by, closed_by?, closed_at? | fk locations, companies | Independent of `daily_log_safety_incidents` (T1's lightweight quick-capture) -- the two lists are not unified in v1 |
+| `safety_observations` | project_id, observed_at, location_id, category (`unsafe_condition/unsafe_act/near_miss/good_catch`), description, status (`open/resolved`), reported_by, resolved_by?, resolved_at? | fk locations | Lighter than an incident: no investigation/corrective-action workflow |
 
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
@@ -226,6 +240,9 @@ per type.
   T2 financial modules (Phase 6) are live.
 - Confirm Hijri-calendar display is out of scope for v1 (Gregorian +
   `ar-JO` number formatting only) — see Assumptions.
-- Decide whether the minimal structured `daily_log_safety_incidents` table
-  (already implemented per Assumption #9) is the right shape ahead of the
-  full T3 Safety module, or should be simplified back to free text.
+- ~~Decide whether the minimal structured `daily_log_safety_incidents`
+  table (already implemented per Assumption #9) is the right shape ahead
+  of the full T3 Safety module, or should be simplified back to free
+  text.~~ Resolved in Phase 9: kept as-is (Daily Log's own lightweight
+  capture), and the full Safety module (§9b) got its own independent
+  `safety_incidents` table rather than promoting this one.
