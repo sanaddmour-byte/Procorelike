@@ -10,3 +10,4 @@ export * from "./financial";
 export * from "./schedule";
 export * from "./safety";
 export * from "./tm-correspondence";
+export * from "./cpm-schedule";

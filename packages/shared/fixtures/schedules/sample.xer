@@ -1,0 +1,22 @@
+ERMHDR	21.12	2026-01-01	Project	admin	admin	dbxDatabaseNoName	Project Management	USD
+%T	PROJECT
+%F	proj_id	proj_short_name	last_recalc_date
+%R	P1	AMMAN-SUB	2026-01-01
+%T	CALENDAR
+%F	clndr_id	clndr_name	default_flag
+%R	C1	Standard Sun-Thu	Y
+%T	PROJWBS
+%F	wbs_id	wbs_name	wbs_short_name	parent_wbs_id
+%R	W1	Substructure	1
+%T	TASK
+%F	task_id	wbs_id	clndr_id	task_code	task_name	task_type	target_drtn_hr_cnt	target_start_date	target_end_date	early_start_date	early_end_date	late_start_date	late_end_date	act_start_date	act_end_date	total_float_hr_cnt	free_float_hr_cnt	phys_complete_pct
+%R	T1	W1	C1	A1000	Mobilization	TT_Task	8	2026-01-05	2026-01-06	2026-01-05	2026-01-06	2026-01-05	2026-01-06	2026-01-05	2026-01-06	0	0	100
+%R	T2	W1	C1	A1010	Excavation	TT_Task	48	2026-01-07	2026-01-14	2026-01-07	2026-01-14	2026-01-07	2026-01-14			0	0	60
+%R	T3	W1	C1	A1020	Foundation pour	TT_Task	48	2026-01-15	2026-01-22	2026-01-15	2026-01-22	2026-01-15	2026-01-22			0	0	0
+%R	T4	W1	C1	A1030	Substructure complete	TT_Mile	0	2026-01-22	2026-01-22	2026-01-22	2026-01-22	2026-01-22	2026-01-22			0	0	0
+%T	TASKPRED
+%F	task_pred_id	task_id	pred_task_id	pred_type	lag_hr_cnt
+%R	L1	T2	T1	PR_FS	0
+%R	L2	T3	T2	PR_FS	0
+%R	L3	T4	T3	PR_FS	0
+%E

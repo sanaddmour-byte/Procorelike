@@ -1,4 +1,4 @@
-import { PermissionDeniedError } from "@siteops/shared";
+import { PermissionDeniedError, ScheduleImportRejectedError } from "@siteops/shared";
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 
@@ -43,6 +43,13 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   if (err instanceof PermissionDeniedError) {
     res.status(403).json({
       error: { message: err.message, code: "permission_denied", correlationId },
+    });
+    return;
+  }
+
+  if (err instanceof ScheduleImportRejectedError) {
+    res.status(400).json({
+      error: { message: err.message, code: "schedule_import_rejected", correlationId, details: err.errors },
     });
     return;
   }

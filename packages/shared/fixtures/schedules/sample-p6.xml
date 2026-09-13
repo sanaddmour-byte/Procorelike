@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<APIBusinessObjects xmlns="http://xmlns.oracle.com/Primavera/P6/V21/API/BusinessObjects">
+  <Project>
+    <ObjectId>1</ObjectId>
+    <Name>Amman Heights - Substructure</Name>
+    <DataDate>2026-01-01T00:00:00</DataDate>
+  </Project>
+  <Calendar>
+    <ObjectId>1</ObjectId>
+    <Name>Standard Sun-Thu</Name>
+    <IsDefault>true</IsDefault>
+  </Calendar>
+  <WBS>
+    <ObjectId>100</ObjectId>
+    <Name>Substructure</Name>
+    <Code>1</Code>
+  </WBS>
+  <Activity>
+    <ObjectId>1</ObjectId>
+    <Id>A1000</Id>
+    <Name>Mobilization</Name>
+    <Type>Task Dependent</Type>
+    <WBSObjectId>100</WBSObjectId>
+    <CalendarObjectId>1</CalendarObjectId>
+    <PlannedDuration>8</PlannedDuration>
+    <StartDate>2026-01-05T08:00:00</StartDate>
+    <FinishDate>2026-01-06T17:00:00</FinishDate>
+    <TotalFloat>0</TotalFloat>
+    <FreeFloat>0</FreeFloat>
+    <PercentComplete>100</PercentComplete>
+  </Activity>
+  <Activity>
+    <ObjectId>2</ObjectId>
+    <Id>A1010</Id>
+    <Name>Excavation</Name>
+    <Type>Task Dependent</Type>
+    <WBSObjectId>100</WBSObjectId>
+    <CalendarObjectId>1</CalendarObjectId>
+    <PlannedDuration>48</PlannedDuration>
+    <StartDate>2026-01-07T08:00:00</StartDate>
+    <FinishDate>2026-01-14T17:00:00</FinishDate>
+    <TotalFloat>0</TotalFloat>
+    <FreeFloat>0</FreeFloat>
+    <PercentComplete>60</PercentComplete>
+  </Activity>
+  <Activity>
+    <ObjectId>3</ObjectId>
+    <Id>A1030</Id>
+    <Name>Substructure complete</Name>
+    <Type>Finish Milestone</Type>
+    <WBSObjectId>100</WBSObjectId>
+    <CalendarObjectId>1</CalendarObjectId>
+    <PlannedDuration>0</PlannedDuration>
+    <StartDate>2026-01-14T17:00:00</StartDate>
+    <FinishDate>2026-01-14T17:00:00</FinishDate>
+    <TotalFloat>0</TotalFloat>
+    <FreeFloat>0</FreeFloat>
+    <PercentComplete>0</PercentComplete>
+  </Activity>
+  <Relationship>
+    <PredecessorActivityObjectId>1</PredecessorActivityObjectId>
+    <SuccessorActivityObjectId>2</SuccessorActivityObjectId>
+    <Type>Finish to Start</Type>
+    <Lag>0</Lag>
+  </Relationship>
+  <Relationship>
+    <PredecessorActivityObjectId>2</PredecessorActivityObjectId>
+    <SuccessorActivityObjectId>3</SuccessorActivityObjectId>
+    <Type>Finish to Start</Type>
+    <Lag>0</Lag>
+  </Relationship>
+</APIBusinessObjects>

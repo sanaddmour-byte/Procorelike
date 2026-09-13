@@ -14,6 +14,7 @@ import { checklistTemplatesRouter } from "./routes/checklist-templates.routes";
 import { commitmentsRouter } from "./routes/commitments.routes";
 import { companiesRouter } from "./routes/companies.routes";
 import { correspondenceRouter } from "./routes/correspondence.routes";
+import { cpmScheduleRouter } from "./routes/cpm-schedule.routes";
 import { dailyLogsRouter } from "./routes/daily-logs.routes";
 import { documentsRouter } from "./routes/documents.routes";
 import { drawingsRouter } from "./routes/drawings.routes";
@@ -25,6 +26,7 @@ import { savedViewsRouter } from "./routes/saved-views.routes";
 import { photosRouter } from "./routes/photos.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { punchItemsRouter } from "./routes/punch-items.routes";
+import { recordLinksRouter } from "./routes/record-links.routes";
 import { rfisRouter } from "./routes/rfis.routes";
 import { scheduleRouter } from "./routes/schedule.routes";
 import { safetyIncidentsRouter, safetyObservationsRouter } from "./routes/safety.routes";
@@ -38,7 +40,10 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   const app = express();
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
-  app.use(express.json());
+  // Default 100kb is fine for every other endpoint, but a schedule import
+  // (docs/SCHEDULING.md A2: "handle a 5,000-task file") sends the whole
+  // source file as JSON text -- a few MB for a large P6 XER/MSP XML export.
+  app.use(express.json({ limit: "20mb" }));
   app.use(correlationMiddleware);
 
   const authDeps = { authDb: clients.authDb.db, appDb: clients.appDb.db, env };
@@ -73,6 +78,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/safety-observations", safetyObservationsRouter(clients.appDb.db, env));
   app.use("/tm-tickets", tmTicketsRouter(clients.appDb.db, env));
   app.use("/correspondence", correspondenceRouter(clients.appDb.db, env));
+  app.use("/schedules", cpmScheduleRouter(clients.appDb.db, env));
+  app.use("/record-links", recordLinksRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 

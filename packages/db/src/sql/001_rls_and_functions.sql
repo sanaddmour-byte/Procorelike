@@ -311,8 +311,9 @@ DECLARE
     'photos', 'inspections',
     'budget_line_items', 'commitments', 'change_events', 'change_orders',
     'payment_applications', 'meetings',
-    'schedule_tasks', 'safety_incidents', 'safety_observations',
-    'tm_tickets', 'correspondence'
+    'manual_schedule_tasks', 'safety_incidents', 'safety_observations',
+    'tm_tickets', 'correspondence',
+    'schedules', 'calendars', 'lookahead_plans'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP
@@ -462,7 +463,13 @@ DECLARE
     ARRAY['meeting_items', 'meeting_id', 'meetings'],
     ARRAY['tm_ticket_labor_entries', 'ticket_id', 'tm_tickets'],
     ARRAY['tm_ticket_equipment_entries', 'ticket_id', 'tm_tickets'],
-    ARRAY['tm_ticket_material_entries', 'ticket_id', 'tm_tickets']
+    ARRAY['tm_ticket_material_entries', 'ticket_id', 'tm_tickets'],
+    ARRAY['schedule_versions', 'schedule_id', 'schedules'],
+    ARRAY['schedule_tasks', 'version_id', 'schedule_versions'],
+    ARRAY['calendar_exceptions', 'calendar_id', 'calendars'],
+    ARRAY['task_dependencies', 'predecessor_id', 'schedule_tasks'],
+    ARRAY['task_baseline_values', 'task_id', 'schedule_tasks'],
+    ARRAY['lookahead_commitments', 'lookahead_plan_id', 'lookahead_plans']
   ];
   row_ text[];
 BEGIN

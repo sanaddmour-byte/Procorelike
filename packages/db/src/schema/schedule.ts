@@ -16,9 +16,16 @@ export const scheduleTaskStatusEnum = pgEnum("schedule_task_status", [
  * own -- this is a task list with dates and percent-complete, which
  * covers "what's supposed to happen when" without pretending to be
  * Primavera/MS Project. See docs/ROADMAP.md Phase 9 gate report.
+ *
+ * SQL table renamed from "schedule_tasks" to "manual_schedule_tasks" in
+ * Phase 11a (migration 0014) to free up the "schedule_tasks" name for
+ * the new versioned CPM model in ./cpm-schedule.ts -- see
+ * docs/SCHEDULING.md's naming note. The Drizzle TS export name
+ * (`scheduleTasks`) is unchanged, so no API/web/mobile code needed to
+ * change: this is a database-level rename only.
  */
 export const scheduleTasks = pgTable(
-  "schedule_tasks",
+  "manual_schedule_tasks",
   {
     id: idColumn(),
     projectId: uuid("project_id")
@@ -39,5 +46,5 @@ export const scheduleTasks = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     ...auditColumns(),
   },
-  (table) => [index("schedule_tasks_project_id_idx").on(table.projectId)],
+  (table) => [index("manual_schedule_tasks_project_id_idx").on(table.projectId)],
 );

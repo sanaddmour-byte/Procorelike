@@ -159,6 +159,59 @@ the Phase 9 gate report for why the two lists stay separate in v1.
 |---|---|---|---|
 | `correspondence` | project_id, correspondence_number, direction (`incoming/outgoing`), type (`letter/notice/transmittal/memo`), subject, body, from_company_id, to_company_id, sent_date?, response_required_by?, status (`draft/sent/acknowledged/closed`), acknowledged_by?, acknowledged_at?, closed_by?, closed_at? | fk companies (x2) | A subcontractor is RLS-restricted to correspondence where their own company is sender or recipient (`correspondence_subcontractor_scope`), mirroring the RFI ball-in-court/distribution rule adapted to a from/to shape |
 
+## 9e. Scheduling & Gantt (Addendum A, Phase 11a)
+
+Full spec: `docs/SCHEDULING.md`. Tier A (import + visualise) only --
+Tier B (native CPM editing, Phase 11d) is a later, feature-flagged phase.
+Deliberately built last per explicit instruction, after every other
+planned phase -- see `docs/ROADMAP.md`'s Phase plan.
+
+| Table | Key fields | Relationships | Notes |
+|---|---|---|---|
+| `schedules` | project_id, source_tool, default_calendar_id?, current_version_id? | fk projects | One per project. `current_version_id` has no DB-level FK (would be circular with `schedule_versions.schedule_id`) -- kept consistent at the service layer only |
+| `schedule_versions` | schedule_id, version_no, data_date, is_baseline, baseline_label?, imported_from, imported_by, source_file_attachment_id?, notes? | fk schedules, fk attachments | Immutable once superseded -- a re-import always creates a new version, never overwrites (docs/SCHEDULING.md A2) |
+| `schedule_tasks` | version_id, external_id?, wbs_code?, parent_task_id? (self-ref), name, task_type (`task/summary/milestone/loe/wbs`), duration_minutes?, calendar_id?, early/late/planned/actual start+finish, total_float_minutes?, free_float_minutes?, is_critical, percent_complete, physical_percent_complete?, constraint_type?, constraint_date?, responsible_company_id?, trade_id?, location_id?, cost_code_id?, sort_order | fk schedule_versions, fk calendars, fk companies/trades/locations/cost_codes | **Not the same table as Phase 9's flat-list Schedule module** -- that table was renamed to `manual_schedule_tasks` (migration 0014) to free this name for the versioned CPM model. `external_id` (then `wbs_code`, then an exact name match) is what a re-import diff matches a task against across versions (docs/SCHEDULING.md A2) |
+| `task_dependencies` | predecessor_id, successor_id, type (`FS/SS/FF/SF`), lag_minutes | fk schedule_tasks (x2) | Unique on (predecessor, successor, type); cycle-checked by the importer before any row is written, not by a DB constraint |
+| `calendars` | project_id, name, is_default, hours_per_day, working_days (bitmask, bit 0 = Sunday) | fk projects | Defaults to Sun-Thu working (`0b0011111` = 31), not Mon-Fri (docs/SCHEDULING.md A10) |
+| `calendar_exceptions` | calendar_id, date, is_working, working_minutes?, label? | fk calendars | Not yet populated by any importer in this phase -- see the scope-cut note below |
+| `task_baseline_values` | task_id, baseline_version_id, planned_start?, planned_finish?, duration_minutes? | fk schedule_tasks, fk schedule_versions | A variance snapshot; not written by anything yet in Phase 11a (no baseline-comparison feature built this phase) |
+| `lookahead_plans` | project_id, week_start, horizon_weeks, published_at?, published_by? | fk projects | Schema only -- the look-ahead generator itself is Phase 11c |
+| `lookahead_commitments` | lookahead_plan_id, task_id, promised_finish, committed_by_company_id, actual_finish?, reason_code? | fk lookahead_plans, fk schedule_tasks | Schema only, same as above |
+
+**Importers built this phase** (`packages/shared/src/schedule/importers/`):
+MS Project XML, Primavera P6 XER, Primavera P6 XML (all three real
+formats, field names reconstructed from memory -- validate against a
+real export file if a specific field turns out different), and CSV
+(the tabular fallback; XLSX binary decoding to the same row shape is
+deferred to whichever phase builds the upload UI, since it needs a
+library dependency that belongs at the API layer, not in the
+browser-shared `packages/shared` bundle). Every importer normalises to
+one `ParsedSchedule` shape and runs the same validation (circular
+dependency, orphaned predecessor, negative duration).
+
+**Scope cuts, documented rather than silently incomplete:**
+- `clndr_data`/`<StandardWorkWeek>` (P6's own per-calendar working-day
+  encoding) is not parsed -- every imported calendar defaults to Sun-Thu
+  working hours. `calendar_exceptions` stays empty until a later phase
+  parses that data.
+- Import runs synchronously, not as a background job with progress
+  feedback (docs/SCHEDULING.md A2's 5,000-task/10s target implies one)
+  -- at this phase's ~1,000-task gate scale it comfortably clears 10
+  seconds in practice; a background-job version is a reasonable follow-up
+  once real usage approaches thousands of tasks.
+- `record_links` (generic polymorphic source/target linking, existing
+  since Phase 1 but never wired to any API until now) gained its first
+  real usage here: creating/listing links, and a re-import carrying
+  forward any link pointing at a matched task's previous-version row
+  onto its new row, so "an RFI linked to this activity" survives a
+  re-import rather than dangling on a superseded row id. `record_links`
+  still has no RLS (a pre-existing Phase 1 open item, not something this
+  phase attempted to fix) -- authorization for it lives in
+  `record-links.service.ts` instead, keyed off which module a given
+  source/target type belongs to.
+- No web or mobile UI this phase -- the Gantt UI (including any import
+  form) is explicitly Phase 11b in the addendum's own phase breakdown.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

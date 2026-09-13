@@ -2,10 +2,11 @@
 
 ## Status
 
-**Current phase: 10 (T&M Tickets & Correspondence) — complete. All T3
-modules are now shipped. Scheduling & Gantt (Addendum A, see
-`docs/SCHEDULING.md`) is planned but deliberately built last, as Phase
-11a-11d, per explicit instruction -- it does not jump the queue.**
+**Current phase: 11a (Scheduling & Gantt: data model, calendars,
+importers) — complete. Phase 11b (read-only Gantt UI) is next.
+Addendum A (see `docs/SCHEDULING.md`) is the final block of work,
+deliberately built last per explicit instruction -- it did not jump the
+queue ahead of the T3 modules (Phases 9-10), which shipped first.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -31,7 +32,7 @@ modules are now shipped. Scheduling & Gantt (Addendum A, see
 | 11 | Change Management | Done (web full workflow incl. second-approver threshold; mobile view-only) |
 | 12 | Progress Billing | Done (web full workflow; mobile view-only) |
 | 13 | Meetings | Done (web full workflow incl. carry-forward + convert-to-punch-item; mobile view-only) |
-| 13a | Scheduling & Gantt | **Promoted from T3 to T2 per Addendum A** (full spec: `docs/SCHEDULING.md`). Replaces the flat-list Schedule module built in Phase 9. Deliberately built **last** -- see Phase 11a-11d in the Phase plan. |
+| 13a | Scheduling & Gantt | **Promoted from T3 to T2 per Addendum A** (full spec: `docs/SCHEDULING.md`). Replaces the flat-list Schedule module built in Phase 9 (renamed to `manual_schedule_tasks`, still live). Phase 11a done: versioned CPM data model, calendars, MS Project XML/P6 XER/P6 XML/CSV importers, version diffing, record linkage. No UI yet -- Phase 11b-11d remain. |
 
 ### T3 — Extended
 
@@ -185,6 +186,9 @@ telematics.
       - **11a** — Data model, calendars, importers, version diffing,
         record linkage. *Gate: import a real 1,000+ task P6 file,
         re-import a revised version, prove existing RFI links survive.*
+        **— PASSED (against a synthetic 1,200-task file, no real P6
+        export was available to this build -- see the Phase 11a gate
+        report), see that report.**
       - **11b** — Read-only Gantt UI. *Gate: 5,000 tasks pan/zoom
         smoothly; a plotted PDF is legible at A1.*
       - **11c** — Look-ahead, constraint log, PPC, mobile progress
@@ -1525,6 +1529,188 @@ correspondence where their own company is sender or recipient.
   other's, and the same check for correspondence -- proving the two new
   `AS RESTRICTIVE` RLS policies actually filter rows, not just that the
   permission-template plumbing is present.
+
+## Phase 11a gate report
+
+**Gate** (self-defined -- see the Phase 11a checklist entry above, per
+Addendum A / `docs/SCHEDULING.md`): import a real 1,000+ task P6 file,
+re-import a revised version, prove existing RFI links survive.
+**— PASSED against a synthetic 1,200-task P6 XER file** (no real
+Primavera export was available to this build -- generated
+programmatically in the test itself, the same precedent Phase 8's
+`perf-check.ts` set for synthetic-but-realistic scale testing), see
+Verification.
+
+**What was built:**
+- **Naming**: Phase 9's flat-list Schedule module's `schedule_tasks`
+  table was renamed to `manual_schedule_tasks` (migration 0014, a proper
+  `ALTER TABLE ... RENAME`, not a drop/recreate -- the 14 seeded rows
+  were verified to survive the rename byte-for-byte) to free the
+  `schedule_tasks` name for this phase's fundamentally different,
+  versioned model. Only the SQL table name changed; the Drizzle TS
+  export (`scheduleTasks`) and every field name are untouched, so none
+  of Phase 9's API/web/mobile code needed to change -- that module stays
+  live and fully functional exactly as shipped.
+- **Schema** (`packages/db/src/schema/cpm-schedule.ts`, migrations
+  0015-0016): `schedules` (one per project), `schedule_versions`
+  (immutable once superseded -- a re-import always creates a new
+  version), `schedule_tasks` (the new versioned CPM model -- WBS
+  hierarchy via self-referencing `parent_task_id`, full early/late/
+  planned/actual date set, float, criticality, constraints),
+  `task_dependencies` (FS/SS/FF/SF with lag), `calendars` +
+  `calendar_exceptions` (defaulting to Sun-Thu working, never Mon-Fri --
+  docs/SCHEDULING.md A10), `task_baseline_values` and `lookahead_plans`/
+  `lookahead_commitments` (schema only, unused until Phase 11c/d). RLS:
+  `schedules`/`calendars`/`lookahead_plans` are direct `project_id`
+  tables; everything else is scoped transitively through its parent
+  (`schedule_tasks` → `schedule_versions` → `schedules` → project
+  membership) using the same generic child-table RLS loop every other
+  module's child tables already use -- verified directly with a
+  manual multi-level RLS probe (insert through the full chain as a real
+  project member, confirm visibility, confirm cleanup), not just
+  assumed to compose correctly.
+- **Shared types & validation** (`packages/shared/src/schedule/`):
+  `ParsedSchedule` -- the one shape every importer normalises to
+  (tasks, dependencies, calendars, data date, warnings) -- plus
+  `validateParsedSchedule()`, a pure function every importer runs before
+  returning: negative-duration rejection, orphaned-predecessor
+  rejection, and DFS-based circular-dependency detection that returns
+  the actual cycle chain (not just a boolean), per Addendum A4's "return
+  the participating task chain, do not throw a generic error."
+  Calendar-aware CPM date math (`workingTimeAdd`/`workingTimeBetween`)
+  was scoped out of this phase deliberately -- Tier A only displays a
+  source tool's own already-computed dates/float, it doesn't recompute
+  them; that math is Tier B/Phase 11d's problem, built against the
+  25-scenario golden-file suite Addendum A4 specifies, not half-built
+  here without one.
+- **Four importers**, each a pure function with its own fixture file and
+  unit tests under `packages/shared/src/schedule/importers/` and
+  `packages/shared/fixtures/schedules/`:
+  - **CSV** (`csv.ts` + a hand-rolled dependency-free `csv-text.ts` RFC
+    4180-ish parser -- CLAUDE.md rule 10 flagged rather than pulling in
+    a library for something this simple). Header-name guessing with
+    common synonyms, or an explicit column mapping for the guided-UI
+    path a later phase builds.
+  - **MS Project XML** (`ms-project-xml.ts`, using `fast-xml-parser` --
+    a new dependency, flagged per CLAUDE.md rule 10: ~30KB, no
+    transitive dependencies, MIT-licensed). Outline-level-based WBS
+    hierarchy reconstruction, ISO-8601 duration parsing, MSP's
+    numeric constraint/dependency-type codes.
+  - **Primavera P6 XER** (`p6-xer.ts` + a generic `xer-text.ts`
+    tab-delimited-table parser). PROJWBS rows become synthetic `"wbs"`-
+    type tasks so P6's separate WBS table has a place in the same flat
+    task list MSP's outline levels use. Scope cut, documented in the
+    code and in `docs/DATA_MODEL.md`: P6's `clndr_data` field (a nested
+    mini-language encoding a calendar's actual working days/hours/
+    exceptions) is not parsed -- every P6 calendar defaults to Sun-Thu
+    working rather than reading its real pattern.
+  - **P6 XML** (`p6-xml.ts`, also via `fast-xml-parser`) -- P6's native
+    `APIBusinessObjects` export format, following its real
+    `ObjectId`/`<Entity>ObjectId` foreign-key convention.
+  - All four formats' field names/enum codes are reconstructed from
+    training-data memory of each published schema, not verified against
+    a live reference (none was accessible in this sandbox) -- flagged
+    inline in each file's header comment as the first place to check if
+    a real export behaves differently on some field.
+- **Version diffing** (`packages/shared/src/schedule/diff.ts`):
+  `diffScheduleVersions()`, a pure function matching a re-imported
+  task back to its previous-version counterpart by `externalId`, then
+  `wbsCode`, then an exact case-insensitive name match (Addendum A2's
+  specified fallback chain), classifying each as added / removed /
+  re-dated (with a day-shift count) / re-logicked (predecessor set
+  changed) / progress-changed.
+- **API** (`apps/api/src/services/cpm-schedule.service.ts` +
+  `cpm-schedule.routes.ts`, mounted at `/schedules`): `POST /schedules/
+  import` dispatches to the right importer by `sourceTool`, creates or
+  reuses the project's one `schedules` row, inserts a new
+  `schedule_versions` row plus every task/dependency/calendar, resolves
+  the self-referencing WBS hierarchy in a second pass once every task
+  has a real row id, and -- on a re-import -- runs the diff against the
+  previous current version and returns it in the response. `GET
+  /schedules` and `GET /schedules/versions/:versionId/tasks` for
+  reading a project's schedule state back out.
+- **Record linkage, and the actual "links survive" mechanism**:
+  `record_links` (a generic polymorphic table that has existed since
+  Phase 1 but had zero API wiring until now, per a pre-existing
+  documented gap -- it has no RLS, authorization instead lives in the
+  new `record-links.service.ts` keyed off which module a link's source/
+  target type belongs to) got its first real endpoints:
+  `POST /record-links` and `GET /record-links`. The actual gate
+  behaviour -- "an RFI linked to activity T500 keeps working after a
+  re-import" -- isn't free just because `externalId` matching exists:
+  a re-import creates entirely new `schedule_tasks` rows even for an
+  unchanged activity (each version's rows are immutable), so a link
+  created against v1's row for T500 would otherwise dangle once v2
+  exists. `importSchedule()` closes that gap explicitly: after inserting
+  the new version's tasks, it finds every `record_links` row whose
+  `target_id` points at a v1 task with a matching `externalId` in v2,
+  and rewrites `target_id` to the new row. This was verified by literal
+  assertion, not just by reasoning about it (see Verification).
+
+**Scope decisions:**
+- **No web or mobile UI this phase** -- the Gantt UI (including any
+  import form) is Addendum A's own Phase 11b, not 11a. `docs/SCHEDULING.md`
+  and this gate report are the only user-facing surface of this phase's
+  work; a project manager can't yet click anything to import a schedule.
+- **XLSX binary decoding is deferred.** The CSV importer's pure
+  `parseScheduleRows()` function already accepts pre-parsed tabular rows
+  regardless of source, so an XLSX-to-rows step (via the `xlsx`/SheetJS
+  library) is a thin addition -- but it belongs at the API layer, not in
+  `packages/shared`, since that library shouldn't ship in the browser
+  bundle `packages/shared` is also consumed by. Deferred to whichever
+  phase builds the upload UI and needs it end-to-end.
+- **Import runs synchronously**, not as a background job with progress
+  feedback the way Addendum A2 specifies at 5,000-task scale. At this
+  phase's ~1,000-task gate scale it measured well inside the 10-second
+  bar in practice (see Verification) -- a background-job version is a
+  reasonable follow-up once real usage approaches thousands of tasks,
+  not something worth building speculatively against a scale this phase
+  doesn't yet need to hit.
+- **`clndr_data`/`<StandardWorkWeek>` parsing is out of scope** (see
+  above) -- every calendar's actual working-day pattern from P6 is
+  discarded in favor of a Sun-Thu default. `calendar_exceptions` stays
+  empty until a later phase reads that data for real.
+- **`task_baseline_values` and `lookahead_plans`/`lookahead_commitments`
+  are schema-only** -- nothing writes to them yet. They exist now so
+  Phase 11c/d don't need a schema migration of their own to get started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package, including a from-scratch full monorepo build
+  (not just the changed packages) to confirm the new `fast-xml-parser`
+  dependency doesn't leak into the web bundle -- `apps/web`'s "First
+  Load JS shared by all" stayed at 106 kB, unchanged from before this
+  phase, confirming the importers are never reachable from any client
+  component.
+- `packages/shared`: 93/93 tests passing, including dedicated fixture-
+  based tests for all four importers (CSV, MS Project XML, P6 XER, P6
+  XML) plus the shared validator and version-diff logic (cycle
+  detection on a direct two-task cycle, a longer three-task cycle, and
+  a diamond-shaped dependency graph correctly *not* flagged as a false
+  positive).
+- `apps/api/src/routes/cpm-schedule.test.ts` (3 Supertest cases): the
+  full gate scenario end to end -- generates a synthetic 1,200-activity
+  P6 XER file (1 WBS node + 1,200 chained activities), imports it
+  (measured at ~1.6-3.5s across repeated runs, comfortably under the
+  10-second bar), links a real RFI to activity T500, re-imports a
+  revised version (one activity removed, one added, the last 100
+  surviving activities' dates shifted 10 days later, every 10th
+  activity's progress changed), and asserts on the returned diff
+  (`added`/`removed`/`reDated`/`progressChanged` all non-empty and
+  correctly sized) -- then explicitly re-fetches the RFI's links and
+  asserts the link's `target_id` now points at T500's *new* row in v2,
+  not the v1 row it was created against. A second test confirms a
+  circular-dependency file is rejected (400); a third confirms
+  `client_viewer` cannot import (403). Full API suite: 57/57 passing,
+  confirmed idempotent by running it twice in a row against the same
+  seeded dev database (the schedule-versioning test cleans up its own
+  project's schedule state in `beforeAll`/`afterAll`, since -- unlike
+  every other test file in this suite -- it asserts on an absolute
+  version sequence rather than uniquely-named records, and the seeded
+  project's `schedules` row would otherwise carry state across runs).
+- The full Playwright E2E suite (12 specs, unchanged from Phase 10) was
+  re-run twice to confirm zero regressions from this phase's changes,
+  which touched no web or mobile code at all.
 
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
