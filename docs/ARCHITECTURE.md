@@ -372,6 +372,15 @@ insufficient against the 100k-row seed — not built pre-emptively.
 | Web flows | Playwright | Critical path per module (create → workflow transition → close) |
 | Mobile flows | Maestro | Offline create → reconnect → sync, per offline-capable module |
 
+`apps/web/e2e/` is the realized Playwright layer (Phase 8): five specs
+against the real dev servers + Postgres (auth, punch-item lifecycle, RFI
+lifecycle, meeting → punch-item conversion, dashboard role gating) --
+see the Phase 8 gate report in `docs/ROADMAP.md`. Not wired into
+turbo's `test` pipeline since it needs live servers; run via
+`pnpm --filter @siteops/web test:e2e`. The Maestro row remains
+unrealized -- mobile E2E is still code-complete-but-manually-verified
+only, the standing limitation noted in every phase's mobile disclosure.
+
 ## 11. Local dev environment
 
 `docker-compose.yml` brings up Postgres 16, MinIO, and MailHog. `pnpm dev`
@@ -380,11 +389,19 @@ insufficient against the 100k-row seed — not built pre-emptively.
 stack. Target: a new developer is running with seeded data in under 5
 minutes from `git clone`.
 
-## 12. Deployment (prod) — open question
+## 12. Deployment (prod)
 
-The master brief does not specify a target hosting platform. Local dev is
-fully specified (docker-compose); production topology (managed Postgres
-provider, container host / k8s / PaaS, CDN for web, push notification
-service if mobile push is added later) is deferred to a pre-Phase-8
-decision once the team knows real infra constraints. Noted as Assumption
-in `docs/ROADMAP.md`.
+The master brief never named a target hosting platform, so this stays
+vendor-generic by design (Assumption 7/12 in `docs/ROADMAP.md`) rather
+than picking one: standard Postgres 16 + Node 22 + an S3-compatible
+bucket runs on any host that provides those. `docs/DEPLOYMENT.md` is the
+procedure -- provisioning Postgres (including why the RLS-setup
+migration step isn't optional), hardening every `.env.example` default,
+building/running each app, wiring an external cron to the two
+`/internal/*` job endpoints, and mobile distribution via EAS
+(`apps/mobile/eas.json`). `docs/BACKUP_RESTORE.md` covers the Postgres
+database and the S3-compatible attachment bucket as one recovery unit
+(since `attachments.storage_key` makes them inseparable), with a restore
+procedure grounded in `packages/db/src/migrate.ts`'s actual idempotent
+re-apply behavior rather than a generic checklist. Both written as part
+of the Phase 8 gate (see `docs/ROADMAP.md`).
