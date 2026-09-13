@@ -13,6 +13,7 @@ import { changeEventsRouter, changeOrdersRouter, potentialChangeOrdersRouter } f
 import { checklistTemplatesRouter } from "./routes/checklist-templates.routes";
 import { commitmentsRouter } from "./routes/commitments.routes";
 import { companiesRouter } from "./routes/companies.routes";
+import { correspondenceRouter } from "./routes/correspondence.routes";
 import { dailyLogsRouter } from "./routes/daily-logs.routes";
 import { documentsRouter } from "./routes/documents.routes";
 import { drawingsRouter } from "./routes/drawings.routes";
@@ -29,6 +30,7 @@ import { scheduleRouter } from "./routes/schedule.routes";
 import { safetyIncidentsRouter, safetyObservationsRouter } from "./routes/safety.routes";
 import { submittalsRouter } from "./routes/submittals.routes";
 import { syncRouter } from "./routes/sync.routes";
+import { tmTicketsRouter } from "./routes/tm-ticket.routes";
 import { createS3Client } from "./lib/s3";
 import { createMailer } from "./lib/mailer";
 
@@ -69,6 +71,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/schedule-tasks", scheduleRouter(clients.appDb.db, env));
   app.use("/safety-incidents", safetyIncidentsRouter(clients.appDb.db, env));
   app.use("/safety-observations", safetyObservationsRouter(clients.appDb.db, env));
+  app.use("/tm-tickets", tmTicketsRouter(clients.appDb.db, env));
+  app.use("/correspondence", correspondenceRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 

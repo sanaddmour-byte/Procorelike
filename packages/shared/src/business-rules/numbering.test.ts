@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   formatChangeOrderNumber,
+  formatCorrespondenceNumber,
   formatPunchItemNumber,
   formatRfiNumber,
   formatSequenceNumber,
   formatSubmittalNumber,
+  formatTmTicketNumber,
 } from "./numbering";
 
 describe("numbering formatters", () => {
@@ -22,6 +24,14 @@ describe("numbering formatters", () => {
 
   it("formats a submittal number with its spec section", () => {
     expect(formatSubmittalNumber("03.30.00", 2)).toBe("SUB-03.30.00-002");
+  });
+
+  it("formats a T&M ticket number zero-padded to 4 digits", () => {
+    expect(formatTmTicketNumber(6)).toBe("TM-0006");
+  });
+
+  it("formats a correspondence number zero-padded to 4 digits", () => {
+    expect(formatCorrespondenceNumber(15)).toBe("COR-0015");
   });
 
   it("does not truncate values wider than the pad length", () => {

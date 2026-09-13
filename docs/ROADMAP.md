@@ -2,11 +2,10 @@
 
 ## Status
 
-**Current phase: 9 (Schedule & Safety) — complete. Phase 10 (T&M Tickets
-& Correspondence, the remaining T3 modules) is next. Scheduling & Gantt
-(Addendum A, see `docs/SCHEDULING.md`) is planned but deliberately built
-last, as Phase 11a-11d, per explicit instruction -- it does not jump the
-queue.**
+**Current phase: 10 (T&M Tickets & Correspondence) — complete. All T3
+modules are now shipped. Scheduling & Gantt (Addendum A, see
+`docs/SCHEDULING.md`) is planned but deliberately built last, as Phase
+11a-11d, per explicit instruction -- it does not jump the queue.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -40,9 +39,9 @@ queue.**
 |---|---|---|
 | 14 | ~~Schedule~~ | Superseded -- promoted to T2 as "Scheduling & Gantt" per Addendum A (row 13a above), deliberately built **last** (Phase 11a-11d). The Phase 9 flat-list implementation stays live and functional exactly as shipped, under the `schedule_tasks` table name, until that work starts. |
 | 15 | Safety | Done (web full incident + observation workflow; mobile view-only) |
-| 16 | T&M Tickets / Field Productivity | Not started |
+| 16 | T&M Tickets | Done (web full workflow incl. labor/equipment/material entries; mobile view-only). "Field Productivity" (daily production-rate tracking) not built -- out of scope, not part of the original T&M ticket concept -- see Phase 10 gate report. |
 | 17 | Reports & Dashboards | Partially done: a per-project rollup dashboard (RFIs/Punch List/Budget/Change Orders) exists on web and mobile; no saved custom reports or org-wide dashboards yet |
-| 18 | Correspondence / Transmittals | Not started |
+| 18 | Correspondence / Transmittals | Done (web full workflow; mobile view-only) |
 
 **Explicitly out of scope for v1**: bidding/tender marketplace, BIM/IFC model
 viewing, ERP accounting integration, timecard payroll export, equipment
@@ -153,8 +152,26 @@ telematics.
       the gate is proving it actually gates these two new modules, not
       building it from scratch).* **— PASSED, see the Phase 9 gate
       report.**
-- [ ] **Phase 10 — T&M Tickets & Correspondence (T3).** The remaining
-      two T3 modules, same "2 modules per phase" cadence. Next up.
+- [x] **Phase 10 — T&M Tickets & Correspondence (T3).** The remaining
+      two T3 modules, same "2 modules per phase" cadence. T&M Tickets:
+      time-and-material billing tickets with labor/equipment/material
+      line items, billed to a specific subcontractor, with a
+      draft/submitted/approved/rejected workflow. Correspondence: formal
+      project letters/notices/transmittals/memos between companies, with
+      a draft/sent/acknowledged/closed workflow.
+      *Gate (not specified in the original brief -- defined here before
+      building, same precedent as Phases 0/7/8/9): create a T&M ticket
+      with labor, equipment, and material entries, confirm the total is
+      computed correctly, and move it through draft → submitted →
+      approved on web (and separately, reject one and confirm it
+      requires a rejection reason and can return to draft); log a piece
+      of correspondence and move it through draft → sent → acknowledged
+      → closed; and confirm a subcontractor only sees T&M tickets billed
+      under their own company and correspondence where their own
+      company is sender or recipient -- the two hard-rule RLS scoping
+      policies this phase adds, beyond the Phase-1-scaffolded
+      permission-template plumbing every T3 module already inherits.*
+      **— PASSED, see the Phase 10 gate report.**
 - [ ] **Phase 11a-11d (final phase) — Scheduling & Gantt (Addendum A).**
       Deliberately built **last**, after every other planned phase
       (including Phase 10 and anything added after it) ships -- per
@@ -1367,7 +1384,149 @@ schedule/safety access level its permission template already assigns.
   flows exercises the two roles that actually own each module day to
   day.
 
+## Phase 10 gate report
 
+**Gate** (self-defined -- see the Phase 10 checklist entry above): create
+a T&M ticket with labor, equipment, and material entries, confirm the
+total is computed correctly, and move it through draft → submitted →
+approved on web (and separately, reject one and confirm it requires a
+rejection reason and can return to draft); log a piece of correspondence
+and move it through draft → sent → acknowledged → closed; and confirm a
+subcontractor only sees T&M tickets billed under their own company and
+correspondence where their own company is sender or recipient.
+**— PASSED**, see Verification.
+
+**What was built:**
+- **Schema**: `tm_tickets` (`packages/db/src/schema/tm-correspondence.ts`)
+  -- server-numbered `ticketNumber` (`TM-0001`), `companyId` (the sub
+  billing the work), `workDate`, `description`, a
+  draft/submitted/approved/rejected `status`, and
+  submitted/approved/rejection bookkeeping columns -- plus three child
+  tables (`tm_ticket_labor_entries`, `tm_ticket_equipment_entries`,
+  `tm_ticket_material_entries`), mirroring the Daily Log's existing
+  manpower/equipment child-table pattern rather than inventing a new
+  shape. `correspondence` -- server-numbered `correspondenceNumber`
+  (`COR-0001`), `direction` (incoming/outgoing), `type`
+  (letter/notice/transmittal/memo), `fromCompanyId`/`toCompanyId`, and a
+  draft/sent/acknowledged/closed `status`. Both are direct
+  `project_id`-scoped tables added to the generic `direct_project_tables`
+  RLS loop; the three T&M child tables were added to the child-table RLS
+  loop the same way Daily Log's and Meetings' child tables already are.
+  Migration `0013` generated and applied cleanly.
+- **Two new hard-rule RLS policies**, beyond the generic project-member
+  scoping every table gets: `tm_tickets_subcontractor_scope` restricts a
+  `subcontractor` role to only the T&M tickets billed under their own
+  company (a T&M ticket is a sub's own billing record, not a
+  project-wide document like an RFI, so it gets stricter scoping than
+  the RFI ball-in-court/distribution pattern); `correspondence_subcontractor_scope`
+  restricts a `subcontractor` to correspondence where their own company
+  is sender or recipient, adapting the RFI rule's shape to a from/to pair
+  instead of ball-in-court/distribution. Both follow the exact
+  `AS RESTRICTIVE` pattern `rfis_subcontractor_scope` already established
+  in Phase 4 -- no new RLS mechanism, just two more instances of it.
+- **Numbering**: `formatTmTicketNumber`/`formatCorrespondenceNumber`
+  added alongside the existing RFI/CO/PI/submittal/commitment formatters
+  in `packages/shared/src/business-rules/numbering.ts`, with their own
+  unit tests -- same server-side `next_sequence_number()` allocation
+  every other numbered record uses (CLAUDE.md rule 12).
+- **Status transition rules**: `TM_TICKET_STATUS_TRANSITIONS` and
+  `CORRESPONDENCE_STATUS_TRANSITIONS`, enforced server-side (409 on an
+  invalid edge, same as every other status-driven module). A T&M ticket
+  requires a `rejectionReason` specifically when transitioning to
+  `rejected` (422 without it, checked in the service layer since it
+  depends on the target status -- the same pattern Phase 9's safety
+  incident used for its corrective-action requirement) and a rejected
+  ticket can return to `draft` for resubmission; `approved` is terminal.
+  Correspondence's `sent` can go straight to `acknowledged` or `closed`
+  (not every letter needs a formal acknowledgment), and `closed` can
+  reopen back to `sent` if follow-up is needed.
+- **API**: `tm-ticket.service.ts`/`tm-ticket.routes.ts` (create with
+  nested labor/equipment/material entries in one call, list, get-detail
+  with a service-computed `totalAmount` -- summed from the entries,
+  never stored redundantly -- and status transition) and
+  `correspondence.service.ts`/`correspondence.routes.ts` (create, list,
+  status transition), wired into `app.ts` at `/tm-tickets` and
+  `/correspondence`. Both modules' permission checks use "standard"
+  uniformly across create/transition, matching the codebase's existing
+  convention (e.g. change order approval) of letting the permission
+  *level* gate the module while business rules -- not a second
+  permission tier -- gate specific transitions.
+- **Attachments**: `tm_ticket` and `correspondence` owner types added to
+  `attachment.service.ts`'s `OWNER_TYPE_MODULES` map (two-line addition,
+  reusing the existing generic pre-signed-upload attachment system
+  rather than building anything new) so both modules can carry file
+  attachments through the same flow photos/documents/inspections already
+  use.
+- **Web**: `/projects/[id]/tm-tickets` (list with an inline create form
+  that supports adding any number of labor/equipment/material rows
+  before submitting, matching the RFI list's inline-form pattern scaled
+  up for three repeatable sub-sections) and `/tm-tickets/[ticketId]`
+  (detail showing every entry, the computed total, status-transition
+  buttons, and a rejection-reason textarea that only appears when a
+  transition to `rejected` is available, disabled until non-empty text
+  is entered -- the same "UI enforces what the API enforces" pattern
+  Phase 9's safety-incident closure used). `/projects/[id]/correspondence`
+  (list with inline create) and `/correspondence/[correspondenceId]`
+  (detail with transition buttons). Both wired into `ProjectTabs` and the
+  `en`/`ar` message catalogs.
+- **Mobile**: view-only screens for both modules, the same standing scope
+  line every T2/T3 module has drawn on mobile since Phase 4 --
+  `/tm-tickets` (list) + `/tm-tickets/[ticketId]` (detail showing every
+  entry and the total) and `/correspondence` (list) +
+  `/correspondence/[correspondenceId]` (detail). Each carries the
+  standard `viewOnlyNote` banner, added to both project-home link lists
+  and `lib/i18n.ts`'s `en`/`ar` translation tables.
+
+**Scope decisions:**
+- Module tier #16 in the original module list is named "T&M Tickets /
+  Field Productivity" -- only the T&M ticket concept (time-and-material
+  billing records) was built. "Field Productivity" (daily production-rate
+  tracking, e.g. units installed per crew-hour against an estimate) is a
+  distinct feature with its own data model and wasn't part of the
+  original brief's detail; out of scope for this phase, not silently
+  dropped.
+- A T&M ticket does not auto-generate or auto-link to a change order or
+  commitment line -- it stands alone as billing backup in v1, the same
+  "no auto-linking" simplification Phase 9 drew for schedule tasks vs.
+  the dependency graph. A future phase could wire "convert approved T&M
+  tickets into a change order" the same way Phase 2's punch list already
+  converts from a failed inspection item.
+- Correspondence doesn't model distribution lists (cc'ing multiple
+  companies) the way RFIs do -- it's a strict one from-company/one
+  to-company record, matching how a physical letter or transmittal
+  actually works, rather than RFI's multi-party cc model.
+- Mobile stays view-only, consistent with every other T2/T3 module;
+  verified by `tsc`/`eslint` only, the same standing mobile-visual-
+  verification limitation noted in every prior phase.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package.
+- `apps/api/src/routes/tm-correspondence.test.ts` (7 Supertest cases):
+  the full T&M ticket lifecycle including entry-total computation
+  (labor + equipment + material, hand-verified against the seeded
+  amounts), the reject-without-reason 422 and successful
+  reject-then-back-to-draft path, a subcontractor-scoping check proving
+  one sub's ticket is invisible to a different sub, and a
+  `client_viewer` 403 on create; the full correspondence lifecycle, its
+  own subcontractor-scoping check, and confirmation `client_viewer` can
+  read but not create correspondence. Full API suite: 54/54 passing.
+- A new Playwright spec, `apps/web/e2e/tm-correspondence.spec.ts` (2
+  cases), drives the actual gate scenario end-to-end against the live
+  Next.js + Express + Postgres stack: creates a T&M ticket with a labor
+  entry, confirms the displayed total matches the hand-computed
+  hours×rate, and walks it draft → submitted → approved; creates a piece
+  of correspondence and walks it draft → sent → acknowledged → closed.
+  Full E2E suite: 12/12 passing (the prior 10 specs unchanged plus these
+  2).
+- The subcontractor-scoping clause of the gate was verified directly
+  (not inferred): the API test suite creates one T&M ticket per
+  subcontractor company and confirms each sub's ticket list excludes the
+  other's, and the same check for correspondence -- proving the two new
+  `AS RESTRICTIVE` RLS policies actually filter rows, not just that the
+  permission-template plumbing is present.
+
+## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the
    Git remote and unrelated to the product name).

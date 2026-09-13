@@ -144,6 +144,21 @@ the Phase 9 gate report for why the two lists stay separate in v1.
 | `safety_incidents` | project_id, occurred_at, location_id, severity (`near_miss/minor/serious/critical`), description, involved_company_id, injured_person_name?, status (`open/investigating/closed`), corrective_action?, reported_by, closed_by?, closed_at? | fk locations, companies | Independent of `daily_log_safety_incidents` (T1's lightweight quick-capture) -- the two lists are not unified in v1 |
 | `safety_observations` | project_id, observed_at, location_id, category (`unsafe_condition/unsafe_act/near_miss/good_catch`), description, status (`open/resolved`), reported_by, resolved_by?, resolved_at? | fk locations | Lighter than an incident: no investigation/corrective-action workflow |
 
+## 9c. T3 — T&M Tickets (Phase 10)
+
+| Table | Key fields | Relationships | Notes |
+|---|---|---|---|
+| `tm_tickets` | project_id, ticket_number, company_id, work_date, description, status (`draft/submitted/approved/rejected`), submitted_by?, submitted_at?, approved_by?, approved_at?, rejection_reason? | fk companies | `company_id` is the sub billing the ticket -- a subcontractor is RLS-restricted to only their own company's tickets (`tm_tickets_subcontractor_scope`), unlike RFIs' project-wide visibility |
+| `tm_ticket_labor_entries` | ticket_id, worker_name, trade?, hours, rate | fk tm_tickets | |
+| `tm_ticket_equipment_entries` | ticket_id, description, hours, rate | fk tm_tickets | |
+| `tm_ticket_material_entries` | ticket_id, description, quantity, unit, unit_cost | fk tm_tickets | `totalAmount` (sum of all three entry types × rate/cost) is computed by the service layer, never stored redundantly |
+
+## 9d. T3 — Correspondence (Phase 10)
+
+| Table | Key fields | Relationships | Notes |
+|---|---|---|---|
+| `correspondence` | project_id, correspondence_number, direction (`incoming/outgoing`), type (`letter/notice/transmittal/memo`), subject, body, from_company_id, to_company_id, sent_date?, response_required_by?, status (`draft/sent/acknowledged/closed`), acknowledged_by?, acknowledged_at?, closed_by?, closed_at? | fk companies (x2) | A subcontractor is RLS-restricted to correspondence where their own company is sender or recipient (`correspondence_subcontractor_scope`), mirroring the RFI ball-in-court/distribution rule adapted to a from/to shape |
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

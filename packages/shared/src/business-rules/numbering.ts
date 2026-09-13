@@ -34,3 +34,11 @@ export function formatSubmittalNumber(specSectionCode: string, value: number): s
 export function formatCommitmentNumber(type: "subcontract" | "po", value: number): string {
   return formatSequenceNumber(type === "po" ? "PO" : "SC", value, 3);
 }
+
+export function formatTmTicketNumber(value: number): string {
+  return formatSequenceNumber("TM", value, 4);
+}
+
+export function formatCorrespondenceNumber(value: number): string {
+  return formatSequenceNumber("COR", value, 4);
+}

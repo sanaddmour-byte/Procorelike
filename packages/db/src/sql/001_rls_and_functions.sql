@@ -311,7 +311,8 @@ DECLARE
     'photos', 'inspections',
     'budget_line_items', 'commitments', 'change_events', 'change_orders',
     'payment_applications', 'meetings',
-    'schedule_tasks', 'safety_incidents', 'safety_observations'
+    'schedule_tasks', 'safety_incidents', 'safety_observations',
+    'tm_tickets', 'correspondence'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP
@@ -397,6 +398,38 @@ CREATE POLICY rfis_subcontractor_scope ON rfis AS RESTRICTIVE FOR ALL USING (
   )
 );
 
+-- Hard rule: a subcontractor may only see a T&M ticket billed under their
+-- own company -- a T&M ticket is a sub's own billing record for extra work,
+-- not a project-wide document like an RFI. Same restrictive-policy shape as
+-- rfis_subcontractor_scope above.
+DROP POLICY IF EXISTS tm_tickets_subcontractor_scope ON tm_tickets;
+CREATE POLICY tm_tickets_subcontractor_scope ON tm_tickets AS RESTRICTIVE FOR ALL USING (
+  current_setting('app.role', true) IS DISTINCT FROM 'subcontractor'
+  OR company_id = (
+    SELECT company_id FROM project_users
+    WHERE project_id = tm_tickets.project_id
+      AND user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+  )
+);
+
+-- Hard rule: a subcontractor may only see correspondence where their own
+-- company is the sender or the recipient -- mirrors the RFI
+-- ball-in-court/distribution rule, adapted to correspondence's from/to shape.
+DROP POLICY IF EXISTS correspondence_subcontractor_scope ON correspondence;
+CREATE POLICY correspondence_subcontractor_scope ON correspondence AS RESTRICTIVE FOR ALL USING (
+  current_setting('app.role', true) IS DISTINCT FROM 'subcontractor'
+  OR from_company_id = (
+    SELECT company_id FROM project_users
+    WHERE project_id = correspondence.project_id
+      AND user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+  )
+  OR to_company_id = (
+    SELECT company_id FROM project_users
+    WHERE project_id = correspondence.project_id
+      AND user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+  )
+);
+
 -- ---------------------------------------------------------------------------
 -- 5. Child tables scoped via their parent's own (already-RLS'd) table.
 --
@@ -426,7 +459,10 @@ DECLARE
     ARRAY['commitment_line_items', 'commitment_id', 'commitments'],
     ARRAY['potential_change_orders', 'change_event_id', 'change_events'],
     ARRAY['payment_application_lines', 'payment_application_id', 'payment_applications'],
-    ARRAY['meeting_items', 'meeting_id', 'meetings']
+    ARRAY['meeting_items', 'meeting_id', 'meetings'],
+    ARRAY['tm_ticket_labor_entries', 'ticket_id', 'tm_tickets'],
+    ARRAY['tm_ticket_equipment_entries', 'ticket_id', 'tm_tickets'],
+    ARRAY['tm_ticket_material_entries', 'ticket_id', 'tm_tickets']
   ];
   row_ text[];
 BEGIN
