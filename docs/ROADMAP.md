@@ -2,7 +2,11 @@
 
 ## Status
 
-**Current phase: 9 (Schedule & Safety) — complete. T&M Tickets + Correspondence (the remaining two T3 modules) are next.**
+**Current phase: 9 (Schedule & Safety) — complete. Phase 10 (T&M Tickets
+& Correspondence, the remaining T3 modules) is next. Scheduling & Gantt
+(Addendum A, see `docs/SCHEDULING.md`) is planned but deliberately built
+last, as Phase 11a-11d, per explicit instruction -- it does not jump the
+queue.**
 
 ## Module tiers (build strictly in order — T2 untouched until every T1 module passes acceptance)
 
@@ -28,12 +32,13 @@
 | 11 | Change Management | Done (web full workflow incl. second-approver threshold; mobile view-only) |
 | 12 | Progress Billing | Done (web full workflow; mobile view-only) |
 | 13 | Meetings | Done (web full workflow incl. carry-forward + convert-to-punch-item; mobile view-only) |
+| 13a | Scheduling & Gantt | **Promoted from T3 to T2 per Addendum A** (full spec: `docs/SCHEDULING.md`). Replaces the flat-list Schedule module built in Phase 9. Deliberately built **last** -- see Phase 11a-11d in the Phase plan. |
 
 ### T3 — Extended
 
 | # | Module | Status |
 |---|---|---|
-| 14 | Schedule | Done (web full CRUD + status/percent-complete; mobile view-only) |
+| 14 | ~~Schedule~~ | Superseded -- promoted to T2 as "Scheduling & Gantt" per Addendum A (row 13a above), deliberately built **last** (Phase 11a-11d). The Phase 9 flat-list implementation stays live and functional exactly as shipped, under the `schedule_tasks` table name, until that work starts. |
 | 15 | Safety | Done (web full incident + observation workflow; mobile view-only) |
 | 16 | T&M Tickets / Field Productivity | Not started |
 | 17 | Reports & Dashboards | Partially done: a per-project rollup dashboard (RFIs/Punch List/Budget/Change Orders) exists on web and mobile; no saved custom reports or org-wide dashboards yet |
@@ -148,6 +153,31 @@ telematics.
       the gate is proving it actually gates these two new modules, not
       building it from scratch).* **— PASSED, see the Phase 9 gate
       report.**
+- [ ] **Phase 10 — T&M Tickets & Correspondence (T3).** The remaining
+      two T3 modules, same "2 modules per phase" cadence. Next up.
+- [ ] **Phase 11a-11d (final phase) — Scheduling & Gantt (Addendum A).**
+      Deliberately built **last**, after every other planned phase
+      (including Phase 10 and anything added after it) ships -- per
+      explicit instruction, this addendum does not jump the queue just
+      because it arrived mid-build. Full spec: `docs/SCHEDULING.md`.
+      Promotes Schedule from T3 to T2 and replaces the flat-list
+      Schedule module shipped in Phase 9 with a versioned CPM data
+      model, MS Project/P6/CSV importers, a canvas-rendered Gantt UI,
+      look-ahead/PPC tracking, and (feature-flagged) a native CPM
+      engine.
+      - **11a** — Data model, calendars, importers, version diffing,
+        record linkage. *Gate: import a real 1,000+ task P6 file,
+        re-import a revised version, prove existing RFI links survive.*
+      - **11b** — Read-only Gantt UI. *Gate: 5,000 tasks pan/zoom
+        smoothly; a plotted PDF is legible at A1.*
+      - **11c** — Look-ahead, constraint log, PPC, mobile progress
+        capture with planner acceptance. *Gate: full offline
+        field-update round trip.*
+      - **11d** — Native CPM engine (feature-flagged), in-app editing,
+        drag-reschedule, XML export. *Gate: 25-scenario golden-file
+        suite passes; 2,000-task computation under 500ms.*
+      - Tier C (resources, levelling, earned value) is **not
+        scheduled** -- see `docs/SCHEDULING.md` §A9.
 
 ## Phase 1 gate report
 
