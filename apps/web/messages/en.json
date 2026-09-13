@@ -9,7 +9,14 @@
     "retry": "Try again",
     "backToProjects": "Back to projects",
     "exportPdf": "Export PDF",
-    "exportAllPdf": "Export All (PDF)"
+    "exportAllPdf": "Export All (PDF)",
+    "close": "Close",
+    "download": "Download",
+    "pageIndicator": "Page {current} of {total}",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
   },
   "Login": {
     "title": "Sign in to SiteOps",

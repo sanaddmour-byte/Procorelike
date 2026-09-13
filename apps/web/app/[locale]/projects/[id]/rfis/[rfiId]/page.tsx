@@ -1,9 +1,11 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiFetch, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { RFI_STATUS_TRANSITIONS, type RfiStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -63,6 +65,7 @@ export default function RfiDetailScreen() {
   const [isOfficial, setIsOfficial] = useState(false);
   const [submittingResponse, setSubmittingResponse] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const pdfViewer = usePdfViewer();
 
   const load = useCallback(async () => {
     try {
@@ -105,18 +108,6 @@ export default function RfiDetailScreen() {
     }
   }
 
-  async function handleDownloadReport(): Promise<void> {
-    try {
-      const res = await apiFetch(`/rfis/${params.rfiId}/report`);
-      if (!res.ok) throw new Error("report_failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      setError(tc("errorGeneric"));
-    }
-  }
-
   async function handleTransition(toStatus: RfiStatus): Promise<void> {
     setTransitioning(true);
     try {
@@ -150,7 +141,7 @@ export default function RfiDetailScreen() {
           </Link>
           <button
             type="button"
-            onClick={() => void handleDownloadReport()}
+            onClick={() => void pdfViewer.openPdf(`/rfis/${params.rfiId}/report`, `${rfi.number} — ${rfi.subject}`, `${rfi.number}.pdf`)}
             className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
           >
             {tc("exportPdf")}
@@ -232,6 +223,7 @@ export default function RfiDetailScreen() {
           </form>
         )}
       </main>
+      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>
   );
 }

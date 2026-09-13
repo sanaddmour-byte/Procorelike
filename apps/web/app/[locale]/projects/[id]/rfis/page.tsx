@@ -1,9 +1,11 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiFetch, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -44,6 +46,7 @@ export default function RfisPage() {
   const [ballInCourtUserId, setBallInCourtUserId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [creating, setCreating] = useState(false);
+  const pdfViewer = usePdfViewer();
 
   function load(): void {
     apiJson<Rfi[]>(`/rfis?projectId=${params.id}`)
@@ -63,18 +66,6 @@ export default function RfisPage() {
   function memberName(userId: string | null): string {
     if (!userId) return t("unassigned");
     return members.find((m) => m.userId === userId)?.name ?? userId;
-  }
-
-  async function handleDownloadAllReport(): Promise<void> {
-    try {
-      const res = await apiFetch(`/rfis/summary-report?projectId=${params.id}`);
-      if (!res.ok) throw new Error("report_failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      setError(tc("errorGeneric"));
-    }
   }
 
   async function handleCreate(e: FormEvent): Promise<void> {
@@ -113,7 +104,7 @@ export default function RfisPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <div className="flex gap-2">
             <button
-              onClick={() => void handleDownloadAllReport()}
+              onClick={() => void pdfViewer.openPdf(`/rfis/summary-report?projectId=${params.id}`, t("title"), "rfi-register.pdf")}
               className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
             >
               {tc("exportAllPdf")}
@@ -194,6 +185,7 @@ export default function RfisPage() {
           ))}
         </ul>
       </main>
+      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>
   );
 }

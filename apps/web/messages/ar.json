@@ -9,7 +9,14 @@
     "retry": "حاول مرة أخرى",
     "backToProjects": "العودة إلى المشاريع",
     "exportPdf": "تصدير PDF",
-    "exportAllPdf": "تصدير الكل (PDF)"
+    "exportAllPdf": "تصدير الكل (PDF)",
+    "close": "إغلاق",
+    "download": "تنزيل",
+    "pageIndicator": "صفحة {current} من {total}",
+    "previousPage": "الصفحة السابقة",
+    "nextPage": "الصفحة التالية",
+    "zoomIn": "تكبير",
+    "zoomOut": "تصغير"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",

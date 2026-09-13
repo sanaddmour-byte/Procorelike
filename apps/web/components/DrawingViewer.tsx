@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { loadPdfjs } from "@/lib/pdfjs";
 
 export type MarkupCoords =
   | { type: "pin"; x: number; y: number }
@@ -39,12 +40,7 @@ export function DrawingViewer({ pdfUrl, markups, errorLabel, onAddPin }: Props) 
 
     async function render(): Promise<void> {
       try {
-        const pdfjsLib = await import("pdfjs-dist");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-          "pdfjs-dist/build/pdf.worker.min.mjs",
-          import.meta.url,
-        ).toString();
-
+        const pdfjsLib = await loadPdfjs();
         const doc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
         const page = await doc.getPage(1);
         const viewport = page.getViewport({ scale: 1.5 });

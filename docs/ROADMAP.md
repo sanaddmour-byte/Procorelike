@@ -2304,6 +2304,72 @@ A4 for all exports as a default") — **PASSED**, see Verification.
   it) renders correctly in the letterhead on the branded registers; the
   unbranded Inspection register correctly omits the letterhead.
 
+## Phase 14 gate report
+
+**Gate** (user-directed follow-up: "Is there a built in pdf viewer inside?"
+→ "Yes i need a pdf viewer inside the app/web page with navigation / zoom
+inside the app") — **PASSED**, see Verification.
+
+**What was built:**
+- **`PdfViewerModal`** (new, `apps/web/components/PdfViewerModal.tsx`): a
+  modal that renders a PDF's pages onto a `<canvas>` via pdf.js, with
+  prev/next page navigation (repeating the header-row pattern from Phase
+  13's registers means a 10-page document is just as navigable here),
+  zoom in/out/reset (50%–300%, 25% steps), a Download button, and Escape/
+  backdrop-click to close. Replaces every export button's previous
+  fetch-blob-then-`window.open()` handoff to the browser's own PDF tab.
+- **`usePdfViewer()`** (new, `apps/web/lib/use-pdf-viewer.ts`): the shared
+  hook that fetches a report's bytes via `apiFetch` and drives the modal's
+  open/loading/error state -- one hook reused by all 10 export buttons
+  (5 single-item + 5 "export all" registers from Phase 13) instead of each
+  page repeating its own fetch-blob-download logic.
+- **`loadPdfjs()`** (new, `apps/web/lib/pdfjs.ts`): the single place that
+  dynamically imports `pdfjs-dist`, wires its bundled worker script, and
+  applies a `Map.prototype.getOrInsertComputed` polyfill (see bug below).
+  `DrawingViewer.tsx` (Phase 3's single-sheet drawing viewer) was switched
+  onto this same helper, both to deduplicate what were two copies of the
+  same dynamic-import/worker-wiring code and because it carried the exact
+  same latent bug.
+- **A real, currently-live upstream bug found via manual browser
+  testing, not any automated test**: pdfjs-dist 6.3.289's main-thread
+  worker-messaging layer calls `Map.prototype.getOrInsertComputed` on
+  every page render -- a very recent (stage-3) JS proposal not yet
+  shipped in *any* current browser, confirmed absent even in the
+  Playwright-bundled Chromium 141 used for this verification. Every
+  `page.render()` call threw immediately. Two other pdfjs-dist versions
+  were tried and rejected before landing on the actual fix: downgrading
+  to 5.4.624 (the newest release still free of the `getOrInsertComputed`
+  call) avoided that crash but hit a *different* one -- a webpack/ESM
+  interop failure ("Object.defineProperty called on non-object") loading
+  `pdf.mjs` under Next's bundler -- so the dependency stayed on 6.3.289
+  and the real fix is the small polyfill in `loadPdfjs()` instead.
+
+**Scope decisions:**
+- **No keyboard shortcuts** (arrow-key page nav, +/- zoom) -- button
+  controls satisfy "navigation and zoom" as asked; can be added cheaply
+  later if wanted.
+- **`DrawingViewer.tsx`'s own single-page markup UI was not converted to
+  `PdfViewerModal`** -- it solves a different problem (pin/polygon markup
+  placement keyed to normalized page coordinates, Phase 3), not report
+  viewing. It was updated only to fix the same underlying pdf.js bug via
+  the same new `loadPdfjs()` helper, not redesigned.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package.
+- **Manual, real-browser verification** (Playwright against the live dev
+  API and web server, not just automated assertions -- this is what
+  caught the `getOrInsertComputed` bug in the first place): opened the
+  single-item viewer on a real RFI and confirmed the canvas renders,
+  zoomed from 125% to 150% and confirmed the displayed percentage and
+  re-render, confirmed Close removes the canvas from the DOM; opened the
+  10-page RFI register from Phase 13 and paged from 1 to 2, confirming
+  both the page indicator and the rendered content changed; separately
+  confirmed `DrawingViewer.tsx` still renders correctly post-fix (a
+  seeded drawing with no actual uploaded file content correctly showed
+  its own pre-existing "No revisions uploaded yet." empty state --
+  unrelated to this phase, not a regression).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

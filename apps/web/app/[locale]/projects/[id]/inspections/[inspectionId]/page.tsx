@@ -1,9 +1,11 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiFetch, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { uploadAttachment } from "@/lib/upload";
 import type { ChecklistResponseType, InspectionResponseValue } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -56,6 +58,7 @@ export default function InspectionDetailScreen() {
   const [busy, setBusy] = useState(false);
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
   const [signedByName, setSignedByName] = useState("");
+  const pdfViewer = usePdfViewer();
 
   const load = useCallback(async () => {
     try {
@@ -152,18 +155,6 @@ export default function InspectionDetailScreen() {
       setError(tc("errorGeneric"));
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function handleDownloadReport(): Promise<void> {
-    try {
-      const res = await apiFetch(`/inspections/${params.inspectionId}/report`);
-      if (!res.ok) throw new Error("report_failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      setError(tc("errorGeneric"));
     }
   }
 
@@ -342,7 +333,10 @@ export default function InspectionDetailScreen() {
                   {t("signedOffBy")}: <span className="font-medium">{inspection.signedByName}</span>
                   {inspection.signedAt && ` — ${inspection.signedAt.replace("T", " ").slice(0, 16)}`}
                 </p>
-                <button onClick={() => void handleDownloadReport()} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+                <button
+                  onClick={() => void pdfViewer.openPdf(`/inspections/${params.inspectionId}/report`, inspection.templateTitle, "inspection-report.pdf")}
+                  className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+                >
                   {t("downloadReport")}
                 </button>
               </div>
@@ -350,6 +344,7 @@ export default function InspectionDetailScreen() {
           </>
         )}
       </main>
+      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>
   );
 }

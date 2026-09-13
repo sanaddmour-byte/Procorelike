@@ -1,9 +1,11 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiFetch, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -85,6 +87,7 @@ export default function ChangeOrdersPage() {
   const [coCostImpact, setCoCostImpact] = useState("");
   const [coTimeImpact, setCoTimeImpact] = useState("0");
   const [saving, setSaving] = useState(false);
+  const pdfViewer = usePdfViewer();
 
   async function loadEvents(): Promise<void> {
     const list = await apiJson<ChangeEvent[]>(`/change-events?projectId=${params.id}`);
@@ -188,18 +191,6 @@ export default function ChangeOrdersPage() {
 
   const targetOptions = coTargetType === "prime" ? budgetLineItems.map((li) => ({ id: li.id, label: budgetLineItemLabel(li) })) : commitments.map((c) => ({ id: c.id, label: `${c.number} — ${c.title}` }));
 
-  async function handleDownloadAllReport(): Promise<void> {
-    try {
-      const res = await apiFetch(`/change-orders/summary-report?projectId=${params.id}`);
-      if (!res.ok) throw new Error("report_failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      setError(tc("errorGeneric"));
-    }
-  }
-
   return (
     <>
       <Header />
@@ -279,7 +270,7 @@ export default function ChangeOrdersPage() {
             <h2 className="text-lg font-bold text-navy-900">{t("changeOrders")}</h2>
             <div className="flex gap-2">
               <button
-                onClick={() => void handleDownloadAllReport()}
+                onClick={() => void pdfViewer.openPdf(`/change-orders/summary-report?projectId=${params.id}`, t("changeOrders"), "change-order-register.pdf")}
                 className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
               >
                 {tc("exportAllPdf")}
@@ -360,6 +351,7 @@ export default function ChangeOrdersPage() {
           </ul>
         </section>
       </main>
+      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>
   );
 }

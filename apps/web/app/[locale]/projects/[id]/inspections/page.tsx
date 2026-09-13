@@ -1,9 +1,11 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiFetch, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -39,6 +41,7 @@ export default function InspectionsPage() {
   const [templateId, setTemplateId] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [creating, setCreating] = useState(false);
+  const pdfViewer = usePdfViewer();
 
   function load(): void {
     apiJson<Inspection[]>(`/inspections?projectId=${params.id}`)
@@ -62,18 +65,6 @@ export default function InspectionsPage() {
 
   function templateTitle(id: string): string {
     return templates.find((tpl) => tpl.id === id)?.title ?? id;
-  }
-
-  async function handleDownloadAllReport(): Promise<void> {
-    try {
-      const res = await apiFetch(`/inspections/summary-report?projectId=${params.id}`);
-      if (!res.ok) throw new Error("report_failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      setError(tc("errorGeneric"));
-    }
   }
 
   async function handleCreate(e: FormEvent): Promise<void> {
@@ -111,7 +102,7 @@ export default function InspectionsPage() {
               {t("manageTemplates")}
             </Link>
             <button
-              onClick={() => void handleDownloadAllReport()}
+              onClick={() => void pdfViewer.openPdf(`/inspections/summary-report?projectId=${params.id}`, t("title"), "inspection-register.pdf")}
               className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
             >
               {tc("exportAllPdf")}
@@ -172,6 +163,7 @@ export default function InspectionsPage() {
           ))}
         </ul>
       </main>
+      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>
   );
 }

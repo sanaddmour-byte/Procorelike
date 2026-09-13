@@ -1,9 +1,11 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiFetch, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { uploadAttachment } from "@/lib/upload";
 import type { SubmittalResponseCode } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -87,6 +89,7 @@ export default function SubmittalDetailScreen() {
   const [file, setFile] = useState<File | null>(null);
   const [submittedDate, setSubmittedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [reviewers, setReviewers] = useState<ReviewerDraft[]>([{ reviewerUserId: "", sequenceOrder: 1, isParallel: false }]);
+  const pdfViewer = usePdfViewer();
 
   const load = useCallback(async () => {
     try {
@@ -169,18 +172,6 @@ export default function SubmittalDetailScreen() {
     }
   }
 
-  async function handleDownloadReport(): Promise<void> {
-    try {
-      const res = await apiFetch(`/submittals/${params.submittalId}/report`);
-      if (!res.ok) throw new Error("report_failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      setError(tc("errorGeneric"));
-    }
-  }
-
   async function handleClose(): Promise<void> {
     setBusy(true);
     try {
@@ -214,7 +205,9 @@ export default function SubmittalDetailScreen() {
           </Link>
           <button
             type="button"
-            onClick={() => void handleDownloadReport()}
+            onClick={() =>
+              void pdfViewer.openPdf(`/submittals/${params.submittalId}/report`, `${submittal.number} — ${submittal.title}`, `${submittal.number}.pdf`)
+            }
             className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
           >
             {tc("exportPdf")}
@@ -359,6 +352,7 @@ export default function SubmittalDetailScreen() {
           ))}
         </div>
       </main>
+      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiFetch, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import {
   CORRESPONDENCE_STATUS_TRANSITIONS,
   type CorrespondenceDirection,
@@ -56,6 +58,7 @@ export default function CorrespondenceDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [signatureName, setSignatureName] = useState("");
+  const pdfViewer = usePdfViewer();
 
   const load = useCallback(async () => {
     try {
@@ -101,18 +104,6 @@ export default function CorrespondenceDetailScreen() {
     }
   }
 
-  async function handleDownloadReport(): Promise<void> {
-    try {
-      const res = await apiFetch(`/correspondence/${params.correspondenceId}/report`);
-      if (!res.ok) throw new Error("report_failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      setError(tc("errorGeneric"));
-    }
-  }
-
   if (!item) {
     return (
       <>
@@ -134,7 +125,13 @@ export default function CorrespondenceDetailScreen() {
           </Link>
           <button
             type="button"
-            onClick={() => void handleDownloadReport()}
+            onClick={() =>
+              void pdfViewer.openPdf(
+                `/correspondence/${params.correspondenceId}/report`,
+                `${item.correspondenceNumber} — ${item.subject}`,
+                `${item.correspondenceNumber}.pdf`,
+              )
+            }
             className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
           >
             {tc("exportPdf")}
@@ -200,6 +197,7 @@ export default function CorrespondenceDetailScreen() {
           </div>
         )}
       </main>
+      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>
   );
 }
