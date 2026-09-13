@@ -45,13 +45,40 @@ export class PdfBuilder {
     }
   }
 
+  /** Greedy word-wrap to the page's text width -- without this, a line longer than the margins (any real RFI question or correspondence body, not just short checklist prompts) just runs off the page edge and gets clipped rather than wrapping. */
+  private wrapText(text: string, size: number, font: PDFFont): string[] {
+    const maxWidth = PAGE_WIDTH - MARGIN * 2;
+    if (font.widthOfTextAtSize(text, size) <= maxWidth) return [text];
+
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let current = "";
+    for (const word of words) {
+      const attempt = current ? `${current} ${word}` : word;
+      if (current && font.widthOfTextAtSize(attempt, size) > maxWidth) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = attempt;
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
+  }
+
   drawLine(text: string, options: DrawLineOptions = {}): void {
     const size = options.size ?? 11;
     const usedFont = options.bold ? this.boldFont : this.font;
     const color = options.color ? rgb(...options.color) : rgb(0.06, 0.09, 0.16);
-    this.ensureSpace(size + (options.gap ?? 4));
-    this.page.drawText(text, { x: MARGIN, y: this.y, size, font: usedFont, color });
-    this.y -= size + (options.gap ?? 6);
+    const gap = options.gap ?? 6;
+
+    const wrapped = this.wrapText(text, size, usedFont);
+    wrapped.forEach((line, i) => {
+      const isLast = i === wrapped.length - 1;
+      this.ensureSpace(size + (isLast ? (options.gap ?? 4) : 2));
+      this.page.drawText(line, { x: MARGIN, y: this.y, size, font: usedFont, color });
+      this.y -= size + (isLast ? gap : 2);
+    });
   }
 
   /** A short horizontal rule under the current line, e.g. a signature underline -- drawn at the position drawLine just left off, so call it right after the line it underlines. */
