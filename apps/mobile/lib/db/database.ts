@@ -91,6 +91,20 @@ async function openAndMigrate(): Promise<SQLite.SQLiteDatabase> {
       PRIMARY KEY (inspection_id, template_item_id)
     );
 
+    CREATE TABLE IF NOT EXISTS schedule_progress_updates (
+      id TEXT PRIMARY KEY NOT NULL,
+      project_id TEXT NOT NULL,
+      task_id TEXT NOT NULL,
+      proposed_percent_complete INTEGER,
+      proposed_actual_start TEXT,
+      proposed_actual_finish TEXT,
+      note TEXT,
+      review_status TEXT NOT NULL DEFAULT 'pending',
+      rejection_reason TEXT,
+      sync_status TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS outbox (
       queue_id TEXT PRIMARY KEY NOT NULL,
       entity_type TEXT NOT NULL,

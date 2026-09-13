@@ -25,6 +25,7 @@ export default function ProjectHomeScreen() {
     { href: `/projects/${id}/billing`, label: i18n.t("billing.title") },
     { href: `/projects/${id}/meetings`, label: i18n.t("meetings.title") },
     { href: `/projects/${id}/schedule`, label: i18n.t("schedule.title") },
+    { href: `/projects/${id}/lookahead`, label: i18n.t("lookahead.title") },
     { href: `/projects/${id}/safety`, label: i18n.t("safety.title") },
     { href: `/projects/${id}/tm-tickets`, label: i18n.t("tmTickets.title") },
     { href: `/projects/${id}/correspondence`, label: i18n.t("correspondence.title") },

@@ -375,6 +375,18 @@ export async function findVersionProjectId(appDb: Database, userId: string, vers
   });
 }
 
+/** Used by Phase 11c's constraint/progress-update routes to resolve a projectId from a bare taskId query param. */
+export async function findTaskProjectId(appDb: Database, userId: string, taskId: string): Promise<string | undefined> {
+  return withUserContext(appDb, userId, async (tx) => {
+    const [task] = await tx.select().from(schema.cpmScheduleTasks).where(eq(schema.cpmScheduleTasks.id, taskId)).limit(1);
+    if (!task) return undefined;
+    const [version] = await tx.select().from(schema.scheduleVersions).where(eq(schema.scheduleVersions.id, task.versionId)).limit(1);
+    if (!version) return undefined;
+    const [scheduleRow] = await tx.select().from(schema.schedules).where(eq(schema.schedules.id, version.scheduleId)).limit(1);
+    return scheduleRow?.projectId;
+  });
+}
+
 /** Throws NotFoundError if the project has no schedule imported yet. */
 export function requireSchedule<T>(value: T | undefined): T {
   if (!value) throw new NotFoundError("No schedule found for this project");

@@ -1886,6 +1886,182 @@ scale gate did its job.
   column headers in `TaskGrid` — was fixed before this report, see
   "What was built").
 
+## Phase 11c gate report
+
+**Gate** (self-defined — see the Phase 11c plan, Addendum A6/A7: a
+look-ahead window with a subcontractor commitment that's confirmed and
+later missed (PPC reflects it), a constraint log, a delay-register
+linkage, and a field progress update that only changes the schedule once
+a planner accepts it — submitted from a phone, including while offline,
+with an end-to-end sync round trip) **— PASSED**, see Verification.
+
+**What was built:**
+- **`packages/db`**: `lookaheadCommitments` gained a `status` enum
+  (`promised`/`confirmed`/`declined`); new `scheduleConstraints` table
+  (category/description/owner company/need-by date/open-or-cleared) and
+  `scheduleProgressUpdates` table (proposed percent/actual-start/actual-
+  finish/note/photo, `pending`/`accepted`/`rejected`, reviewer + rejection
+  reason) — both scoped to a `cpmScheduleTasks` row via
+  `child_fk_parent` RLS; `dailyLogDelays` gained a nullable
+  `scheduleTaskId` link (the "delay linkage" A6 calls for).
+- **`packages/shared`**: `filterLookaheadWindow()` (a task falls in a
+  look-ahead window if its date range overlaps it, falling back from
+  planned to early dates for an unbaselined task) and `computePpc()`
+  (per-company met/missed/pending counts and a percentage, a commitment
+  counted only once its promised finish has passed) — 13 unit tests
+  covering window-overlap edge cases and PPC's met/missed/pending/multi-
+  company/empty cases.
+- **`apps/api`**: `lookahead.service.ts`/`.routes.ts` (ad-hoc unsaved
+  look-ahead view, published plans, commitments with a self-scoped
+  confirm/decline that checks the caller's own company rather than
+  requiring the broader "standard" edit level, PPC, a delay register, and
+  a schedule-scoped company-name lookup — see below); `schedule-
+  constraints.service` folded into the same file's pattern via `POST
+  /schedule-constraints` / `GET` / `POST /:id/clear`; `schedule-
+  progress.service.ts`/`.routes.ts` (submit — "read" is enough, since
+  submitting never mutates the schedule; a planner's accept/reject queue
+  gated at "standard"; accept is the *only* place a phone submission
+  actually reaches `cpmScheduleTasks`, and only the fields that were
+  proposed). Direct `/accept`/`/reject` endpoints rather than a generic
+  transition endpoint (like punch items'
+  `PUNCH_ITEM_STATUS_TRANSITIONS`) — a progress update only ever has two
+  possible outcomes from "pending", so a state-machine abstraction would
+  be pure overhead.
+- **Mobile sync wiring for `schedule_progress_update`**: added as a
+  fourth entity type to `SYNC_ENTITY_TYPES`
+  (`packages/shared/src/schemas/sync.schema.ts`), requiring (and
+  receiving) a branch in each of `sync.service.ts`'s two exhaustive
+  `switch` statements. `applyScheduleProgressUpdatePush()` is create-only
+  — unlike daily logs, a progress update is never edited after
+  submission, only accepted/rejected by a planner (a separate, non-synced
+  web action) — so there's no field-merge/conflict path: a retried push
+  for an already-applied `localId` is just an idempotent no-op, not a
+  duplicate or a conflict. `listScheduleProgressUpdatesSince()` scopes by
+  project via a join through `cpmScheduleTasks`→`scheduleVersions`→
+  `schedules`, since the table itself carries no `projectId` column.
+- **`apps/web`**: a `/lookahead` page (week-start/horizon picker,
+  publish-plan button, tasks-in-window grouped by company, constraint
+  log with add/clear, commitments with confirm/decline/PPC table, a
+  progress-update submission form, a delay-register table) and a
+  `/progress-updates` page (the planner's acceptance queue — accept/
+  reject with an inline rejection-reason input); both added to
+  `ProjectTabs`, fully bilingual.
+- **`apps/mobile`**: `lib/db/schedule-progress-repo.ts` (a create-only
+  local table — `id`/`taskId`/proposed fields/note, plus a
+  `reviewStatus` mirrored down from the server on pull so a submitting
+  device can see its own update go from "awaiting review" to "accepted"/
+  "rejected" without a dedicated endpoint); the four sync-engine
+  touchpoints (`ENTITY_TYPES`, `buildPushData`, `markApplied`,
+  `pullEntity` — `markConflicted` gained an explicit branch that throws,
+  documented as unreachable, since this entity's push handler never
+  returns a `conflict` result). Three new screens under
+  `/projects/[id]/lookahead/`: an index screen (this week + the next 3
+  weeks' tasks, grouped by responsible company via the same schema-scoped
+  `GET /lookahead/companies` lookup the web page uses, plus a "my
+  submitted updates" list read from local SQLite so an offline
+  submission is visible immediately); a task-detail screen (linked RFIs/
+  submittals/punch items via `GET /record-links` — the **first mobile
+  consumer of `record_links`**, shown as badged cards deep-linking into
+  each type's existing mobile detail screen where one exists; the
+  progress-update submission form, offline-queued through the outbox
+  exactly like a daily log); and a commitments screen (plan picker,
+  confirm/decline buttons calling the API directly — not through the
+  outbox, since these are single-writer actions with no offline-conflict
+  story worth building — plus the PPC table). No pre-filtering by "my
+  company" anywhere a wrong-company action is attempted; the API's
+  existing 403 (`not_committed_company`) is caught and shown as a
+  message instead, the same pattern already proven on web.
+- **A real UX bug found and fixed via manual browser verification, not
+  caught by any automated test**: `GET /projects/:id/companies` is
+  gated by `requireAnyFinancialReadAccess()`, which a foreman's default
+  template sets to "none" — so the web look-ahead page's company names
+  silently rendered as raw UUIDs for a foreman (the `.catch()` on that
+  fetch swallowed the resulting 403). Fixed by adding a schedule-scoped
+  `GET /lookahead/companies` endpoint instead of loosening the existing
+  financial-gated one (which Budget/Commitments screens still use for
+  their own, deliberately narrower purpose), with a regression assertion
+  in the gate test and a re-verified screenshot. Mobile was built against
+  the corrected endpoint from the start.
+
+**Scope decisions:**
+- **No photo attachment on a progress update from mobile.** The schema
+  has a `photoAttachmentId` column and the API push handler accepts one,
+  but photo upload is online-only (presign/confirm, per Phase 2's own
+  documented scope), so it can't travel through a fully-offline outbox
+  push. A field submission is data-only on mobile; attaching a photo
+  after the fact would need online connectivity anyway and is left as a
+  documented gap rather than a half-built online/offline hybrid.
+- **Look-ahead plans publish immediately at creation** — no separate
+  draft/publish workflow, unlike Addendum A6's fuller Last Planner
+  system description. `createLookaheadPlan()` sets `publishedAt`/
+  `publishedBy` at insert time.
+- **Constraints and progress updates are not carried forward across a
+  schedule re-import**, unlike `record_links` (Phase 11a). Both are
+  scoped to a specific `cpmScheduleTasks` row, which is never mutated
+  across versions; a re-import creates new task rows in a new version
+  with no equivalent carry-forward logic. Documented here rather than
+  silently left as a surprise gap.
+- **Mobile "my tasks" groups by company, it doesn't filter to only the
+  viewer's own company.** There's no `companyId` in the stored mobile
+  auth session, and the API's own confirm/decline check already enforces
+  company boundaries where it actually matters (an action, not a view) —
+  mirroring the web page's identical choice.
+- **No mobile constraint-log or delay-register screens.** Task #122's
+  stated scope was "my-tasks list + progress capture + commitment
+  confirm/decline"; constraints and the delay register are planner/PM
+  tools, already fully built on web, and adding read-only mobile views of
+  them wasn't part of the gate this phase set for itself.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (189 tests total: 108 `packages/shared` — 13 new
+  this phase for `lookahead.ts` — 58 `apps/api` — including the sync
+  round trip below — 22 `apps/web`, 1 `packages/db`, 0 `apps/mobile`,
+  consistent with every phase since Phase 2), including a full production
+  `next build` of `apps/web` (`/lookahead` compiles at 4.53 kB,
+  `/progress-updates` at 2.57 kB).
+- **The Phase 11c API gate test** (`apps/api/src/routes/lookahead.test.ts`,
+  run against the Zarqa Wastewater project so it doesn't collide with
+  `cpm-schedule.test.ts`'s Amman Heights fixtures): imports a small XER,
+  gets the ad-hoc look-ahead view, confirms a foreman can resolve company
+  names via the new schedule-scoped endpoint (the fix above, regression-
+  tested), publishes a plan, creates a commitment, proves a wrong-company
+  confirm attempt 403s and the right company's succeeds, records a late
+  actual and asserts PPC shows exactly one missed commitment, submits a
+  progress update as a foreman and confirms the task is **unchanged**
+  until a planner accepts it (confirming a foreman cannot self-accept),
+  asserts a double-accept 409s, and confirms a rejected update also
+  leaves the task untouched; then a constraint is created (and a
+  consultant is blocked from creating one), listed, and cleared; then a
+  daily-log delay linked to a schedule task shows up correctly in the
+  delay register.
+- **The offline sync round trip itself**, folded into the same test: a
+  progress update pushed through `/sync/push` with `baseRevision: null`
+  (i.e., authored entirely offline) is confirmed `applied`; a retried
+  push for the same `localId` (simulating a device that didn't see the
+  first response) comes back `applied` again rather than erroring or
+  duplicating; the record is then confirmed present via `/sync/pull`,
+  visible in the planner's normal acceptance queue exactly like a web-
+  submitted one, and accepted through the ordinary `/accept` endpoint —
+  after which the task's `percentComplete` reflects the offline-submitted
+  value. This is the server-side half of Addendum A6's stated Phase 11c
+  gate ("full offline field-update round trip") proven against a real
+  Postgres instance, not mocked.
+- **`apps/mobile`**: `tsc --noEmit` and `eslint --max-warnings=0` both
+  pass clean for every new/changed file (the three lookahead screens, the
+  local repo, the sync-engine's four touchpoints, the outbox's entity
+  type). **Not executed**: this sandbox has no iOS simulator, Android
+  emulator, or physical device — the same standing limitation noted in
+  every mobile phase since Phase 2's gate report. The API-side sync test
+  above proves the actual wire contract the mobile sync engine talks to
+  (push idempotency, project-membership checks on the pushed `taskId`,
+  pull visibility, planner acceptance); the client-side half (SQLite
+  writes, outbox draining, the local `reviewStatus` mirror on pull, the
+  three screens' rendering and interaction) is verified by type-safety
+  and code review only, not execution. Treat the three new mobile screens
+  as code-complete-but-unrun until verified on a real device or
+  simulator, exactly like every mobile screen since Phase 2.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

@@ -39,6 +39,7 @@ export * from "./schemas/cpm-schedule.schema";
 export * from "./schedule/types";
 export * from "./schedule/validate";
 export * from "./schedule/diff";
+export * from "./schedule/lookahead";
 export * from "./schedule/importers/csv-text";
 export * from "./schedule/importers/csv";
 export * from "./schedule/importers/ms-project-xml";

@@ -237,6 +237,44 @@ data-model-adjacent parts:
   export) is pure client-side rendering against that read -- no new
   tables, no write path beyond the existing `POST /schedules/import`.
 
+## 9g. Look-ahead, PPC, constraints, progress capture (Addendum A6/A7, Phase 11c)
+
+Full detail in `docs/ROADMAP.md`'s Phase 11c gate report; summarised here
+for the data-model-adjacent parts.
+
+| Table | Key fields | Relationships | Notes |
+|---|---|---|---|
+| `lookahead_commitments` | *(9e, extended)* + status (`promised/confirmed/declined`) | fk `lookahead_plans`, fk `schedule_tasks` | 9e shipped the table with no status column (schema only); this phase adds the confirm/decline state and the endpoints that drive it |
+| `schedule_constraints` | task_id, category (`design/material/permit/access/labour/prerequisite/other`), description, owner_company_id?, need_by_date, status (`open/cleared`), cleared_at?, cleared_by? | fk `schedule_tasks`, fk `companies`, fk `users` | Scoped to a specific task row -- **not carried forward across a re-import**, unlike `record_links` (9e) |
+| `schedule_progress_updates` | task_id, submitted_by, proposed_percent_complete?, proposed_actual_start?/finish?, note?, photo_attachment_id?, status (`pending/accepted/rejected`), reviewed_by?, reviewed_at?, rejection_reason? | fk `schedule_tasks`, fk `users`, fk `attachments` | The only path a mobile field submission has into `schedule_tasks` is `acceptScheduleProgressUpdate()` -- submission alone never mutates the task |
+| `daily_log_delays` | *(existing, extended)* + schedule_task_id? | fk `schedule_tasks` | Nullable "delay linkage" -- a delay entry can optionally point at the task it affected, feeding the delay register |
+
+**API surface**: `lookahead.service.ts`/`.routes.ts` (`GET /lookahead/view`
+— ad-hoc unsaved window; `GET /lookahead/companies` — a schedule-scoped
+company-name lookup added specifically so a foreman without financial
+read-access can still resolve company names, see the gate report; `GET
+/lookahead/delays` — the delay register; plans/commitments/PPC CRUD),
+`schedule-constraints.routes.ts`, `schedule-progress.routes.ts` (submit +
+planner accept/reject), plus a fourth `SYNC_ENTITY_TYPES` entry
+(`schedule_progress_update`, create-only — no field-merge/conflict path,
+unlike `daily_log`) wired into `sync.service.ts`'s two exhaustive
+`switch` statements.
+
+**Scope cuts, documented rather than silently incomplete:**
+- Look-ahead plans publish immediately at creation (`publishedAt`/
+  `publishedBy` set at insert) -- no separate draft/publish workflow.
+- `schedule_constraints` and `schedule_progress_updates` are **not**
+  carried forward across a schedule re-import, unlike `record_links`:
+  both key off a specific `cpm_schedule_tasks` row, which a re-import
+  never mutates (it creates new rows in a new version instead).
+- No photo attachment on a progress update submitted from mobile --
+  `photo_attachment_id` exists in the schema and the web form supports
+  it, but photo upload is online-only (Phase 2's presign/confirm flow),
+  so it can't travel through a fully-offline `sync/push`.
+- Mobile ships read-only-ish "my tasks" + progress-capture + commitment
+  confirm/decline screens only -- no mobile constraint-log or
+  delay-register views (planner/PM tools, already on web).
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

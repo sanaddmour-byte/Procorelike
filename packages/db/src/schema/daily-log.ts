@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { auditColumns, idColumn, syncColumns } from "./columns";
 import { companies, projects, trades, users } from "./core";
+import { cpmScheduleTasks } from "./cpm-schedule";
 
 export const dailyLogs = pgTable(
   "daily_logs",
@@ -92,6 +93,15 @@ export const dailyLogDelays = pgTable(
     causeCode: varchar("cause_code", { length: 100 }).notNull(),
     description: text("description").notNull(),
     hoursImpact: numeric("hours_impact", { precision: 6, scale: 2 }),
+    /**
+     * Optional link to the CPM schedule (Addendum A / Phase 11c "delay
+     * linkage") -- a delay entry doesn't have to reference a schedule task
+     * (most won't), but when it does, the delay register aggregates
+     * `hoursImpact` across every entry pointing at the same task. No
+     * dedicated RLS entry needed: this table is already scoped through
+     * `daily_log_id` -> `daily_logs`, unaffected by this column.
+     */
+    scheduleTaskId: uuid("schedule_task_id").references(() => cpmScheduleTasks.id),
   },
   (table) => [index("daily_log_delays_daily_log_id_idx").on(table.dailyLogId)],
 );

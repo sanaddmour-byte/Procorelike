@@ -237,6 +237,16 @@ export const lookaheadPlans = pgTable(
   (table) => [index("lookahead_plans_project_id_idx").on(table.projectId)],
 );
 
+/**
+ * `promised` (default, on creation) -> `confirmed`/`declined` (the
+ * subcontractor's own company acting on it, mobile A7 "commitment
+ * confirm/decline") -- independent of `actualFinish`, which is filled in
+ * later once the work is actually done. A declined commitment isn't
+ * deleted -- it stays as the record of "this promise wasn't accepted,"
+ * which is itself useful PPC/planning context.
+ */
+export const lookaheadCommitmentStatusEnum = pgEnum("lookahead_commitment_status", ["promised", "confirmed", "declined"]);
+
 export const lookaheadCommitments = pgTable(
   "lookahead_commitments",
   {
@@ -251,8 +261,78 @@ export const lookaheadCommitments = pgTable(
     committedByCompanyId: uuid("committed_by_company_id")
       .notNull()
       .references(() => companies.id),
+    status: lookaheadCommitmentStatusEnum("status").notNull().default("promised"),
     actualFinish: date("actual_finish", { mode: "string" }),
     reasonCode: varchar("reason_code", { length: 100 }),
   },
   (table) => [index("lookahead_commitments_lookahead_plan_id_idx").on(table.lookaheadPlanId)],
+);
+
+/** Addendum A6 "constraint/commitment log" -- readiness blockers tracked per task, independent of the look-ahead/PPC commitment concept above. */
+export const scheduleConstraintCategoryEnum = pgEnum("schedule_constraint_category", [
+  "design",
+  "material",
+  "permit",
+  "access",
+  "labour",
+  "prerequisite",
+  "other",
+]);
+
+export const scheduleConstraintStatusEnum = pgEnum("schedule_constraint_status", ["open", "cleared"]);
+
+export const scheduleConstraints = pgTable(
+  "schedule_constraints",
+  {
+    id: idColumn(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => cpmScheduleTasks.id),
+    category: scheduleConstraintCategoryEnum("category").notNull(),
+    description: text("description").notNull(),
+    ownerCompanyId: uuid("owner_company_id").references(() => companies.id),
+    needByDate: date("need_by_date", { mode: "string" }).notNull(),
+    status: scheduleConstraintStatusEnum("status").notNull().default("open"),
+    clearedAt: timestamp("cleared_at", { withTimezone: true }),
+    clearedBy: uuid("cleared_by").references(() => users.id),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...auditColumns(),
+  },
+  (table) => [index("schedule_constraints_task_id_idx").on(table.taskId)],
+);
+
+/**
+ * Addendum A6 "progress capture from the field" -- a superintendent's
+ * mobile %/date update, offline-queued, that never mutates the schedule
+ * directly: it lands here as `pending` and only takes effect on the
+ * current version's task row once a planner reviews and accepts it
+ * (docs/SCHEDULING.md A6: "never let a phone edit silently mutate the
+ * master schedule").
+ */
+export const scheduleProgressUpdateStatusEnum = pgEnum("schedule_progress_update_status", ["pending", "accepted", "rejected"]);
+
+export const scheduleProgressUpdates = pgTable(
+  "schedule_progress_updates",
+  {
+    id: idColumn(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => cpmScheduleTasks.id),
+    submittedBy: uuid("submitted_by")
+      .notNull()
+      .references(() => users.id),
+    proposedPercentComplete: integer("proposed_percent_complete"),
+    proposedActualStart: timestamp("proposed_actual_start", { withTimezone: true }),
+    proposedActualFinish: timestamp("proposed_actual_finish", { withTimezone: true }),
+    note: text("note"),
+    photoAttachmentId: uuid("photo_attachment_id").references(() => attachments.id),
+    status: scheduleProgressUpdateStatusEnum("status").notNull().default("pending"),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    rejectionReason: text("rejection_reason"),
+    ...auditColumns(),
+  },
+  (table) => [index("schedule_progress_updates_task_id_idx").on(table.taskId)],
 );

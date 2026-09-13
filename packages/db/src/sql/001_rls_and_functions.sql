@@ -469,7 +469,9 @@ DECLARE
     ARRAY['calendar_exceptions', 'calendar_id', 'calendars'],
     ARRAY['task_dependencies', 'predecessor_id', 'schedule_tasks'],
     ARRAY['task_baseline_values', 'task_id', 'schedule_tasks'],
-    ARRAY['lookahead_commitments', 'lookahead_plan_id', 'lookahead_plans']
+    ARRAY['lookahead_commitments', 'lookahead_plan_id', 'lookahead_plans'],
+    ARRAY['schedule_constraints', 'task_id', 'schedule_tasks'],
+    ARRAY['schedule_progress_updates', 'task_id', 'schedule_tasks']
   ];
   row_ text[];
 BEGIN

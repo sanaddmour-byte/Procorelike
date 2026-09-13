@@ -30,6 +30,8 @@ export const dailyLogDelaySchema = z
     causeCode: z.string().min(1).max(100),
     description: z.string().min(1),
     hoursImpact: z.number().optional(),
+    /** Addendum A6 "delay linkage" (Phase 11c) -- optional link to a CPM schedule task, so a delay register can aggregate impact per activity. */
+    scheduleTaskId: z.string().uuid().optional(),
   })
   .strict();
 

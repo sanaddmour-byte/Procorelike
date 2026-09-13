@@ -3,6 +3,7 @@ import type { FieldConflict, PermissionContext, SyncEntityType, SyncPushRecord }
 import * as dailyLogService from "./daily-log.service";
 import * as inspectionService from "./inspection.service";
 import * as punchItemService from "./punch-item.service";
+import * as scheduleProgressService from "./schedule-progress.service";
 
 export interface SyncPushRecordResult {
   localId: string;
@@ -44,6 +45,8 @@ function applyPush(
       return punchItemService.applyPunchItemPush(appDb, userId, ctx, projectId, record.localId, record.base, record.data);
     case "inspection":
       return inspectionService.applyInspectionPush(appDb, userId, ctx, projectId, record.localId, record.base, record.data);
+    case "schedule_progress_update":
+      return scheduleProgressService.applyScheduleProgressUpdatePush(appDb, userId, ctx, projectId, record.localId, record.base, record.data);
   }
 }
 
@@ -76,5 +79,7 @@ function listSince(
       return punchItemService.listPunchItemsSince(appDb, userId, ctx, projectId, since);
     case "inspection":
       return inspectionService.listInspectionsSince(appDb, userId, ctx, projectId, since);
+    case "schedule_progress_update":
+      return scheduleProgressService.listScheduleProgressUpdatesSince(appDb, userId, ctx, projectId, since);
   }
 }

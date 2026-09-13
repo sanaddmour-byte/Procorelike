@@ -24,6 +24,12 @@ import {
   markPunchItemSynced,
   upsertPunchItemFromServer,
 } from "../db/punch-item-repo";
+import {
+  getLocalProgressUpdate,
+  markProgressUpdateSynced,
+  upsertProgressUpdateFromServer,
+  type ProgressUpdateReviewStatus,
+} from "../db/schedule-progress-repo";
 
 interface SyncPushRecordResult {
   localId: string;
@@ -41,7 +47,7 @@ export interface SyncResult {
   ranOffline: boolean;
 }
 
-const ENTITY_TYPES: SyncEntityType[] = ["daily_log", "punch_item", "inspection"];
+const ENTITY_TYPES: SyncEntityType[] = ["daily_log", "punch_item", "inspection", "schedule_progress_update"];
 
 /**
  * Drains the outbox (push), then pulls anything changed server-side since
@@ -76,6 +82,20 @@ async function buildPushData(entityType: SyncEntityType, localId: string): Promi
     const base = await getPunchItemBaseSnapshot(localId);
     return { baseRevision: item?.baseRevision ?? null, base, data: { description: item?.description ?? "" } };
   }
+  if (entityType === "schedule_progress_update") {
+    const update = await getLocalProgressUpdate(localId);
+    return {
+      baseRevision: null, // create-only: never has a base to diff against
+      base: null,
+      data: {
+        taskId: update?.taskId,
+        proposedPercentComplete: update?.proposedPercentComplete ?? undefined,
+        proposedActualStart: update?.proposedActualStart ?? undefined,
+        proposedActualFinish: update?.proposedActualFinish ?? undefined,
+        note: update?.note ?? undefined,
+      },
+    };
+  }
   const inspection = await getInspection(localId);
   const base = await getInspectionBaseSnapshot(localId);
   const responses = await getResponses(localId);
@@ -102,6 +122,8 @@ async function markApplied(entityType: SyncEntityType, localId: string, serverRe
       description: item?.description ?? "",
       status: item?.status ?? "open",
     });
+  } else if (entityType === "schedule_progress_update") {
+    await markProgressUpdateSynced(localId);
   } else {
     const inspection = await getInspection(localId);
     await markInspectionSynced(localId, serverRevision, {
@@ -119,6 +141,9 @@ async function markConflicted(entityType: SyncEntityType, localId: string, serve
   } else if (entityType === "punch_item") {
     const server = await apiJson<{ description: string }>(`/punch-items/${localId}`);
     await markPunchItemConflict(localId, serverRevision, conflicts, server.description);
+  } else if (entityType === "schedule_progress_update") {
+    // Unreachable: applyScheduleProgressUpdatePush (create-only) only ever returns "applied" or "rejected", never "conflict".
+    throw new Error("schedule_progress_update push never produces a conflict result");
   } else {
     const server = await apiJson<{ status: string; signedByName: string | null }>(`/inspections/${localId}`);
     await markInspectionConflict(localId, serverRevision, conflicts, { status: server.status, signedByName: server.signedByName });
@@ -181,6 +206,18 @@ async function pullEntity(projectId: string, entityType: SyncEntityType, result:
         status: record.status as "open" | "ready_for_review" | "approved" | "closed",
         dueDate: (record.dueDate as string | null) ?? null,
         serverRevision: record.serverRevision as number,
+      });
+    } else if (entityType === "schedule_progress_update") {
+      await upsertProgressUpdateFromServer({
+        id: record.id as string,
+        projectId,
+        taskId: record.taskId as string,
+        proposedPercentComplete: (record.proposedPercentComplete as number | null) ?? null,
+        proposedActualStart: (record.proposedActualStart as string | null) ?? null,
+        proposedActualFinish: (record.proposedActualFinish as string | null) ?? null,
+        note: (record.note as string | null) ?? null,
+        status: record.status as ProgressUpdateReviewStatus,
+        rejectionReason: (record.rejectionReason as string | null) ?? null,
       });
     } else {
       // The generic pull record for an inspection doesn't carry its
