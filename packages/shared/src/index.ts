@@ -40,12 +40,15 @@ export * from "./schedule/types";
 export * from "./schedule/validate";
 export * from "./schedule/diff";
 export * from "./schedule/lookahead";
+export * from "./schedule/calendar";
+export * from "./schedule/cpm";
 export * from "./schedule/importers/csv-text";
 export * from "./schedule/importers/csv";
 export * from "./schedule/importers/ms-project-xml";
 export * from "./schedule/importers/xer-text";
 export * from "./schedule/importers/p6-xer";
 export * from "./schedule/importers/p6-xml";
+export * from "./schedule/exporters/ms-project-xml";
 
 export * from "./sync/merge";
 

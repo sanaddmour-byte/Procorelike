@@ -86,3 +86,43 @@ export const rejectScheduleProgressUpdateSchema = z
   })
   .strict();
 export type RejectScheduleProgressUpdateInput = z.infer<typeof rejectScheduleProgressUpdateSchema>;
+
+// -- Phase 11d (Addendum A, Tier B): feature-flagged native CPM editing --
+
+export const taskConstraintTypeSchema = z.enum(["asap", "alap", "snet", "snlt", "fnet", "fnlt", "mso", "mfo"]);
+export const taskDependencyTypeSchema = z.enum(["FS", "SS", "FF", "SF"]);
+
+export const setNativeEditingEnabledSchema = z.object({ enabled: z.boolean() }).strict();
+export type SetNativeEditingEnabledInput = z.infer<typeof setNativeEditingEnabledSchema>;
+
+/** One task's proposed field changes -- used both by the persisting `recompute` endpoint and the non-persisting `preview` endpoint, so a drag's impact can be shown before it's committed. */
+export const taskEditSchema = z
+  .object({
+    taskId: z.string().uuid(),
+    name: z.string().min(1).max(500).optional(),
+    durationMinutes: z.number().int().min(0).optional(),
+    constraintType: taskConstraintTypeSchema.nullable().optional(),
+    constraintDate: z.string().datetime().nullable().optional(),
+    percentComplete: z.number().int().min(0).max(100).optional(),
+  })
+  .strict();
+export type TaskEditInput = z.infer<typeof taskEditSchema>;
+
+export const dependencyAddSchema = z
+  .object({
+    predecessorId: z.string().uuid(),
+    successorId: z.string().uuid(),
+    type: taskDependencyTypeSchema.default("FS"),
+    lagMinutes: z.number().int().default(0),
+  })
+  .strict();
+export type DependencyAddInput = z.infer<typeof dependencyAddSchema>;
+
+export const scheduleEditBatchSchema = z
+  .object({
+    taskEdits: z.array(taskEditSchema).default([]),
+    dependencyAdds: z.array(dependencyAddSchema).default([]),
+    dependencyRemoveIds: z.array(z.string().uuid()).default([]),
+  })
+  .strict();
+export type ScheduleEditBatchInput = z.infer<typeof scheduleEditBatchSchema>;

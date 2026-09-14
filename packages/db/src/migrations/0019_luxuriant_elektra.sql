@@ -1,0 +1,1 @@
+ALTER TABLE "schedules" ADD COLUMN "native_editing_enabled" boolean DEFAULT false NOT NULL;

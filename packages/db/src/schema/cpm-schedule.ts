@@ -34,6 +34,14 @@ export const schedules = pgTable(
     sourceTool: scheduleSourceToolEnum("source_tool").notNull().default("manual"),
     defaultCalendarId: uuid("default_calendar_id"),
     currentVersionId: uuid("current_version_id"),
+    /**
+     * Tier B gate (docs/SCHEDULING.md, Phase 11d): native CPM editing --
+     * in-app task edits, drag-reschedule, dependency add/remove -- is
+     * feature-flagged per schedule and off by default. Toggled by
+     * owner_admin only; existing imported schedules stay read-only (Tier
+     * A) until a project explicitly opts in.
+     */
+    nativeEditingEnabled: boolean("native_editing_enabled").notNull().default(false),
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id),
