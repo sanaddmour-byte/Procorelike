@@ -204,6 +204,13 @@
       "when": 1789412471455,
       "tag": "0028_even_sinister_six",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789414648720,
+      "tag": "0029_even_phantom_reporter",
+      "breakpoints": true
     }
   ]
 }

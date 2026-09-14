@@ -18,7 +18,7 @@ export const createBudgetLineItemSchema = z
   .strict();
 export type CreateBudgetLineItemInput = z.infer<typeof createBudgetLineItemSchema>;
 
-/** approvedChangesAmount is deliberately not editable here -- it's system-managed, bumped only by an approved 'prime' change order (see change-management.service.ts). */
+/** approvedChangesAmount is deliberately not editable here -- it's system-managed, bumped only by an approved 'prime' change order (see change-management.service.ts). modificationsAmount is likewise not editable directly -- only via createBudgetModificationSchema below. */
 export const updateBudgetLineItemSchema = z
   .object({
     originalAmount: money.optional(),
@@ -26,6 +26,22 @@ export const updateBudgetLineItemSchema = z
   })
   .strict();
 export type UpdateBudgetLineItemInput = z.infer<typeof updateBudgetLineItemSchema>;
+
+/** Procore's Budget Modification: transfers `amount` from one line item to another on the same project, netting to zero on the total budget -- unlike a change order, which changes the overall contract value. */
+export const createBudgetModificationSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    fromLineItemId: z.string().uuid(),
+    toLineItemId: z.string().uuid(),
+    amount: z.number().positive(),
+    reason: z.string().max(2000).optional(),
+  })
+  .strict()
+  .refine((data) => data.fromLineItemId !== data.toLineItemId, {
+    message: "fromLineItemId and toLineItemId must differ",
+    path: ["toLineItemId"],
+  });
+export type CreateBudgetModificationInput = z.infer<typeof createBudgetModificationSchema>;
 
 // ---------------------------------------------------------------------------
 // Commitments

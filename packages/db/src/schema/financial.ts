@@ -57,6 +57,8 @@ export const budgetLineItems = pgTable(
       .notNull()
       .references(() => costCodes.id),
     originalAmount: numeric("original_amount", { precision: 14, scale: 2 }).notNull().default("0"),
+    /** Procore's "Budget Modifications": net internal transfers to/from this line item via budgetModifications, entered without a change order since they don't move the overall contract value. */
+    modificationsAmount: numeric("modifications_amount", { precision: 14, scale: 2 }).notNull().default("0"),
     approvedChangesAmount: numeric("approved_changes_amount", { precision: 14, scale: 2 })
       .notNull()
       .default("0"),
@@ -72,6 +74,30 @@ export const budgetLineItems = pgTable(
     ...auditColumns(),
   },
   (table) => [index("budget_line_items_project_id_idx").on(table.projectId)],
+);
+
+/** Procore's Budget Modification: transfers an amount between two line items on the same project without changing the total budget (unlike a change order) -- e.g. moving contingency into an over-running cost code. */
+export const budgetModifications = pgTable(
+  "budget_modifications",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    fromLineItemId: uuid("from_line_item_id")
+      .notNull()
+      .references(() => budgetLineItems.id),
+    toLineItemId: uuid("to_line_item_id")
+      .notNull()
+      .references(() => budgetLineItems.id),
+    amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+    reason: text("reason"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("budget_modifications_project_id_idx").on(table.projectId)],
 );
 
 export const commitments = pgTable(

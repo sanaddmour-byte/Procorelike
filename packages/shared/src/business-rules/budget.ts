@@ -16,16 +16,23 @@
  * budget.
  */
 
-export function computeRevisedBudget(originalAmount: number, approvedChangesAmount: number): number {
-  return round2(originalAmount + approvedChangesAmount);
+/**
+ * `modificationsAmount` is Procore's "Budget Modifications": net internal
+ * transfers between line items (see budgetModifications table) that don't
+ * change the project's overall contract value, unlike an approved change
+ * order.
+ */
+export function computeRevisedBudget(originalAmount: number, modificationsAmount: number, approvedChangesAmount: number): number {
+  return round2(originalAmount + modificationsAmount + approvedChangesAmount);
 }
 
 export function computeProjectedAmount(
   originalAmount: number,
+  modificationsAmount: number,
   approvedChangesAmount: number,
   forecastToComplete: number,
 ): number {
-  return round2(computeRevisedBudget(originalAmount, approvedChangesAmount) + forecastToComplete);
+  return round2(computeRevisedBudget(originalAmount, modificationsAmount, approvedChangesAmount) + forecastToComplete);
 }
 
 export function computeVariance(revisedBudget: number, projectedAmount: number): number {

@@ -18,9 +18,12 @@ interface BudgetLineItem {
   id: string;
   costCodeId: string;
   originalAmount: string;
+  modificationsAmount: string;
   approvedChangesAmount: string;
   forecastToComplete: string;
   projectedAmount: string;
+  committedCosts: string;
+  pendingCostChanges: string;
   currency: string;
 }
 
@@ -46,6 +49,11 @@ export default function BudgetPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editOriginal, setEditOriginal] = useState("");
   const [editForecast, setEditForecast] = useState("");
+  const [showModForm, setShowModForm] = useState(false);
+  const [modFromId, setModFromId] = useState("");
+  const [modToId, setModToId] = useState("");
+  const [modAmount, setModAmount] = useState("");
+  const [modReason, setModReason] = useState("");
 
   function load(): void {
     apiJson<BudgetLineItem[]>(`/budget-line-items?projectId=${params.id}`)
@@ -119,6 +127,34 @@ export default function BudgetPage() {
     }
   }
 
+  async function handleCreateModification(e: FormEvent): Promise<void> {
+    e.preventDefault();
+    if (!modFromId || !modToId || modFromId === modToId) return;
+    setSaving(true);
+    try {
+      await apiJson("/budget-line-items/modifications", {
+        method: "POST",
+        body: JSON.stringify({
+          projectId: params.id,
+          fromLineItemId: modFromId,
+          toLineItemId: modToId,
+          amount: Number(modAmount || 0),
+          reason: modReason || undefined,
+        }),
+      });
+      setModFromId("");
+      setModToId("");
+      setModAmount("");
+      setModReason("");
+      setShowModForm(false);
+      load();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <>
       <Header />
@@ -126,13 +162,63 @@ export default function BudgetPage() {
       <main className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-          >
-            {t("newButton")}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setShowModForm((s) => !s)}
+              className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800"
+            >
+              {t("newModification")}
+            </button>
+            <button
+              onClick={() => setShowForm((s) => !s)}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+            >
+              {t("newButton")}
+            </button>
+          </div>
         </div>
+
+        {showModForm && (
+          <form onSubmit={(e) => void handleCreateModification(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
+            <label className="flex flex-col gap-1 text-sm">
+              {t("modificationFrom")}
+              <select required value={modFromId} onChange={(e) => setModFromId(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
+                <option value="" disabled>
+                  —
+                </option>
+                {lineItems?.map((li) => (
+                  <option key={li.id} value={li.id}>
+                    {costCodeLabel(li.costCodeId)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("modificationTo")}
+              <select required value={modToId} onChange={(e) => setModToId(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
+                <option value="" disabled>
+                  —
+                </option>
+                {lineItems?.map((li) => (
+                  <option key={li.id} value={li.id}>
+                    {costCodeLabel(li.costCodeId)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("modificationAmount")}
+              <input required type="number" step="0.01" min="0.01" value={modAmount} onChange={(e) => setModAmount(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("modificationReason")}
+              <input value={modReason} onChange={(e) => setModReason(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <button type="submit" disabled={saving || modFromId === modToId} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+              {t("create")}
+            </button>
+          </form>
+        )}
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -166,7 +252,7 @@ export default function BudgetPage() {
 
         <div className="flex flex-col gap-3">
           {lineItems?.map((li) => {
-            const revised = Number(li.originalAmount) + Number(li.approvedChangesAmount);
+            const revised = Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount);
             const variance = revised - Number(li.projectedAmount);
             const editing = editingId === li.id;
             return (
@@ -205,12 +291,24 @@ export default function BudgetPage() {
                       <div className="font-medium">{money(li.originalAmount)}</div>
                     </div>
                     <div>
+                      <div className="text-navy-600">{t("modifications")}</div>
+                      <div className="font-medium">{money(li.modificationsAmount)}</div>
+                    </div>
+                    <div>
                       <div className="text-navy-600">{t("approvedChanges")}</div>
                       <div className="font-medium">{money(li.approvedChangesAmount)}</div>
                     </div>
                     <div>
                       <div className="text-navy-600">{t("revisedBudget")}</div>
                       <div className="font-medium">{revised.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div>
+                      <div className="text-navy-600">{t("pendingCostChanges")}</div>
+                      <div className="font-medium">{money(li.pendingCostChanges)}</div>
+                    </div>
+                    <div>
+                      <div className="text-navy-600">{t("committedCosts")}</div>
+                      <div className="font-medium">{money(li.committedCosts)}</div>
                     </div>
                     <div>
                       <div className="text-navy-600">{t("forecastToComplete")}</div>

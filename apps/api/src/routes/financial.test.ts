@@ -161,6 +161,69 @@ describe("Budget + Change Management (Phase 6 gate)", () => {
     expect(Number(lineItem.approvedChangesAmount)).toBe(6000);
   });
 
+  it("a budget modification transfers an amount between two line items without changing the total budget", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const fromLineItemId = await createBudgetLineItem(omarToken, 100000, 0);
+    const toLineItemId = await createBudgetLineItem(omarToken, 50000, 0);
+
+    const modRes = await request(app)
+      .post("/budget-line-items/modifications")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, fromLineItemId, toLineItemId, amount: 10000, reason: "Move contingency to overrunning cost code" });
+    expect(modRes.status).toBe(201);
+    expect(modRes.body.amount).toBe("10000.00");
+
+    const lineItemsRes = await request(app).get("/budget-line-items").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    const fromLine = lineItemsRes.body.find((li: { id: string }) => li.id === fromLineItemId);
+    const toLine = lineItemsRes.body.find((li: { id: string }) => li.id === toLineItemId);
+    expect(Number(fromLine.modificationsAmount)).toBe(-10000);
+    expect(Number(fromLine.projectedAmount)).toBe(90000); // 100000 original - 10000 modification
+    expect(Number(toLine.modificationsAmount)).toBe(10000);
+    expect(Number(toLine.projectedAmount)).toBe(60000); // 50000 original + 10000 modification
+
+    const listRes = await request(app).get("/budget-line-items/modifications").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    expect(listRes.status).toBe(200);
+    expect(listRes.body.some((m: { id: string }) => m.id === modRes.body.id)).toBe(true);
+
+    // Modifying to/from the same line item is rejected before it ever touches the database.
+    const sameLineRes = await request(app)
+      .post("/budget-line-items/modifications")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, fromLineItemId, toLineItemId: fromLineItemId, amount: 100 });
+    expect(sameLineRes.status).toBe(400);
+  });
+
+  it("surfaces committed costs (from commitments) and pending cost changes (from unapproved change orders) on the budget line item", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const costCodeId = await seedCostCodeId();
+    const lineItemId = await createBudgetLineItem(omarToken, 200000, 0);
+
+    const huda = memberByEmail("huda.masri@siteops.test");
+    const commitmentRes = await request(app)
+      .post("/commitments")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, title: "Framing subcontract", companyId: huda.companyId, type: "subcontract", costCodeId });
+    expect(commitmentRes.status).toBe(201);
+    const commitmentId = commitmentRes.body.id as string;
+    const lineItemRes = await request(app)
+      .post(`/commitments/${commitmentId}/line-items`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ costCodeId, description: "Framing SOV", scheduleOfValuesAmount: 40000 });
+    expect(lineItemRes.status).toBe(201);
+
+    const coRes = await request(app)
+      .post("/change-orders")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, targetType: "prime", targetId: lineItemId, costImpact: 15000 });
+    const changeOrderId = coRes.body.id as string;
+    await request(app).post(`/change-orders/${changeOrderId}/submit`).set("authorization", `Bearer ${omarToken}`).expect(200);
+
+    const budgetListRes = await request(app).get("/budget-line-items").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    const line = budgetListRes.body.find((li: { id: string }) => li.id === lineItemId);
+    expect(Number(line.committedCosts)).toBe(40000);
+    expect(Number(line.pendingCostChanges)).toBe(15000);
+  });
+
   it("a change event can carry potential change orders before a real change order is cut", async () => {
     const omarToken = await loginAs("omar.nassar@siteops.test");
     const eventRes = await request(app)

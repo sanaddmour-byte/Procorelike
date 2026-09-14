@@ -328,7 +328,7 @@ DECLARE
     'number_sequences', 'document_folders', 'documents', 'drawings',
     'rfis', 'submittals', 'daily_logs', 'punch_items', 'photo_albums',
     'photos', 'inspections',
-    'budget_line_items', 'commitments', 'change_events', 'change_orders',
+    'budget_line_items', 'budget_modifications', 'commitments', 'change_events', 'change_orders',
     'payment_applications', 'meetings',
     'manual_schedule_tasks', 'safety_incidents', 'safety_observations',
     'tm_tickets', 'correspondence',
@@ -378,7 +378,7 @@ DO $$
 DECLARE
   t text;
   financial_tables text[] := ARRAY[
-    'budget_line_items', 'commitments', 'change_events', 'change_orders', 'payment_applications'
+    'budget_line_items', 'budget_modifications', 'commitments', 'change_events', 'change_orders', 'payment_applications'
   ];
 BEGIN
   FOREACH t IN ARRAY financial_tables LOOP

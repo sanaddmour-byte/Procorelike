@@ -2,16 +2,17 @@ import { describe, expect, it } from "vitest";
 import { computeProjectedAmount, computeRevisedBudget, computeVariance } from "./budget";
 
 describe("budget math", () => {
-  it("revised budget is original plus approved changes", () => {
-    expect(computeRevisedBudget(100000, 5000)).toBe(105000);
+  it("revised budget is original plus modifications plus approved changes", () => {
+    expect(computeRevisedBudget(100000, 0, 5000)).toBe(105000);
+    expect(computeRevisedBudget(100000, -3000, 5000)).toBe(102000);
   });
 
   it("projected amount adds forecast-to-complete on top of the revised budget", () => {
-    expect(computeProjectedAmount(100000, 5000, 2000)).toBe(107000);
+    expect(computeProjectedAmount(100000, 0, 5000, 2000)).toBe(107000);
   });
 
-  it("handles zero changes and zero forecast", () => {
-    expect(computeProjectedAmount(50000, 0, 0)).toBe(50000);
+  it("handles zero modifications, changes, and forecast", () => {
+    expect(computeProjectedAmount(50000, 0, 0, 0)).toBe(50000);
   });
 
   it("variance is revised budget minus projected amount (negative means over budget)", () => {
@@ -20,6 +21,6 @@ describe("budget math", () => {
   });
 
   it("rounds to two decimal places to avoid floating-point drift", () => {
-    expect(computeProjectedAmount(10.1, 0.2, 0.05)).toBeCloseTo(10.35, 2);
+    expect(computeProjectedAmount(10.1, 0, 0.2, 0.05)).toBeCloseTo(10.35, 2);
   });
 });
