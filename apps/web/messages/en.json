@@ -18,7 +18,14 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "cancel": "Cancel",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "comments": "Comments",
+    "noComments": "No comments on this page yet. Click anywhere on the page to add one.",
+    "commentPlaceholder": "Add a comment…",
+    "postComment": "Post comment",
+    "linkToRfiPlaceholder": "Link to an RFI…",
+    "linkedToRfi": "Linked to",
+    "unlink": "Unlink"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -222,6 +229,8 @@
     "selectDrawing": "Select a drawing…",
     "selectSpecSection": "Select a spec section…",
     "removeLink": "Remove link",
+    "linkedComments": "Linked comments",
+    "viewInContext": "View in context",
     "distribution": "Additional personnel",
     "noDistribution": "No additional personnel assigned.",
     "addPersonnel": "Add personnel"

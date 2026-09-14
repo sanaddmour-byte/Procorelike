@@ -34,6 +34,7 @@ export * from "./schemas/safety.schema";
 export * from "./schemas/tm-ticket.schema";
 export * from "./schemas/correspondence.schema";
 export * from "./schemas/record-link.schema";
+export * from "./schemas/pdf-comment.schema";
 export * from "./schemas/cpm-schedule.schema";
 
 export * from "./schedule/types";

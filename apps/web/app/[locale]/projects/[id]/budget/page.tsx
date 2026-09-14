@@ -124,7 +124,7 @@ export default function BudgetPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <button
             onClick={() => setShowForm((s) => !s)}
@@ -189,7 +189,7 @@ export default function BudgetPage() {
                       {t("forecastToComplete")}
                       <input type="number" step="0.01" value={editForecast} onChange={(e) => setEditForecast(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button onClick={() => void handleSaveEdit(li.id)} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white disabled:opacity-50">
                         {t("save")}
                       </button>

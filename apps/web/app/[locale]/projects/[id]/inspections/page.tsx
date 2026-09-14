@@ -95,9 +95,9 @@ export default function InspectionsPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link href={`/${locale}/projects/${params.id}/inspections/templates`} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
               {t("manageTemplates")}
             </Link>

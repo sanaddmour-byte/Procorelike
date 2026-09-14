@@ -119,7 +119,7 @@ export default function CorrespondenceDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Link href={`/${locale}/projects/${params.id}/correspondence`} className="inline-block text-sm text-navy-600 underline">
             {t("back")}
           </Link>
@@ -130,6 +130,7 @@ export default function CorrespondenceDetailScreen() {
                 `/correspondence/${params.correspondenceId}/report`,
                 `${item.correspondenceNumber} — ${item.subject}`,
                 `${item.correspondenceNumber}.pdf`,
+                { projectId: params.id, recordType: "correspondence", recordId: params.correspondenceId },
               )
             }
             className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
@@ -197,7 +198,15 @@ export default function CorrespondenceDetailScreen() {
           </div>
         )}
       </main>
-      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <PdfViewerModal
+        open={pdfViewer.open}
+        data={pdfViewer.data}
+        error={pdfViewer.error}
+        title={pdfViewer.title}
+        fileName={pdfViewer.fileName}
+        onClose={pdfViewer.close}
+        commentContext={pdfViewer.commentContext}
+      />
     </>
   );
 }

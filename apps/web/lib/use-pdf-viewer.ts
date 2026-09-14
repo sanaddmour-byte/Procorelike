@@ -1,5 +1,6 @@
 "use client";
 
+import type { PdfCommentContext } from "@/components/PdfViewerModal";
 import { useCallback, useState } from "react";
 import { apiFetch } from "./api-client";
 
@@ -9,6 +10,7 @@ export interface PdfViewerState {
   title: string;
   fileName: string;
   error: boolean;
+  commentContext?: PdfCommentContext;
 }
 
 const INITIAL_STATE: PdfViewerState = { open: false, data: null, title: "", fileName: "", error: false };
@@ -23,17 +25,20 @@ const INITIAL_STATE: PdfViewerState = { open: false, data: null, title: "", file
 export function usePdfViewer() {
   const [state, setState] = useState<PdfViewerState>(INITIAL_STATE);
 
-  const openPdf = useCallback(async (path: string, title: string, fileName: string): Promise<void> => {
-    setState({ open: true, data: null, title, fileName, error: false });
-    try {
-      const res = await apiFetch(path);
-      if (!res.ok) throw new Error("report_failed");
-      const buf = await res.arrayBuffer();
-      setState({ open: true, data: new Uint8Array(buf), title, fileName, error: false });
-    } catch {
-      setState((s) => ({ ...s, error: true }));
-    }
-  }, []);
+  const openPdf = useCallback(
+    async (path: string, title: string, fileName: string, commentContext?: PdfCommentContext): Promise<void> => {
+      setState({ open: true, data: null, title, fileName, error: false, commentContext });
+      try {
+        const res = await apiFetch(path);
+        if (!res.ok) throw new Error("report_failed");
+        const buf = await res.arrayBuffer();
+        setState({ open: true, data: new Uint8Array(buf), title, fileName, error: false, commentContext });
+      } catch {
+        setState((s) => ({ ...s, error: true }));
+      }
+    },
+    [],
+  );
 
   const close = useCallback(() => setState((s) => ({ ...s, open: false })), []);
 

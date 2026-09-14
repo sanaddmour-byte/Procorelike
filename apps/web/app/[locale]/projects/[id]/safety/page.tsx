@@ -109,7 +109,7 @@ export default function SafetyIncidentsPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <Link
             href={`/${locale}/projects/${params.id}/safety/observations`}

@@ -211,7 +211,7 @@ export default function InspectionDetailScreen() {
                     </div>
 
                     {item.responseType === "pass_fail" && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           disabled={!editable}
@@ -334,7 +334,13 @@ export default function InspectionDetailScreen() {
                   {inspection.signedAt && ` — ${inspection.signedAt.replace("T", " ").slice(0, 16)}`}
                 </p>
                 <button
-                  onClick={() => void pdfViewer.openPdf(`/inspections/${params.inspectionId}/report`, inspection.templateTitle, "inspection-report.pdf")}
+                  onClick={() =>
+                    void pdfViewer.openPdf(`/inspections/${params.inspectionId}/report`, inspection.templateTitle, "inspection-report.pdf", {
+                      projectId: params.id,
+                      recordType: "inspection",
+                      recordId: params.inspectionId,
+                    })
+                  }
                   className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
                 >
                   {t("downloadReport")}
@@ -344,7 +350,15 @@ export default function InspectionDetailScreen() {
           </>
         )}
       </main>
-      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <PdfViewerModal
+        open={pdfViewer.open}
+        data={pdfViewer.data}
+        error={pdfViewer.error}
+        title={pdfViewer.title}
+        fileName={pdfViewer.fileName}
+        onClose={pdfViewer.close}
+        commentContext={pdfViewer.commentContext}
+      />
     </>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { apiJson } from "@/lib/api-client";
+import type { PdfCommentRecordType } from "@siteops/shared";
+import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { loadPdfjs } from "@/lib/pdfjs";
@@ -10,6 +13,27 @@ const MAX_SCALE = 3;
 const SCALE_STEP = 0.25;
 const DEFAULT_SCALE = 1.25;
 
+export interface PdfCommentContext {
+  projectId: string;
+  recordType: PdfCommentRecordType;
+  recordId: string;
+}
+
+interface PdfComment {
+  id: string;
+  pageNumber: number;
+  x: number;
+  y: number;
+  commentText: string;
+  linkedRfiId: string | null;
+}
+
+interface RfiOption {
+  id: string;
+  number: string;
+  subject: string;
+}
+
 interface Props {
   open: boolean;
   data: Uint8Array | null;
@@ -17,6 +41,8 @@ interface Props {
   title: string;
   fileName: string;
   onClose: () => void;
+  /** When set, enables click-to-pin commenting on the rendered page, posted to /pdf-comments and optionally linked to an RFI. */
+  commentContext?: PdfCommentContext;
 }
 
 /**
@@ -26,9 +52,14 @@ interface Props {
  * multi-page report with navigation and zoom controls). Replaces every
  * export button's old fetch-blob-then-window.open handoff to the
  * browser's own PDF viewer.
+ *
+ * When `commentContext` is supplied, also renders click-to-pin comments
+ * (mirroring DrawingViewer's markup pins) that persist to /pdf-comments
+ * and can each optionally reference an RFI.
  */
-export function PdfViewerModal({ open, data, error, title, fileName, onClose }: Props) {
+export function PdfViewerModal({ open, data, error, title, fileName, onClose, commentContext }: Props) {
   const t = useTranslations("Common");
+  const locale = useLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const docRef = useRef<PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState(0);
@@ -36,6 +67,25 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose }: 
   const [scale, setScale] = useState(DEFAULT_SCALE);
   const [loading, setLoading] = useState(false);
   const [renderError, setRenderError] = useState(false);
+
+  const [comments, setComments] = useState<PdfComment[]>([]);
+  const [rfiOptions, setRfiOptions] = useState<RfiOption[]>([]);
+  const [pendingPin, setPendingPin] = useState<{ pageNumber: number; x: number; y: number } | null>(null);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [newCommentRfiId, setNewCommentRfiId] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [commentError, setCommentError] = useState(false);
+
+  async function reloadComments(ctx: PdfCommentContext): Promise<void> {
+    try {
+      const rows = await apiJson<PdfComment[]>(
+        `/pdf-comments?projectId=${ctx.projectId}&recordType=${ctx.recordType}&recordId=${ctx.recordId}`,
+      );
+      setComments(rows);
+    } catch {
+      setCommentError(true);
+    }
+  }
 
   // Load the document whenever new bytes arrive.
   useEffect(() => {
@@ -68,6 +118,26 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose }: 
       cancelled = true;
     };
   }, [open, data]);
+
+  // Load existing comments (and the project's RFIs, for the "link to RFI" picker) once per open.
+  useEffect(() => {
+    if (!open || !commentContext) {
+      setComments([]);
+      setRfiOptions([]);
+      return;
+    }
+    setCommentError(false);
+    void reloadComments(commentContext);
+    apiJson<RfiOption[]>(`/rfis?projectId=${commentContext.projectId}`)
+      .then(setRfiOptions)
+      .catch(() => undefined);
+  }, [open, commentContext?.projectId, commentContext?.recordType, commentContext?.recordId]);
+
+  useEffect(() => {
+    setPendingPin(null);
+    setNewCommentText("");
+    setNewCommentRfiId("");
+  }, [pageNum]);
 
   // Render the current page whenever the page number, zoom, or document changes.
   useEffect(() => {
@@ -118,9 +188,68 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose }: 
     URL.revokeObjectURL(url);
   }
 
+  function handleCanvasClick(e: React.MouseEvent<HTMLDivElement>): void {
+    if (!commentContext) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setPendingPin({ pageNumber: pageNum, x, y });
+    setNewCommentText("");
+    setNewCommentRfiId("");
+  }
+
+  async function handlePostComment(): Promise<void> {
+    if (!commentContext || !pendingPin || !newCommentText.trim()) return;
+    setPosting(true);
+    setCommentError(false);
+    try {
+      await apiJson("/pdf-comments", {
+        method: "POST",
+        body: JSON.stringify({
+          projectId: commentContext.projectId,
+          recordType: commentContext.recordType,
+          recordId: commentContext.recordId,
+          pageNumber: pendingPin.pageNumber,
+          x: pendingPin.x,
+          y: pendingPin.y,
+          commentText: newCommentText.trim(),
+          linkedRfiId: newCommentRfiId || undefined,
+        }),
+      });
+      setPendingPin(null);
+      setNewCommentText("");
+      setNewCommentRfiId("");
+      await reloadComments(commentContext);
+    } catch {
+      setCommentError(true);
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function handleSetLink(commentId: string, linkedRfiId: string | null): Promise<void> {
+    if (!commentContext) return;
+    setCommentError(false);
+    try {
+      await apiJson(`/pdf-comments/${commentId}/link?projectId=${commentContext.projectId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ linkedRfiId }),
+      });
+      await reloadComments(commentContext);
+    } catch {
+      setCommentError(true);
+    }
+  }
+
+  function rfiLabel(rfiId: string): string {
+    const rfi = rfiOptions.find((r) => r.id === rfiId);
+    return rfi ? `${rfi.number} — ${rfi.subject}` : rfiId;
+  }
+
   if (!open) return null;
 
   const showControls = !error && !renderError && numPages > 0;
+  const pageComments = comments.filter((c) => c.pageNumber === pageNum);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4" onClick={onClose}>
@@ -128,7 +257,7 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose }: 
         className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3 border-b-3 border-ink px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b-3 border-ink px-4 py-3">
           <h2 className="truncate text-sm font-bold text-navy-900">{title}</h2>
           <div className="flex shrink-0 items-center gap-2">
             <button
@@ -145,13 +274,131 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose }: 
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-center overflow-auto bg-navy-900/5 p-4">
-          {error || renderError ? (
-            <p className="text-maroon-700">{t("errorGeneric")}</p>
-          ) : loading || !data ? (
-            <p className="text-navy-600">{t("loading")}</p>
-          ) : (
-            <canvas ref={canvasRef} className="max-w-full border border-ink bg-white shadow-brutal-sm" />
+        <div className="flex flex-1 flex-col overflow-auto">
+          <div className="flex items-center justify-center bg-navy-900/5 p-4">
+            {error || renderError ? (
+              <p className="text-maroon-700">{t("errorGeneric")}</p>
+            ) : loading || !data ? (
+              <p className="text-navy-600">{t("loading")}</p>
+            ) : (
+              <div className="relative inline-block" onClick={handleCanvasClick}>
+                <canvas ref={canvasRef} className={`max-w-full border border-ink bg-white shadow-brutal-sm ${commentContext ? "cursor-crosshair" : ""}`} />
+                {pageComments.map((c, i) => (
+                  <a
+                    key={c.id}
+                    href={`#pdf-comment-${c.id}`}
+                    className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-maroon-600 text-[10px] font-bold text-white shadow"
+                    style={{ left: `${c.x * 100}%`, top: `${c.y * 100}%` }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {i + 1}
+                  </a>
+                ))}
+                {pendingPin && pendingPin.pageNumber === pageNum && (
+                  <span
+                    className="absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-orange-500 shadow"
+                    style={{ left: `${pendingPin.x * 100}%`, top: `${pendingPin.y * 100}%` }}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          {commentContext && showControls && (
+            <div className="border-t-3 border-ink px-4 py-3">
+              {pendingPin && (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void handlePostComment();
+                  }}
+                  className="mb-3 flex flex-col gap-2 rounded-lg border-3 border-ink bg-white p-3"
+                >
+                  <textarea
+                    required
+                    rows={2}
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    placeholder={t("commentPlaceholder")}
+                    className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
+                  />
+                  {rfiOptions.length > 0 && (
+                    <select
+                      value={newCommentRfiId}
+                      onChange={(e) => setNewCommentRfiId(e.target.value)}
+                      className="min-w-0 max-w-full rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
+                    >
+                      <option value="">{t("linkToRfiPlaceholder")}</option>
+                      {rfiOptions.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.number} — {r.subject}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="submit"
+                      disabled={posting || !newCommentText.trim()}
+                      className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                    >
+                      {t("postComment")}
+                    </button>
+                    <button type="button" onClick={() => setPendingPin(null)} className="rounded-lg border-3 border-ink px-3 py-1.5 text-sm text-navy-800">
+                      {t("cancel")}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {commentError && <p className="mb-2 text-sm text-maroon-700">{t("errorGeneric")}</p>}
+
+              <h3 className="mb-1.5 text-sm font-semibold text-navy-800">{t("comments")}</h3>
+              {pageComments.length === 0 ? (
+                <p className="text-sm text-navy-600">{t("noComments")}</p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {pageComments.map((c, i) => (
+                    <li key={c.id} id={`pdf-comment-${c.id}`} className="rounded-lg border-3 border-ink bg-white p-2.5 text-sm">
+                      <p>
+                        <span className="mr-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-maroon-600 text-[10px] font-bold text-white">
+                          {i + 1}
+                        </span>
+                        {c.commentText}
+                      </p>
+                      {c.linkedRfiId ? (
+                        <p className="mt-1 text-xs text-navy-600">
+                          {t("linkedToRfi")}:{" "}
+                          <Link href={`/${locale}/projects/${commentContext.projectId}/rfis/${c.linkedRfiId}`} className="text-navy-800 underline">
+                            {rfiLabel(c.linkedRfiId)}
+                          </Link>{" "}
+                          <button type="button" onClick={() => void handleSetLink(c.id, null)} className="text-navy-500 underline">
+                            {t("unlink")}
+                          </button>
+                        </p>
+                      ) : (
+                        rfiOptions.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            <select
+                              defaultValue=""
+                              onChange={(e) => e.target.value && void handleSetLink(c.id, e.target.value)}
+                              className="min-w-0 max-w-full rounded-lg border-2 border-ink px-1.5 py-1 text-xs"
+                            >
+                              <option value="">{t("linkToRfiPlaceholder")}</option>
+                              {rfiOptions.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                  {r.number} — {r.subject}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
         </div>
 

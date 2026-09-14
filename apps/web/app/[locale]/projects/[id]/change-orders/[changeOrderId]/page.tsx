@@ -92,13 +92,19 @@ export default function ChangeOrderDetailPage() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-2xl px-4 py-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Link href={`/${locale}/projects/${params.id}/change-orders`} className="inline-block text-sm text-maroon-700 underline">
             {t("back")}
           </Link>
           <button
             type="button"
-            onClick={() => void pdfViewer.openPdf(`/change-orders/${params.changeOrderId}/report`, co?.number ?? "", `${co?.number ?? "change-order"}.pdf`)}
+            onClick={() =>
+              void pdfViewer.openPdf(`/change-orders/${params.changeOrderId}/report`, co?.number ?? "", `${co?.number ?? "change-order"}.pdf`, {
+                projectId: params.id,
+                recordType: "change_order",
+                recordId: params.changeOrderId,
+              })
+            }
             disabled={!co}
             className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
           >
@@ -108,7 +114,7 @@ export default function ChangeOrderDetailPage() {
         {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-gradient-to-b from-maroon-50 to-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
         {co && (
           <>
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{co.number}</h1>
               <span
                 className={`whitespace-nowrap rounded px-2 py-1 text-sm font-semibold ${
@@ -149,7 +155,7 @@ export default function ChangeOrderDetailPage() {
               </ul>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {co.status === "draft" && (
                 <button onClick={() => void handleAction("submit")} disabled={busy} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                   {t("submit")}
@@ -169,7 +175,15 @@ export default function ChangeOrderDetailPage() {
           </>
         )}
       </main>
-      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <PdfViewerModal
+        open={pdfViewer.open}
+        data={pdfViewer.data}
+        error={pdfViewer.error}
+        title={pdfViewer.title}
+        fileName={pdfViewer.fileName}
+        onClose={pdfViewer.close}
+        commentContext={pdfViewer.commentContext}
+      />
     </>
   );
 }

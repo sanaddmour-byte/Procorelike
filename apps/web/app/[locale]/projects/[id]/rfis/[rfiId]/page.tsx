@@ -54,6 +54,21 @@ interface Member {
   name: string;
 }
 
+interface LinkedComment {
+  id: string;
+  recordType: "rfi" | "submittal" | "change_order" | "correspondence" | "inspection";
+  recordId: string;
+  commentText: string;
+  pageNumber: number;
+}
+
+function recordHref(locale: string, projectId: string, recordType: LinkedComment["recordType"], recordId: string): string {
+  const segment = { rfi: "rfis", submittal: "submittals", change_order: "change-orders", correspondence: "correspondence", inspection: "inspections" }[
+    recordType
+  ];
+  return `/${locale}/projects/${projectId}/${segment}/${recordId}`;
+}
+
 function statusLabel(status: RfiStatus, t: (key: string) => string): string {
   return { draft: t("statusDraft"), open: t("statusOpen"), answered: t("statusAnswered"), closed: t("statusClosed") }[status];
 }
@@ -76,6 +91,7 @@ export default function RfiDetailScreen() {
   const [members, setMembers] = useState<Member[]>([]);
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [specSections, setSpecSections] = useState<SpecSection[]>([]);
+  const [linkedComments, setLinkedComments] = useState<LinkedComment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
   const [isOfficial, setIsOfficial] = useState(false);
@@ -101,7 +117,10 @@ export default function RfiDetailScreen() {
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
     apiJson<Drawing[]>(`/drawings?projectId=${params.id}`).then(setDrawings).catch(() => undefined);
     apiJson<SpecSection[]>(`/submittals/spec-sections?projectId=${params.id}`).then(setSpecSections).catch(() => undefined);
-  }, [router, locale, load, params.id]);
+    apiJson<LinkedComment[]>(`/pdf-comments/linked-to-rfi?projectId=${params.id}&rfiId=${params.rfiId}`)
+      .then(setLinkedComments)
+      .catch(() => undefined);
+  }, [router, locale, load, params.id, params.rfiId]);
 
   const recordLinkTargets: RecordLinkTargetConfig[] = [
     {
@@ -174,13 +193,19 @@ export default function RfiDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Link href={`/${locale}/projects/${params.id}/rfis`} className="inline-block text-sm text-navy-600 underline">
             {t("back")}
           </Link>
           <button
             type="button"
-            onClick={() => void pdfViewer.openPdf(`/rfis/${params.rfiId}/report`, `${rfi.number} — ${rfi.subject}`, `${rfi.number}.pdf`)}
+            onClick={() =>
+              void pdfViewer.openPdf(`/rfis/${params.rfiId}/report`, `${rfi.number} — ${rfi.subject}`, `${rfi.number}.pdf`, {
+                projectId: params.id,
+                recordType: "rfi",
+                recordId: params.rfiId,
+              })
+            }
             className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
           >
             {tc("exportPdf")}
@@ -227,6 +252,22 @@ export default function RfiDetailScreen() {
             </ul>
           )}
         </div>
+
+        {linkedComments.length > 0 && (
+          <div className="mb-6">
+            <h3 className="mb-1.5 text-sm font-semibold text-navy-800">{t("linkedComments")}</h3>
+            <ul className="flex flex-col gap-2">
+              {linkedComments.map((c) => (
+                <li key={c.id} className="rounded-lg border-3 border-ink bg-white p-2.5 text-sm">
+                  <p className="whitespace-pre-wrap">{c.commentText}</p>
+                  <Link href={recordHref(locale, params.id, c.recordType, c.recordId)} className="mt-1 inline-block text-xs text-navy-600 underline">
+                    {t("viewInContext")}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {RFI_STATUS_TRANSITIONS[rfi.status].length > 0 && (
           <div className="mb-6 flex gap-2">
@@ -283,7 +324,15 @@ export default function RfiDetailScreen() {
           </form>
         )}
       </main>
-      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <PdfViewerModal
+        open={pdfViewer.open}
+        data={pdfViewer.data}
+        error={pdfViewer.error}
+        title={pdfViewer.title}
+        fileName={pdfViewer.fileName}
+        onClose={pdfViewer.close}
+        commentContext={pdfViewer.commentContext}
+      />
     </>
   );
 }

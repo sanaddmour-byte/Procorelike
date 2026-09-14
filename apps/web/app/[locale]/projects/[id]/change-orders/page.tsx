@@ -268,7 +268,7 @@ export default function ChangeOrdersPage() {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-navy-900">{t("changeOrders")}</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => void pdfViewer.openPdf(`/change-orders/summary-report?projectId=${params.id}`, t("changeOrders"), "change-order-register.pdf")}
                 className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"

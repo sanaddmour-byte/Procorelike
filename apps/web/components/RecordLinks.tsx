@@ -134,11 +134,11 @@ export function RecordLinks({ projectId, recordType, recordId, targets, removeLa
               </ul>
             )}
             {availableOptions.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <select
                   value={selected[target.targetType] ?? ""}
                   onChange={(e) => setSelected((s) => ({ ...s, [target.targetType]: e.target.value }))}
-                  className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
+                  className="min-w-0 max-w-full flex-1 rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
                 >
                   <option value="">{target.selectPlaceholder}</option>
                   {availableOptions.map((o) => (
@@ -151,7 +151,7 @@ export function RecordLinks({ projectId, recordType, recordId, targets, removeLa
                   type="button"
                   onClick={() => void handleAdd(target.targetType)}
                   disabled={busy || !selected[target.targetType]}
-                  className="rounded-lg border-3 border-ink bg-white px-2.5 py-1.5 text-sm text-navy-800 disabled:opacity-50"
+                  className="shrink-0 rounded-lg border-3 border-ink bg-white px-2.5 py-1.5 text-sm text-navy-800 disabled:opacity-50"
                 >
                   {target.addLabel}
                 </button>

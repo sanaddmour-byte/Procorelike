@@ -18,7 +18,14 @@
     "zoomIn": "تكبير",
     "zoomOut": "تصغير",
     "cancel": "إلغاء",
-    "saving": "جارٍ الحفظ…"
+    "saving": "جارٍ الحفظ…",
+    "comments": "التعليقات",
+    "noComments": "لا توجد تعليقات على هذه الصفحة بعد. انقر في أي مكان على الصفحة لإضافة تعليق.",
+    "commentPlaceholder": "أضف تعليقًا…",
+    "postComment": "نشر التعليق",
+    "linkToRfiPlaceholder": "ربط بطلب معلومات…",
+    "linkedToRfi": "مرتبط بـ",
+    "unlink": "إلغاء الربط"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
@@ -222,6 +229,8 @@
     "selectDrawing": "اختر مخططًا…",
     "selectSpecSection": "اختر قسم مواصفات…",
     "removeLink": "إزالة الرابط",
+    "linkedComments": "التعليقات المرتبطة",
+    "viewInContext": "عرض في السياق",
     "distribution": "أشخاص إضافيون",
     "noDistribution": "لم يتم تعيين أشخاص إضافيين.",
     "addPersonnel": "إضافة شخص"

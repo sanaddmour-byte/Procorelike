@@ -201,14 +201,18 @@ export default function SubmittalDetailScreen() {
       <Header />
       <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Link href={`/${locale}/projects/${params.id}/submittals`} className="inline-block text-sm text-navy-600 underline">
             {t("back")}
           </Link>
           <button
             type="button"
             onClick={() =>
-              void pdfViewer.openPdf(`/submittals/${params.submittalId}/report`, `${submittal.number} — ${submittal.title}`, `${submittal.number}.pdf`)
+              void pdfViewer.openPdf(`/submittals/${params.submittalId}/report`, `${submittal.number} — ${submittal.title}`, `${submittal.number}.pdf`, {
+                projectId: params.id,
+                recordType: "submittal",
+                recordId: params.submittalId,
+              })
             }
             className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
           >
@@ -257,7 +261,7 @@ export default function SubmittalDetailScreen() {
           )}
         </div>
 
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-medium">{t("packages")}</h2>
           <button onClick={() => void handleNewPackage()} disabled={busy} className="rounded-lg border-3 border-ink px-3 py-1.5 text-sm text-navy-800">
             {t("newPackage")}
@@ -380,7 +384,15 @@ export default function SubmittalDetailScreen() {
           ))}
         </div>
       </main>
-      <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <PdfViewerModal
+        open={pdfViewer.open}
+        data={pdfViewer.data}
+        error={pdfViewer.error}
+        title={pdfViewer.title}
+        fileName={pdfViewer.fileName}
+        onClose={pdfViewer.close}
+        commentContext={pdfViewer.commentContext}
+      />
     </>
   );
 }

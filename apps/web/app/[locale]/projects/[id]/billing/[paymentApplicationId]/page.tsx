@@ -137,7 +137,7 @@ export default function PaymentApplicationDetailPage() {
         {error && <p className="mb-4 rounded-lg border-3 border-maroon-700 bg-gradient-to-b from-maroon-50 to-maroon-100 p-2 text-sm text-maroon-800">{error}</p>}
         {application && (
           <>
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
               <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-1 text-sm font-semibold text-navy-800">{t(statusKey(application.status))}</span>
             </div>
@@ -216,7 +216,7 @@ export default function PaymentApplicationDetailPage() {
               </>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {application.status === "draft" && (
                 <button onClick={() => void handleTransition("submitted")} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                   {t("submitApplication")}

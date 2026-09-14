@@ -35,8 +35,8 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   ];
 
   return (
-    <nav className="border-b-3 border-ink bg-white px-4">
-      <div className="mx-auto flex max-w-3xl gap-1 overflow-x-auto">
+    <nav className="relative border-b-3 border-ink bg-white">
+      <div className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-4">
         {tabs.map((tab) => {
           const active = pathname.startsWith(tab.href);
           return (
@@ -52,6 +52,9 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
           );
         })}
       </div>
+      {/* Fade hints on both edges so a horizontally-scrollable tab strip (routine on phone-width screens) doesn't look like a tab was simply cut off. */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-white to-transparent" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-white to-transparent" aria-hidden="true" />
     </nav>
   );
 }
