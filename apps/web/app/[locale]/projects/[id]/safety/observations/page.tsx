@@ -1,5 +1,6 @@
 "use client";
 
+import { CorrectiveActionsPanel } from "@/components/CorrectiveActionsPanel";
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
@@ -9,6 +10,11 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+
+interface Member {
+  userId: string;
+  name: string;
+}
 
 interface SafetyObservation {
   id: string;
@@ -39,6 +45,7 @@ export default function SafetyObservationsPage() {
   const params = useParams<{ id: string }>();
 
   const [observations, setObservations] = useState<SafetyObservation[] | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [observedAt, setObservedAt] = useState("");
@@ -46,6 +53,7 @@ export default function SafetyObservationsPage() {
   const [description, setDescription] = useState("");
   const [creating, setCreating] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   function load(): void {
     apiJson<SafetyObservation[]>(`/safety-observations?projectId=${params.id}`)
@@ -59,6 +67,7 @@ export default function SafetyObservationsPage() {
       return;
     }
     load();
+    apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
   }, [router, locale, params.id]);
 
   async function handleCreate(e: FormEvent): Promise<void> {
@@ -191,13 +200,26 @@ export default function SafetyObservationsPage() {
               </div>
               <p className="mt-1 text-sm text-navy-700">{obs.description}</p>
               <p className="mt-1 text-xs text-navy-600">{obs.observedAt.slice(0, 16).replace("T", " ")}</p>
-              <button
-                onClick={() => void handleToggle(obs.id)}
-                disabled={togglingId === obs.id}
-                className="mt-3 rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-xs text-white disabled:opacity-50"
-              >
-                {obs.status === "open" ? t("resolve") : t("reopen")}
-              </button>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => void handleToggle(obs.id)}
+                  disabled={togglingId === obs.id}
+                  className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-xs text-white disabled:opacity-50"
+                >
+                  {obs.status === "open" ? t("resolve") : t("reopen")}
+                </button>
+                <button
+                  onClick={() => setExpandedId(expandedId === obs.id ? null : obs.id)}
+                  className="rounded-lg border-3 border-ink bg-white px-3 py-1.5 text-xs font-semibold text-navy-800"
+                >
+                  {t("correctiveActionsToggle")}
+                </button>
+              </div>
+              {expandedId === obs.id && (
+                <div className="mt-3">
+                  <CorrectiveActionsPanel projectId={params.id} sourceType="safety_observation" sourceId={obs.id} members={members} />
+                </div>
+              )}
             </li>
           ))}
         </ul>

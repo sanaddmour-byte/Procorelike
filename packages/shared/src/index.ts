@@ -38,6 +38,7 @@ export * from "./schemas/pdf-comment.schema";
 export * from "./schemas/pdf-sketch.schema";
 export * from "./schemas/cpm-schedule.schema";
 export * from "./schemas/document-control.schema";
+export * from "./schemas/corrective-action.schema";
 
 export * from "./schedule/types";
 export * from "./schedule/validate";

@@ -225,6 +225,13 @@
       "when": 1789417566463,
       "tag": "0031_outstanding_nehzno",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789418731545,
+      "tag": "0032_strong_blizzard",
+      "breakpoints": true
     }
   ]
 }

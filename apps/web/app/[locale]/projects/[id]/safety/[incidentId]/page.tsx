@@ -1,11 +1,14 @@
 "use client";
 
+import { CorrectiveActionsPanel } from "@/components/CorrectiveActionsPanel";
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import {
   SAFETY_INCIDENT_STATUS_TRANSITIONS,
+  type InjuryIllnessType,
+  type OshaClassification,
   type SafetyIncidentSeverity,
   type SafetyIncidentStatus,
 } from "@siteops/shared";
@@ -26,6 +29,16 @@ interface SafetyIncidentDetail {
   correctiveAction: string | null;
   closedAt: string | null;
   reportedBy: string;
+  oshaClassification: OshaClassification;
+  injuryIllnessType: InjuryIllnessType | null;
+  bodyPart: string | null;
+  daysAwayFromWork: number;
+  daysJobTransferOrRestriction: number;
+}
+
+interface Member {
+  userId: string;
+  name: string;
 }
 
 interface ProjectCompany {
@@ -55,6 +68,7 @@ export default function SafetyIncidentDetailScreen() {
 
   const [incident, setIncident] = useState<SafetyIncidentDetail | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [correctiveAction, setCorrectiveAction] = useState("");
   const [transitioning, setTransitioning] = useState(false);
@@ -76,6 +90,7 @@ export default function SafetyIncidentDetailScreen() {
     }
     void load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`).then(setCompanies).catch(() => undefined);
+    apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
   }, [router, locale, load, params.id]);
 
   function companyName(id: string | null): string {
@@ -135,6 +150,32 @@ export default function SafetyIncidentDetailScreen() {
           <p className="whitespace-pre-wrap">{incident.description}</p>
         </div>
 
+        {incident.oshaClassification !== "not_recordable" && (
+          <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
+            <h2 className="mb-2 text-sm font-bold text-navy-900">{t("oshaSectionTitle")}</h2>
+            <dl className="grid grid-cols-2 gap-2 text-sm">
+              <dt className="text-navy-600">{t("oshaClassification")}</dt>
+              <dd>{t(`oshaClass_${incident.oshaClassification}`)}</dd>
+              {incident.injuryIllnessType && (
+                <>
+                  <dt className="text-navy-600">{t("injuryIllnessType")}</dt>
+                  <dd>{t(`injuryType_${incident.injuryIllnessType}`)}</dd>
+                </>
+              )}
+              {incident.bodyPart && (
+                <>
+                  <dt className="text-navy-600">{t("bodyPart")}</dt>
+                  <dd>{incident.bodyPart}</dd>
+                </>
+              )}
+              <dt className="text-navy-600">{t("daysAwayFromWork")}</dt>
+              <dd>{incident.daysAwayFromWork}</dd>
+              <dt className="text-navy-600">{t("daysJobTransferOrRestriction")}</dt>
+              <dd>{incident.daysJobTransferOrRestriction}</dd>
+            </dl>
+          </div>
+        )}
+
         {incident.correctiveAction && (
           <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             <h2 className="mb-2 text-sm font-medium text-navy-800">{t("correctiveAction")}</h2>
@@ -179,6 +220,10 @@ export default function SafetyIncidentDetailScreen() {
             </button>
           </div>
         )}
+
+        <div className="mt-6">
+          <CorrectiveActionsPanel projectId={params.id} sourceType="safety_incident" sourceId={incident.id} members={members} />
+        </div>
       </main>
     </>
   );

@@ -722,7 +722,29 @@
     "resolve": "حل",
     "reopen": "إعادة فتح",
     "back": "العودة إلى السلامة",
-    "reportedBy": "أُبلغ بواسطة"
+    "reportedBy": "أُبلغ بواسطة",
+    "oshaSectionTitle": "سجل OSHA 300",
+    "oshaClassification": "تصنيف OSHA",
+    "oshaClass_not_recordable": "غير قابل للتسجيل",
+    "oshaClass_death": "وفاة",
+    "oshaClass_days_away_from_work": "أيام غياب عن العمل",
+    "oshaClass_job_transfer_or_restriction": "نقل وظيفي أو تقييد",
+    "oshaClass_other_recordable": "حالة أخرى قابلة للتسجيل",
+    "injuryIllnessType": "نوع الإصابة/المرض",
+    "injuryType_injury": "إصابة",
+    "injuryType_skin_disorder": "اضطراب جلدي",
+    "injuryType_respiratory_condition": "حالة تنفسية",
+    "injuryType_poisoning": "تسمم",
+    "injuryType_hearing_loss": "فقدان السمع",
+    "injuryType_other_illness": "مرض آخر",
+    "bodyPart": "الجزء المصاب من الجسم",
+    "daysAwayFromWork": "أيام الغياب عن العمل",
+    "daysJobTransferOrRestriction": "أيام النقل الوظيفي أو التقييد",
+    "summaryRecordable": "قابل للتسجيل لدى OSHA",
+    "summaryDaysAway": "إجمالي أيام الغياب",
+    "summaryOpenIncidents": "حوادث مفتوحة",
+    "summaryOpenObservations": "ملاحظات مفتوحة",
+    "correctiveActionsToggle": "الإجراءات التصحيحية"
   },
   "TmTickets": {
     "title": "تذاكر الوقت والمواد",
@@ -852,5 +874,19 @@
     "acknowledge": "تأكيد الاستلام",
     "acknowledged": "تم التأكيد",
     "notAcknowledged": "لم يتم التأكيد بعد"
+  },
+  "CorrectiveActions": {
+    "title": "الإجراءات التصحيحية",
+    "newAction": "إجراء جديد",
+    "descriptionPlaceholder": "ما الذي يجب القيام به؟",
+    "assignTo": "إسناد إلى…",
+    "create": "إنشاء",
+    "empty": "لا توجد إجراءات تصحيحية بعد.",
+    "assignedTo": "مسند إلى",
+    "due": "الاستحقاق",
+    "statusOpen": "مفتوح",
+    "statusInProgress": "قيد التنفيذ",
+    "statusCompleted": "مكتمل",
+    "statusVerified": "تم التحقق"
   }
 }

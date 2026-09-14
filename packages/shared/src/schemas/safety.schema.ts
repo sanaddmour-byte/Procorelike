@@ -6,6 +6,25 @@ export type SafetyIncidentSeverity = z.infer<typeof safetyIncidentSeveritySchema
 export const safetyIncidentStatusSchema = z.enum(["open", "investigating", "closed"]);
 export type SafetyIncidentStatus = z.infer<typeof safetyIncidentStatusSchema>;
 
+export const oshaClassificationSchema = z.enum([
+  "not_recordable",
+  "death",
+  "days_away_from_work",
+  "job_transfer_or_restriction",
+  "other_recordable",
+]);
+export type OshaClassification = z.infer<typeof oshaClassificationSchema>;
+
+export const injuryIllnessTypeSchema = z.enum([
+  "injury",
+  "skin_disorder",
+  "respiratory_condition",
+  "poisoning",
+  "hearing_loss",
+  "other_illness",
+]);
+export type InjuryIllnessType = z.infer<typeof injuryIllnessTypeSchema>;
+
 export const createSafetyIncidentSchema = z
   .object({
     projectId: z.string().uuid(),
@@ -15,8 +34,17 @@ export const createSafetyIncidentSchema = z
     description: z.string().min(1).max(4000),
     involvedCompanyId: z.string().uuid().optional(),
     injuredPersonName: z.string().max(200).optional(),
+    oshaClassification: oshaClassificationSchema.optional(),
+    injuryIllnessType: injuryIllnessTypeSchema.optional(),
+    bodyPart: z.string().max(200).optional(),
+    daysAwayFromWork: z.number().int().min(0).optional(),
+    daysJobTransferOrRestriction: z.number().int().min(0).optional(),
   })
-  .strict();
+  .strict()
+  .refine((data) => (data.oshaClassification ?? "not_recordable") !== "not_recordable" || !data.injuryIllnessType, {
+    message: "injuryIllnessType only applies to a recordable case",
+    path: ["injuryIllnessType"],
+  });
 export type CreateSafetyIncidentInput = z.infer<typeof createSafetyIncidentSchema>;
 
 export const transitionSafetyIncidentStatusSchema = z

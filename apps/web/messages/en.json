@@ -722,7 +722,29 @@
     "resolve": "Resolve",
     "reopen": "Reopen",
     "back": "Back to safety",
-    "reportedBy": "Reported by"
+    "reportedBy": "Reported by",
+    "oshaSectionTitle": "OSHA 300 Log",
+    "oshaClassification": "OSHA classification",
+    "oshaClass_not_recordable": "Not recordable",
+    "oshaClass_death": "Death",
+    "oshaClass_days_away_from_work": "Days away from work",
+    "oshaClass_job_transfer_or_restriction": "Job transfer or restriction",
+    "oshaClass_other_recordable": "Other recordable case",
+    "injuryIllnessType": "Injury/illness type",
+    "injuryType_injury": "Injury",
+    "injuryType_skin_disorder": "Skin disorder",
+    "injuryType_respiratory_condition": "Respiratory condition",
+    "injuryType_poisoning": "Poisoning",
+    "injuryType_hearing_loss": "Hearing loss",
+    "injuryType_other_illness": "Other illness",
+    "bodyPart": "Body part affected",
+    "daysAwayFromWork": "Days away from work",
+    "daysJobTransferOrRestriction": "Days of job transfer or restriction",
+    "summaryRecordable": "OSHA recordable",
+    "summaryDaysAway": "Total days away",
+    "summaryOpenIncidents": "Open incidents",
+    "summaryOpenObservations": "Open observations",
+    "correctiveActionsToggle": "Corrective actions"
   },
   "TmTickets": {
     "title": "T&M Tickets",
@@ -852,5 +874,19 @@
     "acknowledge": "Acknowledge receipt",
     "acknowledged": "Acknowledged",
     "notAcknowledged": "Not yet acknowledged"
+  },
+  "CorrectiveActions": {
+    "title": "Corrective actions",
+    "newAction": "New action",
+    "descriptionPlaceholder": "What needs to be done?",
+    "assignTo": "Assign to…",
+    "create": "Create",
+    "empty": "No corrective actions yet.",
+    "assignedTo": "Assigned to",
+    "due": "Due",
+    "statusOpen": "Open",
+    "statusInProgress": "In progress",
+    "statusCompleted": "Completed",
+    "statusVerified": "Verified"
   }
 }

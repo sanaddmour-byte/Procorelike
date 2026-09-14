@@ -13,6 +13,7 @@ import { changeEventsRouter, changeOrdersRouter, potentialChangeOrdersRouter } f
 import { checklistTemplatesRouter } from "./routes/checklist-templates.routes";
 import { commitmentsRouter } from "./routes/commitments.routes";
 import { companiesRouter } from "./routes/companies.routes";
+import { correctiveActionsRouter } from "./routes/corrective-actions.routes";
 import { correspondenceRouter } from "./routes/correspondence.routes";
 import { cpmScheduleRouter } from "./routes/cpm-schedule.routes";
 import { dailyLogsRouter } from "./routes/daily-logs.routes";
@@ -96,6 +97,7 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/permission-overrides", permissionOverridesRouter(clients.appDb.db, env));
   app.use("/transmittals", transmittalsRouter(clients.appDb.db, env));
   app.use("/drawing-sets", drawingSetsRouter(clients.appDb.db, env));
+  app.use("/corrective-actions", correctiveActionsRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 

@@ -62,6 +62,87 @@ export async function listSafetyIncidents(
   });
 }
 
+export interface OshaLogRow {
+  incidentId: string;
+  occurredAt: Date;
+  description: string;
+  injuredPersonName: string | null;
+  oshaClassification: string;
+  injuryIllnessType: string | null;
+  bodyPart: string | null;
+  daysAwayFromWork: number;
+  daysJobTransferOrRestriction: number;
+}
+
+export interface SafetySummary {
+  incidentsBySeverity: Record<string, number>;
+  incidentsByStatus: Record<string, number>;
+  observationsByCategory: Record<string, number>;
+  observationsByStatus: Record<string, number>;
+  oshaRecordableCount: number;
+  totalDaysAwayFromWork: number;
+  totalDaysJobTransferOrRestriction: number;
+}
+
+/** Procore's OSHA 300 Log (29 CFR 1904): every incident classified as recordable for a given calendar year, in the shape needed to populate the standard form's columns -- not a facsimile of the form itself, but the same underlying dataset. */
+export async function getOshaLog(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  projectId: string,
+  year: number,
+): Promise<OshaLogRow[]> {
+  requirePermission(ctx, "safety", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const rows = await tx.select().from(schema.safetyIncidents).where(eq(schema.safetyIncidents.projectId, projectId));
+    return rows
+      .filter((r) => r.oshaClassification !== "not_recordable" && r.occurredAt.getUTCFullYear() === year)
+      .map((r) => ({
+        incidentId: r.id,
+        occurredAt: r.occurredAt,
+        description: r.description,
+        injuredPersonName: r.injuredPersonName,
+        oshaClassification: r.oshaClassification,
+        injuryIllnessType: r.injuryIllnessType,
+        bodyPart: r.bodyPart,
+        daysAwayFromWork: r.daysAwayFromWork,
+        daysJobTransferOrRestriction: r.daysJobTransferOrRestriction,
+      }));
+  });
+}
+
+/** A lightweight trend view -- counts by severity/category/status plus OSHA totals -- rather than a full analytics/BI surface. */
+export async function getSafetySummary(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  projectId: string,
+): Promise<SafetySummary> {
+  requirePermission(ctx, "safety", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const incidents = await tx.select().from(schema.safetyIncidents).where(eq(schema.safetyIncidents.projectId, projectId));
+    const observations = await tx.select().from(schema.safetyObservations).where(eq(schema.safetyObservations.projectId, projectId));
+
+    const tally = <T extends string>(items: T[]): Record<string, number> => {
+      const out: Record<string, number> = {};
+      for (const item of items) out[item] = (out[item] ?? 0) + 1;
+      return out;
+    };
+
+    const recordable = incidents.filter((i) => i.oshaClassification !== "not_recordable");
+
+    return {
+      incidentsBySeverity: tally(incidents.map((i) => i.severity)),
+      incidentsByStatus: tally(incidents.map((i) => i.status)),
+      observationsByCategory: tally(observations.map((o) => o.category)),
+      observationsByStatus: tally(observations.map((o) => o.status)),
+      oshaRecordableCount: recordable.length,
+      totalDaysAwayFromWork: recordable.reduce((sum, i) => sum + i.daysAwayFromWork, 0),
+      totalDaysJobTransferOrRestriction: recordable.reduce((sum, i) => sum + i.daysJobTransferOrRestriction, 0),
+    };
+  });
+}
+
 export async function transitionSafetyIncidentStatus(
   appDb: Database,
   userId: string,

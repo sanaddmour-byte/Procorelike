@@ -6,7 +6,7 @@ import {
 } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
-import { NotFoundError } from "../lib/errors";
+import { ApiError, NotFoundError } from "../lib/errors";
 import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
@@ -62,6 +62,37 @@ export function safetyIncidentsRouter(appDb: Database, env: Env): Router {
       }
     },
   );
+
+  router.get("/summary", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const summary = await safetyService.getSafetySummary(appDb, authUser.id, ctx, projectId);
+      res.json(summary);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/osha-log", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const yearRaw = req.query.year;
+      const year = typeof yearRaw === "string" ? Number(yearRaw) : new Date().getUTCFullYear();
+      if (!Number.isInteger(year)) throw new ApiError(400, "validation_error", "year must be an integer");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const rows = await safetyService.getOshaLog(appDb, authUser.id, ctx, projectId, year);
+      res.json(rows);
+    } catch (err) {
+      next(err);
+    }
+  });
 
   return router;
 }
