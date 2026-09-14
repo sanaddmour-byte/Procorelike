@@ -18,19 +18,45 @@ interface ApprovalEntry {
   approvedAt: string;
 }
 
+type ChangeReason =
+  | "owner_change"
+  | "design_development"
+  | "allowance"
+  | "value_engineering"
+  | "unforeseen_condition"
+  | "errors_omissions"
+  | "rfi"
+  | "other";
+
 interface ChangeOrder {
   id: string;
   number: string;
+  title: string | null;
+  reason: ChangeReason;
   targetType: "prime" | "commitment";
   targetId: string;
   costImpact: string;
   timeImpactDays: number;
   status: "draft" | "pending_approval" | "approved" | "rejected" | "void";
+  executed: boolean;
   approvalChain: ApprovalEntry[];
 }
 
 function statusKey(status: ChangeOrder["status"]): string {
   return { draft: "statusDraft", pending_approval: "statusPendingApproval", approved: "statusApproved", rejected: "statusRejected", void: "statusVoid" }[status];
+}
+
+function reasonKey(reason: ChangeReason): string {
+  return {
+    owner_change: "reasonOwnerChange",
+    design_development: "reasonDesignDevelopment",
+    allowance: "reasonAllowance",
+    value_engineering: "reasonValueEngineering",
+    unforeseen_condition: "reasonUnforeseenCondition",
+    errors_omissions: "reasonErrorsOmissions",
+    rfi: "reasonRfi",
+    other: "reasonOther",
+  }[reason];
 }
 
 export default function ChangeOrderDetailPage() {
@@ -62,7 +88,7 @@ export default function ChangeOrderDetailPage() {
     load();
   }, [router, locale, params.changeOrderId]);
 
-  async function handleAction(action: "submit" | "approve" | "reject"): Promise<void> {
+  async function handleAction(action: "submit" | "approve" | "reject" | "execute"): Promise<void> {
     setBusy(true);
     setError(null);
     try {
@@ -115,14 +141,20 @@ export default function ChangeOrderDetailPage() {
         {co && (
           <>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{co.number}</h1>
-              <span
-                className={`whitespace-nowrap rounded px-2 py-1 text-sm font-semibold ${
-                  co.status === "approved" ? "bg-orange-100 text-navy-800" : co.status === "rejected" || co.status === "void" ? "bg-maroon-100 text-maroon-800" : "bg-navy-100 text-navy-800"
-                }`}
-              >
-                {t(statusKey(co.status))}
-              </span>
+              <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
+                {co.number}
+                {co.title ? ` — ${co.title}` : ""}
+              </h1>
+              <div className="flex shrink-0 gap-2">
+                {co.executed && <span className="whitespace-nowrap rounded bg-navy-800 px-2 py-1 text-sm font-semibold text-white">{t("executed")}</span>}
+                <span
+                  className={`whitespace-nowrap rounded px-2 py-1 text-sm font-semibold ${
+                    co.status === "approved" ? "bg-orange-100 text-navy-800" : co.status === "rejected" || co.status === "void" ? "bg-maroon-100 text-maroon-800" : "bg-navy-100 text-navy-800"
+                  }`}
+                >
+                  {t(statusKey(co.status))}
+                </span>
+              </div>
             </div>
 
             <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -130,6 +162,10 @@ export default function ChangeOrderDetailPage() {
                 <div>
                   <div className="text-navy-600">{t("targetType")}</div>
                   <div className="font-medium">{co.targetType === "prime" ? t("targetTypePrime") : t("targetTypeCommitment")}</div>
+                </div>
+                <div>
+                  <div className="text-navy-600">{t("reason")}</div>
+                  <div className="font-medium">{t(reasonKey(co.reason))}</div>
                 </div>
                 <div>
                   <div className="text-navy-600">{t("costImpact")}</div>
@@ -170,6 +206,11 @@ export default function ChangeOrderDetailPage() {
                     {t("reject")}
                   </button>
                 </>
+              )}
+              {co.status === "approved" && !co.executed && (
+                <button onClick={() => void handleAction("execute")} disabled={busy} className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+                  {t("markExecuted")}
+                </button>
               )}
             </div>
           </>

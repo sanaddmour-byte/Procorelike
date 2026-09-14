@@ -11,11 +11,59 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
+type ChangeReason =
+  | "owner_change"
+  | "design_development"
+  | "allowance"
+  | "value_engineering"
+  | "unforeseen_condition"
+  | "errors_omissions"
+  | "rfi"
+  | "other";
+
+const CHANGE_REASONS: ChangeReason[] = [
+  "owner_change",
+  "design_development",
+  "allowance",
+  "value_engineering",
+  "unforeseen_condition",
+  "errors_omissions",
+  "rfi",
+  "other",
+];
+
+function reasonKey(reason: ChangeReason): string {
+  return {
+    owner_change: "reasonOwnerChange",
+    design_development: "reasonDesignDevelopment",
+    allowance: "reasonAllowance",
+    value_engineering: "reasonValueEngineering",
+    unforeseen_condition: "reasonUnforeseenCondition",
+    errors_omissions: "reasonErrorsOmissions",
+    rfi: "reasonRfi",
+    other: "reasonOther",
+  }[reason];
+}
+
+type ChangeEventStatus = "open" | "incorporated" | "void";
+
+const CHANGE_EVENT_STATUS_TRANSITIONS: Record<ChangeEventStatus, readonly ChangeEventStatus[]> = {
+  open: ["incorporated", "void"],
+  incorporated: [],
+  void: [],
+};
+
+function changeEventStatusKey(status: ChangeEventStatus): string {
+  return { open: "eventStatusOpen", incorporated: "eventStatusIncorporated", void: "eventStatusVoid" }[status];
+}
+
 interface ChangeEvent {
   id: string;
   title: string;
   description: string | null;
   potentialCostImpact: string | null;
+  status: ChangeEventStatus;
+  reason: ChangeReason;
 }
 
 interface PotentialChangeOrder {
@@ -33,10 +81,12 @@ interface ChangeEventDetail extends ChangeEvent {
 interface ChangeOrder {
   id: string;
   number: string;
+  title: string | null;
   targetType: "prime" | "commitment";
   targetId: string;
   costImpact: string;
   status: "draft" | "pending_approval" | "approved" | "rejected" | "void";
+  executed: boolean;
 }
 
 interface CostCode {
@@ -76,12 +126,15 @@ export default function ChangeOrdersPage() {
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [eventCostImpact, setEventCostImpact] = useState("");
+  const [eventReason, setEventReason] = useState<ChangeReason>("other");
 
   const [pcoFormFor, setPcoFormFor] = useState<string | null>(null);
   const [pcoCostImpact, setPcoCostImpact] = useState("");
   const [pcoTimeImpact, setPcoTimeImpact] = useState("");
 
   const [showCoForm, setShowCoForm] = useState(false);
+  const [coTitle, setCoTitle] = useState("");
+  const [coReason, setCoReason] = useState<ChangeReason>("other");
   const [coTargetType, setCoTargetType] = useState<"prime" | "commitment">("prime");
   const [coTargetId, setCoTargetId] = useState("");
   const [coCostImpact, setCoCostImpact] = useState("");
@@ -128,12 +181,26 @@ export default function ChangeOrdersPage() {
           title: eventTitle.trim(),
           description: eventDescription.trim() || undefined,
           potentialCostImpact: eventCostImpact ? Number(eventCostImpact) : undefined,
+          reason: eventReason,
         }),
       });
       setEventTitle("");
       setEventDescription("");
       setEventCostImpact("");
+      setEventReason("other");
       setShowEventForm(false);
+      await loadEvents();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleTransitionEvent(changeEventId: string, toStatus: ChangeEventStatus): Promise<void> {
+    setSaving(true);
+    try {
+      await apiJson(`/change-events/${changeEventId}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
       await loadEvents();
     } catch {
       setError(tc("errorGeneric"));
@@ -172,12 +239,16 @@ export default function ChangeOrdersPage() {
         method: "POST",
         body: JSON.stringify({
           projectId: params.id,
+          title: coTitle.trim() || undefined,
+          reason: coReason,
           targetType: coTargetType,
           targetId: coTargetId,
           costImpact: Number(coCostImpact),
           timeImpactDays: Number(coTimeImpact || 0),
         }),
       });
+      setCoTitle("");
+      setCoReason("other");
       setCoCostImpact("");
       setCoTimeImpact("0");
       setShowCoForm(false);
@@ -221,6 +292,16 @@ export default function ChangeOrdersPage() {
                 {t("potentialCostImpact")}
                 <input type="number" step="0.01" value={eventCostImpact} onChange={(e) => setEventCostImpact(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
               </label>
+              <label className="flex flex-col gap-1 text-sm">
+                {t("reason")}
+                <select value={eventReason} onChange={(e) => setEventReason(e.target.value as ChangeReason)} className="rounded-lg border-3 border-ink px-3 py-2">
+                  {CHANGE_REASONS.map((r) => (
+                    <option key={r} value={r}>
+                      {t(reasonKey(r))}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <button type="submit" disabled={saving} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
                 {t("create")}
               </button>
@@ -232,8 +313,18 @@ export default function ChangeOrdersPage() {
           <ul className="flex flex-col gap-3">
             {events?.map((ev) => (
               <li key={ev.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
-                <div className="mb-1 font-bold text-navy-900">{ev.title}</div>
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-bold text-navy-900">{ev.title}</span>
+                  <span
+                    className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${
+                      ev.status === "void" ? "bg-maroon-100 text-maroon-800" : ev.status === "incorporated" ? "bg-orange-100 text-navy-800" : "bg-navy-100 text-navy-800"
+                    }`}
+                  >
+                    {t(changeEventStatusKey(ev.status))}
+                  </span>
+                </div>
                 {ev.description && <p className="mb-2 text-sm text-navy-600">{ev.description}</p>}
+                <p className="mb-2 text-xs text-navy-600">{t("reason")}: {t(reasonKey(ev.reason))}</p>
                 <div className="mb-2 flex flex-wrap gap-2">
                   {ev.potentialChangeOrders.map((pco) => (
                     <span key={pco.id} className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
@@ -241,6 +332,20 @@ export default function ChangeOrdersPage() {
                     </span>
                   ))}
                 </div>
+                {CHANGE_EVENT_STATUS_TRANSITIONS[ev.status].length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {CHANGE_EVENT_STATUS_TRANSITIONS[ev.status].map((next) => (
+                      <button
+                        key={next}
+                        onClick={() => void handleTransitionEvent(ev.id, next)}
+                        disabled={saving}
+                        className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800 disabled:opacity-50"
+                      >
+                        {t("moveTo")}: {t(changeEventStatusKey(next))}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {pcoFormFor === ev.id ? (
                   <div className="flex flex-wrap items-end gap-2">
                     <label className="flex flex-col gap-1 text-xs">
@@ -283,6 +388,20 @@ export default function ChangeOrdersPage() {
 
           {showCoForm && (
             <form onSubmit={(e) => void handleCreateChangeOrder(e)} className="mb-4 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
+              <label className="flex flex-col gap-1 text-sm">
+                {t("coTitle")}
+                <input value={coTitle} onChange={(e) => setCoTitle(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                {t("reason")}
+                <select value={coReason} onChange={(e) => setCoReason(e.target.value as ChangeReason)} className="rounded-lg border-3 border-ink px-3 py-2">
+                  {CHANGE_REASONS.map((r) => (
+                    <option key={r} value={r}>
+                      {t(reasonKey(r))}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="flex flex-col gap-1 text-sm">
                 {t("targetType")}
                 <select
@@ -331,18 +450,24 @@ export default function ChangeOrdersPage() {
               <li key={co.id}>
                 <Link href={`/${locale}/projects/${params.id}/change-orders/${co.id}`} className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-navy-900">{co.number}</span>
-                    <span
-                      className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${
-                        co.status === "approved"
-                          ? "bg-orange-100 text-navy-800"
-                          : co.status === "rejected" || co.status === "void"
-                            ? "bg-maroon-100 text-maroon-800"
-                            : "bg-navy-100 text-navy-800"
-                      }`}
-                    >
-                      {t(statusKey(co.status))}
+                    <span className="font-bold text-navy-900">
+                      {co.number}
+                      {co.title ? ` — ${co.title}` : ""}
                     </span>
+                    <div className="flex shrink-0 gap-2">
+                      {co.executed && <span className="whitespace-nowrap rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("executed")}</span>}
+                      <span
+                        className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${
+                          co.status === "approved"
+                            ? "bg-orange-100 text-navy-800"
+                            : co.status === "rejected" || co.status === "void"
+                              ? "bg-maroon-100 text-maroon-800"
+                              : "bg-navy-100 text-navy-800"
+                        }`}
+                      >
+                        {t(statusKey(co.status))}
+                      </span>
+                    </div>
                   </div>
                   <p className="mt-1 text-sm text-navy-600">{Number(co.costImpact).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                 </Link>

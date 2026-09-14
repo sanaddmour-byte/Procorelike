@@ -180,6 +180,61 @@ describe("Budget + Change Management (Phase 6 gate)", () => {
     expect(detailRes.body.potentialChangeOrders).toHaveLength(1);
   });
 
+  it("supports Procore's Change Event workflow status, Reason categories, a Change Order title, and the Executed flag", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const lineItemId = await createBudgetLineItem(omarToken, 50000, 0);
+
+    const eventRes = await request(app)
+      .post("/change-events")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, title: "Unforeseen rock excavation", reason: "unforeseen_condition" });
+    expect(eventRes.status).toBe(201);
+    expect(eventRes.body.status).toBe("open");
+    expect(eventRes.body.reason).toBe("unforeseen_condition");
+    const changeEventId = eventRes.body.id as string;
+
+    // Void is a terminal status; open -> void is valid, but a second transition off void is not.
+    const voidRes = await request(app)
+      .post(`/change-events/${changeEventId}/transition`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ toStatus: "void" });
+    expect(voidRes.status).toBe(200);
+    expect(voidRes.body.status).toBe("void");
+
+    const reopenAttempt = await request(app)
+      .post(`/change-events/${changeEventId}/transition`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ toStatus: "incorporated" });
+    expect(reopenAttempt.status).toBe(409);
+    expect(reopenAttempt.body.error.code).toBe("invalid_status_transition");
+
+    // A change order carries its own title/reason and defaults isn't executed until marked so.
+    const coRes = await request(app)
+      .post("/change-orders")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, title: "Rock excavation CCO", reason: "unforeseen_condition", targetType: "prime", targetId: lineItemId, costImpact: 4000 });
+    expect(coRes.status).toBe(201);
+    expect(coRes.body.title).toBe("Rock excavation CCO");
+    expect(coRes.body.reason).toBe("unforeseen_condition");
+    expect(coRes.body.executed).toBe(false);
+    const changeOrderId = coRes.body.id as string;
+
+    // Can't execute before it's approved.
+    const tooEarlyExecute = await request(app).post(`/change-orders/${changeOrderId}/execute`).set("authorization", `Bearer ${omarToken}`);
+    expect(tooEarlyExecute.status).toBe(400);
+
+    await request(app).post(`/change-orders/${changeOrderId}/submit`).set("authorization", `Bearer ${omarToken}`).expect(200);
+    await request(app).post(`/change-orders/${changeOrderId}/approve`).set("authorization", `Bearer ${omarToken}`).expect(200);
+
+    const executeRes = await request(app).post(`/change-orders/${changeOrderId}/execute`).set("authorization", `Bearer ${omarToken}`);
+    expect(executeRes.status).toBe(200);
+    expect(executeRes.body.executed).toBe(true);
+
+    const secondExecute = await request(app).post(`/change-orders/${changeOrderId}/execute`).set("authorization", `Bearer ${omarToken}`);
+    expect(secondExecute.status).toBe(400);
+    expect(secondExecute.body.error.code).toBe("already_executed");
+  });
+
   it("client_viewer is blocked from every financial module, per the RLS + permission-engine hard rule", async () => {
     const karimToken = await loginAs("karim.abughazaleh@siteops.test");
 

@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -24,6 +25,19 @@ export const changeStatusEnum = pgEnum("change_status", [
   "approved",
   "rejected",
   "void",
+]);
+/** Procore's Change Event workflow status: separate from a change order's own approval status. */
+export const changeEventStatusEnum = pgEnum("change_event_status", ["open", "incorporated", "void"]);
+/** Procore's standard Change Event/Order Reason categories. */
+export const changeReasonEnum = pgEnum("change_reason", [
+  "owner_change",
+  "design_development",
+  "allowance",
+  "value_engineering",
+  "unforeseen_condition",
+  "errors_omissions",
+  "rfi",
+  "other",
 ]);
 export const paymentApplicationStatusEnum = pgEnum("payment_application_status", [
   "draft",
@@ -110,6 +124,8 @@ export const changeEvents = pgTable(
     title: varchar("title", { length: 300 }).notNull(),
     description: text("description"),
     potentialCostImpact: numeric("potential_cost_impact", { precision: 14, scale: 2 }),
+    status: changeEventStatusEnum("status").notNull().default("open"),
+    reason: changeReasonEnum("reason").notNull().default("other"),
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id),
@@ -140,11 +156,15 @@ export const changeOrders = pgTable(
       .notNull()
       .references(() => projects.id),
     number: varchar("number", { length: 50 }).notNull(),
+    title: varchar("title", { length: 300 }),
     pcoId: uuid("pco_id").references(() => potentialChangeOrders.id),
     targetType: changeOrderTargetTypeEnum("target_type").notNull(),
     targetId: uuid("target_id").notNull(),
+    reason: changeReasonEnum("reason").notNull().default("other"),
     costImpact: numeric("cost_impact", { precision: 14, scale: 2 }).notNull(),
     timeImpactDays: integer("time_impact_days").notNull().default(0),
+    /** Procore's "Executed" flag: the CO has been physically signed by all parties -- distinct from the internal approvalChain, which only tracks this org's own sign-off. */
+    executed: boolean("executed").notNull().default(false),
     /** Ordered list of { userId, companyId, role, approvedAt } — see @siteops/shared approval-threshold. */
     approvalChain: jsonb("approval_chain")
       .notNull()

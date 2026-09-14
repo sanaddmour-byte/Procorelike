@@ -197,6 +197,13 @@
       "when": 1789411996056,
       "tag": "0027_overjoyed_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789412471455,
+      "tag": "0028_even_sinister_six",
+      "breakpoints": true
     }
   ]
 }

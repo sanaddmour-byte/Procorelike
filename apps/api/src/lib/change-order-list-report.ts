@@ -2,11 +2,12 @@ import type { ChangeOrderListReportData } from "../services/change-management.se
 import { PdfBuilder, type TableColumn } from "./pdf-builder";
 
 const COLUMNS: TableColumn[] = [
-  { header: "Number", width: 60 },
-  { header: "Target", width: 90 },
+  { header: "Number", width: 55 },
+  { header: "Title", width: 100 },
+  { header: "Target", width: 75 },
   { header: "Status", width: 75 },
-  { header: "Cost impact", width: 140 },
-  { header: "Time impact", width: 130 },
+  { header: "Cost impact", width: 110 },
+  { header: "Time impact", width: 80 },
 ];
 
 export async function generateChangeOrderListPdf(data: ChangeOrderListReportData): Promise<Uint8Array> {
@@ -29,8 +30,9 @@ export async function generateChangeOrderListPdf(data: ChangeOrderListReportData
     COLUMNS,
     data.rows.map((r) => [
       r.number,
+      r.title ?? "—",
       r.targetType === "prime" ? "Prime contract" : "Commitment",
-      r.status,
+      `${r.status}${r.executed ? " (Executed)" : ""}`,
       `$${Number(r.costImpact).toLocaleString()}`,
       `${r.timeImpactDays} days`,
     ]),

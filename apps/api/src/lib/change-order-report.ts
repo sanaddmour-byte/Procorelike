@@ -1,6 +1,17 @@
 import type { ChangeOrderReportData } from "../services/change-management.service";
 import { PdfBuilder } from "./pdf-builder";
 
+const REASON_LABELS: Record<string, string> = {
+  owner_change: "Owner change",
+  design_development: "Design development",
+  allowance: "Allowance",
+  value_engineering: "Value engineering",
+  unforeseen_condition: "Unforeseen condition",
+  errors_omissions: "Errors & omissions",
+  rfi: "RFI",
+  other: "Other",
+};
+
 export async function generateChangeOrderPdf(data: ChangeOrderReportData): Promise<Uint8Array> {
   const pdf = await PdfBuilder.create();
   await pdf.drawLetterhead(data.companyName, data.logoPngBytes);
@@ -10,9 +21,10 @@ export async function generateChangeOrderPdf(data: ChangeOrderReportData): Promi
 
   pdf.drawLine(`Project: ${data.projectName}`);
   pdf.drawLine(`Target: ${data.targetType === "prime" ? "Prime contract (budget)" : "Commitment"}`);
+  pdf.drawLine(`Reason: ${REASON_LABELS[data.reason] ?? data.reason}`);
   pdf.drawLine(`Cost impact: $${Number(data.costImpact).toLocaleString()}`);
   pdf.drawLine(`Time impact: ${data.timeImpactDays} days`);
-  pdf.drawLine(`Status: ${data.status}`, { gap: 14 });
+  pdf.drawLine(`Status: ${data.status}${data.executed ? " (Executed)" : ""}`, { gap: 14 });
 
   if (data.description) {
     pdf.drawLine("Description", { size: 13, bold: true, gap: 8 });

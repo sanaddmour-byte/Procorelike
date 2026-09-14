@@ -60,15 +60,46 @@ export type CreateCommitmentLineItemInput = z.infer<typeof createCommitmentLineI
 // Change management: change events -> potential change orders -> change orders
 // ---------------------------------------------------------------------------
 
+/** Procore's standard Change Event/Order Reason categories. */
+export const changeReasonSchema = z.enum([
+  "owner_change",
+  "design_development",
+  "allowance",
+  "value_engineering",
+  "unforeseen_condition",
+  "errors_omissions",
+  "rfi",
+  "other",
+]);
+export type ChangeReason = z.infer<typeof changeReasonSchema>;
+
+/** Procore's Change Event workflow status: separate from a change order's own approval status. */
+export const changeEventStatusSchema = z.enum(["open", "incorporated", "void"]);
+export type ChangeEventStatus = z.infer<typeof changeEventStatusSchema>;
+
+export const CHANGE_EVENT_STATUS_TRANSITIONS: Record<ChangeEventStatus, readonly ChangeEventStatus[]> = {
+  open: ["incorporated", "void"],
+  incorporated: [],
+  void: [],
+};
+
 export const createChangeEventSchema = z
   .object({
     projectId: z.string().uuid(),
     title: z.string().min(1).max(300),
     description: z.string().max(5000).optional(),
     potentialCostImpact: money.optional(),
+    reason: changeReasonSchema.default("other"),
   })
   .strict();
 export type CreateChangeEventInput = z.infer<typeof createChangeEventSchema>;
+
+export const transitionChangeEventStatusSchema = z
+  .object({
+    toStatus: changeEventStatusSchema,
+  })
+  .strict();
+export type TransitionChangeEventStatusInput = z.infer<typeof transitionChangeEventStatusSchema>;
 
 export const changeStatusSchema = z.enum(["draft", "pending_approval", "approved", "rejected", "void"]);
 export type ChangeStatus = z.infer<typeof changeStatusSchema>;
@@ -102,9 +133,11 @@ export type ChangeOrderTargetType = z.infer<typeof changeOrderTargetTypeSchema>;
 export const createChangeOrderSchema = z
   .object({
     projectId: z.string().uuid(),
+    title: z.string().max(300).optional(),
     pcoId: z.string().uuid().optional(),
     targetType: changeOrderTargetTypeSchema,
     targetId: z.string().uuid(),
+    reason: changeReasonSchema.default("other"),
     costImpact: money,
     timeImpactDays: z.number().int().default(0),
   })

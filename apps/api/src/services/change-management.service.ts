@@ -1,16 +1,19 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database, type Tx } from "@siteops/db";
 import {
+  CHANGE_EVENT_STATUS_TRANSITIONS,
   formatChangeOrderNumber,
   isValidSecondApprover,
   requiresSecondApprover,
   requirePermission,
   type Approver,
   type ChangeOrderTargetType,
+  type ChangeReason,
   type ChangeStatus,
   type CreateChangeEventInput,
   type CreateChangeOrderInput,
   type CreatePotentialChangeOrderInput,
   type PermissionContext,
+  type TransitionChangeEventStatusInput,
   type UpdatePotentialChangeOrderStatusInput,
 } from "@siteops/shared";
 import { and, eq, inArray } from "drizzle-orm";
@@ -43,6 +46,7 @@ export async function createChangeEvent(
         title: input.title,
         description: input.description,
         potentialCostImpact: input.potentialCostImpact?.toString(),
+        reason: input.reason,
         createdBy: userId,
       })
       .returning();
@@ -50,6 +54,42 @@ export async function createChangeEvent(
 
     await writeAuditLog(tx, { actorId: userId, entityType: "change_event", entityId: row.id, action: "create", after: row });
     return row;
+  });
+}
+
+export async function transitionChangeEventStatus(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  changeEventId: string,
+  input: TransitionChangeEventStatusInput,
+): Promise<ChangeEventRow> {
+  requirePermission(ctx, "change_management", "standard");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [existing] = await tx.select().from(schema.changeEvents).where(eq(schema.changeEvents.id, changeEventId)).limit(1);
+    if (!existing) throw new NotFoundError("Change event not found");
+
+    const allowed = CHANGE_EVENT_STATUS_TRANSITIONS[existing.status];
+    if (!allowed.includes(input.toStatus)) {
+      throw new ApiError(409, "invalid_status_transition", `Cannot move a change event from '${existing.status}' to '${input.toStatus}'`);
+    }
+
+    const [updated] = await tx
+      .update(schema.changeEvents)
+      .set({ status: input.toStatus })
+      .where(eq(schema.changeEvents.id, changeEventId))
+      .returning();
+    if (!updated) throw new Error("Failed to transition change event");
+
+    await writeAuditLog(tx, {
+      actorId: userId,
+      entityType: "change_event",
+      entityId: changeEventId,
+      action: "status_transition",
+      before: { status: existing.status },
+      after: { status: updated.status },
+    });
+    return updated;
   });
 }
 
@@ -174,9 +214,11 @@ export async function createChangeOrder(
       .values({
         projectId: input.projectId,
         number: formatChangeOrderNumber(seq),
+        title: input.title,
         pcoId: input.pcoId,
         targetType: input.targetType,
         targetId: input.targetId,
+        reason: input.reason,
         costImpact: input.costImpact.toString(),
         timeImpactDays: input.timeImpactDays,
         approvalChain: [],
@@ -334,6 +376,42 @@ export async function approveChangeOrder(
   });
 }
 
+/**
+ * Procore's "Executed" flag: marks the change order as physically signed by
+ * all parties. Distinct from `approved` status (this org's own internal
+ * sign-off/approval chain) -- a change order can be Approved internally
+ * before the countersigned paperwork comes back, so the two track
+ * separately, same as Procore.
+ */
+export async function executeChangeOrder(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  changeOrderId: string,
+): Promise<ChangeOrderRow> {
+  requirePermission(ctx, "change_management", "standard");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [co] = await tx.select().from(schema.changeOrders).where(eq(schema.changeOrders.id, changeOrderId)).limit(1);
+    if (!co) throw new NotFoundError("Change order not found");
+    if (co.status !== "approved") {
+      throw new ApiError(400, "invalid_transition", "Only an approved change order can be marked executed");
+    }
+    if (co.executed) {
+      throw new ApiError(400, "already_executed", "This change order is already marked executed");
+    }
+
+    const [updated] = await tx
+      .update(schema.changeOrders)
+      .set({ executed: true, updatedBy: userId, updatedAt: new Date(), serverRevision: co.serverRevision + 1 })
+      .where(eq(schema.changeOrders.id, changeOrderId))
+      .returning();
+    if (!updated) throw new Error("Failed to execute change order");
+
+    await writeAuditLog(tx, { actorId: userId, entityType: "change_order", entityId: changeOrderId, action: "execute", before: { executed: false }, after: { executed: true } });
+    return updated;
+  });
+}
+
 export async function rejectChangeOrder(
   appDb: Database,
   userId: string,
@@ -379,10 +457,12 @@ export interface ChangeOrderReportData extends ReportBranding {
   number: string;
   title: string | null;
   description: string | null;
+  reason: ChangeReason;
   targetType: "prime" | "commitment";
   costImpact: string;
   timeImpactDays: number;
   status: ChangeStatus;
+  executed: boolean;
   approvals: ChangeOrderReportApproval[];
 }
 
@@ -400,13 +480,13 @@ export async function getChangeOrderReportData(
 
     const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, co.projectId)).limit(1);
 
-    let title: string | null = null;
+    let title: string | null = co.title;
     let description: string | null = null;
     if (co.pcoId) {
       const [pco] = await tx.select().from(schema.potentialChangeOrders).where(eq(schema.potentialChangeOrders.id, co.pcoId)).limit(1);
       if (pco) {
         const [event] = await tx.select().from(schema.changeEvents).where(eq(schema.changeEvents.id, pco.changeEventId)).limit(1);
-        title = event?.title ?? null;
+        title = title ?? event?.title ?? null;
         description = event?.description ?? null;
       }
     }
@@ -428,10 +508,12 @@ export async function getChangeOrderReportData(
       number: co.number,
       title,
       description,
+      reason: co.reason,
       targetType: co.targetType,
       costImpact: co.costImpact,
       timeImpactDays: co.timeImpactDays,
       status: co.status,
+      executed: co.executed,
       approvals: co.approvalChain.map((a) => ({
         userName: userNameById.get(a.userId) ?? "Unknown",
         companyName: companyNameById.get(a.companyId) ?? "Unknown",
@@ -444,8 +526,10 @@ export async function getChangeOrderReportData(
 
 export interface ChangeOrderListRow {
   number: string;
+  title: string | null;
   targetType: ChangeOrderTargetType;
   status: ChangeStatus;
+  executed: boolean;
   costImpact: string;
   timeImpactDays: number;
 }
@@ -478,8 +562,10 @@ export async function getChangeOrderListReportData(
       projectName: project?.name ?? "",
       rows: changeOrders.map((co) => ({
         number: co.number,
+        title: co.title,
         targetType: co.targetType,
         status: co.status,
+        executed: co.executed,
         costImpact: co.costImpact,
         timeImpactDays: co.timeImpactDays,
       })),
