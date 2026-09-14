@@ -1,6 +1,7 @@
 "use client";
 
-import { DrawingViewer, type MarkupPin } from "@/components/DrawingViewer";
+import { DrawingViewer, type MarkupCoords, type MarkupPin } from "@/components/DrawingViewer";
+import { DrawingCompareView } from "@/components/DrawingCompareView";
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
@@ -60,6 +61,12 @@ export default function DrawingDetailScreen() {
   const [issuedDate, setIssuedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const [showCompare, setShowCompare] = useState(false);
+  const [compareBaseId, setCompareBaseId] = useState("");
+  const [compareOverlayId, setCompareOverlayId] = useState("");
+  const [compareUrls, setCompareUrls] = useState<{ base: string; overlay: string } | null>(null);
+  const [compareBusy, setCompareBusy] = useState(false);
 
   const currentRevision = revisions?.find((r) => r.id === drawing?.currentRevisionId) ?? null;
 
@@ -138,26 +145,33 @@ export default function DrawingDetailScreen() {
     }
   }
 
-  async function handleAddPin(x: number, y: number): Promise<void> {
-    if (!currentRevision) return;
-    const note = window.prompt(t("noteLabel")) ?? undefined;
+  async function handleCompare(): Promise<void> {
+    if (!compareBaseId || !compareOverlayId || compareBaseId === compareOverlayId) return;
+    const base = revisions?.find((r) => r.id === compareBaseId);
+    const overlay = revisions?.find((r) => r.id === compareOverlayId);
+    if (!base || !overlay) return;
+    setCompareBusy(true);
+    setError(null);
     try {
-      const created = await apiJson<MarkupPin>(`/drawings/revisions/${currentRevision.id}/markups`, {
-        method: "POST",
-        body: JSON.stringify({ coords: { type: "pin", x, y }, note }),
-      });
-      setMarkups((prev) => [...prev, created]);
+      const [baseRes, overlayRes] = await Promise.all([
+        apiJson<{ downloadUrl: string }>(`/attachments/${base.attachmentId}/download`),
+        apiJson<{ downloadUrl: string }>(`/attachments/${overlay.attachmentId}/download`),
+      ]);
+      setCompareUrls({ base: baseRes.downloadUrl, overlay: overlayRes.downloadUrl });
     } catch {
       setError(tc("errorGeneric"));
+    } finally {
+      setCompareBusy(false);
     }
   }
 
-  async function handleAddFreehand(points: [number, number][], color: string): Promise<void> {
+  async function handleAddMarkup(coords: MarkupCoords): Promise<void> {
     if (!currentRevision) return;
+    const note = coords.type === "pin" ? (window.prompt(t("noteLabel")) ?? undefined) : undefined;
     try {
       const created = await apiJson<MarkupPin>(`/drawings/revisions/${currentRevision.id}/markups`, {
         method: "POST",
-        body: JSON.stringify({ coords: { type: "freehand", points, color } }),
+        body: JSON.stringify({ coords, note }),
       });
       setMarkups((prev) => [...prev, created]);
     } catch {
@@ -200,17 +214,86 @@ export default function DrawingDetailScreen() {
                 pdfUrl={pdfUrl}
                 markups={markups}
                 errorLabel={t("viewerError")}
-                onAddPin={(x, y) => void handleAddPin(x, y)}
-                onAddFreehand={(points, color) => void handleAddFreehand(points, color)}
-                pinToolLabel={t("pinTool")}
-                sketchToolLabel={tc("sketchTool")}
+                onAddMarkup={(coords) => void handleAddMarkup(coords)}
+                toolLabels={{
+                  pin: t("pinTool"),
+                  sketch: tc("sketchTool"),
+                  cloud: t("toolCloud"),
+                  box: t("toolBox"),
+                  ellipse: t("toolEllipse"),
+                  arrow: t("toolArrow"),
+                  line: t("toolLine"),
+                  text: t("toolText"),
+                  measurement: t("toolMeasurement"),
+                }}
                 sketchHintLabel={tc("sketchHint")}
+                textPromptLabel={t("textPrompt")}
               />
             </>
           ) : (
             <p className="text-navy-600">{t("noRevisions")}</p>
           )}
         </section>
+
+        {revisions.length >= 2 && (
+          <section className="mb-6">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-lg font-medium">{t("compareRevisions")}</h2>
+              <button onClick={() => setShowCompare((s) => !s)} className="rounded-lg border-3 border-ink px-3 py-1.5 text-sm text-navy-800">
+                {showCompare ? tc("cancel") : t("compareRevisions")}
+              </button>
+            </div>
+            {showCompare && (
+              <div className="flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
+                <p className="text-xs text-navy-600">{t("compareHint")}</p>
+                <div className="flex flex-wrap gap-3">
+                  <label className="flex flex-col gap-1 text-sm">
+                    {t("compareBase")}
+                    <select value={compareBaseId} onChange={(e) => setCompareBaseId(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
+                      <option value="" disabled>
+                        —
+                      </option>
+                      {revisions.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {t("revisionCode")} {r.revisionCode}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    {t("compareOverlay")}
+                    <select value={compareOverlayId} onChange={(e) => setCompareOverlayId(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2">
+                      <option value="" disabled>
+                        —
+                      </option>
+                      {revisions.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {t("revisionCode")} {r.revisionCode}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    onClick={() => void handleCompare()}
+                    disabled={compareBusy || !compareBaseId || !compareOverlayId || compareBaseId === compareOverlayId}
+                    className="self-end rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50"
+                  >
+                    {t("compareRevisions")}
+                  </button>
+                </div>
+                {compareUrls && (
+                  <DrawingCompareView
+                    baseUrl={compareUrls.base}
+                    overlayUrl={compareUrls.overlay}
+                    errorLabel={t("viewerError")}
+                    baseLabel={`${t("compareBase")}: ${t("revisionCode")} ${revisions.find((r) => r.id === compareBaseId)?.revisionCode ?? ""}`}
+                    overlayLabel={`${t("compareOverlay")}: ${t("revisionCode")} ${revisions.find((r) => r.id === compareOverlayId)?.revisionCode ?? ""}`}
+                  />
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
         <section>
           <div className="mb-2 flex items-center justify-between">

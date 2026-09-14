@@ -247,4 +247,51 @@ describe("Drawings (Phase 3 gate: revision history)", () => {
       .send({ coords: { type: "freehand", points: [[0.5, 0.5]] } });
     expect(tooFewPointsRes.status).toBe(400);
   });
+
+  it("supports Procore's additional markup shapes: cloud, box, ellipse, arrow, line, text, measurement", async () => {
+    const token = await loginAs("omar.nassar@siteops.test");
+
+    const drawingRes = await request(app)
+      .post("/drawings")
+      .set("authorization", `Bearer ${token}`)
+      .send({ projectId, sheetNumber: "A-401", discipline: "Architectural", title: "Enlarged Plans" });
+    const drawingId = drawingRes.body.id as string;
+
+    const attachmentId = await createAttachment(token, "drawing_revision", drawingId);
+    const revRes = await request(app)
+      .post(`/drawings/${drawingId}/revisions`)
+      .set("authorization", `Bearer ${token}`)
+      .send({ revisionCode: "1", attachmentId, issuedDate: "2025-03-01" });
+    const revisionId = revRes.body.id as string;
+
+    const shapes: Record<string, unknown>[] = [
+      { type: "cloud", points: [[0.1, 0.1], [0.3, 0.1], [0.3, 0.3], [0.1, 0.3]], color: "#dc2626" },
+      { type: "box", x: 0.2, y: 0.2, width: 0.1, height: 0.05, color: "#2563eb" },
+      { type: "ellipse", cx: 0.5, cy: 0.5, rx: 0.05, ry: 0.03, color: "#16a34a" },
+      { type: "arrow", x1: 0.1, y1: 0.1, x2: 0.2, y2: 0.2, color: "#111827" },
+      { type: "line", x1: 0.3, y1: 0.3, x2: 0.4, y2: 0.4, color: "#dc2626" },
+      { type: "text", x: 0.6, y: 0.6, text: "See detail 3/A-501", color: "#111827" },
+      { type: "measurement", x1: 0.15, y1: 0.15, x2: 0.35, y2: 0.15, color: "#2563eb" },
+    ];
+
+    for (const coords of shapes) {
+      const res = await request(app)
+        .post(`/drawings/revisions/${revisionId}/markups`)
+        .set("authorization", `Bearer ${token}`)
+        .send({ coords });
+      expect(res.status).toBe(201);
+      expect(res.body.coords.type).toBe(coords.type);
+    }
+
+    const listRes = await request(app).get(`/drawings/revisions/${revisionId}/markups`).set("authorization", `Bearer ${token}`);
+    expect(listRes.status).toBe(200);
+    expect(listRes.body).toHaveLength(shapes.length);
+
+    // A text markup with no text is rejected -- the shape carries the label, not the optional "note" field.
+    const invalidTextRes = await request(app)
+      .post(`/drawings/revisions/${revisionId}/markups`)
+      .set("authorization", `Bearer ${token}`)
+      .send({ coords: { type: "text", x: 0.5, y: 0.5, text: "", color: "#111827" } });
+    expect(invalidTextRes.status).toBe(400);
+  });
 });

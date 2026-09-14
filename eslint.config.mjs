@@ -14,6 +14,7 @@ export default tseslint.config(
       "**/coverage/**",
       "**/babel.config.js",
       "**/postcss.config.js",
+      "**/public/**",
     ],
   },
   js.configs.recommended,

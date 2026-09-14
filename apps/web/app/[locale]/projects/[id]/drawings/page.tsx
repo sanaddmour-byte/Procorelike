@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { detectSheetInfoFromPdf } from "@/lib/ocr";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -31,6 +32,8 @@ export default function DrawingsPage() {
   const [discipline, setDiscipline] = useState("");
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
+  const [ocrRunning, setOcrRunning] = useState(false);
+  const [ocrError, setOcrError] = useState(false);
 
   function load(): void {
     apiJson<Drawing[]>(`/drawings?projectId=${params.id}`)
@@ -45,6 +48,21 @@ export default function DrawingsPage() {
     }
     load();
   }, [router, locale, params.id]);
+
+  async function handleOcrFile(file: File | undefined): Promise<void> {
+    if (!file) return;
+    setOcrRunning(true);
+    setOcrError(false);
+    try {
+      const { sheetNumber: detected } = await detectSheetInfoFromPdf(file);
+      if (detected) setSheetNumber(detected);
+      else setOcrError(true);
+    } catch {
+      setOcrError(true);
+    } finally {
+      setOcrRunning(false);
+    }
+  }
 
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
@@ -80,6 +98,12 @@ export default function DrawingsPage() {
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
+            <label className="flex flex-col gap-1 text-sm">
+              {t("ocrDetectLabel")}
+              <input type="file" accept="application/pdf" disabled={ocrRunning} onChange={(e) => void handleOcrFile(e.target.files?.[0])} className="text-sm" />
+            </label>
+            {ocrRunning && <p className="text-xs text-navy-600">{t("ocrRunning")}</p>}
+            {ocrError && <p className="text-xs text-maroon-700">{t("ocrNoMatch")}</p>}
             <label className="flex flex-col gap-1 text-sm">
               {t("sheetNumber")}
               <input
