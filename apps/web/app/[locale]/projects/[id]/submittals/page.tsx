@@ -22,7 +22,7 @@ interface Submittal {
   id: string;
   number: string;
   title: string;
-  status: "draft" | "in_review" | "approved" | "closed";
+  status: "draft" | "in_review" | "approved" | "approved_as_noted" | "revise_resubmit" | "rejected" | "closed";
   ballInCourtUserId: string | null;
 }
 
@@ -32,7 +32,15 @@ interface Member {
 }
 
 function statusLabel(status: Submittal["status"], t: (key: string) => string): string {
-  return { draft: t("statusDraft"), in_review: t("statusInReview"), approved: t("statusApproved"), closed: t("statusClosed") }[status];
+  return {
+    draft: t("statusDraft"),
+    in_review: t("statusInReview"),
+    approved: t("statusApproved"),
+    approved_as_noted: t("statusApprovedAsNoted"),
+    revise_resubmit: t("statusReviseResubmit"),
+    rejected: t("statusRejected"),
+    closed: t("statusClosed"),
+  }[status];
 }
 
 export default function SubmittalsPage() {
@@ -49,6 +57,7 @@ export default function SubmittalsPage() {
   const [showForm, setShowForm] = useState(false);
   const [specSectionId, setSpecSectionId] = useState("");
   const [title, setTitle] = useState("");
+  const [ballInCourtUserId, setBallInCourtUserId] = useState("");
   const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
@@ -86,9 +95,10 @@ export default function SubmittalsPage() {
     try {
       await apiJson("/submittals", {
         method: "POST",
-        body: JSON.stringify({ projectId: params.id, specSectionId, title, distributionUserIds }),
+        body: JSON.stringify({ projectId: params.id, specSectionId, title, ballInCourtUserId: ballInCourtUserId || undefined, distributionUserIds }),
       });
       setTitle("");
+      setBallInCourtUserId("");
       setDistributionUserIds([]);
       setShowForm(false);
       load();
@@ -139,6 +149,21 @@ export default function SubmittalsPage() {
             <label className="flex flex-col gap-1 text-sm">
               {t("submittalTitle")}
               <input required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("ballInCourt")}
+              <select
+                value={ballInCourtUserId}
+                onChange={(e) => setBallInCourtUserId(e.target.value)}
+                className="rounded-lg border-3 border-ink px-3 py-2"
+              >
+                <option value="">{t("unassigned")}</option>
+                {members.map((m) => (
+                  <option key={m.userId} value={m.userId}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <PersonnelPicker label={t("distribution")} members={members} selectedUserIds={distributionUserIds} onChange={setDistributionUserIds} />
             <button type="submit" disabled={creating || !specSectionId} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">

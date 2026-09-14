@@ -1,7 +1,6 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
   formatSubmittalNumber,
-  PASSING_SUBMITTAL_RESPONSE_CODES,
   requirePermission,
   type CreateSubmittalInput,
   type CreateSubmittalRevisionInput,
@@ -9,6 +8,7 @@ import {
   type SubmittalResponseCode,
   type SubmittalStatus,
   type SubmitSubmittalReviewInput,
+  type UpdateSubmittalInput,
 } from "@siteops/shared";
 import { and, asc, eq, inArray, max, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
@@ -125,6 +125,7 @@ export async function createSubmittal(
         title: input.title,
         leadTimeDays: input.leadTimeDays,
         requiredOnSiteDate: input.requiredOnSiteDate ? new Date(input.requiredOnSiteDate) : undefined,
+        ballInCourtUserId: input.ballInCourtUserId,
         createdBy: userId,
       })
       .returning();
@@ -140,6 +141,36 @@ export async function createSubmittal(
 
     await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittal.id, action: "create", after: submittal });
     return submittal;
+  });
+}
+
+/** Reassigns who owns this submittal -- separate from the review workflow's own automatic ballInCourtUserId updates (initialBallInCourt/nextBallInCourt below), which will still overwrite it at the next revision or review event. */
+export async function updateSubmittal(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  submittalId: string,
+  input: UpdateSubmittalInput,
+): Promise<SubmittalRow | undefined> {
+  requirePermission(ctx, "submittals", "standard");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [existing] = await tx.select().from(schema.submittals).where(eq(schema.submittals.id, submittalId)).limit(1);
+    if (!existing) return undefined;
+
+    const [updated] = await tx
+      .update(schema.submittals)
+      .set({
+        ballInCourtUserId: input.ballInCourtUserId,
+        updatedBy: userId,
+        updatedAt: new Date(),
+        serverRevision: existing.serverRevision + 1,
+      })
+      .where(eq(schema.submittals.id, submittalId))
+      .returning();
+    if (!updated) throw new Error("Failed to update submittal");
+
+    await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittalId, action: "update", before: existing, after: updated });
+    return updated;
   });
 }
 
@@ -363,6 +394,23 @@ function nextBallInCourt(allReviews: SubmittalReviewRow[]): string | null {
   return eligible[0]?.reviewerUserId ?? null;
 }
 
+/**
+ * Once every reviewer has responded, the submittal's own status should show
+ * *which* of the four standard review outcomes the round landed on — not
+ * just whether it "passed" — so a rejected or revise-and-resubmit round is
+ * visible without opening each individual review. Worst outcome wins when
+ * reviewers disagree: rejected > revise_resubmit > approved_as_noted >
+ * approved, matching the same passing/non-passing precedence
+ * PASSING_SUBMITTAL_RESPONSE_CODES already encodes.
+ */
+function aggregateSubmittalStatus(completedReviews: SubmittalReviewRow[]): SubmittalStatus {
+  const codes = completedReviews.map((r) => r.responseCode);
+  if (codes.includes("rejected")) return "rejected";
+  if (codes.includes("revise_resubmit")) return "revise_resubmit";
+  if (codes.includes("approved_as_noted")) return "approved_as_noted";
+  return "approved";
+}
+
 export async function submitSubmittalReview(
   appDb: Database,
   userId: string,
@@ -408,11 +456,10 @@ export async function submitSubmittalReview(
 
     const allReviewed = refreshedReviews.every((r) => r.reviewedAt !== null);
     if (allReviewed) {
-      const passed = refreshedReviews.every((r) => r.responseCode !== null && PASSING_SUBMITTAL_RESPONSE_CODES.includes(r.responseCode));
       await tx
         .update(schema.submittals)
         .set({
-          status: passed ? "approved" : "in_review",
+          status: aggregateSubmittalStatus(refreshedReviews),
           ballInCourtUserId: submittal.createdBy,
           updatedBy: userId,
           updatedAt: new Date(),
@@ -452,8 +499,8 @@ export async function closeSubmittal(
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     const [submittal] = await tx.select().from(schema.submittals).where(eq(schema.submittals.id, submittalId)).limit(1);
     if (!submittal) throw new ApiError(404, "not_found", "Submittal not found");
-    if (submittal.status !== "approved") {
-      throw new ApiError(400, "invalid_transition", "Only an approved submittal can be closed");
+    if (submittal.status !== "approved" && submittal.status !== "approved_as_noted") {
+      throw new ApiError(400, "invalid_transition", "Only an approved (or approved-as-noted) submittal can be closed");
     }
 
     const [updated] = await tx

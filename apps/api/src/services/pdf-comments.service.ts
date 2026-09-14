@@ -1,18 +1,10 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
-import { requirePermission, type CreatePdfCommentInput, type Module, type PdfCommentRecordType, type PermissionContext } from "@siteops/shared";
+import { requirePermission, type CreatePdfCommentInput, type PdfCommentRecordType, type PermissionContext } from "@siteops/shared";
 import { and, eq } from "drizzle-orm";
 import { NotFoundError } from "../lib/errors";
+import { PDF_RECORD_TYPE_MODULES } from "./pdf-record-types";
 
 type PdfCommentRow = typeof schema.pdfComments.$inferSelect;
-
-/** Which permission module a pinned PDF comment's recordType belongs to -- same "app-layer, no RLS" approach as record-links.service.ts's LINK_TYPE_MODULES, for the same reason (the underlying record varies by type). */
-const RECORD_TYPE_MODULES: Record<PdfCommentRecordType, Module> = {
-  rfi: "rfis",
-  submittal: "submittals",
-  change_order: "change_management",
-  correspondence: "correspondence",
-  inspection: "inspections",
-};
 
 export async function createPdfComment(
   appDb: Database,
@@ -20,7 +12,7 @@ export async function createPdfComment(
   ctx: PermissionContext,
   input: CreatePdfCommentInput,
 ): Promise<PdfCommentRow> {
-  requirePermission(ctx, RECORD_TYPE_MODULES[input.recordType], "standard");
+  requirePermission(ctx, PDF_RECORD_TYPE_MODULES[input.recordType], "standard");
   if (input.linkedRfiId) requirePermission(ctx, "rfis", "read");
 
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
@@ -50,7 +42,7 @@ export async function listPdfComments(
   recordType: PdfCommentRecordType,
   recordId: string,
 ): Promise<PdfCommentRow[]> {
-  requirePermission(ctx, RECORD_TYPE_MODULES[recordType], "read");
+  requirePermission(ctx, PDF_RECORD_TYPE_MODULES[recordType], "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     return tx
       .select()
@@ -83,7 +75,7 @@ export async function setPdfCommentRfiLink(
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     const [existing] = await tx.select().from(schema.pdfComments).where(eq(schema.pdfComments.id, commentId)).limit(1);
     if (!existing) throw new NotFoundError("PDF comment not found");
-    requirePermission(ctx, RECORD_TYPE_MODULES[existing.recordType as PdfCommentRecordType], "standard");
+    requirePermission(ctx, PDF_RECORD_TYPE_MODULES[existing.recordType as PdfCommentRecordType], "standard");
     if (linkedRfiId) requirePermission(ctx, "rfis", "read");
 
     const [updated] = await tx.update(schema.pdfComments).set({ linkedRfiId }).where(eq(schema.pdfComments.id, commentId)).returning();

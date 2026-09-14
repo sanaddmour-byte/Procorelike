@@ -1,5 +1,5 @@
 import type { Database } from "@siteops/db";
-import { createSubmittalRevisionSchema, createSubmittalSchema, submitSubmittalReviewSchema } from "@siteops/shared";
+import { createSubmittalRevisionSchema, createSubmittalSchema, submitSubmittalReviewSchema, updateSubmittalSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -101,6 +101,23 @@ export function submittalsRouter(appDb: Database, env: Env): Router {
       const detail = await submittalService.getSubmittal(appDb, authUser.id, ctx, id);
       if (!detail) throw new NotFoundError("Submittal not found");
       res.json(detail);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.patch("/:id", validateBody(updateSubmittalSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Submittal not found");
+      const submittal = await submittalService.findSubmittalById(appDb, authUser.id, id);
+      if (!submittal) throw new NotFoundError("Submittal not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, submittal.projectId);
+      const updated = await submittalService.updateSubmittal(appDb, authUser.id, ctx, id, req.body);
+      if (!updated) throw new NotFoundError("Submittal not found");
+      res.json(updated);
     } catch (err) {
       next(err);
     }

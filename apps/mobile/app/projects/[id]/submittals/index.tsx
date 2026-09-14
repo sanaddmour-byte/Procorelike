@@ -5,7 +5,7 @@ import { apiJson } from "@/lib/api-client";
 import { i18n } from "@/lib/i18n";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
-type SubmittalStatus = "draft" | "in_review" | "approved" | "closed";
+type SubmittalStatus = "draft" | "in_review" | "approved" | "approved_as_noted" | "revise_resubmit" | "rejected" | "closed";
 
 interface Submittal {
   id: string;
@@ -19,6 +19,9 @@ function statusLabel(status: SubmittalStatus): string {
     draft: i18n.t("submittals.statusDraft"),
     in_review: i18n.t("submittals.statusInReview"),
     approved: i18n.t("submittals.statusApproved"),
+    approved_as_noted: i18n.t("submittals.statusApprovedAsNoted"),
+    revise_resubmit: i18n.t("submittals.statusReviseResubmit"),
+    rejected: i18n.t("submittals.statusRejected"),
     closed: i18n.t("submittals.statusClosed"),
   }[status];
 }

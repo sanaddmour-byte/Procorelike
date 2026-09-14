@@ -25,7 +25,10 @@
     "postComment": "نشر التعليق",
     "linkToRfiPlaceholder": "ربط بطلب معلومات…",
     "linkedToRfi": "مرتبط بـ",
-    "unlink": "إلغاء الربط"
+    "unlink": "إلغاء الربط",
+    "commentTool": "تعليق",
+    "sketchTool": "رسم",
+    "sketchHint": "اسحب على الصفحة للرسم."
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
@@ -245,6 +248,9 @@
     "statusDraft": "مسودة",
     "statusInReview": "قيد المراجعة",
     "statusApproved": "معتمد",
+    "statusApprovedAsNoted": "معتمد مع ملاحظات",
+    "statusReviseResubmit": "تعديل وإعادة تقديم",
+    "statusRejected": "مرفوض",
     "statusClosed": "مغلق",
     "ballInCourt": "الدور على",
     "unassigned": "غير معيّن",

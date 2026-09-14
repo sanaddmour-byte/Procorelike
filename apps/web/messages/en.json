@@ -25,7 +25,10 @@
     "postComment": "Post comment",
     "linkToRfiPlaceholder": "Link to an RFI…",
     "linkedToRfi": "Linked to",
-    "unlink": "Unlink"
+    "unlink": "Unlink",
+    "commentTool": "Comment",
+    "sketchTool": "Sketch",
+    "sketchHint": "Drag on the page to draw."
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -245,6 +248,9 @@
     "statusDraft": "Draft",
     "statusInReview": "In review",
     "statusApproved": "Approved",
+    "statusApprovedAsNoted": "Approved as noted",
+    "statusReviseResubmit": "Revise & resubmit",
+    "statusRejected": "Rejected",
     "statusClosed": "Closed",
     "ballInCourt": "Ball in court",
     "unassigned": "Unassigned",

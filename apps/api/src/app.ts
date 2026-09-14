@@ -25,6 +25,7 @@ import { lookaheadRouter } from "./routes/lookahead.routes";
 import { meetingItemsRouter, meetingsRouter } from "./routes/meetings.routes";
 import { savedViewsRouter } from "./routes/saved-views.routes";
 import { pdfCommentsRouter } from "./routes/pdf-comments.routes";
+import { pdfSketchesRouter } from "./routes/pdf-sketches.routes";
 import { photosRouter } from "./routes/photos.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { punchItemsRouter } from "./routes/punch-items.routes";
@@ -88,6 +89,7 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/schedule-progress-updates", scheduleProgressRouter(clients.appDb.db, env));
   app.use("/record-links", recordLinksRouter(clients.appDb.db, env));
   app.use("/pdf-comments", pdfCommentsRouter(clients.appDb.db, env));
+  app.use("/pdf-sketches", pdfSketchesRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 

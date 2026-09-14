@@ -6,6 +6,9 @@ export const submittalStatusEnum = pgEnum("submittal_status", [
   "draft",
   "in_review",
   "approved",
+  "approved_as_noted",
+  "revise_resubmit",
+  "rejected",
   "closed",
 ]);
 

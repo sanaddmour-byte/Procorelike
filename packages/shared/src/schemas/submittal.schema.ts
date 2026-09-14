@@ -1,6 +1,22 @@
 import { z } from "zod";
 
-export const submittalStatusSchema = z.enum(["draft", "in_review", "approved", "closed"]);
+/**
+ * Industry-standard (AIA G810 / CSI) submittal states. "approved_as_noted",
+ * "revise_resubmit", and "rejected" reuse the exact same terms as
+ * submittalResponseCodeSchema below (the standard four reviewer actions) so
+ * the submittal's own top-level status can reflect *which* of those a
+ * completed review round landed on, instead of collapsing every
+ * non-fully-passing outcome into a generic "in_review".
+ */
+export const submittalStatusSchema = z.enum([
+  "draft",
+  "in_review",
+  "approved",
+  "approved_as_noted",
+  "revise_resubmit",
+  "rejected",
+  "closed",
+]);
 export type SubmittalStatus = z.infer<typeof submittalStatusSchema>;
 
 export const submittalResponseCodeSchema = z.enum([
@@ -24,12 +40,21 @@ export const createSubmittalSchema = z
     title: z.string().min(1).max(300),
     leadTimeDays: z.number().int().positive().optional(),
     requiredOnSiteDate: z.string().date().optional(),
+    /** Who owns this submittal before any review round exists to drive it automatically -- see submittal.service.ts's initialBallInCourt/nextBallInCourt. */
+    ballInCourtUserId: z.string().uuid().optional(),
     /** Additional personnel beyond the single ballInCourtUserId -- mirrors rfi.schema.ts's distribution fields. */
     distributionUserIds: z.array(z.string().uuid()).max(50).default([]),
     distributionCompanyIds: z.array(z.string().uuid()).max(50).default([]),
   })
   .strict();
 export type CreateSubmittalInput = z.infer<typeof createSubmittalSchema>;
+
+export const updateSubmittalSchema = z
+  .object({
+    ballInCourtUserId: z.string().uuid(),
+  })
+  .strict();
+export type UpdateSubmittalInput = z.infer<typeof updateSubmittalSchema>;
 
 export const reviewerAssignmentSchema = z
   .object({

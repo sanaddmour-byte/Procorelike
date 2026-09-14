@@ -121,6 +121,34 @@ describe("RFI lifecycle across three users", () => {
     expect(rejectedTransition.status).toBe(400);
   });
 
+  it("allows manually reassigning the ball-in-court user via PATCH", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const lina = memberByEmail("lina.kanaan@siteops.test");
+    const rana = memberByEmail("rana.odeh@siteops.test");
+
+    const createRes = await request(app)
+      .post("/rfis")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({
+        projectId,
+        subject: "Waterproofing detail at parapet",
+        question: "Which membrane detail applies at the parapet-to-roof transition?",
+        ballInCourtUserId: lina.userId,
+      });
+    expect(createRes.status).toBe(201);
+    const rfiId = createRes.body.id as string;
+
+    const reassignRes = await request(app)
+      .patch(`/rfis/${rfiId}`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ ballInCourtUserId: rana.userId });
+    expect(reassignRes.status).toBe(200);
+    expect(reassignRes.body.ballInCourtUserId).toBe(rana.userId);
+
+    const detailRes = await request(app).get(`/rfis/${rfiId}`).set("authorization", `Bearer ${omarToken}`);
+    expect(detailRes.body.ballInCourtUserId).toBe(rana.userId);
+  });
+
   it("computes isOverdue from status + dueDate rather than storing it", async () => {
     const token = await loginAs("omar.nassar@siteops.test");
     const pastDueDate = "2020-01-01";

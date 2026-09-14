@@ -41,7 +41,7 @@ interface SubmittalDetail {
   projectId: string;
   number: string;
   title: string;
-  status: "draft" | "in_review" | "approved" | "closed";
+  status: "draft" | "in_review" | "approved" | "approved_as_noted" | "revise_resubmit" | "rejected" | "closed";
   ballInCourtUserId: string | null;
   packages: Package[];
   specSection: { id: string; csiCode: string; title: string } | null;
@@ -60,7 +60,15 @@ interface ReviewerDraft {
 }
 
 function statusLabel(status: SubmittalDetail["status"], t: (key: string) => string): string {
-  return { draft: t("statusDraft"), in_review: t("statusInReview"), approved: t("statusApproved"), closed: t("statusClosed") }[status];
+  return {
+    draft: t("statusDraft"),
+    in_review: t("statusInReview"),
+    approved: t("statusApproved"),
+    approved_as_noted: t("statusApprovedAsNoted"),
+    revise_resubmit: t("statusReviseResubmit"),
+    rejected: t("statusRejected"),
+    closed: t("statusClosed"),
+  }[status];
 }
 
 function responseCodeLabel(code: SubmittalResponseCode | null, t: (key: string) => string): string {
@@ -87,6 +95,7 @@ export default function SubmittalDetailScreen() {
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reassigning, setReassigning] = useState(false);
   const [revisionFormPackageId, setRevisionFormPackageId] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [submittedDate, setSubmittedDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -114,6 +123,19 @@ export default function SubmittalDetailScreen() {
   function memberName(userId: string | null): string {
     if (!userId) return t("unassigned");
     return members.find((m) => m.userId === userId)?.name ?? userId;
+  }
+
+  async function handleReassign(userId: string): Promise<void> {
+    if (!userId) return;
+    setReassigning(true);
+    try {
+      await apiJson(`/submittals/${params.submittalId}`, { method: "PATCH", body: JSON.stringify({ ballInCourtUserId: userId }) });
+      await load();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setReassigning(false);
+    }
   }
 
   async function handleNewPackage(): Promise<void> {
@@ -230,8 +252,26 @@ export default function SubmittalDetailScreen() {
             </button>
           )}
         </div>
-        <p className="mb-4 text-sm text-navy-600">
-          {statusLabel(submittal.status, t)} · {t("ballInCourt")}: {memberName(submittal.ballInCourtUserId)}
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-navy-600">
+          <span className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(submittal.status, t)}</span>
+          <span className="flex items-center gap-1.5">
+            {t("ballInCourt")}:
+            <select
+              value={submittal.ballInCourtUserId ?? ""}
+              disabled={reassigning}
+              onChange={(e) => void handleReassign(e.target.value)}
+              className="rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800 disabled:opacity-50"
+            >
+              <option value="" disabled>
+                {t("unassigned")}
+              </option>
+              {members.map((m) => (
+                <option key={m.userId} value={m.userId}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </span>
           {submittal.specSection && (
             <>
               {" · "}
@@ -241,7 +281,7 @@ export default function SubmittalDetailScreen() {
               </Link>
             </>
           )}
-        </p>
+        </div>
         {error && <p className="text-maroon-700">{error}</p>}
 
         <div className="mb-6">

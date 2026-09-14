@@ -28,6 +28,21 @@ interface PdfComment {
   linkedRfiId: string | null;
 }
 
+interface SketchPoint {
+  x: number;
+  y: number;
+}
+
+interface PdfSketch {
+  id: string;
+  pageNumber: number;
+  points: SketchPoint[];
+  color: string;
+}
+
+const SKETCH_COLORS = ["#dc2626", "#2563eb", "#16a34a", "#111827"];
+const MIN_STROKE_POINT_SPACING = 0.002;
+
 interface RfiOption {
   id: string;
   number: string;
@@ -76,12 +91,29 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
   const [posting, setPosting] = useState(false);
   const [commentError, setCommentError] = useState(false);
 
+  const [tool, setTool] = useState<"comment" | "sketch">("comment");
+  const [sketches, setSketches] = useState<PdfSketch[]>([]);
+  const [sketchColor, setSketchColor] = useState(SKETCH_COLORS[0]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentStroke, setCurrentStroke] = useState<SketchPoint[]>([]);
+
   async function reloadComments(ctx: PdfCommentContext): Promise<void> {
     try {
       const rows = await apiJson<PdfComment[]>(
         `/pdf-comments?projectId=${ctx.projectId}&recordType=${ctx.recordType}&recordId=${ctx.recordId}`,
       );
       setComments(rows);
+    } catch {
+      setCommentError(true);
+    }
+  }
+
+  async function reloadSketches(ctx: PdfCommentContext): Promise<void> {
+    try {
+      const rows = await apiJson<PdfSketch[]>(
+        `/pdf-sketches?projectId=${ctx.projectId}&recordType=${ctx.recordType}&recordId=${ctx.recordId}`,
+      );
+      setSketches(rows);
     } catch {
       setCommentError(true);
     }
@@ -119,15 +151,17 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
     };
   }, [open, data]);
 
-  // Load existing comments (and the project's RFIs, for the "link to RFI" picker) once per open.
+  // Load existing comments and sketches (and the project's RFIs, for the "link to RFI" picker) once per open.
   useEffect(() => {
     if (!open || !commentContext) {
       setComments([]);
       setRfiOptions([]);
+      setSketches([]);
       return;
     }
     setCommentError(false);
     void reloadComments(commentContext);
+    void reloadSketches(commentContext);
     apiJson<RfiOption[]>(`/rfis?projectId=${commentContext.projectId}`)
       .then(setRfiOptions)
       .catch(() => undefined);
@@ -137,6 +171,8 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
     setPendingPin(null);
     setNewCommentText("");
     setNewCommentRfiId("");
+    setIsDrawing(false);
+    setCurrentStroke([]);
   }, [pageNum]);
 
   // Render the current page whenever the page number, zoom, or document changes.
@@ -189,13 +225,62 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
   }
 
   function handleCanvasClick(e: React.MouseEvent<HTMLDivElement>): void {
-    if (!commentContext) return;
+    if (!commentContext || tool !== "comment") return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
     setPendingPin({ pageNumber: pageNum, x, y });
     setNewCommentText("");
     setNewCommentRfiId("");
+  }
+
+  function normalizedPoint(e: React.PointerEvent<HTMLDivElement>): SketchPoint {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+    return { x: clamp01((e.clientX - rect.left) / rect.width), y: clamp01((e.clientY - rect.top) / rect.height) };
+  }
+
+  function handleSketchPointerDown(e: React.PointerEvent<HTMLDivElement>): void {
+    if (!commentContext || tool !== "sketch") return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsDrawing(true);
+    setCurrentStroke([normalizedPoint(e)]);
+  }
+
+  function handleSketchPointerMove(e: React.PointerEvent<HTMLDivElement>): void {
+    if (!isDrawing) return;
+    const point = normalizedPoint(e);
+    setCurrentStroke((prev) => {
+      if (prev.length >= 2000) return prev;
+      const last = prev[prev.length - 1];
+      if (last && Math.abs(last.x - point.x) < MIN_STROKE_POINT_SPACING && Math.abs(last.y - point.y) < MIN_STROKE_POINT_SPACING) return prev;
+      return [...prev, point];
+    });
+  }
+
+  async function handleSketchPointerUp(): Promise<void> {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    const stroke = currentStroke;
+    setCurrentStroke([]);
+    if (!commentContext || stroke.length < 2) return;
+    setCommentError(false);
+    try {
+      await apiJson("/pdf-sketches", {
+        method: "POST",
+        body: JSON.stringify({
+          projectId: commentContext.projectId,
+          recordType: commentContext.recordType,
+          recordId: commentContext.recordId,
+          pageNumber: pageNum,
+          points: stroke,
+          color: sketchColor,
+        }),
+      });
+      await reloadSketches(commentContext);
+    } catch {
+      setCommentError(true);
+    }
   }
 
   async function handlePostComment(): Promise<void> {
@@ -250,6 +335,7 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
 
   const showControls = !error && !renderError && numPages > 0;
   const pageComments = comments.filter((c) => c.pageNumber === pageNum);
+  const pageSketches = sketches.filter((s) => s.pageNumber === pageNum);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4" onClick={onClose}>
@@ -274,6 +360,40 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
           </div>
         </div>
 
+        {commentContext && showControls && (
+          <div className="flex flex-wrap items-center gap-2 border-b-3 border-ink px-4 py-2">
+            <button
+              type="button"
+              onClick={() => setTool("comment")}
+              className={`rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold ${tool === "comment" ? "bg-gradient-to-b from-maroon-600 to-maroon-800 text-white" : "text-navy-800"}`}
+            >
+              {t("commentTool")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTool("sketch")}
+              className={`rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold ${tool === "sketch" ? "bg-gradient-to-b from-maroon-600 to-maroon-800 text-white" : "text-navy-800"}`}
+            >
+              {t("sketchTool")}
+            </button>
+            {tool === "sketch" && (
+              <div className="ml-1 flex items-center gap-1.5">
+                {SKETCH_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-label={c}
+                    onClick={() => setSketchColor(c)}
+                    className={`h-5 w-5 rounded-full border-2 ${sketchColor === c ? "border-ink" : "border-white"} shadow`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+                <span className="ml-1 text-xs text-navy-600">{t("sketchHint")}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-1 flex-col overflow-auto">
           <div className="flex items-center justify-center bg-navy-900/5 p-4">
             {error || renderError ? (
@@ -281,8 +401,45 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
             ) : loading || !data ? (
               <p className="text-navy-600">{t("loading")}</p>
             ) : (
-              <div className="relative inline-block" onClick={handleCanvasClick}>
-                <canvas ref={canvasRef} className={`max-w-full border border-ink bg-white shadow-brutal-sm ${commentContext ? "cursor-crosshair" : ""}`} />
+              <div
+                className="relative inline-block touch-none"
+                onClick={handleCanvasClick}
+                onPointerDown={handleSketchPointerDown}
+                onPointerMove={handleSketchPointerMove}
+                onPointerUp={() => void handleSketchPointerUp()}
+                onPointerCancel={() => void handleSketchPointerUp()}
+              >
+                <canvas
+                  ref={canvasRef}
+                  className={`max-w-full border border-ink bg-white shadow-brutal-sm ${commentContext ? "cursor-crosshair" : ""}`}
+                />
+                {(pageSketches.length > 0 || currentStroke.length > 1) && (
+                  <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 1 1" preserveAspectRatio="none">
+                    {pageSketches.map((s) => (
+                      <polyline
+                        key={s.id}
+                        points={s.points.map((p) => `${p.x},${p.y}`).join(" ")}
+                        fill="none"
+                        stroke={s.color}
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    ))}
+                    {currentStroke.length > 1 && (
+                      <polyline
+                        points={currentStroke.map((p) => `${p.x},${p.y}`).join(" ")}
+                        fill="none"
+                        stroke={sketchColor}
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    )}
+                  </svg>
+                )}
                 {pageComments.map((c, i) => (
                   <a
                     key={c.id}

@@ -97,6 +97,7 @@ export default function RfiDetailScreen() {
   const [isOfficial, setIsOfficial] = useState(false);
   const [submittingResponse, setSubmittingResponse] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [reassigning, setReassigning] = useState(false);
   const pdfViewer = usePdfViewer();
 
   const load = useCallback(async () => {
@@ -178,6 +179,18 @@ export default function RfiDetailScreen() {
     }
   }
 
+  async function handleReassign(userId: string): Promise<void> {
+    setReassigning(true);
+    try {
+      await apiJson(`/rfis/${params.rfiId}`, { method: "PATCH", body: JSON.stringify({ ballInCourtUserId: userId || undefined }) });
+      await load();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setReassigning(false);
+    }
+  }
+
   if (!rfi) {
     return (
       <>
@@ -218,10 +231,34 @@ export default function RfiDetailScreen() {
           </h1>
           {rfi.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
         </div>
-        <p className="mb-4 text-sm text-navy-600">
-          {statusLabel(rfi.status, t)} · {t("ballInCourt")}: {memberName(rfi.ballInCourtUserId)}
-          {rfi.dueDate && ` · ${t("dueDate")}: ${rfi.dueDate.slice(0, 10)}`}
-        </p>
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-navy-600">
+          <span>{statusLabel(rfi.status, t)}</span>
+          <span>·</span>
+          <span>{t("ballInCourt")}:</span>
+          <select
+            value={rfi.ballInCourtUserId ?? ""}
+            disabled={reassigning}
+            onChange={(e) => void handleReassign(e.target.value)}
+            className="rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800 disabled:opacity-50"
+          >
+            <option value="" disabled>
+              {t("unassigned")}
+            </option>
+            {members.map((m) => (
+              <option key={m.userId} value={m.userId}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+          {rfi.dueDate && (
+            <>
+              <span>·</span>
+              <span>
+                {t("dueDate")}: {rfi.dueDate.slice(0, 10)}
+              </span>
+            </>
+          )}
+        </div>
         {error && <p className="text-maroon-700">{error}</p>}
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

@@ -149,7 +149,8 @@ describe("Submittals", () => {
     expect(ranaReviewRes.status).toBe(200);
 
     const afterBoth = await request(app).get(`/submittals/${submittalId}`).set("authorization", `Bearer ${omarToken}`);
-    expect(afterBoth.body.status).toBe("approved");
+    // Lina's "approved as noted" is the worst outcome among the two passing reviews, so it wins the aggregate.
+    expect(afterBoth.body.status).toBe("approved_as_noted");
     expect(afterBoth.body.ballInCourtUserId).toBe(omar.userId);
 
     const closeRes = await request(app).post(`/submittals/${submittalId}/close`).set("authorization", `Bearer ${omarToken}`);
@@ -201,8 +202,8 @@ describe("Submittals", () => {
     expect(linaReviewRes.status).toBe(200);
 
     const finalRes = await request(app).get(`/submittals/${submittalId}`).set("authorization", `Bearer ${omarToken}`);
-    // One reviewer asked for a revision, so the whole submittal isn't approved yet.
-    expect(finalRes.body.status).toBe("in_review");
+    // One reviewer asked for a revision, which is the worst outcome, so it wins the aggregate.
+    expect(finalRes.body.status).toBe("revise_resubmit");
   });
 
   it("rejects a caller who isn't an assigned reviewer on the revision", async () => {
@@ -230,6 +231,30 @@ describe("Submittals", () => {
       .send({ responseCode: "approved" });
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe("not_a_reviewer");
+  });
+
+  it("assigns a ball-in-court user at creation and allows reassigning it via PATCH", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const lina = memberByEmail("lina.kanaan@siteops.test");
+    const rana = memberByEmail("rana.odeh@siteops.test");
+
+    const submittalRes = await request(app)
+      .post("/submittals")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, specSectionId, title: "Elevator shop drawings", ballInCourtUserId: lina.userId });
+    expect(submittalRes.status).toBe(201);
+    expect(submittalRes.body.ballInCourtUserId).toBe(lina.userId);
+    const submittalId = submittalRes.body.id as string;
+
+    const reassignRes = await request(app)
+      .patch(`/submittals/${submittalId}`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ ballInCourtUserId: rana.userId });
+    expect(reassignRes.status).toBe(200);
+    expect(reassignRes.body.ballInCourtUserId).toBe(rana.userId);
+
+    const detailRes = await request(app).get(`/submittals/${submittalId}`).set("authorization", `Bearer ${omarToken}`);
+    expect(detailRes.body.ballInCourtUserId).toBe(rana.userId);
   });
 
   it("records additional distribution personnel at creation and returns them, plus a navigable spec section, on GET", async () => {
