@@ -1,5 +1,8 @@
 export type ScheduleTaskType = "task" | "summary" | "milestone" | "loe" | "wbs";
 
+export type ScheduleTaskConstraintType = "asap" | "alap" | "snet" | "snlt" | "fnet" | "fnlt" | "mso" | "mfo";
+export type ScheduleTaskDependencyType = "FS" | "SS" | "FF" | "SF";
+
 export interface GanttTask {
   id: string;
   externalId: string | null;
@@ -18,13 +21,17 @@ export interface GanttTask {
   percentComplete: number;
   responsibleCompanyId: string | null;
   sortOrder: number;
+  /** Only present/meaningful for Phase 11d native editing (drag resize needs the current value to compute a delta). */
+  durationMinutes: number | null;
+  constraintType: ScheduleTaskConstraintType | null;
+  constraintDate: string | null;
 }
 
 export interface GanttDependency {
   id: string;
   predecessorId: string;
   successorId: string;
-  type: "FS" | "SS" | "FF" | "SF";
+  type: ScheduleTaskDependencyType;
   lagMinutes: number;
 }
 
@@ -34,3 +41,9 @@ export interface GanttRow extends GanttTask {
   hasChildren: boolean;
   isCollapsed: boolean;
 }
+
+/** The result of a completed drag gesture on the Timeline (Phase 11d native editing), handed to the page to preview before committing. */
+export type GanttDragEdit =
+  | { kind: "move"; taskId: string; newStartDate: Date }
+  | { kind: "resize"; taskId: string; newDurationMinutes: number }
+  | { kind: "link"; predecessorId: string; successorId: string };

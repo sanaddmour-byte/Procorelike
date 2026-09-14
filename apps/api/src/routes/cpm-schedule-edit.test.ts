@@ -87,6 +87,31 @@ const XER = [
 ].join("\n");
 
 describe("Native CPM editing (Phase 11d gate)", () => {
+  it("fails cleanly (not a 500) when recompute is attempted on a calendar-less (CSV-imported) schedule", async () => {
+    const pmToken = await loginAs("omar.nassar@siteops.test");
+    const csv = ["ID,Task Name,Duration (days),Predecessors", "A,Task A,1,", "B,Task B,1,A"].join("\n");
+
+    const importRes = await request(app)
+      .post("/schedules/import")
+      .set("authorization", `Bearer ${pmToken}`)
+      .send({ projectId, sourceTool: "csv", fileText: csv });
+    expect(importRes.status).toBe(201);
+    const scheduleId = importRes.body.schedule.id as string;
+    const versionId = importRes.body.version.id as string;
+
+    const toggleOn = await request(app)
+      .patch(`/schedules/${scheduleId}/native-editing`)
+      .set("authorization", `Bearer ${pmToken}`)
+      .send({ enabled: true });
+    expect(toggleOn.status).toBe(200);
+
+    const recompute = await request(app).post(`/schedules/versions/${versionId}/recompute`).set("authorization", `Bearer ${pmToken}`).send();
+    expect(recompute.status).toBe(422);
+    expect(recompute.body.error.code).toBe("no_calendar");
+
+    await resetProjectSchedule(); // leave a clean slate for the main flow test below, which imports its own schedule for the same project
+  });
+
   it("runs the full flag -> preview -> apply -> cycle-reject -> export flow", async () => {
     const pmToken = await loginAs("omar.nassar@siteops.test");
     const viewerToken = await loginAs("karim.abughazaleh@siteops.test");

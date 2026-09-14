@@ -2370,6 +2370,132 @@ inside the app") — **PASSED**, see Verification.
   its own pre-existing "No revisions uploaded yet." empty state --
   unrelated to this phase, not a regression).
 
+## Phase 11d gate report
+
+**Gate** (docs/SCHEDULING.md A9: "CPM engine behind a feature flag,
+in-app editing, drag-reschedule with impact preview, XML export. Gate:
+the 25-scenario golden-file suite passes and the 2,000-task computation
+stays under 500ms.") — **PASSED**, see Verification. Built on explicit
+user confirmation to proceed with Tier B now, after Tier A (Phase
+11a-11c) was already complete.
+
+**What was built:**
+- **`packages/shared`**: `schedule/calendar.ts` -- calendar-aware
+  working-time date arithmetic (`workingTimeAdd`/`Subtract`/`Between`,
+  snap-to-working-instant), UTC-only so results are host-timezone-
+  independent, with 17 tests. `schedule/cpm.ts` -- the pure
+  `computeSchedule()` engine: Kahn's-algorithm topological sort with
+  cycle detection, forward/backward pass, 4 dependency types (FS/SS/FF/
+  SF) with lag, 8 constraint types (asap/alap/snet/snlt/fnet/fnlt/mso/
+  mfo), calendar-aware duration, progress/data-date handling with
+  retained-logic vs progress-override semantics, `ignoreConstraintsOnCritical`,
+  WBS/summary duration-weighted rollup -- 35 golden-file scenarios (the
+  25-scenario gate, exceeded) plus a 2,000-task performance test,
+  comfortably under the 500ms bar. `schedule/exporters/ms-project-xml.ts`
+  -- the reverse of the existing importer, round-trip tested.
+- **`packages/db`**: `schedules.nativeEditingEnabled` boolean, default
+  `false` (migration 0019) -- the Tier B feature flag, off for every
+  existing and newly-imported schedule until a project opts in.
+- **`apps/api`**: `cpm-schedule-edit.service.ts` -- `setNativeEditingEnabled`
+  (admin-gated, same level project_manager/owner_admin already hold on
+  every other schedule action), `previewScheduleEdits` (runs
+  `computeSchedule()` against a proposed batch of task edits/dependency
+  adds/removes without persisting -- the "impact preview before commit"
+  requirement), `applyScheduleEdits` (validates the batch would not
+  create a dependency cycle *before* writing anything, then persists and
+  recomputes the whole version -- any task's dates can shift, not just
+  the one edited -- and also updates `plannedStart`/`plannedFinish`
+  alongside `earlyStart`/`earlyFinish`, since once native editing is
+  live the engine's own computed schedule *is* the current plan, not a
+  frozen import snapshot), `recomputeVersion`, and `exportVersionXml`.
+  New routes on the existing `/schedules` router: `PATCH
+  /:scheduleId/native-editing`, `POST /versions/:id/preview`, `POST
+  /versions/:id/apply`, `POST /versions/:id/recompute`, `GET
+  /versions/:id/export.xml`.
+- **`apps/web`**: the Gantt page's canvas `Timeline` gained real drag
+  interactions -- drag a bar's body to reschedule (sets a `mso` "must
+  start on" constraint), drag its right edge to resize (changes
+  duration), drag from a link handle (shown on the selected row) to
+  another row to add an FS dependency. Every drag ends by calling
+  `preview`, then opens `ImpactPreviewModal` (a before/after table of
+  every task whose finish date or critical-path status changed, or a
+  clear rejection message if the change would create a cycle) before
+  anything is committed via `apply`. A client-side undo stack (the
+  *inverse* of each applied batch, captured before the edit) backs an
+  Undo button. An "Enable/Disable editing" toggle and an "Export XML"
+  button (triggers a browser download) were added to the toolbar.
+
+**Bugs found and fixed via manual, real-browser testing (not just automated
+assertions) before this phase could be called done:**
+- **A schedule with zero calendar rows crashed the API with a bare 500**
+  instead of a clean error. CSV is the one supported import format that
+  creates no calendar row (`importers/csv.ts` never populates
+  `parsed.calendars`); enabling native editing and dragging a bar on such
+  a schedule threw `TypeError: Cannot read properties of undefined
+  (reading 'exceptions')` inside `computeSchedule()`'s calendar lookup.
+  Fixed with an explicit `no_calendar` `ApiError` (422) in
+  `requireNativeEditingEnabled()`, with a regression test.
+- **A dragged bar didn't visually move even after a successful apply.**
+  The Gantt renders `plannedStart ?? earlyStart` (`taskDateRange()`), and
+  the original `applyScheduleEdits` only wrote the recomputed dates onto
+  `earlyStart`/`earlyFinish`, leaving the imported `plannedStart`/
+  `plannedFinish` (which take display precedence) stale forever. Fixed
+  by also writing `plannedStart`/`plannedFinish` on apply (see above) --
+  confirmed visually via Playwright: a dragged "Foundation Work" bar
+  moved from Feb 01-03 to Feb 05-08, correctly rippling a delay onto
+  "Framing" and "Roofing" downstream, both before and after Undo.
+- **`apps/api`'s vitest suite raced itself under the unfiltered `pnpm
+  test`**: two integration-test files (`cpm-schedule.test.ts` and the new
+  `cpm-schedule-edit.test.ts`) both mutate the *same* seeded project's
+  singleton `schedules` row and were assigned to different parallel
+  vitest workers, causing duplicate-version-number and foreign-key
+  errors when run together (each file alone passed reliably). Fixed by
+  setting `fileParallelism: false` in `apps/api/vitest.config.ts` --
+  these are integration tests against one real, shared Postgres
+  instance, not isolated unit tests, so serial file execution is the
+  correct trade-off, not a workaround.
+
+**Scope decisions:**
+- **Dependency CRUD is folded into the same batch-edit endpoint as task
+  edits** (`taskEdits`/`dependencyAdds`/`dependencyRemoveIds` in one
+  `ScheduleEditBatchInput`), rather than separate CRUD routes -- a single
+  preview/apply round trip naturally covers "drag to create a
+  dependency" and "drag to reschedule" through the same impact-preview
+  flow, and the golden-file engine already treats a batch as one
+  computation.
+- **A resize drag's minute delta is a rough calendar-day estimate**
+  client-side (`ASSUMED_MINUTES_PER_DAY = 8 * 60`) -- the authoritative
+  value is whatever the preview endpoint's real per-task calendar
+  computes, shown in the impact preview before commit; this only drives
+  the live ghost overlay during the drag itself.
+- **No redo stack**, only undo -- redoing an undo is a straightforward
+  follow-up if wanted, not required by the gate.
+- **PDF/XLSX export and the `.mpp`/MPXJ sidecar remain out of scope**,
+  per the Phase 11b gate report's original deferral and A1's constraint
+  -- unchanged by this phase.
+- Tier C (resources, levelling, earned value) was **not built**, per
+  explicit standing instruction.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 164 tests across 19 files,
+  including the new 17-test `calendar.test.ts` and 35-test `cpm.test.ts`;
+  `apps/api`: 62 tests across 17 files, including the new 2-test
+  `cpm-schedule-edit.test.ts` covering the full flag → preview → apply →
+  cycle-rejection → export flow and the calendar-less-schedule failure
+  case; `apps/web`: 22 tests unaffected).
+- **Manual, real-browser verification** (Playwright against the live dev
+  API and web server): imported a 3-task P6 XER schedule, enabled native
+  editing, dragged the first task's bar 4 days later at day-zoom,
+  confirmed the impact-preview modal showed the correct before/after
+  finish dates for all three tasks (the delay rippling through the FS
+  chain) with no cycle warning, clicked Apply, confirmed the bars and
+  grid dates visually updated, then clicked Undo and confirmed the
+  schedule returned to its pre-drag state and the Undo button disabled
+  itself. Separately confirmed via `curl` that a client_viewer is
+  rejected (403) from toggling the flag and that a cycle-creating
+  dependency add is rejected (409) without mutating anything.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

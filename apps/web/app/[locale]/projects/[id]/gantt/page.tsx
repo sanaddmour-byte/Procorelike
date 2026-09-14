@@ -1,5 +1,6 @@
 "use client";
 
+import { ImpactPreviewModal, buildImpactRows, type ImpactRow } from "@/components/gantt/ImpactPreviewModal";
 import { ScheduleImportForm } from "@/components/gantt/ScheduleImportForm";
 import { TaskGrid, type TaskGridHandle } from "@/components/gantt/TaskGrid";
 import { Timeline, type TimelineHandle } from "@/components/gantt/Timeline";
@@ -8,20 +9,35 @@ import { ProjectTabs } from "@/components/ProjectTabs";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { toGanttTask, type ApiScheduleTask } from "@/lib/gantt/api";
+import {
+  applyScheduleEdits,
+  downloadScheduleXml,
+  previewScheduleEdits,
+  setNativeEditingEnabled,
+  type ScheduleEditBatch,
+} from "@/lib/gantt/edit-api";
 import { EMPTY_GANTT_FILTERS, applyGanttFilters, type GanttFilters } from "@/lib/gantt/filter";
 import { dateToX, timelineEnd, timelineOrigin, type ZoomLevel } from "@/lib/gantt/timescale";
 import { flattenWbsTree } from "@/lib/gantt/tree";
-import type { GanttDependency } from "@/lib/gantt/types";
+import type { GanttDependency, GanttDragEdit } from "@/lib/gantt/types";
 import { useViewportHeight } from "@/lib/gantt/useViewportHeight";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface CurrentScheduleResponse {
-  schedule: { id: string; sourceTool: string };
+  schedule: { id: string; sourceTool: string; nativeEditingEnabled: boolean };
   version: { id: string; versionNo: number; dataDate: string };
   tasks: ApiScheduleTask[];
   dependencies: GanttDependency[];
+}
+
+interface PendingEdit {
+  batch: ScheduleEditBatch;
+  impactRows: ImpactRow[];
+  cycleTaskNames: string[] | null;
+  /** What an undo of this edit (once applied) needs to send back -- captured before the edit, since a link's own inverse (the new dependency's id) is only known after apply. */
+  inverse: { taskEdits?: ScheduleEditBatch["taskEdits"] } | { linkPredecessorId: string; linkSuccessorId: string; linkType: "FS" };
 }
 
 interface ProjectCompany {
@@ -58,6 +74,13 @@ export default function GanttPage() {
   const gridRef = useRef<TaskGridHandle>(null);
   const timelineRef = useRef<TimelineHandle>(null);
   const height = useViewportHeight(280);
+
+  // Phase 11d: feature-flagged native CPM editing.
+  const [pendingEdit, setPendingEdit] = useState<PendingEdit | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const [undoStack, setUndoStack] = useState<ScheduleEditBatch[]>([]);
+  const [editError, setEditError] = useState<string | null>(null);
 
   function load(): void {
     setLoading(true);
@@ -111,6 +134,104 @@ export default function GanttPage() {
     link.click();
   }
 
+  function handleExportXml(): void {
+    if (!data) return;
+    downloadScheduleXml(data.version.id, `schedule-v${data.version.versionNo}.xml`).catch(() => setEditError(tc("errorGeneric")));
+  }
+
+  async function handleToggleEditing(): Promise<void> {
+    if (!data) return;
+    setToggling(true);
+    setEditError(null);
+    try {
+      const result = await setNativeEditingEnabled(data.schedule.id, !data.schedule.nativeEditingEnabled);
+      setData((prev) => (prev ? { ...prev, schedule: { ...prev.schedule, nativeEditingEnabled: result.nativeEditingEnabled } } : prev));
+    } catch {
+      setEditError(tc("errorGeneric"));
+    } finally {
+      setToggling(false);
+    }
+  }
+
+  async function handleDragEdit(edit: GanttDragEdit): Promise<void> {
+    if (!data) return;
+    setEditError(null);
+
+    let batch: ScheduleEditBatch;
+    let inverse: PendingEdit["inverse"];
+
+    if (edit.kind === "link") {
+      batch = { dependencyAdds: [{ predecessorId: edit.predecessorId, successorId: edit.successorId, type: "FS", lagMinutes: 0 }] };
+      inverse = { linkPredecessorId: edit.predecessorId, linkSuccessorId: edit.successorId, linkType: "FS" };
+    } else {
+      const original = allTasks.find((t) => t.id === edit.taskId);
+      if (!original) return;
+      if (edit.kind === "move") {
+        batch = { taskEdits: [{ taskId: edit.taskId, constraintType: "mso", constraintDate: edit.newStartDate.toISOString() }] };
+        inverse = {
+          taskEdits: [{ taskId: edit.taskId, constraintType: original.constraintType, constraintDate: original.constraintDate }],
+        };
+      } else {
+        batch = { taskEdits: [{ taskId: edit.taskId, durationMinutes: edit.newDurationMinutes }] };
+        inverse = { taskEdits: [{ taskId: edit.taskId, durationMinutes: original.durationMinutes ?? 0 }] };
+      }
+    }
+
+    try {
+      const preview = await previewScheduleEdits(data.version.id, batch);
+      const cycleTaskNames = preview.cycle
+        ? preview.cycle.taskIds.map((id) => allTasks.find((t) => t.id === id)?.name ?? id)
+        : null;
+      setPendingEdit({ batch, impactRows: buildImpactRows(rows, preview.tasks), cycleTaskNames, inverse });
+    } catch {
+      setEditError(tc("errorGeneric"));
+    }
+  }
+
+  async function handleConfirmEdit(): Promise<void> {
+    if (!data || !pendingEdit) return;
+    setApplying(true);
+    setEditError(null);
+    try {
+      const result = await applyScheduleEdits(data.version.id, pendingEdit.batch);
+      setData((prev) => (prev ? { ...prev, tasks: result.tasks, dependencies: result.dependencies } : prev));
+
+      const inverse = pendingEdit.inverse;
+      let inverseBatch: ScheduleEditBatch;
+      if ("linkPredecessorId" in inverse) {
+        const created = result.dependencies.find(
+          (d) => d.predecessorId === inverse.linkPredecessorId && d.successorId === inverse.linkSuccessorId && d.type === inverse.linkType,
+        );
+        inverseBatch = created ? { dependencyRemoveIds: [created.id] } : {};
+      } else {
+        inverseBatch = { taskEdits: inverse.taskEdits };
+      }
+      setUndoStack((prev) => [...prev, inverseBatch]);
+      setPendingEdit(null);
+    } catch {
+      setEditError(t("editFailed"));
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  function handleCancelEdit(): void {
+    setPendingEdit(null);
+  }
+
+  async function handleUndo(): Promise<void> {
+    if (!data || undoStack.length === 0) return;
+    const batch = undoStack[undoStack.length - 1]!;
+    setEditError(null);
+    try {
+      const result = await applyScheduleEdits(data.version.id, batch);
+      setData((prev) => (prev ? { ...prev, tasks: result.tasks, dependencies: result.dependencies } : prev));
+      setUndoStack((prev) => prev.slice(0, -1));
+    } catch {
+      setEditError(t("editFailed"));
+    }
+  }
+
   return (
     <>
       <Header />
@@ -148,6 +269,30 @@ export default function GanttPage() {
               >
                 {t("reimport")}
               </button>
+              <button
+                onClick={handleExportXml}
+                className="rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm text-navy-800 brutal-interactive"
+              >
+                {t("exportXml")}
+              </button>
+              <button
+                onClick={handleToggleEditing}
+                disabled={toggling}
+                className={`rounded-lg border-3 border-ink px-3 py-2 text-sm brutal-interactive disabled:opacity-50 ${
+                  data.schedule.nativeEditingEnabled ? "bg-navy-700 text-white" : "bg-white text-navy-800"
+                }`}
+              >
+                {data.schedule.nativeEditingEnabled ? t("disableEditing") : t("enableEditing")}
+              </button>
+              {data.schedule.nativeEditingEnabled && (
+                <button
+                  onClick={handleUndo}
+                  disabled={undoStack.length === 0}
+                  className="rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm text-navy-800 brutal-interactive disabled:opacity-40"
+                >
+                  {t("undo")}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -180,11 +325,13 @@ export default function GanttPage() {
                 </option>
               ))}
             </select>
+            {data.schedule.nativeEditingEnabled && <span className="text-xs text-navy-600">{t("editingHint")}</span>}
           </div>
         )}
 
         {loading && <p>{tc("loading")}</p>}
         {error && <p className="text-maroon-700">{error}</p>}
+        {editError && <p className="mb-3 text-sm text-maroon-700">{editError}</p>}
 
         {!loading && !error && (!data || showImportForm) && <ScheduleImportForm projectId={params.id} onImported={load} />}
 
@@ -217,12 +364,24 @@ export default function GanttPage() {
                   onSelect={setSelectedId}
                   locale={locale}
                   gridColumnLabel={t("columnTask")}
+                  editingEnabled={data.schedule.nativeEditingEnabled}
+                  onDragEdit={handleDragEdit}
                 />
               </div>
             )}
           </>
         )}
       </main>
+
+      <ImpactPreviewModal
+        open={pendingEdit !== null}
+        rows={pendingEdit?.impactRows ?? []}
+        cycleTaskNames={pendingEdit?.cycleTaskNames ?? null}
+        locale={locale}
+        busy={applying}
+        onConfirm={handleConfirmEdit}
+        onCancel={handleCancelEdit}
+      />
     </>
   );
 }

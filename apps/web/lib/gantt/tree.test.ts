@@ -20,6 +20,9 @@ function task(overrides: Partial<GanttTask> & { id: string }): GanttTask {
     percentComplete: 0,
     responsibleCompanyId: null,
     sortOrder: 0,
+    durationMinutes: null,
+    constraintType: null,
+    constraintDate: null,
     ...overrides,
   };
 }

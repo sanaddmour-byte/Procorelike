@@ -1,9 +1,9 @@
 "use client";
 
 import { GRID_WIDTH, HEADER_HEIGHT, ROW_HEIGHT } from "@/lib/gantt/constants";
-import { dateToX, generateTicks, taskDateRange, type ZoomLevel } from "@/lib/gantt/timescale";
-import type { GanttDependency, GanttRow } from "@/lib/gantt/types";
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type MouseEvent } from "react";
+import { dateToX, pixelsPerDay, generateTicks, taskDateRange, type ZoomLevel } from "@/lib/gantt/timescale";
+import type { GanttDependency, GanttDragEdit, GanttRow } from "@/lib/gantt/types";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 
 /** Mirrors apps/web/tailwind.config.ts -- canvas drawing can't reach Tailwind classes, so the palette is duplicated here on purpose. */
 const COLOR = {
@@ -21,7 +21,45 @@ const COLOR = {
   milestoneCritical: "#5c1620",
   dependency: "#6f88b8",
   selected: "#ea580c",
+  ghost: "#ea580c",
+  linkHandle: "#0d182d",
+  linkLine: "#ea580c",
 };
+
+const RESIZE_HANDLE_PX = 8;
+const LINK_HANDLE_OFFSET_PX = 10;
+const LINK_HANDLE_RADIUS_PX = 5;
+const DRAG_THRESHOLD_PX = 3;
+/** A rough calendar-day estimate for a resize drag's minute delta -- the authoritative value comes back from the preview endpoint's real calendar, this only drives the live ghost/ballpark before that round trip. */
+const ASSUMED_MINUTES_PER_DAY = 8 * 60;
+
+type DragMode = "move" | "resize" | "link";
+
+interface DragState {
+  mode: DragMode;
+  taskId: string;
+  startClientX: number;
+  originalX1: number;
+  originalX2: number;
+  originalStart: Date;
+  originalDurationMinutes: number;
+  moved: boolean;
+  lastDeltaX: number;
+}
+
+interface GhostState {
+  taskId: string;
+  x1: number;
+  x2: number;
+}
+
+interface LinkDragState {
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  targetTaskId: string | null;
+}
 
 export interface TimelineHandle {
   /** A PNG snapshot of the currently visible view (rows + date window) -- not the full schedule, see docs/SCHEDULING.md's Phase 11b scope notes. Returns null before the pane has measured itself. */
@@ -40,16 +78,22 @@ interface TimelineProps {
   onSelect: (id: string) => void;
   locale: string;
   gridColumnLabel: string;
+  /** Phase 11d: drag-to-reschedule/resize/link only active once a project's schedule has native editing turned on. */
+  editingEnabled?: boolean;
+  onDragEdit?: (edit: GanttDragEdit) => void;
 }
 
 export const Timeline = forwardRef<TimelineHandle, TimelineProps>(function Timeline(
-  { rows, dependencies, origin, totalWidth, listHeight, scrollTop, zoom, selectedId, onSelect, locale, gridColumnLabel },
+  { rows, dependencies, origin, totalWidth, listHeight, scrollTop, zoom, selectedId, onSelect, locale, gridColumnLabel, editingEnabled = false, onDragEdit },
   ref,
 ) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
+  const dragRef = useRef<DragState | null>(null);
+  const [ghost, setGhost] = useState<GhostState | null>(null);
+  const [linkDrag, setLinkDrag] = useState<LinkDragState | null>(null);
 
   const totalHeight = HEADER_HEIGHT + listHeight;
 
@@ -166,6 +210,50 @@ export const Timeline = forwardRef<TimelineHandle, TimelineProps>(function Timel
       }
     }
 
+    // The link-drag handle -- only drawn for the selected row, and only once native editing is on, to keep the canvas uncluttered.
+    if (editingEnabled && selectedId) {
+      const selectedIndex = rowIndexById.get(selectedId);
+      const selectedRow = selectedIndex !== undefined ? rows[selectedIndex] : undefined;
+      if (selectedRow && selectedRow.taskType !== "summary" && selectedRow.taskType !== "wbs") {
+        const range = taskDateRange(selectedRow);
+        if (range) {
+          const y = HEADER_HEIGHT + selectedIndex! * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+          const x2 = dateToX(range.finish, origin, zoom) - scrollLeft;
+          ctx.fillStyle = COLOR.linkHandle;
+          ctx.beginPath();
+          ctx.arc(x2 + LINK_HANDLE_OFFSET_PX, y, LINK_HANDLE_RADIUS_PX, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // A dashed ghost outline for the bar currently being dragged (move/resize) -- the real dates only update once the drag ends and the impact preview is confirmed.
+    if (ghost) {
+      const ghostIndex = rowIndexById.get(ghost.taskId);
+      if (ghostIndex !== undefined) {
+        const y = HEADER_HEIGHT + ghostIndex * ROW_HEIGHT - scrollTop + 6;
+        ctx.save();
+        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = COLOR.ghost;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(ghost.x1, y, Math.max(ghost.x2 - ghost.x1, 2), ROW_HEIGHT - 12);
+        ctx.restore();
+      }
+    }
+
+    // A line following the cursor while dragging a new dependency from the link handle.
+    if (linkDrag) {
+      ctx.save();
+      ctx.strokeStyle = linkDrag.targetTaskId ? COLOR.selected : COLOR.linkLine;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(linkDrag.fromX, linkDrag.fromY);
+      ctx.lineTo(linkDrag.toX, linkDrag.toY);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // Dependency arrows -- only between predecessor/successor rows both currently rendered, to keep this bounded by viewport size rather than total dependency count.
     ctx.strokeStyle = COLOR.dependency;
     ctx.fillStyle = COLOR.dependency;
@@ -221,7 +309,7 @@ export const Timeline = forwardRef<TimelineHandle, TimelineProps>(function Timel
       if (x < -60 || x > viewportWidth + 60) continue;
       ctx.fillText(tick.label, x + 4, HEADER_HEIGHT / 2);
     }
-  }, [rows, dependencies, origin, zoom, scrollTop, scrollLeft, viewportWidth, listHeight, totalHeight, locale, selectedId, rowIndexById]);
+  }, [rows, dependencies, origin, zoom, scrollTop, scrollLeft, viewportWidth, listHeight, totalHeight, locale, selectedId, rowIndexById, editingEnabled, ghost, linkDrag]);
 
   useImperativeHandle(
     ref,
@@ -291,15 +379,132 @@ export const Timeline = forwardRef<TimelineHandle, TimelineProps>(function Timel
     setScrollLeft(scrollRef.current?.scrollLeft ?? 0);
   }
 
-  function handleClick(e: MouseEvent<HTMLCanvasElement>): void {
+  function rowIndexAtY(y: number): number | null {
+    if (y < HEADER_HEIGHT) return null;
+    return Math.floor((y - HEADER_HEIGHT + scrollTop) / ROW_HEIGHT);
+  }
+
+  function handleClick(e: ReactMouseEvent<HTMLCanvasElement>): void {
+    if (dragRef.current?.moved) return; // a real drag just ended -- its own mouseup handled the edit, this is not a plain select-click
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const y = e.clientY - rect.top;
-    if (y < HEADER_HEIGHT) return;
-    const index = Math.floor((y - HEADER_HEIGHT + scrollTop) / ROW_HEIGHT);
-    const row = rows[index];
+    const index = rowIndexAtY(e.clientY - rect.top);
+    const row = index !== null ? rows[index] : undefined;
     if (row) onSelect(row.id);
   }
+
+  function handleMouseDown(e: ReactMouseEvent<HTMLCanvasElement>): void {
+    if (!editingEnabled || !onDragEdit) return;
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const localX = e.clientX - rect.left + scrollLeft;
+    const localY = e.clientY - rect.top;
+    const index = rowIndexAtY(localY);
+    if (index === null) return;
+    const row = rows[index];
+    if (!row || row.taskType === "summary" || row.taskType === "wbs") return;
+    const range = taskDateRange(row);
+    if (!range) return;
+
+    const x1 = dateToX(range.start, origin, zoom);
+    const x2 = dateToX(range.finish, origin, zoom);
+
+    // The link handle only exists for the already-selected row (see the draw effect) -- dragging it starts a link, regardless of where on the bar it visually sits.
+    if (row.id === selectedId && Math.abs(localX - (x2 + LINK_HANDLE_OFFSET_PX)) <= LINK_HANDLE_RADIUS_PX + 3) {
+      const y = HEADER_HEIGHT + index * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      dragRef.current = { mode: "link", taskId: row.id, startClientX: e.clientX, originalX1: x1, originalX2: x2, originalStart: range.start, originalDurationMinutes: row.durationMinutes ?? 0, moved: false, lastDeltaX: 0 };
+      setLinkDrag({ fromX: x2 + LINK_HANDLE_OFFSET_PX - scrollLeft, fromY: y, toX: localX - scrollLeft, toY: y, targetTaskId: null });
+      attachWindowListeners();
+      return;
+    }
+
+    if (row.taskType === "milestone") {
+      if (Math.abs(localX - x1) > 8) return;
+      dragRef.current = { mode: "move", taskId: row.id, startClientX: e.clientX, originalX1: x1, originalX2: x1, originalStart: range.start, originalDurationMinutes: 0, moved: false, lastDeltaX: 0 };
+      attachWindowListeners();
+      return;
+    }
+
+    if (localX < x1 - 2 || localX > x2 + 2) return; // clicked empty timeline space, not a bar
+    const mode: DragMode = localX >= x2 - RESIZE_HANDLE_PX ? "resize" : "move";
+    dragRef.current = {
+      mode,
+      taskId: row.id,
+      startClientX: e.clientX,
+      originalX1: x1,
+      originalX2: x2,
+      originalStart: range.start,
+      originalDurationMinutes: row.durationMinutes ?? 0,
+      moved: false,
+      lastDeltaX: 0,
+    };
+    attachWindowListeners();
+  }
+
+  function attachWindowListeners(): void {
+    window.addEventListener("mousemove", handleWindowMouseMove);
+    window.addEventListener("mouseup", handleWindowMouseUp);
+  }
+
+  function handleWindowMouseMove(e: globalThis.MouseEvent): void {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const deltaX = e.clientX - drag.startClientX;
+    drag.lastDeltaX = deltaX;
+    if (Math.abs(deltaX) > DRAG_THRESHOLD_PX) drag.moved = true;
+
+    if (drag.mode === "link") {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      const localX = rect ? e.clientX - rect.left + scrollLeft : 0;
+      const localY = rect ? e.clientY - rect.top : 0;
+      const index = rowIndexAtY(localY);
+      const targetRow = index !== null ? rows[index] : undefined;
+      const validTarget = targetRow && targetRow.id !== drag.taskId && targetRow.taskType !== "summary" && targetRow.taskType !== "wbs" ? targetRow.id : null;
+      setLinkDrag((prev) => (prev ? { ...prev, toX: localX - scrollLeft, toY: HEADER_HEIGHT + (index ?? 0) * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2, targetTaskId: validTarget } : prev));
+      return;
+    }
+
+    if (drag.mode === "move") {
+      setGhost({ taskId: drag.taskId, x1: drag.originalX1 + deltaX - scrollLeft, x2: drag.originalX2 + deltaX - scrollLeft });
+    } else {
+      const minWidth = Math.max(2, pixelsPerDay(zoom) / 4);
+      const newX2 = Math.max(drag.originalX1 + minWidth, drag.originalX2 + deltaX);
+      setGhost({ taskId: drag.taskId, x1: drag.originalX1 - scrollLeft, x2: newX2 - scrollLeft });
+    }
+  }
+
+  function handleWindowMouseUp(): void {
+    const drag = dragRef.current;
+    detachWindowListeners();
+    setGhost(null);
+    const pendingLink = linkDrag;
+    setLinkDrag(null);
+    dragRef.current = null;
+    if (!drag || !drag.moved || !onDragEdit) return;
+
+    if (drag.mode === "link") {
+      if (pendingLink?.targetTaskId) onDragEdit({ kind: "link", predecessorId: drag.taskId, successorId: pendingLink.targetTaskId });
+      return;
+    }
+
+    const deltaDays = Math.round(drag.lastDeltaX / pixelsPerDay(zoom));
+    if (deltaDays === 0) return;
+
+    if (drag.mode === "move") {
+      const newStartDate = new Date(drag.originalStart.getTime() + deltaDays * 24 * 60 * 60 * 1000);
+      onDragEdit({ kind: "move", taskId: drag.taskId, newStartDate });
+    } else {
+      const newDurationMinutes = Math.max(60, drag.originalDurationMinutes + deltaDays * ASSUMED_MINUTES_PER_DAY);
+      onDragEdit({ kind: "resize", taskId: drag.taskId, newDurationMinutes });
+    }
+  }
+
+  function detachWindowListeners(): void {
+    window.removeEventListener("mousemove", handleWindowMouseMove);
+    window.removeEventListener("mouseup", handleWindowMouseUp);
+  }
+
+  useEffect(() => () => detachWindowListeners(), []);
 
   return (
     <div
@@ -312,7 +517,16 @@ export const Timeline = forwardRef<TimelineHandle, TimelineProps>(function Timel
         <canvas
           ref={canvasRef}
           onClick={handleClick}
-          style={{ position: "sticky", insetInlineStart: 0, top: 0, width: viewportWidth, height: totalHeight, display: "block" }}
+          onMouseDown={handleMouseDown}
+          style={{
+            position: "sticky",
+            insetInlineStart: 0,
+            top: 0,
+            width: viewportWidth,
+            height: totalHeight,
+            display: "block",
+            cursor: editingEnabled ? "grab" : "default",
+          }}
         />
       </div>
     </div>

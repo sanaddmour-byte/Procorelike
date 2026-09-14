@@ -1,6 +1,6 @@
-import type { GanttTask, ScheduleTaskType } from "./types";
+import type { GanttTask, ScheduleTaskConstraintType, ScheduleTaskType } from "./types";
 
-/** The subset of a `schedule_tasks` API row the Gantt UI needs -- the row itself carries more (CPM/cost fields not shown yet). */
+/** The subset of a `schedule_tasks` API row the Gantt UI needs -- the row itself carries more (cost fields not shown yet). */
 export interface ApiScheduleTask {
   id: string;
   externalId: string | null;
@@ -19,6 +19,9 @@ export interface ApiScheduleTask {
   percentComplete: number;
   responsibleCompanyId: string | null;
   sortOrder: number;
+  durationMinutes: number | null;
+  constraintType: ScheduleTaskConstraintType | null;
+  constraintDate: string | null;
 }
 
 export function toGanttTask(row: ApiScheduleTask): GanttTask {
@@ -40,5 +43,8 @@ export function toGanttTask(row: ApiScheduleTask): GanttTask {
     percentComplete: row.percentComplete,
     responsibleCompanyId: row.responsibleCompanyId,
     sortOrder: row.sortOrder,
+    durationMinutes: row.durationMinutes,
+    constraintType: row.constraintType,
+    constraintDate: row.constraintDate,
   };
 }

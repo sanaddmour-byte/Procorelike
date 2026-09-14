@@ -291,7 +291,11 @@ from the original proposal:
 - **11d** (originally 6.5d) — CPM engine behind a feature flag, in-app
   editing, drag-reschedule with impact preview, XML export. *Gate: the
   25-scenario golden-file suite passes and the 2,000-task computation
-  stays under 500ms.*
+  stays under 500ms.* **Built — see docs/ROADMAP.md's Phase 11d gate
+  report** (35 golden-file scenarios, feature-flagged in-app editing with
+  drag-reschedule/resize/link, impact preview before commit, undo, and
+  MS Project XML export; PDF/XLSX export and the `.mpp` sidecar remain
+  the documented gap from A1/the Phase 11b gate report).
 
 Tier C (resources, levelling, earned value) is **not scheduled**. Do not
 build it.

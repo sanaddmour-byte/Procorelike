@@ -16,7 +16,9 @@
     "previousPage": "الصفحة السابقة",
     "nextPage": "الصفحة التالية",
     "zoomIn": "تكبير",
-    "zoomOut": "تصغير"
+    "zoomOut": "تصغير",
+    "cancel": "إلغاء",
+    "saving": "جارٍ الحفظ…"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
@@ -466,7 +468,20 @@
     "zoomWeek": "أسبوع",
     "zoomMonth": "شهر",
     "zoomQuarter": "ربع سنة",
-    "zoomYear": "سنة"
+    "zoomYear": "سنة",
+    "enableEditing": "تفعيل التحرير",
+    "disableEditing": "إيقاف التحرير",
+    "editingHint": "اسحب الشريط لإعادة الجدولة، أو حافته اليمنى لتغيير المدة، أو مقبضه لربط المهام.",
+    "exportXml": "تصدير XML",
+    "undo": "تراجع",
+    "editFailed": "تعذر حفظ هذا التغيير. حاول مرة أخرى.",
+    "impactPreviewTitle": "معاينة أثر هذا التغيير",
+    "impactPreviewBefore": "قبل",
+    "impactPreviewAfter": "بعد",
+    "impactPreviewNoChange": "هذا التغيير لا يغيّر مواعيد أي مهمة أخرى.",
+    "impactPreviewCycle": "سينتج عن هذا اعتماد دائري يشمل: {tasks}. اختر مهمة أخرى للربط.",
+    "impactPreviewMore": "+{count} مهمة إضافية متأثرة",
+    "impactPreviewConfirm": "تطبيق التغيير"
   },
   "Lookahead": {
     "title": "النظرة الاستشرافية",

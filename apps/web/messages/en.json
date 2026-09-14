@@ -16,7 +16,9 @@
     "previousPage": "Previous page",
     "nextPage": "Next page",
     "zoomIn": "Zoom in",
-    "zoomOut": "Zoom out"
+    "zoomOut": "Zoom out",
+    "cancel": "Cancel",
+    "saving": "Saving…"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -466,7 +468,20 @@
     "zoomWeek": "Week",
     "zoomMonth": "Month",
     "zoomQuarter": "Quarter",
-    "zoomYear": "Year"
+    "zoomYear": "Year",
+    "enableEditing": "Enable editing",
+    "disableEditing": "Disable editing",
+    "editingHint": "Drag a bar to reschedule, its right edge to resize, or its handle to link tasks.",
+    "exportXml": "Export XML",
+    "undo": "Undo",
+    "editFailed": "Couldn't save that change. Please try again.",
+    "impactPreviewTitle": "Preview the impact of this change",
+    "impactPreviewBefore": "Before",
+    "impactPreviewAfter": "After",
+    "impactPreviewNoChange": "This change doesn't move any other task's dates.",
+    "impactPreviewCycle": "This would create a circular dependency involving: {tasks}. Choose a different task to link.",
+    "impactPreviewMore": "+{count} more task(s) affected",
+    "impactPreviewConfirm": "Apply change"
   },
   "Lookahead": {
     "title": "Look-ahead",

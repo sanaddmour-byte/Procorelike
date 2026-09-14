@@ -175,6 +175,12 @@ function runComputeOnOverlay(state: LoadedVersionState, edits: ScheduleEditBatch
 async function requireNativeEditingEnabled(tx: Tx, versionId: string): Promise<LoadedVersionState> {
   const state = await loadVersionState(tx, versionId);
   if (!state.schedule.nativeEditingEnabled) throw new ScheduleEditNotEnabledError();
+  // computeSchedule requires a calendar for every task; a CSV import (the one source format with no
+  // calendar block, see importers/csv.ts) leaves a schedule with zero calendar rows, which would
+  // otherwise crash the engine rather than fail cleanly the first time editing is attempted on it.
+  if (state.calendars.length === 0) {
+    throw new ApiError(422, "no_calendar", "This schedule has no calendar to compute against -- re-import from a source format that includes one (MS Project XML or Primavera P6) before enabling native editing.");
+  }
   return state;
 }
 
@@ -278,6 +284,12 @@ export async function applyScheduleEdits(
       await tx
         .update(schema.cpmScheduleTasks)
         .set({
+          // Once native editing is live, "planned" and "early" are the same thing -- our own engine's
+          // current computed schedule -- so the Gantt (which renders plannedStart/Finish preferentially,
+          // see taskDateRange() in the web app) reflects every edit's ripple effect, not just the task
+          // that was directly dragged. A separate, frozen baseline (task_baseline_values) is unaffected.
+          plannedStart: new Date(result.earlyStart),
+          plannedFinish: new Date(result.earlyFinish),
           earlyStart: new Date(result.earlyStart),
           earlyFinish: new Date(result.earlyFinish),
           lateStart: new Date(result.lateStart),
