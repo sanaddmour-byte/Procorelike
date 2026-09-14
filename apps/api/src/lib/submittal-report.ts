@@ -6,6 +6,19 @@ function responseCodeLabel(code: string | null): string {
   return { approved: "Approved", approved_as_noted: "Approved as noted", revise_resubmit: "Revise & resubmit", rejected: "Rejected" }[code] ?? code;
 }
 
+const SUBMITTAL_TYPE_LABELS: Record<string, string> = {
+  shop_drawings: "Shop Drawings",
+  product_data: "Product Data",
+  samples: "Samples",
+  design_data: "Design Data",
+  test_reports: "Test Reports",
+  certificates: "Certificates",
+  manufacturer_instructions: "Manufacturer's Instructions",
+  manufacturer_field_reports: "Manufacturer's Field Reports",
+  operation_maintenance_data: "Operation and Maintenance Data",
+  other: "Other",
+};
+
 export async function generateSubmittalPdf(data: SubmittalReportData): Promise<Uint8Array> {
   const pdf = await PdfBuilder.create();
   await pdf.drawLetterhead(data.companyName, data.logoPngBytes);
@@ -14,9 +27,15 @@ export async function generateSubmittalPdf(data: SubmittalReportData): Promise<U
   pdf.drawLine(`${data.number} — ${data.title}`, { size: 14, gap: 12 });
 
   pdf.drawLine(`Project: ${data.projectName}`);
+  if (data.isPrivate) pdf.drawLine("Private", { color: [0.6, 0.2, 0.2] });
+  pdf.drawLine(`Type: ${SUBMITTAL_TYPE_LABELS[data.submittalType] ?? data.submittalType}`);
   pdf.drawLine(`Spec section: ${data.specSectionLabel}`);
-  pdf.drawLine(`Status: ${data.status}`);
+  pdf.drawLine(`Status: ${data.status}${data.isOverdue ? " (OVERDUE)" : ""}`, { color: data.isOverdue ? [0.6, 0.2, 0.2] : undefined });
   if (data.ballInCourtName) pdf.drawLine(`Ball in court: ${data.ballInCourtName}`);
+  if (data.responsibleContractorName) pdf.drawLine(`Responsible contractor: ${data.responsibleContractorName}`);
+  if (data.location) pdf.drawLine(`Location: ${data.location}`);
+  if (data.receivedFrom) pdf.drawLine(`Received from: ${data.receivedFrom}`);
+  if (data.dueDate) pdf.drawLine(`Due: ${data.dueDate.toISOString().slice(0, 10)}`);
   if (data.leadTimeDays !== null) pdf.drawLine(`Lead time: ${data.leadTimeDays} days`);
   if (data.requiredOnSiteDate) pdf.drawLine(`Required on site: ${data.requiredOnSiteDate.toISOString().slice(0, 10)}`);
   pdf.addSpacer(10);

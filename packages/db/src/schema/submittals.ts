@@ -19,6 +19,20 @@ export const submittalResponseCodeEnum = pgEnum("submittal_response_code", [
   "rejected",
 ]);
 
+/** Procore's standard submittal type categories (CSI/AIA). */
+export const submittalTypeEnum = pgEnum("submittal_type", [
+  "shop_drawings",
+  "product_data",
+  "samples",
+  "design_data",
+  "test_reports",
+  "certificates",
+  "manufacturer_instructions",
+  "manufacturer_field_reports",
+  "operation_maintenance_data",
+  "other",
+]);
+
 export const submittals = pgTable(
   "submittals",
   {
@@ -31,8 +45,18 @@ export const submittals = pgTable(
       .notNull()
       .references(() => specificationsSections.id),
     title: varchar("title", { length: 300 }).notNull(),
+    submittalType: submittalTypeEnum("submittal_type").notNull().default("shop_drawings"),
     status: submittalStatusEnum("status").notNull().default("draft"),
     ballInCourtUserId: uuid("ball_in_court_user_id").references(() => users.id),
+    /** The company responsible for furnishing this submittal -- Procore's "Responsible Contractor" field. */
+    responsibleContractorCompanyId: uuid("responsible_contractor_company_id").references(() => companies.id),
+    location: varchar("location", { length: 200 }),
+    /** Free-text: who this submittal was received from -- Procore's "Received From" field. */
+    receivedFrom: varchar("received_from", { length: 200 }),
+    /** Procore's Final Due Date: when the current ball-in-court response is expected -- drives isOverdue the same way rfis.due_date does. */
+    dueDate: timestamp("due_date", { withTimezone: true }),
+    /** Procore's Private flag: restricts visibility the same way rfis.is_private does -- see submittal.service.ts's canViewPrivateSubmittal. */
+    isPrivate: boolean("is_private").notNull().default(false),
     leadTimeDays: integer("lead_time_days"),
     requiredOnSiteDate: timestamp("required_on_site_date", { withTimezone: true }),
     createdBy: uuid("created_by")

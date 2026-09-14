@@ -2,11 +2,13 @@ import { nextSequenceNumber, schema, withRequestContext, type Database } from "@
 import {
   formatSubmittalNumber,
   requirePermission,
+  resolveEffectiveLevel,
   type CreateSubmittalInput,
   type CreateSubmittalRevisionInput,
   type PermissionContext,
   type SubmittalResponseCode,
   type SubmittalStatus,
+  type SubmittalType,
   type SubmitSubmittalReviewInput,
   type UpdateSubmittalInput,
 } from "@siteops/shared";
@@ -22,14 +24,37 @@ type SubmittalRevisionRow = typeof schema.submittalRevisions.$inferSelect;
 type SubmittalReviewRow = typeof schema.submittalReviews.$inferSelect;
 type SubmittalDistributionRow = typeof schema.submittalDistribution.$inferSelect;
 
+export interface SubmittalWithOverdue extends SubmittalRow {
+  isOverdue: boolean;
+}
+
 export interface PackageWithRevisions extends SubmittalPackageRow {
   revisions: (SubmittalRevisionRow & { reviews: SubmittalReviewRow[] })[];
 }
 
-export interface SubmittalDetail extends SubmittalRow {
+export interface SubmittalDetail extends SubmittalWithOverdue {
   packages: PackageWithRevisions[];
   specSection: { id: string; csiCode: string; title: string } | null;
   distribution: SubmittalDistributionRow[];
+}
+
+/** `is_in_review_and_past_due`, not stored -- derived fresh, mirroring rfi.service.ts's withOverdue. */
+function withOverdue(submittal: SubmittalRow): SubmittalWithOverdue {
+  const isOverdue = submittal.status === "in_review" && submittal.dueDate !== null && submittal.dueDate.getTime() < Date.now();
+  return { ...submittal, isOverdue };
+}
+
+/**
+ * Procore's Private submittal flag: hides it from everyone except the
+ * creator, its current ball-in-court user, anyone on its distribution
+ * list, and a caller with admin-level submittals permission -- mirrors
+ * rfi.service.ts's canViewPrivateRfi.
+ */
+function canViewPrivateSubmittal(userId: string, ctx: PermissionContext, submittal: SubmittalRow, distribution: SubmittalDistributionRow[]): boolean {
+  if (!submittal.isPrivate) return true;
+  if (resolveEffectiveLevel(ctx, "submittals") === "admin") return true;
+  if (submittal.createdBy === userId || submittal.ballInCourtUserId === userId) return true;
+  return distribution.some((d) => d.userId === userId);
 }
 
 export async function listSpecSections(
@@ -105,7 +130,7 @@ export async function createSubmittal(
   userId: string,
   ctx: PermissionContext,
   input: CreateSubmittalInput,
-): Promise<SubmittalRow> {
+): Promise<SubmittalWithOverdue> {
   requirePermission(ctx, "submittals", "standard");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     const [specSection] = await tx
@@ -123,9 +148,15 @@ export async function createSubmittal(
         number: formatSubmittalNumber(specSection.csiCode, seq),
         specSectionId: input.specSectionId,
         title: input.title,
+        submittalType: input.submittalType,
         leadTimeDays: input.leadTimeDays,
         requiredOnSiteDate: input.requiredOnSiteDate ? new Date(input.requiredOnSiteDate) : undefined,
         ballInCourtUserId: input.ballInCourtUserId,
+        responsibleContractorCompanyId: input.responsibleContractorCompanyId,
+        location: input.location,
+        receivedFrom: input.receivedFrom,
+        dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
+        isPrivate: input.isPrivate,
         createdBy: userId,
       })
       .returning();
@@ -140,18 +171,18 @@ export async function createSubmittal(
     }
 
     await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittal.id, action: "create", after: submittal });
-    return submittal;
+    return withOverdue(submittal);
   });
 }
 
-/** Reassigns who owns this submittal -- separate from the review workflow's own automatic ballInCourtUserId updates (initialBallInCourt/nextBallInCourt below), which will still overwrite it at the next revision or review event. */
+/** Reassigns/edits a submittal's own fields -- separate from the review workflow's own automatic ballInCourtUserId updates (initialBallInCourt/nextBallInCourt below), which will still overwrite the ball-in-court at the next revision or review event. */
 export async function updateSubmittal(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   submittalId: string,
   input: UpdateSubmittalInput,
-): Promise<SubmittalRow | undefined> {
+): Promise<SubmittalWithOverdue | undefined> {
   requirePermission(ctx, "submittals", "standard");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     const [existing] = await tx.select().from(schema.submittals).where(eq(schema.submittals.id, submittalId)).limit(1);
@@ -160,7 +191,13 @@ export async function updateSubmittal(
     const [updated] = await tx
       .update(schema.submittals)
       .set({
-        ballInCourtUserId: input.ballInCourtUserId,
+        ballInCourtUserId: input.ballInCourtUserId ?? existing.ballInCourtUserId,
+        submittalType: input.submittalType ?? existing.submittalType,
+        responsibleContractorCompanyId: input.responsibleContractorCompanyId ?? existing.responsibleContractorCompanyId,
+        location: input.location ?? existing.location,
+        receivedFrom: input.receivedFrom ?? existing.receivedFrom,
+        dueDate: input.dueDate ? new Date(input.dueDate) : existing.dueDate,
+        isPrivate: input.isPrivate ?? existing.isPrivate,
         updatedBy: userId,
         updatedAt: new Date(),
         serverRevision: existing.serverRevision + 1,
@@ -170,7 +207,7 @@ export async function updateSubmittal(
     if (!updated) throw new Error("Failed to update submittal");
 
     await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittalId, action: "update", before: existing, after: updated });
-    return updated;
+    return withOverdue(updated);
   });
 }
 
@@ -222,10 +259,17 @@ export async function listSubmittals(
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<SubmittalRow[]> {
+): Promise<SubmittalWithOverdue[]> {
   requirePermission(ctx, "submittals", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.submittals).where(eq(schema.submittals.projectId, projectId));
+    const rows = await tx.select().from(schema.submittals).where(eq(schema.submittals.projectId, projectId));
+    const privateIds = rows.filter((s) => s.isPrivate).map((s) => s.id);
+    const distribution =
+      privateIds.length > 0 ? await tx.select().from(schema.submittalDistribution).where(inArray(schema.submittalDistribution.submittalId, privateIds)) : [];
+    const distributionBySubmittalId = new Map<string, SubmittalDistributionRow[]>();
+    for (const d of distribution) distributionBySubmittalId.set(d.submittalId, [...(distributionBySubmittalId.get(d.submittalId) ?? []), d]);
+
+    return rows.filter((s) => canViewPrivateSubmittal(userId, ctx, s, distributionBySubmittalId.get(s.id) ?? [])).map(withOverdue);
   });
 }
 
@@ -250,6 +294,7 @@ export async function getSubmittal(
       .select()
       .from(schema.submittalDistribution)
       .where(eq(schema.submittalDistribution.submittalId, submittalId));
+    if (!canViewPrivateSubmittal(userId, ctx, submittal, distribution)) return undefined;
 
     const packages = await tx
       .select()
@@ -280,7 +325,7 @@ export async function getSubmittal(
       }),
     );
 
-    return { ...submittal, packages: packagesWithRevisions, specSection: specSection ?? null, distribution };
+    return { ...withOverdue(submittal), packages: packagesWithRevisions, specSection: specSection ?? null, distribution };
   });
 }
 
@@ -531,9 +576,16 @@ export interface SubmittalReportData extends ReportBranding {
   projectName: string;
   number: string;
   title: string;
+  submittalType: SubmittalType;
   specSectionLabel: string;
   status: SubmittalStatus;
   ballInCourtName: string | null;
+  responsibleContractorName: string | null;
+  location: string | null;
+  receivedFrom: string | null;
+  dueDate: Date | null;
+  isOverdue: boolean;
+  isPrivate: boolean;
   leadTimeDays: number | null;
   requiredOnSiteDate: Date | null;
   revisions: SubmittalReportRevision[];
@@ -559,6 +611,9 @@ export async function getSubmittalReportData(
       .limit(1);
     const [ballInCourtUser] = submittal.ballInCourtUserId
       ? await tx.select().from(schema.users).where(eq(schema.users.id, submittal.ballInCourtUserId)).limit(1)
+      : [undefined];
+    const [responsibleContractor] = submittal.responsibleContractorCompanyId
+      ? await tx.select().from(schema.companies).where(eq(schema.companies.id, submittal.responsibleContractorCompanyId)).limit(1)
       : [undefined];
 
     const packages = await tx
@@ -609,9 +664,16 @@ export async function getSubmittalReportData(
       projectName: project?.name ?? "",
       number: submittal.number,
       title: submittal.title,
+      submittalType: submittal.submittalType,
       specSectionLabel: specSection ? `${specSection.csiCode} — ${specSection.title}` : "",
       status: submittal.status,
       ballInCourtName: ballInCourtUser?.name ?? null,
+      responsibleContractorName: responsibleContractor?.name ?? null,
+      location: submittal.location,
+      receivedFrom: submittal.receivedFrom,
+      dueDate: submittal.dueDate,
+      isOverdue: withOverdue(submittal).isOverdue,
+      isPrivate: submittal.isPrivate,
       leadTimeDays: submittal.leadTimeDays,
       requiredOnSiteDate: submittal.requiredOnSiteDate,
       revisions,

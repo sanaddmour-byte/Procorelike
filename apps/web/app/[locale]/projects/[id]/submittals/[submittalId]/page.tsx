@@ -37,13 +37,32 @@ interface Package {
   revisions: Revision[];
 }
 
+type SubmittalType =
+  | "shop_drawings"
+  | "product_data"
+  | "samples"
+  | "design_data"
+  | "test_reports"
+  | "certificates"
+  | "manufacturer_instructions"
+  | "manufacturer_field_reports"
+  | "operation_maintenance_data"
+  | "other";
+
 interface SubmittalDetail {
   id: string;
   projectId: string;
   number: string;
   title: string;
   status: "draft" | "in_review" | "approved" | "approved_as_noted" | "revise_resubmit" | "rejected" | "closed";
+  submittalType: SubmittalType;
   ballInCourtUserId: string | null;
+  responsibleContractorCompanyId: string | null;
+  location: string | null;
+  receivedFrom: string | null;
+  dueDate: string | null;
+  isOverdue: boolean;
+  isPrivate: boolean;
   packages: Package[];
   specSection: { id: string; csiCode: string; title: string } | null;
   distribution: { id: string; userId: string | null; companyId: string | null }[];
@@ -52,6 +71,8 @@ interface SubmittalDetail {
 interface Member {
   userId: string;
   name: string;
+  companyId: string;
+  companyName: string;
 }
 
 interface ReviewerDraft {
@@ -70,6 +91,34 @@ function statusLabel(status: SubmittalDetail["status"], t: (key: string) => stri
     rejected: t("statusRejected"),
     closed: t("statusClosed"),
   }[status];
+}
+
+const SUBMITTAL_TYPES: SubmittalType[] = [
+  "shop_drawings",
+  "product_data",
+  "samples",
+  "design_data",
+  "test_reports",
+  "certificates",
+  "manufacturer_instructions",
+  "manufacturer_field_reports",
+  "operation_maintenance_data",
+  "other",
+];
+
+function submittalTypeLabel(type: SubmittalType, t: (key: string) => string): string {
+  return {
+    shop_drawings: t("typeShopDrawings"),
+    product_data: t("typeProductData"),
+    samples: t("typeSamples"),
+    design_data: t("typeDesignData"),
+    test_reports: t("typeTestReports"),
+    certificates: t("typeCertificates"),
+    manufacturer_instructions: t("typeManufacturerInstructions"),
+    manufacturer_field_reports: t("typeManufacturerFieldReports"),
+    operation_maintenance_data: t("typeOperationMaintenanceData"),
+    other: t("typeOther"),
+  }[type];
 }
 
 function responseCodeLabel(code: SubmittalResponseCode | null, t: (key: string) => string): string {
@@ -126,6 +175,11 @@ export default function SubmittalDetailScreen() {
     return members.find((m) => m.userId === userId)?.name ?? userId;
   }
 
+  function companyName(companyId: string | null): string | null {
+    if (!companyId) return null;
+    return members.find((m) => m.companyId === companyId)?.companyName ?? null;
+  }
+
   async function handleReassign(userId: string): Promise<void> {
     if (!userId) return;
     setReassigning(true);
@@ -136,6 +190,15 @@ export default function SubmittalDetailScreen() {
       setError(tc("errorGeneric"));
     } finally {
       setReassigning(false);
+    }
+  }
+
+  async function handleUpdateType(submittalType: SubmittalType): Promise<void> {
+    try {
+      await apiJson(`/submittals/${params.submittalId}`, { method: "PATCH", body: JSON.stringify({ submittalType }) });
+      await load();
+    } catch {
+      setError(tc("errorGeneric"));
     }
   }
 
@@ -243,15 +306,19 @@ export default function SubmittalDetailScreen() {
           </button>
         </div>
 
-        <div className="mb-1 flex items-center justify-between">
+        <div className="mb-1 flex items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
             {submittal.number} — {submittal.title}
           </h1>
-          {submittal.status === "approved" && (
-            <button onClick={() => void handleClose()} disabled={busy} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
-              {t("close")}
-            </button>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {submittal.isPrivate && <span className="rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("private")}</span>}
+            {submittal.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
+            {submittal.status === "approved" && (
+              <button onClick={() => void handleClose()} disabled={busy} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
+                {t("close")}
+              </button>
+            )}
+          </div>
         </div>
         <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-navy-600">
           <span className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(submittal.status, t)}</span>
@@ -281,6 +348,42 @@ export default function SubmittalDetailScreen() {
                 {submittal.specSection.csiCode} — {submittal.specSection.title}
               </Link>
             </>
+          )}
+        </div>
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-navy-600">
+          <span className="flex items-center gap-1.5">
+            {t("submittalType")}:
+            <select
+              value={submittal.submittalType}
+              onChange={(e) => void handleUpdateType(e.target.value as SubmittalType)}
+              className="rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800"
+            >
+              {SUBMITTAL_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {submittalTypeLabel(type, t)}
+                </option>
+              ))}
+            </select>
+          </span>
+          {companyName(submittal.responsibleContractorCompanyId) && (
+            <span>
+              · {t("responsibleContractor")}: {companyName(submittal.responsibleContractorCompanyId)}
+            </span>
+          )}
+          {submittal.location && (
+            <span>
+              · {t("location")}: {submittal.location}
+            </span>
+          )}
+          {submittal.receivedFrom && (
+            <span>
+              · {t("receivedFrom")}: {submittal.receivedFrom}
+            </span>
+          )}
+          {submittal.dueDate && (
+            <span>
+              · {t("dueDate")}: {submittal.dueDate.slice(0, 10)}
+            </span>
           )}
         </div>
         {error && <p className="text-maroon-700">{error}</p>}

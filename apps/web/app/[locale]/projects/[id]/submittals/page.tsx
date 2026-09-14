@@ -18,17 +18,62 @@ interface SpecSection {
   title: string;
 }
 
+type SubmittalType =
+  | "shop_drawings"
+  | "product_data"
+  | "samples"
+  | "design_data"
+  | "test_reports"
+  | "certificates"
+  | "manufacturer_instructions"
+  | "manufacturer_field_reports"
+  | "operation_maintenance_data"
+  | "other";
+
+const SUBMITTAL_TYPES: SubmittalType[] = [
+  "shop_drawings",
+  "product_data",
+  "samples",
+  "design_data",
+  "test_reports",
+  "certificates",
+  "manufacturer_instructions",
+  "manufacturer_field_reports",
+  "operation_maintenance_data",
+  "other",
+];
+
 interface Submittal {
   id: string;
   number: string;
   title: string;
   status: "draft" | "in_review" | "approved" | "approved_as_noted" | "revise_resubmit" | "rejected" | "closed";
   ballInCourtUserId: string | null;
+  dueDate: string | null;
+  isOverdue: boolean;
+  isPrivate: boolean;
 }
 
 interface Member {
   userId: string;
   name: string;
+  companyId: string;
+  companyName: string;
+}
+
+function submittalTypeLabel(type: SubmittalType, t: (key: string) => string): string {
+  return {
+    shop_drawings: t("typeShopDrawings"),
+    product_data: t("typeProductData"),
+    samples: t("typeSamples"),
+    design_data: t("typeDesignData"),
+    test_reports: t("typeTestReports"),
+    certificates: t("typeCertificates"),
+    manufacturer_instructions: t("typeManufacturerInstructions"),
+    manufacturer_field_reports: t("typeManufacturerFieldReports"),
+    operation_maintenance_data: t("typeOperationMaintenanceData"),
+    other: t("typeOther"),
+  }[type];
 }
 
 function statusLabel(status: Submittal["status"], t: (key: string) => string): string {
@@ -57,6 +102,12 @@ export default function SubmittalsPage() {
   const [showForm, setShowForm] = useState(false);
   const [specSectionId, setSpecSectionId] = useState("");
   const [title, setTitle] = useState("");
+  const [submittalType, setSubmittalType] = useState<SubmittalType>("shop_drawings");
+  const [responsibleContractorCompanyId, setResponsibleContractorCompanyId] = useState("");
+  const [location, setLocation] = useState("");
+  const [receivedFrom, setReceivedFrom] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [ballInCourtUserId, setBallInCourtUserId] = useState("");
   const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
@@ -88,6 +139,11 @@ export default function SubmittalsPage() {
     return members.find((m) => m.userId === userId)?.name ?? userId;
   }
 
+  const companies = members.reduce<{ id: string; name: string }[]>((acc, m) => {
+    if (!acc.some((c) => c.id === m.companyId)) acc.push({ id: m.companyId, name: m.companyName });
+    return acc;
+  }, []);
+
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
     if (!specSectionId) return;
@@ -95,9 +151,27 @@ export default function SubmittalsPage() {
     try {
       await apiJson("/submittals", {
         method: "POST",
-        body: JSON.stringify({ projectId: params.id, specSectionId, title, ballInCourtUserId: ballInCourtUserId || undefined, distributionUserIds }),
+        body: JSON.stringify({
+          projectId: params.id,
+          specSectionId,
+          title,
+          submittalType,
+          responsibleContractorCompanyId: responsibleContractorCompanyId || undefined,
+          location: location || undefined,
+          receivedFrom: receivedFrom || undefined,
+          dueDate: dueDate || undefined,
+          isPrivate,
+          ballInCourtUserId: ballInCourtUserId || undefined,
+          distributionUserIds,
+        }),
       });
       setTitle("");
+      setSubmittalType("shop_drawings");
+      setResponsibleContractorCompanyId("");
+      setLocation("");
+      setReceivedFrom("");
+      setDueDate("");
+      setIsPrivate(false);
       setBallInCourtUserId("");
       setDistributionUserIds([]);
       setShowForm(false);
@@ -151,6 +225,47 @@ export default function SubmittalsPage() {
               <input required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1 text-sm">
+              {t("submittalType")}
+              <select value={submittalType} onChange={(e) => setSubmittalType(e.target.value as SubmittalType)} className="rounded-lg border-3 border-ink px-3 py-2">
+                {SUBMITTAL_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {submittalTypeLabel(type, t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("responsibleContractor")}
+              <select
+                value={responsibleContractorCompanyId}
+                onChange={(e) => setResponsibleContractorCompanyId(e.target.value)}
+                className="rounded-lg border-3 border-ink px-3 py-2"
+              >
+                <option value="">{t("unassigned")}</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("location")}
+              <input value={location} onChange={(e) => setLocation(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("receivedFrom")}
+              <input value={receivedFrom} onChange={(e) => setReceivedFrom(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("dueDate")}
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
+              {t("private")}
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
               {t("ballInCourt")}
               <select
                 value={ballInCourtUserId}
@@ -186,7 +301,11 @@ export default function SubmittalsPage() {
                   <span className="font-medium">
                     {s.number} — {s.title}
                   </span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(s.status, t)}</span>
+                  <div className="flex shrink-0 gap-2">
+                    {s.isPrivate && <span className="rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("private")}</span>}
+                    {s.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
+                    <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(s.status, t)}</span>
+                  </div>
                 </div>
                 <p className="mt-1 text-sm text-navy-600">
                   {t("ballInCourt")}: {memberName(s.ballInCourtUserId)}

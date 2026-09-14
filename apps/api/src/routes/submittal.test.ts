@@ -19,6 +19,7 @@ const SEED_PASSWORD = "ChangeMe123!";
 interface Member {
   userId: string;
   email: string;
+  companyId: string;
 }
 
 let app: Express;
@@ -273,5 +274,104 @@ describe("Submittals", () => {
     const distributedUserIds = detailRes.body.distribution.map((d: { userId: string | null }) => d.userId);
     expect(distributedUserIds).toEqual(expect.arrayContaining([lina.userId, rana.userId]));
     expect(detailRes.body.specSection.id).toBe(specSectionId);
+  });
+
+  it("supports type, responsible contractor, location, received from, due date, and Procore-style Private visibility", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test"); // project_manager
+    const rana = memberByEmail("rana.odeh@siteops.test");
+    const lina = memberByEmail("lina.kanaan@siteops.test"); // project_engineer: "standard" on submittals, not admin
+
+    const createRes = await request(app)
+      .post("/submittals")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({
+        projectId,
+        specSectionId,
+        title: "Private submittal: curtain wall glazing",
+        submittalType: "product_data",
+        responsibleContractorCompanyId: rana.companyId,
+        location: "Level 4 curtain wall",
+        receivedFrom: "Glazing Sub",
+        dueDate: "2030-01-01",
+        ballInCourtUserId: rana.userId,
+        isPrivate: true,
+      });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.submittalType).toBe("product_data");
+    expect(createRes.body.responsibleContractorCompanyId).toBe(rana.companyId);
+    expect(createRes.body.location).toBe("Level 4 curtain wall");
+    expect(createRes.body.receivedFrom).toBe("Glazing Sub");
+    expect(createRes.body.isPrivate).toBe(true);
+    const submittalId = createRes.body.id as string;
+
+    // A default submittal's type defaults to "shop_drawings" and isPrivate to false.
+    const plainRes = await request(app)
+      .post("/submittals")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, specSectionId, title: "Plain submittal" });
+    expect(plainRes.body.submittalType).toBe("shop_drawings");
+    expect(plainRes.body.isPrivate).toBe(false);
+
+    // Lina has "standard" (non-admin) submittals permission and isn't the creator,
+    // ball-in-court, or distributed -- Private hides it from her specifically.
+    const linaToken = await loginAs("lina.kanaan@siteops.test");
+    const linaSeesIt = await request(app).get(`/submittals/${submittalId}`).set("authorization", `Bearer ${linaToken}`);
+    expect(linaSeesIt.status).toBe(404);
+    const linaList = await request(app).get("/submittals").query({ projectId }).set("authorization", `Bearer ${linaToken}`);
+    expect(linaList.body.some((s: { id: string }) => s.id === submittalId)).toBe(false);
+
+    // Sara has admin-level submittals permission (owner_admin), so Private doesn't hide it from her.
+    const saraToken = await loginAs("sara.haddad@siteops.test");
+    const saraSeesIt = await request(app).get(`/submittals/${submittalId}`).set("authorization", `Bearer ${saraToken}`);
+    expect(saraSeesIt.status).toBe(200);
+
+    // Rana is the ball-in-court user, so she can see it despite not being an admin.
+    const ranaToken = await loginAs("rana.odeh@siteops.test");
+    const ranaSeesIt = await request(app).get(`/submittals/${submittalId}`).set("authorization", `Bearer ${ranaToken}`);
+    expect(ranaSeesIt.status).toBe(200);
+
+    // Adding Lina to the distribution list (via a second private submittal) grants her visibility.
+    const distributedRes = await request(app)
+      .post("/submittals")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({
+        projectId,
+        specSectionId,
+        title: "Private submittal with Lina distributed",
+        isPrivate: true,
+        distributionUserIds: [lina.userId],
+      });
+    const distributedSubmittalId = distributedRes.body.id as string;
+    const linaSeesDistributed = await request(app).get(`/submittals/${distributedSubmittalId}`).set("authorization", `Bearer ${linaToken}`);
+    expect(linaSeesDistributed.status).toBe(200);
+  });
+
+  it("computes isOverdue from status + dueDate rather than storing it", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const pastDueDate = "2020-01-01";
+
+    const createRes = await request(app)
+      .post("/submittals")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, specSectionId, title: "Overdue test submittal", dueDate: pastDueDate });
+    const submittalId = createRes.body.id as string;
+    expect(createRes.body.isOverdue).toBe(false); // still draft, not in_review yet
+
+    const packageRes = await request(app).post(`/submittals/${submittalId}/packages`).set("authorization", `Bearer ${omarToken}`);
+    const packageId = packageRes.body.id as string;
+    const attachmentId = await createAttachment(omarToken, submittalId);
+    const lina = memberByEmail("lina.kanaan@siteops.test");
+    await request(app)
+      .post(`/submittals/packages/${packageId}/revisions`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ attachmentId, submittedDate: "2025-04-01", reviewers: [{ reviewerUserId: lina.userId, sequenceOrder: 1 }] });
+
+    const detailRes = await request(app).get(`/submittals/${submittalId}`).set("authorization", `Bearer ${omarToken}`);
+    expect(detailRes.body.status).toBe("in_review");
+    expect(detailRes.body.isOverdue).toBe(true);
+
+    const listRes = await request(app).get("/submittals").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    const listed = listRes.body.find((s: { id: string }) => s.id === submittalId);
+    expect(listed.isOverdue).toBe(true);
   });
 });
