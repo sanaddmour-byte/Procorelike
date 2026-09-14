@@ -178,6 +178,66 @@ describe("Punch List", () => {
     expect(detailRes.body.history).toHaveLength(2); // created + transitioned
   });
 
+  it("supports Procore's Not Accepted/In Dispute statuses and gates the Approved transition behind the Final Approver", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const membersRes = await request(app).get(`/projects/${ammanHeightsProjectId}/members`).set("authorization", `Bearer ${omarToken}`);
+    const members = membersRes.body as { userId: string; email: string }[];
+    const finalApprover = members.find((m) => m.email === "sara.haddad@siteops.test");
+    const notApprover = members.find((m) => m.email === "lina.kanaan@siteops.test");
+    if (!finalApprover || !notApprover) throw new Error("Seed members not found");
+
+    const createRes = await request(app)
+      .post("/punch-items")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({
+        projectId: ammanHeightsProjectId,
+        description: "Grout line cracking, lobby floor",
+        finalApproverUserId: finalApprover.userId,
+      });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.finalApproverUserId).toBe(finalApprover.userId);
+    const id = createRes.body.id as string;
+
+    await request(app).post(`/punch-items/${id}/transition`).set("authorization", `Bearer ${omarToken}`).send({ toStatus: "ready_for_review" });
+
+    // Reviewer isn't satisfied yet -- sends it back as Not Accepted rather than approving.
+    const notAcceptedRes = await request(app)
+      .post(`/punch-items/${id}/transition`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ toStatus: "not_accepted", note: "Grout color doesn't match" });
+    expect(notAcceptedRes.status).toBe(200);
+    expect(notAcceptedRes.body.status).toBe("not_accepted");
+
+    await request(app).post(`/punch-items/${id}/transition`).set("authorization", `Bearer ${omarToken}`).send({ toStatus: "ready_for_review" });
+
+    // The contractor disputes the finding instead.
+    const disputeRes = await request(app)
+      .post(`/punch-items/${id}/transition`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ toStatus: "in_dispute" });
+    expect(disputeRes.status).toBe(200);
+    expect(disputeRes.body.status).toBe("in_dispute");
+
+    await request(app).post(`/punch-items/${id}/transition`).set("authorization", `Bearer ${omarToken}`).send({ toStatus: "ready_for_review" });
+
+    // Someone other than the assigned Final Approver can't sign off "approved".
+    const notApproverToken = await loginAs("lina.kanaan@siteops.test");
+    const blockedApproval = await request(app)
+      .post(`/punch-items/${id}/transition`)
+      .set("authorization", `Bearer ${notApproverToken}`)
+      .send({ toStatus: "approved" });
+    expect(blockedApproval.status).toBe(403);
+
+    // The assigned Final Approver can.
+    const finalApproverToken = await loginAs("sara.haddad@siteops.test");
+    const approvedRes = await request(app)
+      .post(`/punch-items/${id}/transition`)
+      .set("authorization", `Bearer ${finalApproverToken}`)
+      .send({ toStatus: "approved" });
+    expect(approvedRes.status).toBe(200);
+    expect(approvedRes.body.status).toBe("approved");
+  });
+
   it("records additional distribution personnel at creation, alongside the single assignee", async () => {
     const token = await loginAs("omar.nassar@siteops.test");
     const membersRes = await request(app).get(`/projects/${ammanHeightsProjectId}/members`).set("authorization", `Bearer ${token}`);

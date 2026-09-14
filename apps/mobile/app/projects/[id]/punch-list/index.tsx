@@ -10,6 +10,8 @@ function statusLabel(status: LocalPunchItem["status"]): string {
   return {
     open: i18n.t("punchList.statusOpen"),
     ready_for_review: i18n.t("punchList.statusReadyForReview"),
+    not_accepted: i18n.t("punchList.statusNotAccepted"),
+    in_dispute: i18n.t("punchList.statusInDispute"),
     approved: i18n.t("punchList.statusApproved"),
     closed: i18n.t("punchList.statusClosed"),
   }[status];

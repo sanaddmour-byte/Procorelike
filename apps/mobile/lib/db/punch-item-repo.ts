@@ -1,4 +1,5 @@
 import * as Crypto from "expo-crypto";
+import type { PunchItemStatus } from "@siteops/shared";
 import { getDb } from "./database";
 import { enqueueOutbox } from "./outbox-repo";
 import type { SyncStatus } from "./daily-log-repo";
@@ -9,7 +10,7 @@ export interface LocalPunchItem {
   number: string | null;
   description: string;
   priority: "low" | "medium" | "high";
-  status: "open" | "ready_for_review" | "approved" | "closed";
+  status: PunchItemStatus;
   dueDate: string | null;
   baseRevision: number | null;
   syncStatus: SyncStatus;

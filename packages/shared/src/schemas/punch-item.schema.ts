@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const punchItemPrioritySchema = z.enum(["low", "medium", "high"]);
-export const punchItemStatusSchema = z.enum(["open", "ready_for_review", "approved", "closed"]);
+export const punchItemStatusSchema = z.enum(["open", "ready_for_review", "not_accepted", "in_dispute", "approved", "closed"]);
 export type PunchItemPriority = z.infer<typeof punchItemPrioritySchema>;
 export type PunchItemStatus = z.infer<typeof punchItemStatusSchema>;
 
@@ -12,6 +12,8 @@ export const createPunchItemSchema = z
     locationId: z.string().uuid().optional(),
     assigneeUserId: z.string().uuid().optional(),
     assigneeCompanyId: z.string().uuid().optional(),
+    /** Procore's Final Approver role: distinct from the assignee -- required to move a punch item to "approved". */
+    finalApproverUserId: z.string().uuid().optional(),
     tradeId: z.string().uuid().optional(),
     priority: punchItemPrioritySchema.default("medium"),
     dueDate: z.string().datetime().optional(),
@@ -36,13 +38,21 @@ export const transitionPunchItemStatusSchema = z
   .strict();
 export type TransitionPunchItemStatusInput = z.infer<typeof transitionPunchItemStatusSchema>;
 
-/** Valid forward transitions — enforced server-side, not just in the UI. */
+/**
+ * Valid forward transitions — enforced server-side, not just in the UI.
+ * Mirrors Procore's Punch List Workflow: a reviewer can send an item back
+ * as "Not Accepted" (needs more work) or "In Dispute" (contested) instead
+ * of approving it outright, both of which route back into review once
+ * resolved.
+ */
 export const PUNCH_ITEM_STATUS_TRANSITIONS: Record<
   z.infer<typeof punchItemStatusSchema>,
   readonly z.infer<typeof punchItemStatusSchema>[]
 > = {
   open: ["ready_for_review"],
-  ready_for_review: ["approved", "open"],
+  ready_for_review: ["approved", "not_accepted", "in_dispute", "open"],
+  not_accepted: ["ready_for_review", "open"],
+  in_dispute: ["ready_for_review", "open"],
   approved: ["closed", "open"],
   closed: [],
 };

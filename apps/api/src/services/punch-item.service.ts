@@ -7,6 +7,7 @@ import {
   PermissionDeniedError,
   PUNCH_ITEM_STATUS_TRANSITIONS,
   requirePermission,
+  resolveEffectiveLevel,
   type CreatePunchItemInput,
   type FieldConflict,
   type PermissionContext,
@@ -175,6 +176,18 @@ export async function transitionPunchItemStatus(
         "invalid_status_transition",
         `Cannot move a punch item from '${existing.status}' to '${input.toStatus}'`,
       );
+    }
+
+    // Procore's Final Approver role: once one is assigned, only that person
+    // (or someone with admin-level punch_list permission) may sign off the
+    // "approved" transition -- the assignee alone can't self-approve their fix.
+    if (
+      input.toStatus === "approved" &&
+      existing.finalApproverUserId &&
+      existing.finalApproverUserId !== userId &&
+      resolveEffectiveLevel(ctx, "punch_list") !== "admin"
+    ) {
+      throw new PermissionDeniedError("punch_list", "admin");
     }
 
     const [updated] = await tx

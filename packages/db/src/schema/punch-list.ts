@@ -6,6 +6,8 @@ import { drawingRevisions, markups } from "./documents";
 export const punchItemStatusEnum = pgEnum("punch_item_status", [
   "open",
   "ready_for_review",
+  "not_accepted",
+  "in_dispute",
   "approved",
   "closed",
 ]);
@@ -24,6 +26,8 @@ export const punchItems = pgTable(
     locationId: uuid("location_id").references(() => locations.id),
     assigneeUserId: uuid("assignee_user_id").references(() => users.id),
     assigneeCompanyId: uuid("assignee_company_id").references(() => companies.id),
+    /** Procore's Final Approver role: distinct from the assignee -- the person who must sign off before a punch item can move to "approved". */
+    finalApproverUserId: uuid("final_approver_user_id").references(() => users.id),
     tradeId: uuid("trade_id").references(() => trades.id),
     priority: punchItemPriorityEnum("priority").notNull().default("medium"),
     dueDate: timestamp("due_date", { withTimezone: true }),

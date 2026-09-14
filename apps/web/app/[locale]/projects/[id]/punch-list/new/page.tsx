@@ -22,6 +22,7 @@ export default function NewPunchItemPage() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [dueDate, setDueDate] = useState("");
+  const [finalApproverUserId, setFinalApproverUserId] = useState("");
   const [members, setMembers] = useState<Member[]>([]);
   const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export default function NewPunchItemPage() {
           description,
           priority,
           dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          finalApproverUserId: finalApproverUserId || undefined,
           distributionUserIds,
         }),
       });
@@ -91,6 +93,21 @@ export default function NewPunchItemPage() {
               onChange={(e) => setDueDate(e.target.value)}
               className="rounded-lg border-3 border-ink px-3 py-2"
             />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            {t("finalApprover")}
+            <select
+              value={finalApproverUserId}
+              onChange={(e) => setFinalApproverUserId(e.target.value)}
+              className="rounded-lg border-3 border-ink px-3 py-2"
+            >
+              <option value="">{t("unassigned")}</option>
+              {members.map((m) => (
+                <option key={m.userId} value={m.userId}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
           </label>
           <PersonnelPicker label={t("distribution")} members={members} selectedUserIds={distributionUserIds} onChange={setDistributionUserIds} />
           {error && <p className="text-sm text-maroon-700">{error}</p>}

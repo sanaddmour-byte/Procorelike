@@ -10,7 +10,7 @@ import Link, { type LinkProps } from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type PunchStatus = "open" | "ready_for_review" | "approved" | "closed";
+type PunchStatus = "open" | "ready_for_review" | "not_accepted" | "in_dispute" | "approved" | "closed";
 
 interface Member {
   userId: string;
@@ -23,6 +23,7 @@ interface PunchItemDetail {
   description: string;
   priority: "low" | "medium" | "high";
   status: PunchStatus;
+  finalApproverUserId: string | null;
   needsReview: boolean;
   conflictData: FieldConflict[] | null;
   history: { id: string; fromStatus: PunchStatus | null; toStatus: PunchStatus; note: string | null; changedAt: string }[];
@@ -59,9 +60,27 @@ export default function PunchItemDetailPage() {
     return {
       open: t("statusOpen"),
       ready_for_review: t("statusReadyForReview"),
+      not_accepted: t("statusNotAccepted"),
+      in_dispute: t("statusInDispute"),
       approved: t("statusApproved"),
       closed: t("statusClosed"),
     }[status];
+  }
+
+  async function handleSetFinalApprover(finalApproverUserId: string): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      await apiJson(`/punch-items/${params.itemId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ finalApproverUserId: finalApproverUserId || undefined }),
+      });
+      load();
+    } catch (err) {
+      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function transition(toStatus: PunchStatus): Promise<void> {
@@ -113,9 +132,23 @@ export default function PunchItemDetailPage() {
               </div>
             )}
 
-            <div className="mb-4 flex items-center gap-2">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="text-sm text-navy-600">{t("status")}:</span>
               <span className="rounded bg-orange-100 px-2 py-0.5 text-sm">{statusLabel(item.status)}</span>
+              <span className="text-sm text-navy-600">· {t("finalApprover")}:</span>
+              <select
+                value={item.finalApproverUserId ?? ""}
+                disabled={busy}
+                onChange={(e) => void handleSetFinalApprover(e.target.value)}
+                className="rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800 disabled:opacity-50"
+              >
+                <option value="">{t("unassigned")}</option>
+                {members.map((m) => (
+                  <option key={m.userId} value={m.userId}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex flex-wrap gap-2">

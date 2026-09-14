@@ -14,7 +14,7 @@ interface PunchItem {
   number: string;
   description: string;
   priority: "low" | "medium" | "high";
-  status: "open" | "ready_for_review" | "approved" | "closed";
+  status: "open" | "ready_for_review" | "not_accepted" | "in_dispute" | "approved" | "closed";
   needsReview: boolean;
 }
 
@@ -59,6 +59,8 @@ export default function PunchListPage() {
     return {
       open: t("statusOpen"),
       ready_for_review: t("statusReadyForReview"),
+      not_accepted: t("statusNotAccepted"),
+      in_dispute: t("statusInDispute"),
       approved: t("statusApproved"),
       closed: t("statusClosed"),
     }[status];
@@ -105,6 +107,8 @@ export default function PunchListPage() {
               <option value="">{t("filterAll")}</option>
               <option value="open">{t("statusOpen")}</option>
               <option value="ready_for_review">{t("statusReadyForReview")}</option>
+              <option value="not_accepted">{t("statusNotAccepted")}</option>
+              <option value="in_dispute">{t("statusInDispute")}</option>
               <option value="approved">{t("statusApproved")}</option>
               <option value="closed">{t("statusClosed")}</option>
             </select>
