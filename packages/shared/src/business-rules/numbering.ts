@@ -42,3 +42,7 @@ export function formatTmTicketNumber(value: number): string {
 export function formatCorrespondenceNumber(value: number): string {
   return formatSequenceNumber("COR", value, 4);
 }
+
+export function formatTransmittalNumber(value: number): string {
+  return formatSequenceNumber("TR", value, 4);
+}

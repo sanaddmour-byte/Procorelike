@@ -106,7 +106,8 @@
     "tmTickets": "T&M Tickets",
     "correspondence": "Correspondence",
     "backToProjects": "Back to projects",
-    "permissions": "Permissions"
+    "permissions": "Permissions",
+    "transmittals": "Transmittals"
   },
   "DailyLog": {
     "title": "Daily Logs",
@@ -235,7 +236,11 @@
     "ocrNoMatch": "Couldn't detect a sheet number — enter it manually.",
     "back": "Back to drawings",
     "referencedByRfis": "Referenced by RFIs",
-    "noReferencingRfis": "No RFIs reference this drawing yet."
+    "noReferencingRfis": "No RFIs reference this drawing yet.",
+    "publishSet": "Publish drawing set",
+    "setName": "Set name",
+    "setPublishedDate": "Published date",
+    "setSheets": "sheets"
   },
   "Rfis": {
     "title": "RFIs",
@@ -821,5 +826,31 @@
     "noTemplate": "— none —",
     "addOverride": "Add override:",
     "set": "Set"
+  },
+  "Transmittals": {
+    "back": "Back to transmittals",
+    "title": "Transmittals",
+    "newTransmittal": "New transmittal",
+    "createTransmittal": "Create transmittal",
+    "subject": "Subject",
+    "purpose": "Purpose",
+    "purpose_for_review": "For review",
+    "purpose_for_approval": "For approval",
+    "purpose_for_information": "For information",
+    "purpose_as_requested": "As requested",
+    "purpose_for_construction": "For construction",
+    "purpose_for_bid": "For bid",
+    "message": "Message (optional)",
+    "items": "Items",
+    "documentLabel": "Document",
+    "recipients": "Recipients",
+    "wholeCompany": "Whole company",
+    "empty": "No transmittals have been sent on this project yet.",
+    "statusDraft": "Draft",
+    "statusSent": "Sent",
+    "send": "Send transmittal",
+    "acknowledge": "Acknowledge receipt",
+    "acknowledged": "Acknowledged",
+    "notAcknowledged": "Not yet acknowledged"
   }
 }

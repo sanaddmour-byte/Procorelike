@@ -17,6 +17,7 @@ import { correspondenceRouter } from "./routes/correspondence.routes";
 import { cpmScheduleRouter } from "./routes/cpm-schedule.routes";
 import { dailyLogsRouter } from "./routes/daily-logs.routes";
 import { documentsRouter } from "./routes/documents.routes";
+import { drawingSetsRouter, transmittalsRouter } from "./routes/document-control.routes";
 import { drawingsRouter } from "./routes/drawings.routes";
 import { healthRouter } from "./routes/health.routes";
 import { inspectionsRouter } from "./routes/inspections.routes";
@@ -93,6 +94,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/pdf-sketches", pdfSketchesRouter(clients.appDb.db, env));
   app.use("/permission-templates", permissionTemplatesRouter(clients.appDb.db, env));
   app.use("/permission-overrides", permissionOverridesRouter(clients.appDb.db, env));
+  app.use("/transmittals", transmittalsRouter(clients.appDb.db, env));
+  app.use("/drawing-sets", drawingSetsRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 

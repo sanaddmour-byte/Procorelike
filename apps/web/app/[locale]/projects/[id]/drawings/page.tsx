@@ -18,6 +18,13 @@ interface Drawing {
   currentRevisionId: string | null;
 }
 
+interface DrawingSet {
+  id: string;
+  name: string;
+  publishedDate: string;
+  drawingRevisionIds: string[];
+}
+
 export default function DrawingsPage() {
   const t = useTranslations("Drawings");
   const tc = useTranslations("Common");
@@ -26,6 +33,7 @@ export default function DrawingsPage() {
   const params = useParams<{ id: string }>();
 
   const [drawings, setDrawings] = useState<Drawing[] | null>(null);
+  const [drawingSets, setDrawingSets] = useState<DrawingSet[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [sheetNumber, setSheetNumber] = useState("");
@@ -35,10 +43,19 @@ export default function DrawingsPage() {
   const [ocrRunning, setOcrRunning] = useState(false);
   const [ocrError, setOcrError] = useState(false);
 
+  const [showSetForm, setShowSetForm] = useState(false);
+  const [setName, setSetName] = useState("");
+  const [setDate, setSetDate] = useState("");
+  const [setDrawingIds, setSetDrawingIds] = useState<string[]>([]);
+  const [publishingSet, setPublishingSet] = useState(false);
+
   function load(): void {
     apiJson<Drawing[]>(`/drawings?projectId=${params.id}`)
       .then(setDrawings)
       .catch(() => setError(tc("errorGeneric")));
+    apiJson<DrawingSet[]>(`/drawing-sets?projectId=${params.id}`)
+      .then(setDrawingSets)
+      .catch(() => undefined);
   }
 
   useEffect(() => {
@@ -48,6 +65,33 @@ export default function DrawingsPage() {
     }
     load();
   }, [router, locale, params.id]);
+
+  function toggleSetDrawing(id: string): void {
+    setSetDrawingIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  async function handlePublishSet(e: FormEvent): Promise<void> {
+    e.preventDefault();
+    setPublishingSet(true);
+    try {
+      const drawingRevisionIds = setDrawingIds
+        .map((id) => drawings?.find((d) => d.id === id)?.currentRevisionId)
+        .filter((id): id is string => Boolean(id));
+      await apiJson("/drawing-sets", {
+        method: "POST",
+        body: JSON.stringify({ projectId: params.id, name: setName, publishedDate: setDate, drawingRevisionIds }),
+      });
+      setSetName("");
+      setSetDate("");
+      setSetDrawingIds([]);
+      setShowSetForm(false);
+      load();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setPublishingSet(false);
+    }
+  }
 
   async function handleOcrFile(file: File | undefined): Promise<void> {
     if (!file) return;
@@ -91,10 +135,56 @@ export default function DrawingsPage() {
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-            {t("newButton")}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowSetForm((s) => !s)} className="rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm font-semibold text-navy-800 brutal-interactive">
+              {t("publishSet")}
+            </button>
+            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+              {t("newButton")}
+            </button>
+          </div>
         </div>
+
+        {showSetForm && (
+          <form onSubmit={(e) => void handlePublishSet(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-cream shadow-brutal-sm p-4">
+            <label className="flex flex-col gap-1 text-sm">
+              {t("setName")}
+              <input required value={setName} onChange={(e) => setSetName(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("setPublishedDate")}
+              <input required type="date" value={setDate} onChange={(e) => setSetDate(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <p className="text-sm font-semibold text-navy-800">{t("setSheets")}</p>
+            <div className="grid gap-1 sm:grid-cols-2">
+              {drawings
+                ?.filter((d) => d.currentRevisionId)
+                .map((d) => (
+                  <label key={d.id} className="flex items-center gap-2 text-xs">
+                    <input type="checkbox" checked={setDrawingIds.includes(d.id)} onChange={() => toggleSetDrawing(d.id)} />
+                    {d.sheetNumber} — {d.title}
+                  </label>
+                ))}
+            </div>
+            <button
+              type="submit"
+              disabled={publishingSet || setDrawingIds.length === 0}
+              className="self-start rounded-lg border-3 border-ink bg-navy-700 px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {publishingSet ? tc("saving") : t("publishSet")}
+            </button>
+          </form>
+        )}
+
+        {drawingSets.length > 0 && (
+          <ul className="mb-6 flex flex-col gap-2">
+            {drawingSets.map((s) => (
+              <li key={s.id} className="rounded-lg border-2 border-orange-200 bg-white px-3 py-2 text-sm">
+                <span className="font-semibold">{s.name}</span> — {s.publishedDate} ({s.drawingRevisionIds.length} {t("setSheets")})
+              </li>
+            ))}
+          </ul>
+        )}
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

@@ -106,7 +106,8 @@
     "tmTickets": "تذاكر الوقت والمواد",
     "correspondence": "المراسلات",
     "backToProjects": "العودة إلى المشاريع",
-    "permissions": "الصلاحيات"
+    "permissions": "الصلاحيات",
+    "transmittals": "خطابات الإحالة"
   },
   "DailyLog": {
     "title": "سجلات الأعمال اليومية",
@@ -235,7 +236,11 @@
     "ocrNoMatch": "تعذر اكتشاف رقم اللوحة — أدخله يدويًا.",
     "back": "العودة إلى المخططات",
     "referencedByRfis": "مُشار إليه من طلبات المعلومات",
-    "noReferencingRfis": "لا توجد طلبات معلومات تشير إلى هذا المخطط بعد."
+    "noReferencingRfis": "لا توجد طلبات معلومات تشير إلى هذا المخطط بعد.",
+    "publishSet": "نشر مجموعة مخططات",
+    "setName": "اسم المجموعة",
+    "setPublishedDate": "تاريخ النشر",
+    "setSheets": "لوحات"
   },
   "Rfis": {
     "title": "طلبات المعلومات",
@@ -821,5 +826,31 @@
     "noTemplate": "— بدون —",
     "addOverride": "إضافة استثناء:",
     "set": "تعيين"
+  },
+  "Transmittals": {
+    "back": "العودة إلى خطابات الإحالة",
+    "title": "خطابات الإحالة",
+    "newTransmittal": "خطاب إحالة جديد",
+    "createTransmittal": "إنشاء خطاب الإحالة",
+    "subject": "الموضوع",
+    "purpose": "الغرض",
+    "purpose_for_review": "للمراجعة",
+    "purpose_for_approval": "للموافقة",
+    "purpose_for_information": "للعلم",
+    "purpose_as_requested": "حسب الطلب",
+    "purpose_for_construction": "للتنفيذ",
+    "purpose_for_bid": "للمناقصة",
+    "message": "رسالة (اختياري)",
+    "items": "العناصر",
+    "documentLabel": "مستند",
+    "recipients": "المستلمون",
+    "wholeCompany": "الشركة بأكملها",
+    "empty": "لم يتم إرسال أي خطابات إحالة في هذا المشروع بعد.",
+    "statusDraft": "مسودة",
+    "statusSent": "تم الإرسال",
+    "send": "إرسال خطاب الإحالة",
+    "acknowledge": "تأكيد الاستلام",
+    "acknowledged": "تم التأكيد",
+    "notAcknowledged": "لم يتم التأكيد بعد"
   }
 }

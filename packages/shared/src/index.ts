@@ -37,6 +37,7 @@ export * from "./schemas/record-link.schema";
 export * from "./schemas/pdf-comment.schema";
 export * from "./schemas/pdf-sketch.schema";
 export * from "./schemas/cpm-schedule.schema";
+export * from "./schemas/document-control.schema";
 
 export * from "./schedule/types";
 export * from "./schedule/validate";

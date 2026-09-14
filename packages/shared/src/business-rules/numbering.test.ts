@@ -7,6 +7,7 @@ import {
   formatSequenceNumber,
   formatSubmittalNumber,
   formatTmTicketNumber,
+  formatTransmittalNumber,
 } from "./numbering";
 
 describe("numbering formatters", () => {
@@ -32,6 +33,10 @@ describe("numbering formatters", () => {
 
   it("formats a correspondence number zero-padded to 4 digits", () => {
     expect(formatCorrespondenceNumber(15)).toBe("COR-0015");
+  });
+
+  it("formats a transmittal number zero-padded to 4 digits", () => {
+    expect(formatTransmittalNumber(3)).toBe("TR-0003");
   });
 
   it("does not truncate values wider than the pad length", () => {

@@ -332,7 +332,8 @@ DECLARE
     'payment_applications', 'meetings',
     'manual_schedule_tasks', 'safety_incidents', 'safety_observations',
     'tm_tickets', 'correspondence',
-    'schedules', 'calendars', 'lookahead_plans'
+    'schedules', 'calendars', 'lookahead_plans',
+    'transmittals', 'drawing_sets'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP
@@ -492,7 +493,10 @@ DECLARE
     ARRAY['task_baseline_values', 'task_id', 'schedule_tasks'],
     ARRAY['lookahead_commitments', 'lookahead_plan_id', 'lookahead_plans'],
     ARRAY['schedule_constraints', 'task_id', 'schedule_tasks'],
-    ARRAY['schedule_progress_updates', 'task_id', 'schedule_tasks']
+    ARRAY['schedule_progress_updates', 'task_id', 'schedule_tasks'],
+    ARRAY['transmittal_items', 'transmittal_id', 'transmittals'],
+    ARRAY['transmittal_recipients', 'transmittal_id', 'transmittals'],
+    ARRAY['drawing_set_items', 'drawing_set_id', 'drawing_sets']
   ];
   row_ text[];
 BEGIN

@@ -14,6 +14,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { key: "directory", label: t("directory"), href: `/${locale}/projects/${projectId}/directory` },
     { key: "documents", label: t("documents"), href: `/${locale}/projects/${projectId}/documents` },
     { key: "drawings", label: t("drawings"), href: `/${locale}/projects/${projectId}/drawings` },
+    { key: "transmittals", label: t("transmittals"), href: `/${locale}/projects/${projectId}/transmittals` },
     { key: "rfis", label: t("rfis"), href: `/${locale}/projects/${projectId}/rfis` },
     { key: "submittals", label: t("submittals"), href: `/${locale}/projects/${projectId}/submittals` },
     { key: "inspections", label: t("inspections"), href: `/${locale}/projects/${projectId}/inspections` },
