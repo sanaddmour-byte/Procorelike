@@ -10,10 +10,12 @@ export async function generateRfiPdf(data: RfiReportData): Promise<Uint8Array> {
 
   pdf.drawLine(`Project: ${data.projectName}`);
   pdf.drawLine(`Status: ${data.status}${data.isOverdue ? " (OVERDUE)" : ""}`, { color: data.isOverdue ? [0.6, 0.2, 0.2] : undefined });
+  if (data.isPrivate) pdf.drawLine("Private", { color: [0.6, 0.2, 0.2] });
+  if (data.reference) pdf.drawLine(`Reference: ${data.reference}`);
   if (data.dueDate) pdf.drawLine(`Due: ${data.dueDate.toISOString().slice(0, 10)}`);
   if (data.ballInCourtName) pdf.drawLine(`Ball in court: ${data.ballInCourtName}${data.ballInCourtCompanyName ? ` (${data.ballInCourtCompanyName})` : ""}`);
-  if (data.costImpactFlag) pdf.drawLine("Cost impact: flagged", { color: [0.6, 0.4, 0.05] });
-  if (data.scheduleImpactFlag) pdf.drawLine("Schedule impact: flagged", { color: [0.6, 0.4, 0.05] });
+  if (data.costImpact !== "na") pdf.drawLine(`Cost impact: ${data.costImpact === "yes" ? "Yes" : "No"}`, { color: data.costImpact === "yes" ? [0.6, 0.4, 0.05] : undefined });
+  if (data.scheduleImpact !== "na") pdf.drawLine(`Schedule impact: ${data.scheduleImpact === "yes" ? "Yes" : "No"}`, { color: data.scheduleImpact === "yes" ? [0.6, 0.4, 0.05] : undefined });
   pdf.addSpacer(4);
 
   pdf.drawLine("Question", { size: 13, bold: true, gap: 8 });

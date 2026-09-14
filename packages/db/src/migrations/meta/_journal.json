@@ -169,6 +169,20 @@
       "when": 1789394450358,
       "tag": "0023_lovely_fenris",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789406405268,
+      "tag": "0024_premium_silvermane",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1789406456955,
+      "tag": "0025_tan_mole_man",
+      "breakpoints": true
     }
   ]
 }

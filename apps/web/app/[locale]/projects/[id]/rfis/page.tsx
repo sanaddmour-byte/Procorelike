@@ -20,6 +20,7 @@ interface Rfi {
   ballInCourtUserId: string | null;
   dueDate: string | null;
   isOverdue: boolean;
+  isPrivate: boolean;
 }
 
 interface Member {
@@ -46,6 +47,10 @@ export default function RfisPage() {
   const [question, setQuestion] = useState("");
   const [ballInCourtUserId, setBallInCourtUserId] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [reference, setReference] = useState("");
+  const [costImpact, setCostImpact] = useState<"yes" | "no" | "na">("na");
+  const [scheduleImpact, setScheduleImpact] = useState<"yes" | "no" | "na">("na");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
@@ -82,6 +87,10 @@ export default function RfisPage() {
           question,
           ballInCourtUserId: ballInCourtUserId || undefined,
           dueDate: dueDate || undefined,
+          reference: reference || undefined,
+          costImpact,
+          scheduleImpact,
+          isPrivate,
           distributionUserIds,
         }),
       });
@@ -89,6 +98,10 @@ export default function RfisPage() {
       setQuestion("");
       setBallInCourtUserId("");
       setDueDate("");
+      setReference("");
+      setCostImpact("na");
+      setScheduleImpact("na");
+      setIsPrivate(false);
       setDistributionUserIds([]);
       setShowForm(false);
       load();
@@ -154,6 +167,32 @@ export default function RfisPage() {
               {t("dueDate")}
               <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
+            <label className="flex flex-col gap-1 text-sm">
+              {t("reference")}
+              <input value={reference} onChange={(e) => setReference(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+            </label>
+            <div className="flex flex-wrap gap-3">
+              <label className="flex flex-col gap-1 text-sm">
+                {t("costImpact")}
+                <select value={costImpact} onChange={(e) => setCostImpact(e.target.value as typeof costImpact)} className="rounded-lg border-3 border-ink px-3 py-2">
+                  <option value="na">{t("impactNa")}</option>
+                  <option value="yes">{t("impactYes")}</option>
+                  <option value="no">{t("impactNo")}</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                {t("scheduleImpact")}
+                <select value={scheduleImpact} onChange={(e) => setScheduleImpact(e.target.value as typeof scheduleImpact)} className="rounded-lg border-3 border-ink px-3 py-2">
+                  <option value="na">{t("impactNa")}</option>
+                  <option value="yes">{t("impactYes")}</option>
+                  <option value="no">{t("impactNo")}</option>
+                </select>
+              </label>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} />
+              {t("private")}
+            </label>
             <PersonnelPicker label={t("distribution")} members={members} selectedUserIds={distributionUserIds} onChange={setDistributionUserIds} />
             <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
@@ -176,6 +215,7 @@ export default function RfisPage() {
                     {rfi.number} — {rfi.subject}
                   </span>
                   <div className="flex shrink-0 gap-2">
+                    {rfi.isPrivate && <span className="rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("private")}</span>}
                     {rfi.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
                     <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
                       {statusLabel(rfi.status, t)}

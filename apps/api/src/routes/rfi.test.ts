@@ -198,4 +198,73 @@ describe("RFI lifecycle across three users", () => {
     const ziadList = await request(app).get("/rfis").query({ projectId }).set("authorization", `Bearer ${ziadToken}`);
     expect(ziadList.body.some((r: { id: string }) => r.id === rfiId)).toBe(false);
   });
+
+  it("supports reference, tri-state cost/schedule impact, and Procore-style Private visibility", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test"); // project_manager
+    const rana = memberByEmail("rana.odeh@siteops.test");
+    const lina = memberByEmail("lina.kanaan@siteops.test"); // project_engineer: "standard" on rfis, not admin
+
+    const createRes = await request(app)
+      .post("/rfis")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({
+        projectId,
+        subject: "Private RFI: elevator shaft clearance",
+        question: "Confirm clearance at the elevator shaft.",
+        ballInCourtUserId: rana.userId,
+        reference: "Dwg A-501",
+        costImpact: "yes",
+        scheduleImpact: "no",
+        isPrivate: true,
+      });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.reference).toBe("Dwg A-501");
+    expect(createRes.body.costImpact).toBe("yes");
+    expect(createRes.body.scheduleImpact).toBe("no");
+    expect(createRes.body.isPrivate).toBe(true);
+    const rfiId = createRes.body.id as string;
+
+    // A default (non-private) RFI's impacts default to "na", not a boolean flag.
+    const plainRes = await request(app)
+      .post("/rfis")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, subject: "Plain RFI", question: "Any impact here?" });
+    expect(plainRes.body.costImpact).toBe("na");
+    expect(plainRes.body.scheduleImpact).toBe("na");
+    expect(plainRes.body.isPrivate).toBe(false);
+
+    // Lina is GC staff (not a subcontractor, so unaffected by the subcontractor RLS scope)
+    // but only has "standard" (non-admin) RFI permission and isn't the creator, ball-in-court,
+    // or distributed -- Private hides it from her specifically.
+    const linaToken = await loginAs("lina.kanaan@siteops.test");
+    const linaSeesIt = await request(app).get(`/rfis/${rfiId}`).set("authorization", `Bearer ${linaToken}`);
+    expect(linaSeesIt.status).toBe(404);
+    const linaList = await request(app).get("/rfis").query({ projectId }).set("authorization", `Bearer ${linaToken}`);
+    expect(linaList.body.some((r: { id: string }) => r.id === rfiId)).toBe(false);
+
+    // Sara has admin-level RFI permission (owner_admin), so Private doesn't hide it from her.
+    const saraToken = await loginAs("sara.haddad@siteops.test");
+    const saraSeesIt = await request(app).get(`/rfis/${rfiId}`).set("authorization", `Bearer ${saraToken}`);
+    expect(saraSeesIt.status).toBe(200);
+
+    // Rana is the ball-in-court user, so she can see it despite not being an admin.
+    const ranaToken = await loginAs("rana.odeh@siteops.test");
+    const ranaSeesIt = await request(app).get(`/rfis/${rfiId}`).set("authorization", `Bearer ${ranaToken}`);
+    expect(ranaSeesIt.status).toBe(200);
+
+    // Adding Lina to the distribution list (via a second private RFI) grants her visibility.
+    const distributedRes = await request(app)
+      .post("/rfis")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({
+        projectId,
+        subject: "Private RFI with Lina distributed",
+        question: "Same clearance question, cc'd to Lina.",
+        isPrivate: true,
+        distributionUserIds: [lina.userId],
+      });
+    const distributedRfiId = distributedRes.body.id as string;
+    const linaSeesDistributed = await request(app).get(`/rfis/${distributedRfiId}`).set("authorization", `Bearer ${linaToken}`);
+    expect(linaSeesDistributed.status).toBe(200);
+  });
 });

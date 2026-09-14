@@ -2,10 +2,12 @@ import { nextSequenceNumber, schema, withRequestContext, type Database } from "@
 import {
   formatRfiNumber,
   requirePermission,
+  resolveEffectiveLevel,
   RFI_STATUS_TRANSITIONS,
   type CreateRfiInput,
   type CreateRfiResponseInput,
   type PermissionContext,
+  type RfiImpact,
   type RfiStatus,
   type TransitionRfiStatusInput,
   type UpdateRfiInput,
@@ -35,6 +37,20 @@ function withOverdue(rfi: RfiRow): RfiWithOverdue {
   return { ...rfi, isOverdue };
 }
 
+/**
+ * Procore's Private RFI flag: hides the RFI from everyone except the
+ * creator, its current ball-in-court user, anyone on its distribution
+ * list, and a caller with admin-level RFI permission -- narrower than the
+ * subcontractor-only RLS scoping (rfis_subcontractor_scope), which stays
+ * in effect regardless of this flag.
+ */
+function canViewPrivateRfi(userId: string, ctx: PermissionContext, rfi: RfiRow, distribution: RfiDistributionRow[]): boolean {
+  if (!rfi.isPrivate) return true;
+  if (resolveEffectiveLevel(ctx, "rfis") === "admin") return true;
+  if (rfi.createdBy === userId || rfi.ballInCourtUserId === userId) return true;
+  return distribution.some((d) => d.userId === userId);
+}
+
 export async function createRfi(
   appDb: Database,
   userId: string,
@@ -54,8 +70,10 @@ export async function createRfi(
         ballInCourtUserId: input.ballInCourtUserId,
         ballInCourtCompanyId: input.ballInCourtCompanyId,
         dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
-        costImpactFlag: input.costImpactFlag,
-        scheduleImpactFlag: input.scheduleImpactFlag,
+        costImpact: input.costImpact,
+        scheduleImpact: input.scheduleImpact,
+        isPrivate: input.isPrivate,
+        reference: input.reference,
         createdBy: userId,
       })
       .returning();
@@ -91,7 +109,12 @@ export async function listRfis(
   requirePermission(ctx, "rfis", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     const rows = await tx.select().from(schema.rfis).where(eq(schema.rfis.projectId, projectId));
-    return rows.map(withOverdue);
+    const privateIds = rows.filter((r) => r.isPrivate).map((r) => r.id);
+    const distribution = privateIds.length > 0 ? await tx.select().from(schema.rfiDistribution).where(inArray(schema.rfiDistribution.rfiId, privateIds)) : [];
+    const distributionByRfiId = new Map<string, RfiDistributionRow[]>();
+    for (const d of distribution) distributionByRfiId.set(d.rfiId, [...(distributionByRfiId.get(d.rfiId) ?? []), d]);
+
+    return rows.filter((r) => canViewPrivateRfi(userId, ctx, r, distributionByRfiId.get(r.id) ?? [])).map(withOverdue);
   });
 }
 
@@ -105,6 +128,7 @@ export async function getRfi(appDb: Database, userId: string, ctx: PermissionCon
       tx.select().from(schema.rfiResponses).where(eq(schema.rfiResponses.rfiId, rfiId)).orderBy(desc(schema.rfiResponses.createdAt)),
       tx.select().from(schema.rfiDistribution).where(eq(schema.rfiDistribution.rfiId, rfiId)),
     ]);
+    if (!canViewPrivateRfi(userId, ctx, rfi, distribution)) return undefined;
 
     return { ...withOverdue(rfi), responses, distribution };
   });
@@ -130,8 +154,10 @@ export async function updateRfi(
         ballInCourtUserId: input.ballInCourtUserId ?? existing.ballInCourtUserId,
         ballInCourtCompanyId: input.ballInCourtCompanyId ?? existing.ballInCourtCompanyId,
         dueDate: input.dueDate ? new Date(input.dueDate) : existing.dueDate,
-        costImpactFlag: input.costImpactFlag ?? existing.costImpactFlag,
-        scheduleImpactFlag: input.scheduleImpactFlag ?? existing.scheduleImpactFlag,
+        costImpact: input.costImpact ?? existing.costImpact,
+        scheduleImpact: input.scheduleImpact ?? existing.scheduleImpact,
+        isPrivate: input.isPrivate ?? existing.isPrivate,
+        reference: input.reference ?? existing.reference,
         updatedBy: userId,
         updatedAt: new Date(),
         serverRevision: existing.serverRevision + 1,
@@ -254,8 +280,10 @@ export interface RfiReportData extends ReportBranding {
   ballInCourtName: string | null;
   ballInCourtCompanyName: string | null;
   dueDate: Date | null;
-  costImpactFlag: boolean;
-  scheduleImpactFlag: boolean;
+  costImpact: RfiImpact;
+  scheduleImpact: RfiImpact;
+  isPrivate: boolean;
+  reference: string | null;
   responses: RfiReportResponse[];
 }
 
@@ -296,8 +324,10 @@ export async function getRfiReportData(appDb: Database, userId: string, ctx: Per
       ballInCourtName: ballInCourtUser?.name ?? null,
       ballInCourtCompanyName: ballInCourtCompany?.name ?? null,
       dueDate: rfi.dueDate,
-      costImpactFlag: rfi.costImpactFlag,
-      scheduleImpactFlag: rfi.scheduleImpactFlag,
+      costImpact: rfi.costImpact,
+      scheduleImpact: rfi.scheduleImpact,
+      isPrivate: rfi.isPrivate,
+      reference: rfi.reference,
       responses: responseRows.map((r) => ({
         respondedByName: responderNameById.get(r.respondedBy) ?? "Unknown",
         responseText: r.responseText,

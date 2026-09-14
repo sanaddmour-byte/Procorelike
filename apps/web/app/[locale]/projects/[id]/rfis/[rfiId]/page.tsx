@@ -34,6 +34,8 @@ interface RfiResponse {
   createdAt: string;
 }
 
+type RfiImpact = "yes" | "no" | "na";
+
 interface RfiDetail {
   id: string;
   projectId: string;
@@ -43,8 +45,10 @@ interface RfiDetail {
   status: RfiStatus;
   ballInCourtUserId: string | null;
   dueDate: string | null;
-  costImpactFlag: boolean;
-  scheduleImpactFlag: boolean;
+  costImpact: RfiImpact;
+  scheduleImpact: RfiImpact;
+  isPrivate: boolean;
+  reference: string | null;
   isOverdue: boolean;
   responses: RfiResponse[];
   distribution: { id: string; userId: string | null; companyId: string | null }[];
@@ -72,6 +76,10 @@ function recordHref(locale: string, projectId: string, recordType: LinkedComment
 
 function statusLabel(status: RfiStatus, t: (key: string) => string): string {
   return { draft: t("statusDraft"), open: t("statusOpen"), answered: t("statusAnswered"), closed: t("statusClosed") }[status];
+}
+
+function impactOptionLabel(impact: RfiImpact, t: (key: string) => string): string {
+  return { na: t("impactNa"), yes: t("impactYes"), no: t("impactNo") }[impact];
 }
 
 function transitionLabel(from: RfiStatus, to: RfiStatus, t: (key: string) => string): string {
@@ -192,6 +200,15 @@ export default function RfiDetailScreen() {
     }
   }
 
+  async function handleUpdateImpact(field: "costImpact" | "scheduleImpact", value: RfiImpact): Promise<void> {
+    try {
+      await apiJson(`/rfis/${params.rfiId}`, { method: "PATCH", body: JSON.stringify({ [field]: value }) });
+      await load();
+    } catch {
+      setError(tc("errorGeneric"));
+    }
+  }
+
   if (!rfi) {
     return (
       <>
@@ -230,6 +247,7 @@ export default function RfiDetailScreen() {
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
             {rfi.number} — {rfi.subject}
           </h1>
+          {rfi.isPrivate && <span className="rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("private")}</span>}
           {rfi.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
         </div>
         <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-navy-600">
@@ -259,15 +277,45 @@ export default function RfiDetailScreen() {
               </span>
             </>
           )}
+          {rfi.reference && (
+            <>
+              <span>·</span>
+              <span>
+                {t("reference")}: {rfi.reference}
+              </span>
+            </>
+          )}
+        </div>
+        <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-navy-600">
+          <span className="flex items-center gap-1.5">
+            {t("costImpact")}:
+            <select
+              value={rfi.costImpact}
+              onChange={(e) => void handleUpdateImpact("costImpact", e.target.value as RfiImpact)}
+              className="rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800"
+            >
+              <option value="na">{impactOptionLabel("na", t)}</option>
+              <option value="yes">{impactOptionLabel("yes", t)}</option>
+              <option value="no">{impactOptionLabel("no", t)}</option>
+            </select>
+          </span>
+          <span className="flex items-center gap-1.5">
+            {t("scheduleImpact")}:
+            <select
+              value={rfi.scheduleImpact}
+              onChange={(e) => void handleUpdateImpact("scheduleImpact", e.target.value as RfiImpact)}
+              className="rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800"
+            >
+              <option value="na">{impactOptionLabel("na", t)}</option>
+              <option value="yes">{impactOptionLabel("yes", t)}</option>
+              <option value="no">{impactOptionLabel("no", t)}</option>
+            </select>
+          </span>
         </div>
         {error && <p className="text-maroon-700">{error}</p>}
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
           <p className="whitespace-pre-wrap">{rfi.question}</p>
-          <div className="mt-3 flex gap-3 text-xs text-navy-600">
-            {rfi.costImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("costImpact")}</span>}
-            {rfi.scheduleImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("scheduleImpact")}</span>}
-          </div>
         </div>
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

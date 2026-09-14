@@ -3,6 +3,10 @@ import { z } from "zod";
 export const rfiStatusSchema = z.enum(["draft", "open", "answered", "closed"]);
 export type RfiStatus = z.infer<typeof rfiStatusSchema>;
 
+/** Matches Procore's Cost Impact / Schedule Impact fields: Yes, No, or N/A -- not a plain flag. */
+export const rfiImpactSchema = z.enum(["yes", "no", "na"]);
+export type RfiImpact = z.infer<typeof rfiImpactSchema>;
+
 export const createRfiSchema = z
   .object({
     projectId: z.string().uuid(),
@@ -11,8 +15,12 @@ export const createRfiSchema = z
     ballInCourtUserId: z.string().uuid().optional(),
     ballInCourtCompanyId: z.string().uuid().optional(),
     dueDate: z.string().date().optional(),
-    costImpactFlag: z.boolean().default(false),
-    scheduleImpactFlag: z.boolean().default(false),
+    costImpact: rfiImpactSchema.default("na"),
+    scheduleImpact: rfiImpactSchema.default("na"),
+    /** Restricts visibility to the creator, ball-in-court user, distribution list, and admin-level RFI permission -- see rfi.service.ts's canViewPrivateRfi. */
+    isPrivate: z.boolean().default(false),
+    /** Free-text reference tag, e.g. a spec section or drawing callout. */
+    reference: z.string().max(200).optional(),
     /** Cc list at creation time — drives the subcontractor visibility rule (docs/DATA_MODEL.md §10). More recipients can be added later via a separate distribution endpoint. */
     distributionUserIds: z.array(z.string().uuid()).max(50).default([]),
     distributionCompanyIds: z.array(z.string().uuid()).max(50).default([]),

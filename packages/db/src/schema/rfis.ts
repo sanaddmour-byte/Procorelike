@@ -4,6 +4,9 @@ import { companies, projects, users } from "./core";
 
 export const rfiStatusEnum = pgEnum("rfi_status", ["draft", "open", "answered", "closed"]);
 
+/** Matches Procore's Cost Impact / Schedule Impact fields, which are Yes/No/N/A rather than a plain flag. */
+export const rfiImpactEnum = pgEnum("rfi_impact", ["yes", "no", "na"]);
+
 export const rfis = pgTable(
   "rfis",
   {
@@ -18,8 +21,12 @@ export const rfis = pgTable(
     ballInCourtUserId: uuid("ball_in_court_user_id").references(() => users.id),
     ballInCourtCompanyId: uuid("ball_in_court_company_id").references(() => companies.id),
     dueDate: timestamp("due_date", { withTimezone: true }),
-    costImpactFlag: boolean("cost_impact_flag").notNull().default(false),
-    scheduleImpactFlag: boolean("schedule_impact_flag").notNull().default(false),
+    costImpact: rfiImpactEnum("cost_impact").notNull().default("na"),
+    scheduleImpact: rfiImpactEnum("schedule_impact").notNull().default("na"),
+    /** Procore's Private flag: restricts visibility to the creator, ball-in-court user, distribution list, and admin-level RFI permission -- see rfi.service.ts's canViewPrivateRfi. */
+    isPrivate: boolean("is_private").notNull().default(false),
+    /** Free-text reference tag, e.g. a spec section or drawing callout -- optional, not validated against other records. */
+    reference: varchar("reference", { length: 200 }),
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id),
