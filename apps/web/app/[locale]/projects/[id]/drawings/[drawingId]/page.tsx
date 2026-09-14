@@ -152,6 +152,19 @@ export default function DrawingDetailScreen() {
     }
   }
 
+  async function handleAddFreehand(points: [number, number][], color: string): Promise<void> {
+    if (!currentRevision) return;
+    try {
+      const created = await apiJson<MarkupPin>(`/drawings/revisions/${currentRevision.id}/markups`, {
+        method: "POST",
+        body: JSON.stringify({ coords: { type: "freehand", points, color } }),
+      });
+      setMarkups((prev) => [...prev, created]);
+    } catch {
+      setError(tc("errorGeneric"));
+    }
+  }
+
   if (!drawing || !revisions) {
     return (
       <>
@@ -183,7 +196,16 @@ export default function DrawingDetailScreen() {
           {currentRevision && pdfUrl ? (
             <>
               <p className="mb-2 text-xs text-navy-600">{t("viewerHint")}</p>
-              <DrawingViewer pdfUrl={pdfUrl} markups={markups} errorLabel={t("viewerError")} onAddPin={(x, y) => void handleAddPin(x, y)} />
+              <DrawingViewer
+                pdfUrl={pdfUrl}
+                markups={markups}
+                errorLabel={t("viewerError")}
+                onAddPin={(x, y) => void handleAddPin(x, y)}
+                onAddFreehand={(points, color) => void handleAddFreehand(points, color)}
+                pinToolLabel={t("pinTool")}
+                sketchToolLabel={tc("sketchTool")}
+                sketchHintLabel={tc("sketchHint")}
+              />
             </>
           ) : (
             <p className="text-navy-600">{t("noRevisions")}</p>

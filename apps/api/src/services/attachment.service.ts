@@ -10,7 +10,7 @@ import {
   type RequestUploadInput,
 } from "@siteops/shared";
 import type { S3Client } from "@aws-sdk/client-s3";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Env } from "../env";
 import { ApiError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
@@ -42,6 +42,9 @@ const OWNER_TYPE_MODULES: Record<string, Module> = {
   inspection: "inspections",
   tm_ticket: "tm_tickets",
   correspondence: "correspondence",
+  rfi: "rfis",
+  submittal: "submittals",
+  punch_item: "punch_list",
 };
 
 function moduleForOwnerType(ownerType: string): Module {
@@ -116,6 +119,23 @@ export async function findAttachmentById(appDb: Database, userId: string, attach
   return withUserContext(appDb, userId, async (tx) => {
     const [attachment] = await tx.select().from(schema.attachments).where(eq(schema.attachments.id, attachmentId)).limit(1);
     return attachment;
+  });
+}
+
+/** Every attachment recorded against a given (ownerType, ownerId) pair — e.g. files uploaded directly to an RFI or Submittal, or photos on a Punch Item — gated on read access to that owner type's module. */
+export async function listAttachmentsByOwner(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  ownerType: string,
+  ownerId: string,
+): Promise<AttachmentRow[]> {
+  requirePermission(ctx, moduleForOwnerType(ownerType), "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    return tx
+      .select()
+      .from(schema.attachments)
+      .where(and(eq(schema.attachments.ownerType, ownerType), eq(schema.attachments.ownerId, ownerId)));
   });
 }
 

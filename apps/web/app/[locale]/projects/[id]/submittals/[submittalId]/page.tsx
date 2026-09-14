@@ -1,5 +1,6 @@
 "use client";
 
+import { AttachmentList } from "@/components/AttachmentList";
 import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
@@ -299,6 +300,19 @@ export default function SubmittalDetailScreen() {
                 ))}
             </ul>
           )}
+        </div>
+
+        <div className="mb-6">
+          <AttachmentList
+            projectId={submittal.projectId}
+            ownerType="submittal"
+            ownerId={submittal.id}
+            heading={t("files")}
+            emptyLabel={t("noFiles")}
+            uploadLabel={t("uploadFile")}
+            uploadingLabel={t("uploading")}
+            errorLabel={tc("errorGeneric")}
+          />
         </div>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

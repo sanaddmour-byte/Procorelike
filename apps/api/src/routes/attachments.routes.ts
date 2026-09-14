@@ -47,6 +47,22 @@ export function attachmentsRouter(appDb: Database, s3: S3Client, env: Env): Rout
     },
   );
 
+  router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const { projectId, ownerType, ownerId } = req.query;
+      if (typeof projectId !== "string" || typeof ownerType !== "string" || typeof ownerId !== "string") {
+        throw new NotFoundError("projectId, ownerType and ownerId query params are required");
+      }
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const rows = await attachmentService.listAttachmentsByOwner(appDb, authUser.id, ctx, ownerType, ownerId);
+      res.json(rows);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.get("/:id/download", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authUser = req.authUser;

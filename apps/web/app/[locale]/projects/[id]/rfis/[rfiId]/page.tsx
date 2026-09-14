@@ -1,5 +1,6 @@
 "use client";
 
+import { AttachmentList } from "@/components/AttachmentList";
 import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
@@ -267,6 +268,19 @@ export default function RfiDetailScreen() {
             {rfi.costImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("costImpact")}</span>}
             {rfi.scheduleImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("scheduleImpact")}</span>}
           </div>
+        </div>
+
+        <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
+          <AttachmentList
+            projectId={params.id}
+            ownerType="rfi"
+            ownerId={params.rfiId}
+            heading={t("files")}
+            emptyLabel={t("noFiles")}
+            uploadLabel={t("uploadFile")}
+            uploadingLabel={t("uploading")}
+            errorLabel={tc("errorGeneric")}
+          />
         </div>
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

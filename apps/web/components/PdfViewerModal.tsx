@@ -1,6 +1,7 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { MIN_STROKE_POINT_SPACING, SKETCH_COLORS } from "@/lib/sketch";
 import type { PdfCommentRecordType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -40,8 +41,6 @@ interface PdfSketch {
   color: string;
 }
 
-const SKETCH_COLORS = ["#dc2626", "#2563eb", "#16a34a", "#111827"];
-const MIN_STROKE_POINT_SPACING = 0.002;
 
 interface RfiOption {
   id: string;
@@ -93,7 +92,7 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
 
   const [tool, setTool] = useState<"comment" | "sketch">("comment");
   const [sketches, setSketches] = useState<PdfSketch[]>([]);
-  const [sketchColor, setSketchColor] = useState(SKETCH_COLORS[0]);
+  const [sketchColor, setSketchColor] = useState<string>(SKETCH_COLORS[0] ?? "#dc2626");
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState<SketchPoint[]>([]);
 

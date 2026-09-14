@@ -144,7 +144,11 @@
     "saveView": "حفظ العرض",
     "distribution": "أشخاص إضافيون",
     "noDistribution": "لم يتم تعيين أشخاص إضافيين.",
-    "addPersonnel": "إضافة شخص"
+    "addPersonnel": "إضافة شخص",
+    "photos": "الصور",
+    "noPhotos": "لم يتم إرفاق صور بعد.",
+    "uploadPhoto": "رفع صورة",
+    "uploadingPhoto": "جارٍ الرفع…"
   },
   "Photos": {
     "title": "الصور",
@@ -192,6 +196,7 @@
     "viewerError": "تعذّر تحميل ملف PDF هذا.",
     "noteLabel": "ملاحظة (اختياري)",
     "addPin": "إضافة دبوس",
+    "pinTool": "دبوس",
     "back": "العودة إلى المخططات",
     "referencedByRfis": "مُشار إليه من طلبات المعلومات",
     "noReferencingRfis": "لا توجد طلبات معلومات تشير إلى هذا المخطط بعد."
@@ -236,7 +241,11 @@
     "viewInContext": "عرض في السياق",
     "distribution": "أشخاص إضافيون",
     "noDistribution": "لم يتم تعيين أشخاص إضافيين.",
-    "addPersonnel": "إضافة شخص"
+    "addPersonnel": "إضافة شخص",
+    "files": "الملفات",
+    "noFiles": "لم يتم إرفاق ملفات بعد.",
+    "uploadFile": "رفع ملف",
+    "uploading": "جارٍ الرفع…"
   },
   "Submittals": {
     "title": "المستندات الفنية",
@@ -279,7 +288,10 @@
     "distribution": "أشخاص إضافيون",
     "noDistribution": "لم يتم تعيين أشخاص إضافيين.",
     "addPersonnel": "إضافة شخص",
-    "viewSpecSection": "عرض قسم المواصفات"
+    "viewSpecSection": "عرض قسم المواصفات",
+    "files": "الملفات",
+    "noFiles": "لم يتم إرفاق ملفات بعد.",
+    "uploadFile": "رفع ملف"
   },
   "Inspections": {
     "title": "التفتيشات",

@@ -144,7 +144,11 @@
     "saveView": "Save view",
     "distribution": "Additional personnel",
     "noDistribution": "No additional personnel assigned.",
-    "addPersonnel": "Add personnel"
+    "addPersonnel": "Add personnel",
+    "photos": "Photos",
+    "noPhotos": "No photos attached yet.",
+    "uploadPhoto": "Upload photo",
+    "uploadingPhoto": "Uploading…"
   },
   "Photos": {
     "title": "Photos",
@@ -192,6 +196,7 @@
     "viewerError": "Could not load this PDF.",
     "noteLabel": "Note (optional)",
     "addPin": "Add pin",
+    "pinTool": "Pin",
     "back": "Back to drawings",
     "referencedByRfis": "Referenced by RFIs",
     "noReferencingRfis": "No RFIs reference this drawing yet."
@@ -236,7 +241,11 @@
     "viewInContext": "View in context",
     "distribution": "Additional personnel",
     "noDistribution": "No additional personnel assigned.",
-    "addPersonnel": "Add personnel"
+    "addPersonnel": "Add personnel",
+    "files": "Files",
+    "noFiles": "No files attached yet.",
+    "uploadFile": "Upload file",
+    "uploading": "Uploading…"
   },
   "Submittals": {
     "title": "Submittals",
@@ -279,7 +288,10 @@
     "distribution": "Additional personnel",
     "noDistribution": "No additional personnel assigned.",
     "addPersonnel": "Add personnel",
-    "viewSpecSection": "View specification section"
+    "viewSpecSection": "View specification section",
+    "files": "Files",
+    "noFiles": "No files attached yet.",
+    "uploadFile": "Upload file"
   },
   "Inspections": {
     "title": "Inspections",

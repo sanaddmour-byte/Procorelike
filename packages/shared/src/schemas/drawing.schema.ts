@@ -29,13 +29,23 @@ export type CreateDrawingRevisionInput = z.infer<typeof createDrawingRevisionSch
 
 export const createMarkupSchema = z
   .object({
-    /** Anchored to sheet coordinates — a single pin `{ type: "pin", x, y }` or an outline `{ type: "polygon", points: [[x,y], ...] }`, both normalized 0-1 against the rendered page so they survive different viewer zoom levels/resolutions. */
+    /** Anchored to sheet coordinates — a single pin `{ type: "pin", x, y }`, an outline `{ type: "polygon", points: [[x,y], ...] }`, or a freehand redline stroke `{ type: "freehand", points: [[x,y], ...], color }` — all normalized 0-1 against the rendered page so they survive different viewer zoom levels/resolutions. */
     coords: z.union([
       z.object({ type: z.literal("pin"), x: z.number().min(0).max(1), y: z.number().min(0).max(1) }).strict(),
       z
         .object({
           type: z.literal("polygon"),
           points: z.array(z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)])).min(3),
+        })
+        .strict(),
+      z
+        .object({
+          type: z.literal("freehand"),
+          points: z.array(z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)])).min(2).max(2000),
+          color: z
+            .string()
+            .regex(/^#[0-9a-fA-F]{6}$/)
+            .default("#dc2626"),
         })
         .strict(),
     ]),

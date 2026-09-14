@@ -1,5 +1,6 @@
 "use client";
 
+import { AttachmentList } from "@/components/AttachmentList";
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { ApiClientError, apiJson } from "@/lib/api-client";
@@ -146,6 +147,21 @@ export default function PunchItemDetailPage() {
                     ))}
                 </ul>
               )}
+            </section>
+
+            <section className="mt-6">
+              <AttachmentList
+                projectId={params.id}
+                ownerType="punch_item"
+                ownerId={params.itemId}
+                heading={t("photos")}
+                emptyLabel={t("noPhotos")}
+                uploadLabel={t("uploadPhoto")}
+                uploadingLabel={t("uploadingPhoto")}
+                errorLabel={tc("errorGeneric")}
+                accept="image/*"
+                imageMode
+              />
             </section>
 
             <section className="mt-6">

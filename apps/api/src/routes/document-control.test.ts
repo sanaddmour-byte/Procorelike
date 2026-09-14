@@ -203,4 +203,48 @@ describe("Drawings (Phase 3 gate: revision history)", () => {
     expect(listRes.body).toHaveLength(1);
     expect(listRes.body[0].note).toBe("Rebar clash here");
   });
+
+  it("creates and lists a freehand redline sketch anchored to a specific revision", async () => {
+    const token = await loginAs("omar.nassar@siteops.test");
+
+    const drawingRes = await request(app)
+      .post("/drawings")
+      .set("authorization", `Bearer ${token}`)
+      .send({ projectId, sheetNumber: "M-301", discipline: "Mechanical", title: "Roof Plan" });
+    const drawingId = drawingRes.body.id as string;
+
+    const attachmentId = await createAttachment(token, "drawing_revision", drawingId);
+    const revRes = await request(app)
+      .post(`/drawings/${drawingId}/revisions`)
+      .set("authorization", `Bearer ${token}`)
+      .send({ revisionCode: "1", attachmentId, issuedDate: "2025-02-15" });
+    const revisionId = revRes.body.id as string;
+
+    const points: [number, number][] = [
+      [0.1, 0.1],
+      [0.25, 0.2],
+      [0.4, 0.15],
+    ];
+    const sketchRes = await request(app)
+      .post(`/drawings/revisions/${revisionId}/markups`)
+      .set("authorization", `Bearer ${token}`)
+      .send({ coords: { type: "freehand", points, color: "#2563eb" } });
+    expect(sketchRes.status).toBe(201);
+    expect(sketchRes.body.coords.type).toBe("freehand");
+    expect(sketchRes.body.coords.points).toEqual(points);
+    expect(sketchRes.body.coords.color).toBe("#2563eb");
+
+    const listRes = await request(app)
+      .get(`/drawings/revisions/${revisionId}/markups`)
+      .set("authorization", `Bearer ${token}`);
+    expect(listRes.status).toBe(200);
+    expect(listRes.body).toHaveLength(1);
+    expect(listRes.body[0].coords.points).toEqual(points);
+
+    const tooFewPointsRes = await request(app)
+      .post(`/drawings/revisions/${revisionId}/markups`)
+      .set("authorization", `Bearer ${token}`)
+      .send({ coords: { type: "freehand", points: [[0.5, 0.5]] } });
+    expect(tooFewPointsRes.status).toBe(400);
+  });
 });
