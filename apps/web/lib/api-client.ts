@@ -54,5 +54,6 @@ export async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
     const body = (await res.json().catch(() => null)) as ApiErrorBody | null;
     throw new ApiClientError(res.status, body?.error.code ?? "unknown_error");
   }
+  if (res.status === 204) return undefined as T; // e.g. DELETE endpoints, which return no body
   return res.json() as Promise<T>;
 }

@@ -1,7 +1,7 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
 import { requirePermission, type Module, type PermissionContext } from "@siteops/shared";
 import { and, eq, or } from "drizzle-orm";
-import { ApiError } from "../lib/errors";
+import { ApiError, NotFoundError } from "../lib/errors";
 
 type RecordLinkRow = typeof schema.recordLinks.$inferSelect;
 
@@ -26,6 +26,9 @@ const LINK_TYPE_MODULES: Record<string, Module> = {
   tm_ticket: "tm_tickets",
   correspondence: "correspondence",
   schedule_task: "schedule",
+  drawing: "drawings",
+  /** Spec sections have no module of their own -- they're reference data browsed today only through submittals. */
+  specification_section: "submittals",
 };
 
 function moduleForLinkType(type: string): Module {
@@ -53,6 +56,16 @@ export async function createRecordLink(
     const [row] = await tx.insert(schema.recordLinks).values(input).returning();
     if (!row) throw new Error("Failed to create record link");
     return row;
+  });
+}
+
+/** Removing a link requires "standard" on whichever module the *source* side belongs to -- the same level required to create it. */
+export async function deleteRecordLink(appDb: Database, userId: string, ctx: PermissionContext, linkId: string): Promise<void> {
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [link] = await tx.select().from(schema.recordLinks).where(eq(schema.recordLinks.id, linkId)).limit(1);
+    if (!link) throw new NotFoundError("Record link not found");
+    requirePermission(ctx, moduleForLinkType(link.sourceType), "standard");
+    await tx.delete(schema.recordLinks).where(eq(schema.recordLinks.id, linkId));
   });
 }
 

@@ -3,6 +3,7 @@
 import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
+import { RecordLinks, type RecordLinkTargetConfig } from "@/components/RecordLinks";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
@@ -11,6 +12,18 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+
+interface Drawing {
+  id: string;
+  sheetNumber: string;
+  title: string;
+}
+
+interface SpecSection {
+  id: string;
+  csiCode: string;
+  title: string;
+}
 
 interface RfiResponse {
   id: string;
@@ -33,6 +46,7 @@ interface RfiDetail {
   scheduleImpactFlag: boolean;
   isOverdue: boolean;
   responses: RfiResponse[];
+  distribution: { id: string; userId: string | null; companyId: string | null }[];
 }
 
 interface Member {
@@ -60,6 +74,8 @@ export default function RfiDetailScreen() {
 
   const [rfi, setRfi] = useState<RfiDetail | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [specSections, setSpecSections] = useState<SpecSection[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
   const [isOfficial, setIsOfficial] = useState(false);
@@ -83,7 +99,30 @@ export default function RfiDetailScreen() {
     }
     void load();
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
+    apiJson<Drawing[]>(`/drawings?projectId=${params.id}`).then(setDrawings).catch(() => undefined);
+    apiJson<SpecSection[]>(`/submittals/spec-sections?projectId=${params.id}`).then(setSpecSections).catch(() => undefined);
   }, [router, locale, load, params.id]);
+
+  const recordLinkTargets: RecordLinkTargetConfig[] = [
+    {
+      targetType: "drawing",
+      label: t("linkedDrawings"),
+      addLabel: t("addDrawing"),
+      emptyLabel: t("noDrawingsLinked"),
+      selectPlaceholder: t("selectDrawing"),
+      options: drawings.map((d) => ({ id: d.id, label: `${d.sheetNumber} — ${d.title}` })),
+      hrefFor: (id) => `/${locale}/projects/${params.id}/drawings/${id}`,
+    },
+    {
+      targetType: "specification_section",
+      label: t("linkedSpecSection"),
+      addLabel: t("addSpecSection"),
+      emptyLabel: t("noSpecSectionLinked"),
+      selectPlaceholder: t("selectSpecSection"),
+      options: specSections.map((s) => ({ id: s.id, label: `${s.csiCode} — ${s.title}` })),
+      hrefFor: (id) => `/${locale}/projects/${params.id}/specifications/${id}`,
+    },
+  ];
 
   function memberName(userId: string | null): string {
     if (!userId) return t("unassigned");
@@ -166,6 +205,27 @@ export default function RfiDetailScreen() {
             {rfi.costImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("costImpact")}</span>}
             {rfi.scheduleImpactFlag && <span className="rounded bg-orange-200 px-2 py-0.5 text-orange-900">{t("scheduleImpact")}</span>}
           </div>
+        </div>
+
+        <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
+          <RecordLinks projectId={params.id} recordType="rfi" recordId={params.rfiId} targets={recordLinkTargets} removeLabel={t("removeLink")} />
+        </div>
+
+        <div className="mb-6">
+          <h3 className="mb-1.5 text-sm font-semibold text-navy-800">{t("distribution")}</h3>
+          {rfi.distribution.filter((d) => d.userId).length === 0 ? (
+            <p className="text-sm text-navy-600">{t("noDistribution")}</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {rfi.distribution
+                .filter((d) => d.userId)
+                .map((d) => (
+                  <li key={d.id} className="rounded-lg border-3 border-ink bg-white px-2.5 py-1.5 text-sm text-navy-800">
+                    {memberName(d.userId)}
+                  </li>
+                ))}
+            </ul>
+          )}
         </div>
 
         {RFI_STATUS_TRANSITIONS[rfi.status].length > 0 && (

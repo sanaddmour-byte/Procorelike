@@ -44,6 +44,8 @@ interface SubmittalDetail {
   status: "draft" | "in_review" | "approved" | "closed";
   ballInCourtUserId: string | null;
   packages: Package[];
+  specSection: { id: string; csiCode: string; title: string } | null;
+  distribution: { id: string; userId: string | null; companyId: string | null }[];
 }
 
 interface Member {
@@ -226,8 +228,34 @@ export default function SubmittalDetailScreen() {
         </div>
         <p className="mb-4 text-sm text-navy-600">
           {statusLabel(submittal.status, t)} · {t("ballInCourt")}: {memberName(submittal.ballInCourtUserId)}
+          {submittal.specSection && (
+            <>
+              {" · "}
+              {t("specSection")}:{" "}
+              <Link href={`/${locale}/projects/${params.id}/specifications/${submittal.specSection.id}`} className="text-navy-800 underline">
+                {submittal.specSection.csiCode} — {submittal.specSection.title}
+              </Link>
+            </>
+          )}
         </p>
         {error && <p className="text-maroon-700">{error}</p>}
+
+        <div className="mb-6">
+          <h3 className="mb-1.5 text-sm font-semibold text-navy-800">{t("distribution")}</h3>
+          {submittal.distribution.filter((d) => d.userId).length === 0 ? (
+            <p className="text-sm text-navy-600">{t("noDistribution")}</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {submittal.distribution
+                .filter((d) => d.userId)
+                .map((d) => (
+                  <li key={d.id} className="rounded-lg border-3 border-ink bg-white px-2.5 py-1.5 text-sm text-navy-800">
+                    {memberName(d.userId)}
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
 
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-medium">{t("packages")}</h2>

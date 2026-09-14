@@ -1,6 +1,6 @@
 import { boolean, index, integer, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { auditColumns, idColumn } from "./columns";
-import { attachments, projects, specificationsSections, users } from "./core";
+import { attachments, companies, projects, specificationsSections, users } from "./core";
 
 export const submittalStatusEnum = pgEnum("submittal_status", [
   "draft",
@@ -42,6 +42,21 @@ export const submittals = pgTable(
     index("submittals_project_id_idx").on(table.projectId),
     index("submittals_ball_in_court_user_idx").on(table.ballInCourtUserId),
   ],
+);
+
+/** Additional personnel a submittal should notify/involve, alongside the single ballInCourtUserId -- mirrors rfis.ts's rfiDistribution. */
+export const submittalDistribution = pgTable(
+  "submittal_distribution",
+  {
+    id: idColumn(),
+    submittalId: uuid("submittal_id")
+      .notNull()
+      .references(() => submittals.id),
+    userId: uuid("user_id").references(() => users.id),
+    companyId: uuid("company_id").references(() => companies.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("submittal_distribution_submittal_id_idx").on(table.submittalId)],
 );
 
 export const submittalPackages = pgTable(

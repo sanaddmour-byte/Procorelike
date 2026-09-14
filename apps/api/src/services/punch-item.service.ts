@@ -19,6 +19,12 @@ import { writeAuditLog } from "../lib/audit";
 import type { SyncApplyResult } from "./daily-log.service";
 
 type PunchItemRow = typeof schema.punchItems.$inferSelect;
+type PunchItemDistributionRow = typeof schema.punchItemDistribution.$inferSelect;
+
+export interface PunchItemDetail extends PunchItemRow {
+  history: (typeof schema.punchItemHistory.$inferSelect)[];
+  distribution: PunchItemDistributionRow[];
+}
 
 export async function createPunchItem(
   appDb: Database,
@@ -29,17 +35,26 @@ export async function createPunchItem(
   requirePermission(ctx, "punch_list", "standard");
 
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const { distributionUserIds, distributionCompanyIds, ...fields } = input;
     const seq = await nextSequenceNumber(tx, input.projectId, "PI");
     const [item] = await tx
       .insert(schema.punchItems)
       .values({
-        ...input,
+        ...fields,
         number: formatPunchItemNumber(seq),
         dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
         createdBy: userId,
       })
       .returning();
     if (!item) throw new Error("Failed to create punch item");
+
+    const distributionRows = [
+      ...distributionUserIds.map((distUserId) => ({ punchItemId: item.id, userId: distUserId })),
+      ...distributionCompanyIds.map((companyId) => ({ punchItemId: item.id, companyId })),
+    ];
+    if (distributionRows.length > 0) {
+      await tx.insert(schema.punchItemDistribution).values(distributionRows);
+    }
 
     await tx.insert(schema.punchItemHistory).values({
       punchItemId: item.id,
@@ -82,16 +97,16 @@ export async function getPunchItem(
   userId: string,
   ctx: PermissionContext,
   punchItemId: string,
-): Promise<PunchItemRow & { history: (typeof schema.punchItemHistory.$inferSelect)[] }> {
+): Promise<PunchItemDetail> {
   requirePermission(ctx, "punch_list", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     const [item] = await tx.select().from(schema.punchItems).where(eq(schema.punchItems.id, punchItemId)).limit(1);
     if (!item) throw new NotFoundError("Punch item not found");
-    const history = await tx
-      .select()
-      .from(schema.punchItemHistory)
-      .where(eq(schema.punchItemHistory.punchItemId, punchItemId));
-    return { ...item, history };
+    const [history, distribution] = await Promise.all([
+      tx.select().from(schema.punchItemHistory).where(eq(schema.punchItemHistory.punchItemId, punchItemId)),
+      tx.select().from(schema.punchItemDistribution).where(eq(schema.punchItemDistribution.punchItemId, punchItemId)),
+    ]);
+    return { ...item, history, distribution };
   });
 }
 

@@ -177,6 +177,31 @@ describe("Punch List", () => {
     expect(detailRes.status).toBe(200);
     expect(detailRes.body.history).toHaveLength(2); // created + transitioned
   });
+
+  it("records additional distribution personnel at creation, alongside the single assignee", async () => {
+    const token = await loginAs("omar.nassar@siteops.test");
+    const membersRes = await request(app).get(`/projects/${ammanHeightsProjectId}/members`).set("authorization", `Bearer ${token}`);
+    const members = membersRes.body as { userId: string; email: string }[];
+    const assignee = members.find((m) => m.email === "yousef.amer@siteops.test");
+    const distributee = members.find((m) => m.email !== assignee?.email);
+    if (!assignee || !distributee) throw new Error("Seed members not found");
+
+    const createRes = await request(app)
+      .post("/punch-items")
+      .set("authorization", `Bearer ${token}`)
+      .send({
+        projectId: ammanHeightsProjectId,
+        description: "Re-caulk shower pan, unit 7C",
+        priority: "medium",
+        assigneeUserId: assignee.userId,
+        distributionUserIds: [distributee.userId],
+      });
+    expect(createRes.status).toBe(201);
+
+    const detailRes = await request(app).get(`/punch-items/${createRes.body.id}`).set("authorization", `Bearer ${token}`);
+    expect(detailRes.status).toBe(200);
+    expect(detailRes.body.distribution.map((d: { userId: string | null }) => d.userId)).toContain(distributee.userId);
+  });
 });
 
 describe("Offline sync (airplane-mode scenario)", () => {

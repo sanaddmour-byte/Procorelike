@@ -193,7 +193,13 @@ export async function convertMeetingItemToPunchItem(
     return { row, projectId: meeting.projectId };
   });
 
-  const punchItem = await createPunchItem(appDb, userId, ctx, { projectId: item.projectId, description: item.row.description, priority: "medium" });
+  const punchItem = await createPunchItem(appDb, userId, ctx, {
+    projectId: item.projectId,
+    description: item.row.description,
+    priority: "medium",
+    distributionUserIds: [],
+    distributionCompanyIds: [],
+  });
 
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     const [updated] = await tx

@@ -46,6 +46,21 @@ export const punchItems = pgTable(
   ],
 );
 
+/** Additional personnel a punch item should notify/involve, alongside the single assigneeUserId -- mirrors rfis.ts's rfiDistribution. */
+export const punchItemDistribution = pgTable(
+  "punch_item_distribution",
+  {
+    id: idColumn(),
+    punchItemId: uuid("punch_item_id")
+      .notNull()
+      .references(() => punchItems.id),
+    userId: uuid("user_id").references(() => users.id),
+    companyId: uuid("company_id").references(() => companies.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("punch_item_distribution_punch_item_id_idx").on(table.punchItemId)],
+);
+
 export const punchItemHistory = pgTable(
   "punch_item_history",
   {

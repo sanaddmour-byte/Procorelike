@@ -41,12 +41,22 @@ export async function listMyCompanies(appDb: Database, userId: string): Promise<
  * despite the company existing means "visible but not a member", not
  * "not found".
  */
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
 export async function uploadCompanyLogo(
   appDb: Database,
   userId: string,
   companyId: string,
   input: UploadCompanyLogoInput,
 ): Promise<CompanyListItem> {
+  // A payload that merely claims image/png but isn't a real PNG can make pdf-lib's decoder
+  // hang indefinitely at report-generation time (observed directly while testing letterhead
+  // rendering) -- reject it here, once, up front, rather than at every PDF export.
+  const bytes = Buffer.from(input.dataBase64, "base64");
+  if (!bytes.subarray(0, 8).equals(PNG_SIGNATURE)) {
+    throw new ApiError(400, "invalid_png", "The uploaded file is not a valid PNG image");
+  }
+
   return withRequestContext(appDb, { userId }, async (tx) => {
     const [existing] = await tx.select().from(schema.companies).where(eq(schema.companies.id, companyId)).limit(1);
     if (!existing) throw new NotFoundError("Company not found");

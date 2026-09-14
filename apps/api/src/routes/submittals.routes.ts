@@ -29,6 +29,23 @@ export function submittalsRouter(appDb: Database, env: Env): Router {
     }
   });
 
+  router.get("/spec-sections/:id", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Spec section not found");
+      const projectId = await submittalService.findSpecSectionProjectId(appDb, authUser.id, id);
+      if (!projectId) throw new NotFoundError("Spec section not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const section = await submittalService.getSpecSectionDetail(appDb, authUser.id, ctx, id);
+      if (!section) throw new NotFoundError("Spec section not found");
+      res.json(section);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.post("/", validateBody(createSubmittalSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authUser = req.authUser;

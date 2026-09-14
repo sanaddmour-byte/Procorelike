@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { PersonnelPicker } from "@/components/PersonnelPicker";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
@@ -45,6 +46,7 @@ export default function RfisPage() {
   const [question, setQuestion] = useState("");
   const [ballInCourtUserId, setBallInCourtUserId] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
 
@@ -80,12 +82,14 @@ export default function RfisPage() {
           question,
           ballInCourtUserId: ballInCourtUserId || undefined,
           dueDate: dueDate || undefined,
+          distributionUserIds,
         }),
       });
       setSubject("");
       setQuestion("");
       setBallInCourtUserId("");
       setDueDate("");
+      setDistributionUserIds([]);
       setShowForm(false);
       load();
     } catch {
@@ -150,6 +154,7 @@ export default function RfisPage() {
               {t("dueDate")}
               <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
+            <PersonnelPicker label={t("distribution")} members={members} selectedUserIds={distributionUserIds} onChange={setDistributionUserIds} />
             <button type="submit" disabled={creating} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
             </button>

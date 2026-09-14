@@ -10,7 +10,7 @@ import {
   type SubmittalStatus,
   type SubmitSubmittalReviewInput,
 } from "@siteops/shared";
-import { asc, eq, inArray, max } from "drizzle-orm";
+import { and, asc, eq, inArray, max, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
@@ -20,6 +20,7 @@ type SubmittalRow = typeof schema.submittals.$inferSelect;
 type SubmittalPackageRow = typeof schema.submittalPackages.$inferSelect;
 type SubmittalRevisionRow = typeof schema.submittalRevisions.$inferSelect;
 type SubmittalReviewRow = typeof schema.submittalReviews.$inferSelect;
+type SubmittalDistributionRow = typeof schema.submittalDistribution.$inferSelect;
 
 export interface PackageWithRevisions extends SubmittalPackageRow {
   revisions: (SubmittalRevisionRow & { reviews: SubmittalReviewRow[] })[];
@@ -27,6 +28,8 @@ export interface PackageWithRevisions extends SubmittalPackageRow {
 
 export interface SubmittalDetail extends SubmittalRow {
   packages: PackageWithRevisions[];
+  specSection: { id: string; csiCode: string; title: string } | null;
+  distribution: SubmittalDistributionRow[];
 }
 
 export async function listSpecSections(
@@ -38,6 +41,62 @@ export async function listSpecSections(
   requirePermission(ctx, "submittals", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
     return tx.select().from(schema.specificationsSections).where(eq(schema.specificationsSections.projectId, projectId));
+  });
+}
+
+export interface SpecSectionDetail {
+  id: string;
+  projectId: string;
+  csiCode: string;
+  title: string;
+  submittals: { id: string; number: string; title: string; status: SubmittalStatus }[];
+  linkedRfis: { id: string; number: string; subject: string; status: string }[];
+}
+
+/** Unauthenticated peek used by the route to resolve which project a spec section belongs to, before loading a real permission context. */
+export async function findSpecSectionProjectId(appDb: Database, userId: string, specSectionId: string): Promise<string | undefined> {
+  return withUserContext(appDb, userId, async (tx) => {
+    const [row] = await tx.select().from(schema.specificationsSections).where(eq(schema.specificationsSections.id, specSectionId)).limit(1);
+    return row?.projectId;
+  });
+}
+
+/** A spec section's own page: its submittals (via the direct FK) plus anything explicitly linked to it (today, just RFIs -- see record-links.service.ts's LINK_TYPE_MODULES). */
+export async function getSpecSectionDetail(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  specSectionId: string,
+): Promise<SpecSectionDetail | undefined> {
+  requirePermission(ctx, "submittals", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [section] = await tx.select().from(schema.specificationsSections).where(eq(schema.specificationsSections.id, specSectionId)).limit(1);
+    if (!section) return undefined;
+
+    const submittalRows = await tx.select().from(schema.submittals).where(eq(schema.submittals.specSectionId, specSectionId));
+
+    const links = await tx
+      .select()
+      .from(schema.recordLinks)
+      .where(
+        or(
+          and(eq(schema.recordLinks.targetType, "specification_section"), eq(schema.recordLinks.targetId, specSectionId)),
+          and(eq(schema.recordLinks.sourceType, "specification_section"), eq(schema.recordLinks.sourceId, specSectionId)),
+        ),
+      );
+    const rfiIds = links
+      .map((l) => (l.sourceType === "rfi" ? l.sourceId : l.targetType === "rfi" ? l.targetId : null))
+      .filter((id): id is string => Boolean(id));
+    const rfiRows = rfiIds.length > 0 ? await tx.select().from(schema.rfis).where(inArray(schema.rfis.id, rfiIds)) : [];
+
+    return {
+      id: section.id,
+      projectId: section.projectId,
+      csiCode: section.csiCode,
+      title: section.title,
+      submittals: submittalRows.map((s) => ({ id: s.id, number: s.number, title: s.title, status: s.status })),
+      linkedRfis: rfiRows.map((r) => ({ id: r.id, number: r.number, subject: r.subject, status: r.status })),
+    };
   });
 }
 
@@ -70,6 +129,14 @@ export async function createSubmittal(
       })
       .returning();
     if (!submittal) throw new Error("Failed to create submittal");
+
+    const distributionRows = [
+      ...input.distributionUserIds.map((distUserId) => ({ submittalId: submittal.id, userId: distUserId })),
+      ...input.distributionCompanyIds.map((companyId) => ({ submittalId: submittal.id, companyId })),
+    ];
+    if (distributionRows.length > 0) {
+      await tx.insert(schema.submittalDistribution).values(distributionRows);
+    }
 
     await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittal.id, action: "create", after: submittal });
     return submittal;
@@ -142,6 +209,17 @@ export async function getSubmittal(
     const [submittal] = await tx.select().from(schema.submittals).where(eq(schema.submittals.id, submittalId)).limit(1);
     if (!submittal) return undefined;
 
+    const [specSection] = await tx
+      .select({ id: schema.specificationsSections.id, csiCode: schema.specificationsSections.csiCode, title: schema.specificationsSections.title })
+      .from(schema.specificationsSections)
+      .where(eq(schema.specificationsSections.id, submittal.specSectionId))
+      .limit(1);
+
+    const distribution = await tx
+      .select()
+      .from(schema.submittalDistribution)
+      .where(eq(schema.submittalDistribution.submittalId, submittalId));
+
     const packages = await tx
       .select()
       .from(schema.submittalPackages)
@@ -171,7 +249,7 @@ export async function getSubmittal(
       }),
     );
 
-    return { ...submittal, packages: packagesWithRevisions };
+    return { ...submittal, packages: packagesWithRevisions, specSection: specSection ?? null, distribution };
   });
 }
 

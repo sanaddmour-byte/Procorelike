@@ -24,6 +24,9 @@ export const createSubmittalSchema = z
     title: z.string().min(1).max(300),
     leadTimeDays: z.number().int().positive().optional(),
     requiredOnSiteDate: z.string().date().optional(),
+    /** Additional personnel beyond the single ballInCourtUserId -- mirrors rfi.schema.ts's distribution fields. */
+    distributionUserIds: z.array(z.string().uuid()).max(50).default([]),
+    distributionCompanyIds: z.array(z.string().uuid()).max(50).default([]),
   })
   .strict();
 export type CreateSubmittalInput = z.infer<typeof createSubmittalSchema>;

@@ -3,6 +3,7 @@ import { createRecordLinkSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
+import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { loadPermissionContext } from "../services/permission.service";
@@ -35,6 +36,22 @@ export function recordLinksRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const rows = await recordLinksService.listRecordLinksFor(appDb, authUser.id, ctx, recordType, recordId);
       res.json(rows);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Record link not found");
+      const projectId = req.query.projectId;
+      if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      await recordLinksService.deleteRecordLink(appDb, authUser.id, ctx, id);
+      res.status(204).end();
     } catch (err) {
       next(err);
     }

@@ -231,4 +231,22 @@ describe("Submittals", () => {
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe("not_a_reviewer");
   });
+
+  it("records additional distribution personnel at creation and returns them, plus a navigable spec section, on GET", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const lina = memberByEmail("lina.kanaan@siteops.test");
+    const rana = memberByEmail("rana.odeh@siteops.test");
+
+    const submittalRes = await request(app)
+      .post("/submittals")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, specSectionId, title: "Curtain wall shop drawings", distributionUserIds: [lina.userId, rana.userId] });
+    expect(submittalRes.status).toBe(201);
+
+    const detailRes = await request(app).get(`/submittals/${submittalRes.body.id}`).set("authorization", `Bearer ${omarToken}`);
+    expect(detailRes.status).toBe(200);
+    const distributedUserIds = detailRes.body.distribution.map((d: { userId: string | null }) => d.userId);
+    expect(distributedUserIds).toEqual(expect.arrayContaining([lina.userId, rana.userId]));
+    expect(detailRes.body.specSection.id).toBe(specSectionId);
+  });
 });

@@ -15,11 +15,17 @@ export const createPunchItemSchema = z
     tradeId: z.string().uuid().optional(),
     priority: punchItemPrioritySchema.default("medium"),
     dueDate: z.string().datetime().optional(),
+    /** Additional personnel beyond the single assigneeUserId -- mirrors rfi.schema.ts's distribution fields. */
+    distributionUserIds: z.array(z.string().uuid()).max(50).default([]),
+    distributionCompanyIds: z.array(z.string().uuid()).max(50).default([]),
   })
   .strict();
 export type CreatePunchItemInput = z.infer<typeof createPunchItemSchema>;
 
-export const updatePunchItemSchema = createPunchItemSchema.omit({ projectId: true }).partial().strict();
+export const updatePunchItemSchema = createPunchItemSchema
+  .omit({ projectId: true, distributionUserIds: true, distributionCompanyIds: true })
+  .partial()
+  .strict();
 export type UpdatePunchItemInput = z.infer<typeof updatePunchItemSchema>;
 
 export const transitionPunchItemStatusSchema = z

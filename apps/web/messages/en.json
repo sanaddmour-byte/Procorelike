@@ -131,7 +131,10 @@
     "filterAll": "All",
     "saveViewAs": "Save current filter as",
     "viewNamePlaceholder": "View name",
-    "saveView": "Save view"
+    "saveView": "Save view",
+    "distribution": "Additional personnel",
+    "noDistribution": "No additional personnel assigned.",
+    "addPersonnel": "Add personnel"
   },
   "Photos": {
     "title": "Photos",
@@ -179,7 +182,9 @@
     "viewerError": "Could not load this PDF.",
     "noteLabel": "Note (optional)",
     "addPin": "Add pin",
-    "back": "Back to drawings"
+    "back": "Back to drawings",
+    "referencedByRfis": "Referenced by RFIs",
+    "noReferencingRfis": "No RFIs reference this drawing yet."
   },
   "Rfis": {
     "title": "RFIs",
@@ -207,7 +212,19 @@
     "addResponse": "Add response",
     "responseText": "Response",
     "markOfficial": "Mark as the official answer",
-    "back": "Back to RFIs"
+    "back": "Back to RFIs",
+    "linkedDrawings": "Linked Drawings",
+    "linkedSpecSection": "Linked Specification Section",
+    "addDrawing": "Link drawing",
+    "addSpecSection": "Link spec section",
+    "noDrawingsLinked": "No drawings linked yet.",
+    "noSpecSectionLinked": "No specification section linked yet.",
+    "selectDrawing": "Select a drawing…",
+    "selectSpecSection": "Select a spec section…",
+    "removeLink": "Remove link",
+    "distribution": "Additional personnel",
+    "noDistribution": "No additional personnel assigned.",
+    "addPersonnel": "Add personnel"
   },
   "Submittals": {
     "title": "Submittals",
@@ -243,7 +260,11 @@
     "responseRejected": "Rejected",
     "pending": "Pending",
     "close": "Close submittal",
-    "back": "Back to submittals"
+    "back": "Back to submittals",
+    "distribution": "Additional personnel",
+    "noDistribution": "No additional personnel assigned.",
+    "addPersonnel": "Add personnel",
+    "viewSpecSection": "View specification section"
   },
   "Inspections": {
     "title": "Inspections",
@@ -659,5 +680,12 @@
   "Language": {
     "english": "English",
     "arabic": "العربية"
+  },
+  "Specifications": {
+    "back": "Back to submittals",
+    "submittalsInSection": "Submittals in this section",
+    "noSubmittals": "No submittals in this section yet.",
+    "linkedRfis": "Linked RFIs",
+    "noLinkedRfis": "No RFIs linked to this section yet."
   }
 }

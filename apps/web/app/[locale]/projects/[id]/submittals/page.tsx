@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { PersonnelPicker } from "@/components/PersonnelPicker";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
@@ -48,6 +49,7 @@ export default function SubmittalsPage() {
   const [showForm, setShowForm] = useState(false);
   const [specSectionId, setSpecSectionId] = useState("");
   const [title, setTitle] = useState("");
+  const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
 
@@ -84,9 +86,10 @@ export default function SubmittalsPage() {
     try {
       await apiJson("/submittals", {
         method: "POST",
-        body: JSON.stringify({ projectId: params.id, specSectionId, title }),
+        body: JSON.stringify({ projectId: params.id, specSectionId, title, distributionUserIds }),
       });
       setTitle("");
+      setDistributionUserIds([]);
       setShowForm(false);
       load();
     } catch {
@@ -137,6 +140,7 @@ export default function SubmittalsPage() {
               {t("submittalTitle")}
               <input required value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
             </label>
+            <PersonnelPicker label={t("distribution")} members={members} selectedUserIds={distributionUserIds} onChange={setDistributionUserIds} />
             <button type="submit" disabled={creating || !specSectionId} className="self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">
               {t("create")}
             </button>

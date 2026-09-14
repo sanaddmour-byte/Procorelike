@@ -76,13 +76,17 @@ export class PdfBuilder {
     const usedFont = options.bold ? this.boldFont : this.font;
     const color = options.color ? rgb(...options.color) : rgb(0.06, 0.09, 0.16);
     const gap = options.gap ?? 6;
+    // Continuation lines within one word-wrapped block use standard single-spacing (~1.35x
+    // the font size) rather than a flat 2pt, which read as cramped for long RFI/correspondence
+    // bodies -- the exact text most likely to actually wrap.
+    const continuationGap = Math.round(size * 0.35);
 
     const wrapped = this.wrapText(text, size, usedFont);
     wrapped.forEach((line, i) => {
       const isLast = i === wrapped.length - 1;
-      this.ensureSpace(size + (isLast ? (options.gap ?? 4) : 2));
+      this.ensureSpace(size + (isLast ? gap : continuationGap));
       this.page.drawText(line, { x: MARGIN, y: this.y, size, font: usedFont, color });
-      this.y -= size + (isLast ? gap : 2);
+      this.y -= size + (isLast ? gap : continuationGap);
     });
   }
 
@@ -159,9 +163,10 @@ export class PdfBuilder {
   /**
    * Embeds a PNG company logo top-left with the company name beside it, and
    * drops the y-cursor below it -- call once, before any drawLine calls.
-   * A company with no logo (or a corrupt/unsupported one) just gets the
-   * name as a plain bold line instead, so report generation never fails
-   * over branding.
+   * A company with no logo (or a corrupt/unsupported one) gets a bordered
+   * placeholder box with its initials in the same spot instead, so every
+   * letterhead keeps the same visual anchor rather than the name floating
+   * with nothing to its left on some reports and a logo on others.
    */
   async drawLetterhead(companyName: string | null, logoPngBytes: Uint8Array | null): Promise<void> {
     const LOGO_MAX_HEIGHT = 40;
@@ -170,26 +175,66 @@ export class PdfBuilder {
     if (logoPngBytes) {
       try {
         const image = await this.doc.embedPng(logoPngBytes);
-        const scale = Math.min(LOGO_MAX_WIDTH / image.width, LOGO_MAX_HEIGHT / image.height, 1);
+        // Scale to fill the letterhead box, capped at 4x so a genuinely tiny source image
+        // (an icon-sized upload) doesn't blow up into a blocky mess -- but uncapped below
+        // 1x, since the old "never upscale" rule left small-but-reasonable logos (e.g. a
+        // 48px square) rendering as a barely visible speck instead of filling the box.
+        const scale = Math.min(LOGO_MAX_WIDTH / image.width, LOGO_MAX_HEIGHT / image.height, 4);
         const width = image.width * scale;
         const height = image.height * scale;
         this.page.drawImage(image, { x: MARGIN, y: this.y - height, width, height });
-        if (companyName) {
-          this.page.drawText(companyName, {
-            x: MARGIN + width + 10,
-            y: this.y - height / 2 - 5,
-            size: 12,
-            font: this.boldFont,
-            color: rgb(0.06, 0.09, 0.16),
-          });
-        }
+        this.drawLetterheadCompanyName(companyName, width, height);
         this.y -= height + 14;
         return;
       } catch {
-        // fall through to the text-only branch below
+        // fall through to the placeholder branch below
       }
     }
-    if (companyName) this.drawLine(companyName, { size: 12, bold: true, gap: 4 });
+
+    if (!companyName) return;
+
+    const boxHeight = LOGO_MAX_HEIGHT;
+    const boxWidth = LOGO_MAX_HEIGHT; // square placeholder, not the full logo width -- it holds only a couple of initials
+    const initials = companyName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0]!.toUpperCase())
+      .join("");
+
+    this.page.drawRectangle({
+      x: MARGIN,
+      y: this.y - boxHeight,
+      width: boxWidth,
+      height: boxHeight,
+      borderColor: rgb(0.6, 0.65, 0.72),
+      borderWidth: 1,
+      borderDashArray: [3, 2],
+    });
+    if (initials) {
+      const size = 14;
+      const textWidth = this.boldFont.widthOfTextAtSize(initials, size);
+      this.page.drawText(initials, {
+        x: MARGIN + (boxWidth - textWidth) / 2,
+        y: this.y - boxHeight / 2 - size / 2 + 3,
+        size,
+        font: this.boldFont,
+        color: rgb(0.44, 0.5, 0.58),
+      });
+    }
+    this.drawLetterheadCompanyName(companyName, boxWidth, boxHeight);
+    this.y -= boxHeight + 14;
+  }
+
+  private drawLetterheadCompanyName(companyName: string | null, anchorWidth: number, anchorHeight: number): void {
+    if (!companyName) return;
+    this.page.drawText(companyName, {
+      x: MARGIN + anchorWidth + 10,
+      y: this.y - anchorHeight / 2 - 5,
+      size: 12,
+      font: this.boldFont,
+      color: rgb(0.06, 0.09, 0.16),
+    });
   }
 
   async save(): Promise<Uint8Array> {

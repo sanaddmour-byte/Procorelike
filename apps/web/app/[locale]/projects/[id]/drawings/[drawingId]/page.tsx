@@ -28,6 +28,19 @@ interface Revision {
   supersededAt: string | null;
 }
 
+interface RecordLinkRow {
+  sourceType: string;
+  sourceId: string;
+  targetType: string;
+  targetId: string;
+}
+
+interface RfiRef {
+  id: string;
+  number: string;
+  subject: string;
+}
+
 export default function DrawingDetailScreen() {
   const t = useTranslations("Drawings");
   const tc = useTranslations("Common");
@@ -39,6 +52,7 @@ export default function DrawingDetailScreen() {
   const [revisions, setRevisions] = useState<Revision[] | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [markups, setMarkups] = useState<MarkupPin[]>([]);
+  const [referencingRfis, setReferencingRfis] = useState<RfiRef[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
@@ -57,6 +71,19 @@ export default function DrawingDetailScreen() {
       ]);
       setDrawing(drawingRes);
       setRevisions(revisionsRes);
+
+      const links = await apiJson<RecordLinkRow[]>(
+        `/record-links?projectId=${drawingRes.projectId}&recordType=drawing&recordId=${params.drawingId}`,
+      );
+      const rfiIds = links
+        .map((l) => (l.sourceType === "rfi" ? l.sourceId : l.targetType === "rfi" ? l.targetId : null))
+        .filter((rfiId): rfiId is string => Boolean(rfiId));
+      if (rfiIds.length > 0) {
+        const allRfis = await apiJson<RfiRef[]>(`/rfis?projectId=${drawingRes.projectId}`);
+        setReferencingRfis(allRfis.filter((rfi) => rfiIds.includes(rfi.id)));
+      } else {
+        setReferencingRfis([]);
+      }
     } catch {
       setError(tc("errorGeneric"));
     }
@@ -229,6 +256,26 @@ export default function DrawingDetailScreen() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="mt-6">
+          <h2 className="mb-2 text-lg font-medium">{t("referencedByRfis")}</h2>
+          {referencingRfis.length === 0 ? (
+            <p className="text-navy-600">{t("noReferencingRfis")}</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {referencingRfis.map((rfi) => (
+                <li key={rfi.id}>
+                  <Link
+                    href={`/${locale}/projects/${params.id}/rfis/${rfi.id}`}
+                    className="block rounded-lg border-3 border-ink bg-white px-2.5 py-1.5 text-sm text-navy-800 underline"
+                  >
+                    {rfi.number} — {rfi.subject}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </main>
     </>

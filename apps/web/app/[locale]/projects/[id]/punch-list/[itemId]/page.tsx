@@ -11,6 +11,11 @@ import { useEffect, useState } from "react";
 
 type PunchStatus = "open" | "ready_for_review" | "approved" | "closed";
 
+interface Member {
+  userId: string;
+  name: string;
+}
+
 interface PunchItemDetail {
   id: string;
   number: string;
@@ -20,6 +25,7 @@ interface PunchItemDetail {
   needsReview: boolean;
   conflictData: FieldConflict[] | null;
   history: { id: string; fromStatus: PunchStatus | null; toStatus: PunchStatus; note: string | null; changedAt: string }[];
+  distribution: { id: string; userId: string | null; companyId: string | null }[];
 }
 
 export default function PunchItemDetailPage() {
@@ -29,6 +35,7 @@ export default function PunchItemDetailPage() {
   const params = useParams<{ id: string; itemId: string }>();
 
   const [item, setItem] = useState<PunchItemDetail | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -39,6 +46,13 @@ export default function PunchItemDetailPage() {
   }
 
   useEffect(load, [params.itemId, tc]);
+  useEffect(() => {
+    apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
+  }, [params.id]);
+
+  function memberName(userId: string | null): string {
+    return members.find((m) => m.userId === userId)?.name ?? (userId ?? "");
+  }
 
   function statusLabel(status: PunchStatus): string {
     return {
@@ -116,6 +130,23 @@ export default function PunchItemDetailPage() {
                 </button>
               ))}
             </div>
+
+            <section className="mt-6">
+              <h3 className="mb-1.5 text-sm font-semibold text-navy-800">{t("distribution")}</h3>
+              {item.distribution.filter((d) => d.userId).length === 0 ? (
+                <p className="mb-4 text-sm text-navy-600">{t("noDistribution")}</p>
+              ) : (
+                <ul className="mb-4 flex flex-wrap gap-2">
+                  {item.distribution
+                    .filter((d) => d.userId)
+                    .map((d) => (
+                      <li key={d.id} className="rounded-lg border-3 border-ink bg-white px-2.5 py-1.5 text-sm text-navy-800">
+                        {memberName(d.userId)}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </section>
 
             <section className="mt-6">
               <ul className="flex flex-col gap-2 text-sm text-navy-700">

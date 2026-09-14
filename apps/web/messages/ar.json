@@ -131,7 +131,10 @@
     "filterAll": "الكل",
     "saveViewAs": "حفظ التصفية الحالية باسم",
     "viewNamePlaceholder": "اسم العرض",
-    "saveView": "حفظ العرض"
+    "saveView": "حفظ العرض",
+    "distribution": "أشخاص إضافيون",
+    "noDistribution": "لم يتم تعيين أشخاص إضافيين.",
+    "addPersonnel": "إضافة شخص"
   },
   "Photos": {
     "title": "الصور",
@@ -179,7 +182,9 @@
     "viewerError": "تعذّر تحميل ملف PDF هذا.",
     "noteLabel": "ملاحظة (اختياري)",
     "addPin": "إضافة دبوس",
-    "back": "العودة إلى المخططات"
+    "back": "العودة إلى المخططات",
+    "referencedByRfis": "مُشار إليه من طلبات المعلومات",
+    "noReferencingRfis": "لا توجد طلبات معلومات تشير إلى هذا المخطط بعد."
   },
   "Rfis": {
     "title": "طلبات المعلومات",
@@ -207,7 +212,19 @@
     "addResponse": "إضافة رد",
     "responseText": "الرد",
     "markOfficial": "وضع علامة كإجابة رسمية",
-    "back": "العودة إلى طلبات المعلومات"
+    "back": "العودة إلى طلبات المعلومات",
+    "linkedDrawings": "المخططات المرتبطة",
+    "linkedSpecSection": "قسم المواصفات المرتبط",
+    "addDrawing": "ربط مخطط",
+    "addSpecSection": "ربط قسم مواصفات",
+    "noDrawingsLinked": "لا توجد مخططات مرتبطة بعد.",
+    "noSpecSectionLinked": "لم يتم ربط قسم مواصفات بعد.",
+    "selectDrawing": "اختر مخططًا…",
+    "selectSpecSection": "اختر قسم مواصفات…",
+    "removeLink": "إزالة الرابط",
+    "distribution": "أشخاص إضافيون",
+    "noDistribution": "لم يتم تعيين أشخاص إضافيين.",
+    "addPersonnel": "إضافة شخص"
   },
   "Submittals": {
     "title": "المستندات الفنية",
@@ -243,7 +260,11 @@
     "responseRejected": "مرفوض",
     "pending": "قيد الانتظار",
     "close": "إغلاق المستند الفني",
-    "back": "العودة إلى المستندات الفنية"
+    "back": "العودة إلى المستندات الفنية",
+    "distribution": "أشخاص إضافيون",
+    "noDistribution": "لم يتم تعيين أشخاص إضافيين.",
+    "addPersonnel": "إضافة شخص",
+    "viewSpecSection": "عرض قسم المواصفات"
   },
   "Inspections": {
     "title": "التفتيشات",
@@ -659,5 +680,12 @@
   "Language": {
     "english": "English",
     "arabic": "العربية"
+  },
+  "Specifications": {
+    "back": "العودة إلى المستندات الفنية",
+    "submittalsInSection": "المستندات الفنية في هذا القسم",
+    "noSubmittals": "لا توجد مستندات فنية في هذا القسم بعد.",
+    "linkedRfis": "طلبات المعلومات المرتبطة",
+    "noLinkedRfis": "لا توجد طلبات معلومات مرتبطة بهذا القسم بعد."
   }
 }
