@@ -1,4 +1,4 @@
-import { acceptInviteSchema, inviteUserSchema, loginSchema, refreshSchema } from "@siteops/shared";
+import { acceptInviteSchema, inviteUserSchema, loginSchema, refreshSchema, updateMyProfileSchema } from "@siteops/shared";
 import { requirePermission } from "@siteops/shared";
 import { Router, type Request, type Response, type NextFunction } from "express";
 import type { Env } from "../env";
@@ -40,6 +40,22 @@ export function authRouter(deps: AuthDeps, env: Env): Router {
         .acceptInvite(deps, req.body)
         .then((tokens) => res.status(201).json(tokens))
         .catch(next);
+    },
+  );
+
+  router.patch(
+    "/me",
+    requireAuth(env),
+    validateBody(updateMyProfileSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const authUser = req.authUser;
+        if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+        const updated = await authService.updateMyProfile(deps, authUser.id, req.body);
+        res.json(updated);
+      } catch (err) {
+        next(err);
+      }
     },
   );
 

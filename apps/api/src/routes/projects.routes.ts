@@ -1,4 +1,4 @@
-import { createProjectSchema } from "@siteops/shared";
+import { assignPermissionTemplateSchema, createProjectSchema } from "@siteops/shared";
 import { Router, type Request, type Response, type NextFunction } from "express";
 import type { Database } from "@siteops/db";
 import type { Env } from "../env";
@@ -6,7 +6,8 @@ import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import * as projectService from "../services/project.service";
-import { listProjectCompanies, listProjectCostCodes, listProjectMembers } from "../services/directory.service";
+import * as permissionService from "../services/permission.service";
+import { listDirectoryCompanies, listProjectCompanies, listProjectCostCodes, listProjectMembers } from "../services/directory.service";
 import { getProjectDashboard } from "../services/dashboard.service";
 import { loadPermissionContext } from "../services/permission.service";
 
@@ -68,6 +69,20 @@ export function projectsRouter(appDb: Database, env: Env): Router {
     }
   });
 
+  router.get("/:id/directory-companies", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = paramAsString(req.params.id);
+      if (!projectId) throw new Error("missing :id param");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const companies = await listDirectoryCompanies(appDb, authUser.id, ctx, projectId);
+      res.json(companies);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.get("/:id/dashboard", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authUser = req.authUser;
@@ -95,6 +110,39 @@ export function projectsRouter(appDb: Database, env: Env): Router {
       next(err);
     }
   });
+
+  router.get("/:id/member-permissions", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = paramAsString(req.params.id);
+      if (!projectId) throw new Error("missing :id param");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      const members = await permissionService.listMemberPermissions(appDb, authUser.id, ctx, projectId);
+      res.json(members);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.patch(
+    "/:id/members/:userId/permission-template",
+    validateBody(assignPermissionTemplateSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const authUser = req.authUser;
+        if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+        const projectId = paramAsString(req.params.id);
+        const targetUserId = paramAsString(req.params.userId);
+        if (!projectId || !targetUserId) throw new Error("missing :id/:userId param");
+        const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+        await permissionService.assignPermissionTemplate(appDb, authUser.id, ctx, projectId, targetUserId, req.body);
+        res.status(204).send();
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   return router;
 }

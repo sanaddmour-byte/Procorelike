@@ -42,3 +42,13 @@ export const enrollTotpSchema = z
   })
   .strict();
 export type EnrollTotpInput = z.infer<typeof enrollTotpSchema>;
+
+/** Self-service only (PATCH /auth/me) -- Procore's Directory shows a business and a mobile number per person. */
+export const updateMyProfileSchema = z
+  .object({
+    name: z.string().min(1).max(200).optional(),
+    businessPhone: z.string().max(50).nullable().optional(),
+    mobilePhone: z.string().max(50).nullable().optional(),
+  })
+  .strict();
+export type UpdateMyProfileInput = z.infer<typeof updateMyProfileSchema>;

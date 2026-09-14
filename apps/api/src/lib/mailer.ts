@@ -24,6 +24,22 @@ export async function sendRfiEscalationEmail(mailer: Transporter, env: Env, emai
   });
 }
 
+export interface InviteEmail {
+  to: string;
+  inviterName: string;
+  projectName: string;
+  acceptUrl: string;
+}
+
+export async function sendInviteEmail(mailer: Transporter, env: Env, email: InviteEmail): Promise<void> {
+  await mailer.sendMail({
+    from: env.SMTP_FROM,
+    to: email.to,
+    subject: `${email.inviterName} invited you to ${email.projectName} on SiteOps`,
+    text: `${email.inviterName} has invited you to join "${email.projectName}" on SiteOps.\n\nAccept your invitation: ${email.acceptUrl}\n\nThis link expires in 7 days.`,
+  });
+}
+
 export interface DailyDigestEmail {
   to: string;
   ballInCourtRfis: { number: string; subject: string; projectName: string }[];

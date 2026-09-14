@@ -32,6 +32,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { key: "safety", label: t("safety"), href: `/${locale}/projects/${projectId}/safety` },
     { key: "tm-tickets", label: t("tmTickets"), href: `/${locale}/projects/${projectId}/tm-tickets` },
     { key: "correspondence", label: t("correspondence"), href: `/${locale}/projects/${projectId}/correspondence` },
+    { key: "permissions", label: t("permissions"), href: `/${locale}/projects/${projectId}/permissions` },
   ];
 
   return (

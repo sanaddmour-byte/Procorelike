@@ -198,6 +198,15 @@ describe("Budget + Change Management (Phase 6 gate)", () => {
     const costCodeId = await seedCostCodeId();
     const lineItemId = await createBudgetLineItem(omarToken, 200000, 0);
 
+    // costCodeId is the project's first seeded cost code, shared with every
+    // other test that happens to use it -- read the baseline for this
+    // brand-new line item before adding our own commitment, and assert the
+    // *increase*, so this test stays correct across repeated runs against
+    // the same seeded database rather than assuming a pristine cost code.
+    const baselineRes = await request(app).get("/budget-line-items").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    const baselineLine = baselineRes.body.find((li: { id: string }) => li.id === lineItemId);
+    const baselineCommittedCosts = Number(baselineLine.committedCosts);
+
     const huda = memberByEmail("huda.masri@siteops.test");
     const commitmentRes = await request(app)
       .post("/commitments")
@@ -220,7 +229,7 @@ describe("Budget + Change Management (Phase 6 gate)", () => {
 
     const budgetListRes = await request(app).get("/budget-line-items").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
     const line = budgetListRes.body.find((li: { id: string }) => li.id === lineItemId);
-    expect(Number(line.committedCosts)).toBe(40000);
+    expect(Number(line.committedCosts) - baselineCommittedCosts).toBe(40000);
     expect(Number(line.pendingCostChanges)).toBe(15000);
   });
 

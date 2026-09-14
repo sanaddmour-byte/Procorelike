@@ -64,7 +64,23 @@
     "role": "الدور",
     "company": "الشركة",
     "back": "العودة إلى المشاريع",
-    "empty": "لم تتم إضافة أي شخص إلى دليل هذا المشروع بعد."
+    "empty": "لم تتم إضافة أي شخص إلى دليل هذا المشروع بعد.",
+    "peopleTab": "الأشخاص",
+    "companiesTab": "الشركات",
+    "businessPhone": "هاتف العمل",
+    "mobilePhone": "الهاتف المحمول",
+    "editContact": "تعديل",
+    "invitePerson": "دعوة شخص",
+    "inviteEmail": "البريد الإلكتروني",
+    "inviteCompany": "الشركة",
+    "inviteCompanyPlaceholder": "اختر شركة…",
+    "inviteRole": "الدور",
+    "sendInvite": "إرسال الدعوة",
+    "inviteLinkLabel": "تم إنشاء الدعوة. شارك هذا الرابط:",
+    "noCompanies": "لم تتم إضافة أي شركات إلى هذا المشروع بعد.",
+    "companyName": "الشركة",
+    "companyType": "النوع",
+    "companyRole": "الدور في المشروع"
   },
   "ProjectNav": {
     "dashboard": "لوحة المعلومات",
@@ -89,7 +105,8 @@
     "safety": "السلامة",
     "tmTickets": "تذاكر الوقت والمواد",
     "correspondence": "المراسلات",
-    "backToProjects": "العودة إلى المشاريع"
+    "backToProjects": "العودة إلى المشاريع",
+    "permissions": "الصلاحيات"
   },
   "DailyLog": {
     "title": "سجلات الأعمال اليومية",
@@ -779,5 +796,30 @@
     "noSubmittals": "لا توجد مستندات فنية في هذا القسم بعد.",
     "linkedRfis": "طلبات المعلومات المرتبطة",
     "noLinkedRfis": "لا توجد طلبات معلومات مرتبطة بهذا القسم بعد."
+  },
+  "AcceptInvite": {
+    "title": "قبول الدعوة",
+    "name": "اسمك",
+    "password": "اختر كلمة مرور",
+    "submit": "إنشاء حساب",
+    "missingToken": "رابط الدعوة هذا يفتقد الرمز. يرجى استخدام الرابط الموجود في رسالة الدعوة.",
+    "invalidInvite": "هذه الدعوة غير صالحة أو منتهية الصلاحية أو تم استخدامها بالفعل."
+  },
+  "Permissions": {
+    "back": "العودة إلى المشاريع",
+    "title": "الصلاحيات",
+    "forbidden": "ليس لديك صلاحية لإدارة الصلاحيات في هذا المشروع.",
+    "templatesHeading": "قوالب الصلاحيات",
+    "deleteTemplate": "حذف",
+    "saveTemplate": "حفظ التغييرات",
+    "newTemplate": "قالب جديد",
+    "templateNamePlaceholder": "اسم القالب",
+    "createTemplate": "إنشاء القالب",
+    "templateInUse": "هذا القالب مُسند إلى أحد أعضاء المشروع ولا يمكن حذفه.",
+    "membersHeading": "الأعضاء",
+    "assignedTemplate": "القالب:",
+    "noTemplate": "— بدون —",
+    "addOverride": "إضافة استثناء:",
+    "set": "تعيين"
   }
 }

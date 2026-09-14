@@ -5,13 +5,16 @@ import {
   type AcceptInviteInput,
   type InviteUserInput,
   type LoginInput,
+  type UpdateMyProfileInput,
 } from "@siteops/shared";
 import { hashPassword, verifyPassword } from "@siteops/shared/server";
 import { eq } from "drizzle-orm";
+import type { Transporter } from "nodemailer";
 import type { Env } from "../env";
 import { ApiError, UnauthorizedError } from "../lib/errors";
 import { parseDurationMs } from "../lib/duration";
 import { signAccessToken } from "../lib/jwt";
+import { sendInviteEmail } from "../lib/mailer";
 import { generateOpaqueToken, hmacSha256 } from "../lib/tokens";
 import { verifyTotpCode } from "../lib/totp";
 
@@ -19,6 +22,7 @@ export interface AuthDeps {
   authDb: Database;
   appDb: Database;
   env: Env;
+  mailer?: Transporter;
 }
 
 export interface AuthTokens {
@@ -133,7 +137,7 @@ export async function createInvite(
   const tokenHash = hmacSha256(deps.env.INVITE_TOKEN_SECRET, inviteToken);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  await withRequestContext(deps.appDb, { userId: inviterUserId }, async (tx) => {
+  const { projectName, inviterName } = await withRequestContext(deps.appDb, { userId: inviterUserId }, async (tx) => {
     await tx.insert(schema.invites).values({
       email: input.email,
       companyId: input.companyId,
@@ -143,9 +147,49 @@ export async function createInvite(
       invitedBy: inviterUserId,
       expiresAt,
     });
+
+    const [project] = await tx.select().from(schema.projects).where(eq(schema.projects.id, input.projectId)).limit(1);
+    const [inviter] = await tx.select().from(schema.users).where(eq(schema.users.id, inviterUserId)).limit(1);
+    return { projectName: project?.name ?? "your project", inviterName: inviter?.name ?? "A team member" };
   });
 
+  // Best-effort: the invite row (and its returned inviteToken, shown to the
+  // inviter as a fallback share link) is the real deliverable -- a down
+  // SMTP relay should never fail invite creation itself.
+  if (deps.mailer) {
+    const acceptUrl = `${deps.env.CORS_ORIGIN}/en/accept-invite?token=${inviteToken}`;
+    sendInviteEmail(deps.mailer, deps.env, {
+      to: input.email,
+      inviterName,
+      projectName,
+      acceptUrl,
+    }).catch((err) => console.error("Failed to send invite email", err));
+  }
+
   return { inviteToken };
+}
+
+/** Self-service profile edit (PATCH /auth/me) -- RLS's users_self_update policy only allows a user to update their own row, so this is deliberately not parameterized by a target user id. */
+export async function updateMyProfile(
+  deps: AuthDeps,
+  userId: string,
+  input: UpdateMyProfileInput,
+): Promise<{ id: string; email: string; name: string; businessPhone: string | null; mobilePhone: string | null }> {
+  return withRequestContext(deps.appDb, { userId }, async (tx) => {
+    const [updated] = await tx
+      .update(schema.users)
+      .set(input)
+      .where(eq(schema.users.id, userId))
+      .returning({
+        id: schema.users.id,
+        email: schema.users.email,
+        name: schema.users.name,
+        businessPhone: schema.users.businessPhone,
+        mobilePhone: schema.users.mobilePhone,
+      });
+    if (!updated) throw new ApiError(404, "not_found", "User not found");
+    return updated;
+  });
 }
 
 export async function acceptInvite(deps: AuthDeps, input: AcceptInviteInput): Promise<AuthTokens> {

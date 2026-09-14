@@ -64,7 +64,23 @@
     "role": "Role",
     "company": "Company",
     "back": "Back to projects",
-    "empty": "No one has been added to this project's directory yet."
+    "empty": "No one has been added to this project's directory yet.",
+    "peopleTab": "People",
+    "companiesTab": "Companies",
+    "businessPhone": "Business phone",
+    "mobilePhone": "Mobile phone",
+    "editContact": "Edit",
+    "invitePerson": "Invite person",
+    "inviteEmail": "Email",
+    "inviteCompany": "Company",
+    "inviteCompanyPlaceholder": "Select a company…",
+    "inviteRole": "Role",
+    "sendInvite": "Send invite",
+    "inviteLinkLabel": "Invite created. Share this link:",
+    "noCompanies": "No companies have been added to this project yet.",
+    "companyName": "Company",
+    "companyType": "Type",
+    "companyRole": "Role on project"
   },
   "ProjectNav": {
     "dashboard": "Dashboard",
@@ -89,7 +105,8 @@
     "safety": "Safety",
     "tmTickets": "T&M Tickets",
     "correspondence": "Correspondence",
-    "backToProjects": "Back to projects"
+    "backToProjects": "Back to projects",
+    "permissions": "Permissions"
   },
   "DailyLog": {
     "title": "Daily Logs",
@@ -779,5 +796,30 @@
     "noSubmittals": "No submittals in this section yet.",
     "linkedRfis": "Linked RFIs",
     "noLinkedRfis": "No RFIs linked to this section yet."
+  },
+  "AcceptInvite": {
+    "title": "Accept your invitation",
+    "name": "Your name",
+    "password": "Choose a password",
+    "submit": "Create account",
+    "missingToken": "This invite link is missing its token. Please use the link from your invitation email.",
+    "invalidInvite": "This invite is invalid, expired, or already used."
+  },
+  "Permissions": {
+    "back": "Back to projects",
+    "title": "Permissions",
+    "forbidden": "You don't have permission to manage permissions on this project.",
+    "templatesHeading": "Permission templates",
+    "deleteTemplate": "Delete",
+    "saveTemplate": "Save changes",
+    "newTemplate": "New template",
+    "templateNamePlaceholder": "Template name",
+    "createTemplate": "Create template",
+    "templateInUse": "This template is assigned to a project member and can't be deleted.",
+    "membersHeading": "Members",
+    "assignedTemplate": "Template:",
+    "noTemplate": "— none —",
+    "addOverride": "Add override:",
+    "set": "Set"
   }
 }

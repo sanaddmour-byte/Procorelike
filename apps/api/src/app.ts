@@ -26,6 +26,7 @@ import { meetingItemsRouter, meetingsRouter } from "./routes/meetings.routes";
 import { savedViewsRouter } from "./routes/saved-views.routes";
 import { pdfCommentsRouter } from "./routes/pdf-comments.routes";
 import { pdfSketchesRouter } from "./routes/pdf-sketches.routes";
+import { permissionOverridesRouter, permissionTemplatesRouter } from "./routes/permissions.routes";
 import { photosRouter } from "./routes/photos.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { punchItemsRouter } from "./routes/punch-items.routes";
@@ -51,9 +52,9 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use(express.json({ limit: "20mb" }));
   app.use(correlationMiddleware);
 
-  const authDeps = { authDb: clients.authDb.db, appDb: clients.appDb.db, env };
   const s3 = createS3Client(env);
   const mailer = createMailer(env);
+  const authDeps = { authDb: clients.authDb.db, appDb: clients.appDb.db, env, mailer };
 
   app.use("/health", healthRouter());
   app.use("/auth", authRouter(authDeps, env));
@@ -90,6 +91,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/record-links", recordLinksRouter(clients.appDb.db, env));
   app.use("/pdf-comments", pdfCommentsRouter(clients.appDb.db, env));
   app.use("/pdf-sketches", pdfSketchesRouter(clients.appDb.db, env));
+  app.use("/permission-templates", permissionTemplatesRouter(clients.appDb.db, env));
+  app.use("/permission-overrides", permissionOverridesRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 

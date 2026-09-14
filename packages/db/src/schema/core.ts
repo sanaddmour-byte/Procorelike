@@ -91,6 +91,9 @@ export const users = pgTable(
     localePref: varchar("locale_pref", { length: 5 }).notNull().default("en"),
     totpSecret: text("totp_secret"),
     totpEnabled: boolean("totp_enabled").notNull().default(false),
+    /** Procore Directory shows both a business (office) and a mobile number per person -- self-service only, see updateMyProfileSchema. */
+    businessPhone: varchar("business_phone", { length: 50 }),
+    mobilePhone: varchar("mobile_phone", { length: 50 }),
     ...auditColumns(),
   },
   (table) => [uniqueIndex("users_email_unique").on(table.email)],

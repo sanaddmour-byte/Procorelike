@@ -6,6 +6,8 @@ export interface DirectoryMember {
   userId: string;
   name: string;
   email: string;
+  businessPhone: string | null;
+  mobilePhone: string | null;
   role: string;
   companyId: string;
   companyName: string;
@@ -26,6 +28,8 @@ export async function listProjectMembers(
         userId: schema.projectUsers.userId,
         name: schema.users.name,
         email: schema.users.email,
+        businessPhone: schema.users.businessPhone,
+        mobilePhone: schema.users.mobilePhone,
         role: schema.projectUsers.role,
         companyId: schema.projectUsers.companyId,
         companyName: schema.companies.name,
@@ -65,6 +69,33 @@ export interface ProjectCompany {
   name: string;
   type: string;
   roleOnProject: string | null;
+}
+
+/**
+ * Procore's Directory > Companies tab: every company on the project, visible
+ * to anyone with directory:read (not gated on financial access, unlike
+ * listProjectCompanies below which backs financial pickers and must stay
+ * narrower than every directory-permitted role).
+ */
+export async function listDirectoryCompanies(
+  appDb: Database,
+  callerUserId: string,
+  ctx: PermissionContext,
+  projectId: string,
+): Promise<ProjectCompany[]> {
+  requirePermission(ctx, "directory", "read");
+  return withRequestContext(appDb, { userId: callerUserId, role: ctx.role }, async (tx) => {
+    return tx
+      .select({
+        companyId: schema.companies.id,
+        name: schema.companies.name,
+        type: schema.companies.type,
+        roleOnProject: schema.projectCompanies.roleOnProject,
+      })
+      .from(schema.projectCompanies)
+      .innerJoin(schema.companies, eq(schema.companies.id, schema.projectCompanies.companyId))
+      .where(eq(schema.projectCompanies.projectId, projectId));
+  });
 }
 
 /** The companies actually on this project (docs/DATA_MODEL.md §1 project_companies), for pickers like "which company is this commitment/PO with" -- narrower and more correct than every company in the system. */
