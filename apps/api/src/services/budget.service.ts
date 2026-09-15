@@ -25,6 +25,7 @@ type BudgetModificationRow = typeof schema.budgetModifications.$inferSelect;
 export interface BudgetLineItemWithRollups extends BudgetLineItemRow {
   committedCosts: string;
   pendingCostChanges: string;
+  directCosts: string;
 }
 
 async function attachRollups(tx: Tx, projectId: string, lineItems: BudgetLineItemRow[]): Promise<BudgetLineItemWithRollups[]> {
@@ -32,7 +33,7 @@ async function attachRollups(tx: Tx, projectId: string, lineItems: BudgetLineIte
   const lineItemIds = lineItems.map((li) => li.id);
   const costCodeIds = [...new Set(lineItems.map((li) => li.costCodeId))];
 
-  const [committedRows, pendingRows] = await Promise.all([
+  const [committedRows, pendingRows, directCostRows] = await Promise.all([
     tx
       .select({
         costCodeId: schema.commitments.costCodeId,
@@ -57,15 +58,33 @@ async function attachRollups(tx: Tx, projectId: string, lineItems: BudgetLineIte
         ),
       )
       .groupBy(schema.changeOrders.targetId),
+    // Only approved direct costs count -- mirrors committedCosts only
+    // counting costs that have actually cleared, not merely proposed ones.
+    tx
+      .select({
+        costCodeId: schema.directCosts.costCodeId,
+        total: sql<string>`coalesce(sum(${schema.directCosts.amount}), 0)`,
+      })
+      .from(schema.directCosts)
+      .where(
+        and(
+          eq(schema.directCosts.projectId, projectId),
+          eq(schema.directCosts.status, "approved"),
+          inArray(schema.directCosts.costCodeId, costCodeIds),
+        ),
+      )
+      .groupBy(schema.directCosts.costCodeId),
   ]);
 
   const committedByCostCode = new Map(committedRows.filter((r) => r.costCodeId !== null).map((r) => [r.costCodeId as string, r.total]));
   const pendingByLineItem = new Map(pendingRows.map((r) => [r.targetId, r.total]));
+  const directCostsByCostCode = new Map(directCostRows.map((r) => [r.costCodeId, r.total]));
 
   return lineItems.map((li) => ({
     ...li,
     committedCosts: committedByCostCode.get(li.costCodeId) ?? "0",
     pendingCostChanges: pendingByLineItem.get(li.id) ?? "0",
+    directCosts: directCostsByCostCode.get(li.costCodeId) ?? "0",
   }));
 }
 

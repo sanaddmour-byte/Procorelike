@@ -107,7 +107,9 @@
     "correspondence": "المراسلات",
     "backToProjects": "العودة إلى المشاريع",
     "permissions": "الصلاحيات",
-    "transmittals": "خطابات الإحالة"
+    "transmittals": "خطابات الإحالة",
+    "primeContract": "العقد الرئيسي",
+    "directCosts": "التكاليف المباشرة"
   },
   "DailyLog": {
     "title": "سجلات الأعمال اليومية",
@@ -420,7 +422,8 @@
     "modificationFrom": "من بند",
     "modificationTo": "إلى بند",
     "modificationAmount": "المبلغ",
-    "modificationReason": "السبب (اختياري)"
+    "modificationReason": "السبب (اختياري)",
+    "directCosts": "التكاليف المباشرة"
   },
   "Commitments": {
     "title": "الالتزامات",
@@ -888,5 +891,44 @@
     "statusInProgress": "قيد التنفيذ",
     "statusCompleted": "مكتمل",
     "statusVerified": "تم التحقق"
+  },
+  "PrimeContract": {
+    "title": "العقد الرئيسي",
+    "empty": "لم يتم إنشاء عقد رئيسي لهذا المشروع بعد.",
+    "contractNumber": "رقم العقد",
+    "contractTitle": "العنوان",
+    "ownerCompany": "شركة المالك",
+    "originalContractSum": "قيمة العقد الأصلية",
+    "retentionPct": "نسبة الضمان %",
+    "approvedChanges": "التغييرات المعتمدة",
+    "pendingChanges": "التغييرات المعلقة",
+    "revisedContractSum": "قيمة العقد المعدلة",
+    "create": "إنشاء",
+    "save": "حفظ",
+    "edit": "تعديل",
+    "cancel": "إلغاء",
+    "statusDraft": "مسودة",
+    "statusExecuted": "موقّع",
+    "statusClosed": "مغلق"
+  },
+  "DirectCosts": {
+    "title": "التكاليف المباشرة",
+    "newButton": "تكلفة مباشرة جديدة",
+    "empty": "لا توجد تكاليف مباشرة مسجلة بعد.",
+    "costCode": "رمز التكلفة",
+    "type": "النوع",
+    "typeInvoice": "فاتورة",
+    "typeExpense": "مصروف",
+    "typePayroll": "رواتب",
+    "typeOther": "أخرى",
+    "description": "الوصف",
+    "amount": "المبلغ",
+    "incurredDate": "تاريخ التكبد",
+    "create": "إنشاء",
+    "approve": "اعتماد",
+    "reject": "رفض",
+    "statusPending": "قيد الانتظار",
+    "statusApproved": "معتمد",
+    "statusRejected": "مرفوض"
   }
 }

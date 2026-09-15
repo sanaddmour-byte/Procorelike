@@ -220,3 +220,79 @@ export const PAYMENT_APPLICATION_STATUS_TRANSITIONS: Record<PaymentApplicationSt
   certified: ["paid"],
   paid: [],
 };
+
+// ---------------------------------------------------------------------------
+// Prime Contract
+// ---------------------------------------------------------------------------
+
+export const primeContractStatusSchema = z.enum(["draft", "executed", "closed"]);
+export type PrimeContractStatus = z.infer<typeof primeContractStatusSchema>;
+
+export const PRIME_CONTRACT_STATUS_TRANSITIONS: Record<PrimeContractStatus, readonly PrimeContractStatus[]> = {
+  draft: ["executed"],
+  executed: ["closed"],
+  closed: [],
+};
+
+/** One per project (enforced by a unique index on projectId) -- the owner agreement itself, distinct from the internal Budget and from Commitments. */
+export const createPrimeContractSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    contractNumber: z.string().min(1).max(50),
+    title: z.string().min(1).max(300),
+    ownerCompanyId: z.string().uuid(),
+    originalContractSum: money.default(0),
+    retentionPct: z.number().min(0).max(100).default(0),
+    currency: currencyCode,
+  })
+  .strict();
+export type CreatePrimeContractInput = z.infer<typeof createPrimeContractSchema>;
+
+export const updatePrimeContractSchema = z
+  .object({
+    contractNumber: z.string().min(1).max(50).optional(),
+    title: z.string().min(1).max(300).optional(),
+    originalContractSum: money.optional(),
+    retentionPct: z.number().min(0).max(100).optional(),
+    executedDate: z.string().date().optional(),
+  })
+  .strict();
+export type UpdatePrimeContractInput = z.infer<typeof updatePrimeContractSchema>;
+
+export const transitionPrimeContractStatusSchema = z
+  .object({
+    toStatus: primeContractStatusSchema,
+  })
+  .strict();
+export type TransitionPrimeContractStatusInput = z.infer<typeof transitionPrimeContractStatusSchema>;
+
+// ---------------------------------------------------------------------------
+// Direct Costs
+// ---------------------------------------------------------------------------
+
+export const directCostTypeSchema = z.enum(["invoice", "expense", "payroll", "other"]);
+export type DirectCostType = z.infer<typeof directCostTypeSchema>;
+
+export const directCostStatusSchema = z.enum(["pending", "approved", "rejected"]);
+export type DirectCostStatus = z.infer<typeof directCostStatusSchema>;
+
+/** A cost that hits a budget cost code without going through a commitment (subcontract/PO) -- a permit fee, owner-purchased material, payroll allocation, etc. */
+export const createDirectCostSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    costCodeId: z.string().uuid(),
+    vendorCompanyId: z.string().uuid().optional(),
+    type: directCostTypeSchema.default("invoice"),
+    description: z.string().min(1).max(300),
+    amount: money,
+    incurredDate: z.string().date(),
+  })
+  .strict();
+export type CreateDirectCostInput = z.infer<typeof createDirectCostSchema>;
+
+export const transitionDirectCostStatusSchema = z
+  .object({
+    toStatus: z.enum(["approved", "rejected"]),
+  })
+  .strict();
+export type TransitionDirectCostStatusInput = z.infer<typeof transitionDirectCostStatusSchema>;

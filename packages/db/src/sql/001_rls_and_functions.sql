@@ -333,7 +333,8 @@ DECLARE
     'manual_schedule_tasks', 'safety_incidents', 'safety_observations',
     'tm_tickets', 'correspondence',
     'schedules', 'calendars', 'lookahead_plans',
-    'transmittals', 'drawing_sets', 'corrective_actions'
+    'transmittals', 'drawing_sets', 'corrective_actions',
+    'prime_contracts', 'direct_costs'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP

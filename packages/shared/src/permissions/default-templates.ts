@@ -32,6 +32,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "standard",
     reports: "admin",
     correspondence: "admin",
+    prime_contract: "admin",
+    direct_costs: "admin",
   },
   project_engineer: {
     directory: "read",
@@ -53,6 +55,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "read",
     reports: "read",
     correspondence: "standard",
+    prime_contract: "read",
+    direct_costs: "read",
   },
   superintendent: {
     directory: "read",
@@ -74,6 +78,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "standard",
     reports: "read",
     correspondence: "read",
+    prime_contract: "none",
+    direct_costs: "none",
   },
   foreman: {
     directory: "none",
@@ -95,6 +101,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "standard",
     reports: "none",
     correspondence: "none",
+    prime_contract: "none",
+    direct_costs: "none",
   },
   qa_qc: {
     directory: "read",
@@ -116,6 +124,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "none",
     reports: "read",
     correspondence: "read",
+    prime_contract: "none",
+    direct_costs: "none",
   },
   safety_officer: {
     directory: "read",
@@ -137,6 +147,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "none",
     reports: "read",
     correspondence: "none",
+    prime_contract: "none",
+    direct_costs: "none",
   },
   subcontractor: {
     directory: "none",
@@ -158,6 +170,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "standard",
     reports: "none",
     correspondence: "read",
+    prime_contract: "none",
+    direct_costs: "none",
   },
   consultant: {
     directory: "read",
@@ -179,6 +193,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "none",
     reports: "read",
     correspondence: "read",
+    prime_contract: "none",
+    direct_costs: "none",
   },
   client_viewer: {
     directory: "read",
@@ -202,6 +218,8 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     tm_tickets: "none",
     reports: "read",
     correspondence: "read",
+    prime_contract: "none",
+    direct_costs: "none",
   },
 };
 
@@ -231,6 +249,8 @@ function allModulesAt(level: PermissionLevel): Record<Module, PermissionLevel> {
     "tm_tickets",
     "reports",
     "correspondence",
+    "prime_contract",
+    "direct_costs",
   ];
   return Object.fromEntries(modules.map((m) => [m, level])) as Record<Module, PermissionLevel>;
 }

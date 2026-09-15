@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -45,6 +46,10 @@ export const paymentApplicationStatusEnum = pgEnum("payment_application_status",
   "certified",
   "paid",
 ]);
+export const primeContractStatusEnum = pgEnum("prime_contract_status", ["draft", "executed", "closed"]);
+export const directCostStatusEnum = pgEnum("direct_cost_status", ["pending", "approved", "rejected"]);
+/** Procore's Direct Cost types: a cost hitting the budget without going through a subcontract/PO commitment (e.g. a permit fee or owner-purchased material). */
+export const directCostTypeEnum = pgEnum("direct_cost_type", ["invoice", "expense", "payroll", "other"]);
 
 export const budgetLineItems = pgTable(
   "budget_line_items",
@@ -98,6 +103,77 @@ export const budgetModifications = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("budget_modifications_project_id_idx").on(table.projectId)],
+);
+
+/**
+ * Procore's Prime Contract: the owner agreement itself, distinct from the
+ * internal Budget (cost tracking) and from Commitments (the GC's downward
+ * subcontracts/POs). One per project. Its Approved/Pending Changes rollups
+ * are computed fresh from the *same* "prime"-targeted change_orders already
+ * used by the Budget (see budget.service.ts's attachRollups) summed
+ * project-wide rather than per-line-item -- deliberately not re-plumbed to
+ * target primeContracts.id directly, to avoid touching the already-tested
+ * change-management workflow. "Invoiced to date" is intentionally not
+ * modeled here yet: payment_application_lines.sov_line_id currently always
+ * references a commitment's own line items, even for a commitmentId=null
+ * (prime) application, so there is no clean SOV to bill against until that
+ * gap is addressed -- documented rather than papered over.
+ */
+export const primeContracts = pgTable(
+  "prime_contracts",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    contractNumber: varchar("contract_number", { length: 50 }).notNull(),
+    title: varchar("title", { length: 300 }).notNull(),
+    ownerCompanyId: uuid("owner_company_id")
+      .notNull()
+      .references(() => companies.id),
+    originalContractSum: numeric("original_contract_sum", { precision: 14, scale: 2 }).notNull().default("0"),
+    retentionPct: numeric("retention_pct", { precision: 5, scale: 2 }).notNull().default("0"),
+    executedDate: timestamp("executed_date", { withTimezone: false, mode: "date" }),
+    status: primeContractStatusEnum("status").notNull().default("draft"),
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    ...auditColumns(),
+  },
+  (table) => [uniqueIndex("prime_contracts_project_id_unique").on(table.projectId)],
+);
+
+/** Procore's Direct Costs: a cost that hits a budget cost code without going through a commitment (subcontract/PO) -- a permit fee, owner-purchased material, payroll allocation, etc. Only approved direct costs count toward the Budget grid's Direct Costs rollup (budget.service.ts's attachRollups), mirroring how a pending change order doesn't count as committed until approved. */
+export const directCosts = pgTable(
+  "direct_costs",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    costCodeId: uuid("cost_code_id")
+      .notNull()
+      .references(() => costCodes.id),
+    vendorCompanyId: uuid("vendor_company_id").references(() => companies.id),
+    type: directCostTypeEnum("type").notNull().default("invoice"),
+    description: varchar("description", { length: 300 }).notNull(),
+    amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+    incurredDate: timestamp("incurred_date", { withTimezone: false, mode: "date" }).notNull(),
+    status: directCostStatusEnum("status").notNull().default("pending"),
+    approvedBy: uuid("approved_by").references(() => users.id),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    ...auditColumns(),
+  },
+  (table) => [
+    index("direct_costs_project_id_idx").on(table.projectId),
+    index("direct_costs_cost_code_id_idx").on(table.costCodeId),
+  ],
 );
 
 export const commitments = pgTable(

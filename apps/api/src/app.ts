@@ -17,6 +17,7 @@ import { correctiveActionsRouter } from "./routes/corrective-actions.routes";
 import { correspondenceRouter } from "./routes/correspondence.routes";
 import { cpmScheduleRouter } from "./routes/cpm-schedule.routes";
 import { dailyLogsRouter } from "./routes/daily-logs.routes";
+import { directCostRouter } from "./routes/direct-cost.routes";
 import { documentsRouter } from "./routes/documents.routes";
 import { drawingSetsRouter, transmittalsRouter } from "./routes/document-control.routes";
 import { drawingsRouter } from "./routes/drawings.routes";
@@ -30,6 +31,7 @@ import { pdfCommentsRouter } from "./routes/pdf-comments.routes";
 import { pdfSketchesRouter } from "./routes/pdf-sketches.routes";
 import { permissionOverridesRouter, permissionTemplatesRouter } from "./routes/permissions.routes";
 import { photosRouter } from "./routes/photos.routes";
+import { primeContractRouter } from "./routes/prime-contract.routes";
 import { projectsRouter } from "./routes/projects.routes";
 import { punchItemsRouter } from "./routes/punch-items.routes";
 import { recordLinksRouter } from "./routes/record-links.routes";
@@ -98,6 +100,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/transmittals", transmittalsRouter(clients.appDb.db, env));
   app.use("/drawing-sets", drawingSetsRouter(clients.appDb.db, env));
   app.use("/corrective-actions", correctiveActionsRouter(clients.appDb.db, env));
+  app.use("/prime-contracts", primeContractRouter(clients.appDb.db, env));
+  app.use("/direct-costs", directCostRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
 

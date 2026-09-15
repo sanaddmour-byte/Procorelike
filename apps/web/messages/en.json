@@ -107,7 +107,9 @@
     "correspondence": "Correspondence",
     "backToProjects": "Back to projects",
     "permissions": "Permissions",
-    "transmittals": "Transmittals"
+    "transmittals": "Transmittals",
+    "primeContract": "Prime Contract",
+    "directCosts": "Direct Costs"
   },
   "DailyLog": {
     "title": "Daily Logs",
@@ -420,7 +422,8 @@
     "modificationFrom": "From line item",
     "modificationTo": "To line item",
     "modificationAmount": "Amount",
-    "modificationReason": "Reason (optional)"
+    "modificationReason": "Reason (optional)",
+    "directCosts": "Direct costs"
   },
   "Commitments": {
     "title": "Commitments",
@@ -888,5 +891,44 @@
     "statusInProgress": "In progress",
     "statusCompleted": "Completed",
     "statusVerified": "Verified"
+  },
+  "PrimeContract": {
+    "title": "Prime Contract",
+    "empty": "No prime contract has been created for this project yet.",
+    "contractNumber": "Contract number",
+    "contractTitle": "Title",
+    "ownerCompany": "Owner company",
+    "originalContractSum": "Original contract sum",
+    "retentionPct": "Retention %",
+    "approvedChanges": "Approved changes",
+    "pendingChanges": "Pending changes",
+    "revisedContractSum": "Revised contract sum",
+    "create": "Create",
+    "save": "Save",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "statusDraft": "Draft",
+    "statusExecuted": "Executed",
+    "statusClosed": "Closed"
+  },
+  "DirectCosts": {
+    "title": "Direct Costs",
+    "newButton": "New direct cost",
+    "empty": "No direct costs recorded yet.",
+    "costCode": "Cost code",
+    "type": "Type",
+    "typeInvoice": "Invoice",
+    "typeExpense": "Expense",
+    "typePayroll": "Payroll",
+    "typeOther": "Other",
+    "description": "Description",
+    "amount": "Amount",
+    "incurredDate": "Date incurred",
+    "create": "Create",
+    "approve": "Approve",
+    "reject": "Reject",
+    "statusPending": "Pending",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected"
   }
 }

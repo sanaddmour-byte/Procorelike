@@ -232,6 +232,20 @@
       "when": 1789418731545,
       "tag": "0032_strong_blizzard",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789451892978,
+      "tag": "0033_silent_microchip",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1789452254676,
+      "tag": "0034_breezy_the_fury",
+      "breakpoints": true
     }
   ]
 }

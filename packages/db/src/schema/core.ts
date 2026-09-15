@@ -49,6 +49,8 @@ export const permissionModuleEnum = pgEnum("permission_module", [
   "tm_tickets",
   "reports",
   "correspondence",
+  "prime_contract",
+  "direct_costs",
 ]);
 
 export const permissionLevelEnum = pgEnum("permission_level", ["none", "read", "standard", "admin"]);

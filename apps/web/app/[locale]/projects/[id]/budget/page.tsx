@@ -24,6 +24,7 @@ interface BudgetLineItem {
   projectedAmount: string;
   committedCosts: string;
   pendingCostChanges: string;
+  directCosts: string;
   currency: string;
 }
 
@@ -309,6 +310,10 @@ export default function BudgetPage() {
                     <div>
                       <div className="text-navy-600">{t("committedCosts")}</div>
                       <div className="font-medium">{money(li.committedCosts)}</div>
+                    </div>
+                    <div>
+                      <div className="text-navy-600">{t("directCosts")}</div>
+                      <div className="font-medium">{money(li.directCosts)}</div>
                     </div>
                     <div>
                       <div className="text-navy-600">{t("forecastToComplete")}</div>

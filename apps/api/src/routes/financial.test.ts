@@ -327,6 +327,155 @@ describe("Budget + Change Management (Phase 6 gate)", () => {
   });
 });
 
+describe("Prime Contract (Financial depth)", () => {
+  it("is one per project, and its rollups reflect approved/pending 'prime' change orders project-wide", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const huda = memberByEmail("huda.masri@siteops.test");
+
+    // One prime contract per project (unique index) -- this test runs
+    // against a persistent seeded DB across repeated `pnpm vitest run`
+    // invocations, so reuse whatever a prior run already created instead of
+    // assuming create always succeeds from a blank slate.
+    let contractId: string;
+    const existingRes = await request(app).get("/prime-contracts").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    if (existingRes.status === 200) {
+      contractId = existingRes.body.id as string;
+    } else {
+      expect(existingRes.status).toBe(404);
+      const createRes = await request(app)
+        .post("/prime-contracts")
+        .set("authorization", `Bearer ${omarToken}`)
+        .send({ projectId, contractNumber: "PC-001", title: "Owner Prime Agreement", ownerCompanyId: huda.companyId, originalContractSum: 1000000 });
+      expect(createRes.status).toBe(201);
+      contractId = createRes.body.id as string;
+    }
+
+    // A second create always fails, regardless of which branch above ran.
+    const dupRes = await request(app)
+      .post("/prime-contracts")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, contractNumber: "PC-002", title: "Duplicate attempt", ownerCompanyId: huda.companyId, originalContractSum: 1 });
+    expect(dupRes.status).toBe(409);
+
+    const baselineRes = await request(app).get("/prime-contracts").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    const baselineApproved = Number(baselineRes.body.approvedChangesAmount);
+    const baselinePending = Number(baselineRes.body.pendingChangesAmount);
+
+    // An approved 'prime' change order (below the default threshold, so one
+    // approval is enough) bumps approvedChangesAmount project-wide.
+    const approvedLineItemId = await createBudgetLineItem(omarToken, 10000, 0);
+    const approvedCoRes = await request(app)
+      .post("/change-orders")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, targetType: "prime", targetId: approvedLineItemId, costImpact: 2000 });
+    await request(app).post(`/change-orders/${approvedCoRes.body.id}/submit`).set("authorization", `Bearer ${omarToken}`).expect(200);
+    await request(app).post(`/change-orders/${approvedCoRes.body.id}/approve`).set("authorization", `Bearer ${omarToken}`).expect(200);
+
+    const afterApprovedRes = await request(app).get("/prime-contracts").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    expect(Number(afterApprovedRes.body.approvedChangesAmount) - baselineApproved).toBe(2000);
+
+    // A submitted-but-not-yet-approved 'prime' change order bumps pendingChangesAmount instead.
+    const pendingLineItemId = await createBudgetLineItem(omarToken, 10000, 0);
+    const pendingCoRes = await request(app)
+      .post("/change-orders")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, targetType: "prime", targetId: pendingLineItemId, costImpact: 1500 });
+    await request(app).post(`/change-orders/${pendingCoRes.body.id}/submit`).set("authorization", `Bearer ${omarToken}`).expect(200);
+
+    const afterPendingRes = await request(app).get("/prime-contracts").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    expect(Number(afterPendingRes.body.pendingChangesAmount) - baselinePending).toBe(1500);
+
+    // Drive the lifecycle forward from wherever a prior run left it, since
+    // the contract row (and its status) persists across test runs.
+    let status = afterPendingRes.body.status as "draft" | "executed" | "closed";
+    if (status === "draft") {
+      const executeRes = await request(app)
+        .post(`/prime-contracts/${contractId}/transition`)
+        .set("authorization", `Bearer ${omarToken}`)
+        .send({ toStatus: "executed" });
+      expect(executeRes.status).toBe(200);
+      expect(executeRes.body.status).toBe("executed");
+      expect(executeRes.body.executedDate).toBeTruthy();
+      status = "executed";
+    }
+    if (status === "executed") {
+      const closeRes = await request(app)
+        .post(`/prime-contracts/${contractId}/transition`)
+        .set("authorization", `Bearer ${omarToken}`)
+        .send({ toStatus: "closed" });
+      expect(closeRes.status).toBe(200);
+      expect(closeRes.body.status).toBe("closed");
+    }
+
+    // Closed is a dead end.
+    const deadEndRes = await request(app)
+      .post(`/prime-contracts/${contractId}/transition`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ toStatus: "executed" });
+    expect(deadEndRes.status).toBe(409);
+  });
+});
+
+describe("Direct Costs (Financial depth)", () => {
+  it("only counts toward the budget's directCosts rollup once approved, and locks once transitioned", async () => {
+    const omarToken = await loginAs("omar.nassar@siteops.test");
+    const costCodeId = await seedCostCodeId();
+    const lineItemId = await createBudgetLineItem(omarToken, 20000, 0);
+
+    // Shared cost code across tests -- assert the increase from a captured
+    // baseline rather than an absolute total (same pattern as the
+    // committedCosts test above).
+    const baselineRes = await request(app).get("/budget-line-items").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    const baselineLine = baselineRes.body.find((li: { id: string }) => li.id === lineItemId);
+    const baselineDirectCosts = Number(baselineLine.directCosts);
+
+    const createRes = await request(app)
+      .post("/direct-costs")
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ projectId, costCodeId, type: "invoice", description: "Building permit fee", amount: 1200, incurredDate: "2026-01-15" });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.status).toBe("pending");
+    const directCostId = createRes.body.id as string;
+
+    // Pending doesn't count toward the rollup yet.
+    const afterPendingRes = await request(app).get("/budget-line-items").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    const afterPendingLine = afterPendingRes.body.find((li: { id: string }) => li.id === lineItemId);
+    expect(Number(afterPendingLine.directCosts)).toBe(baselineDirectCosts);
+
+    const listRes = await request(app).get("/direct-costs").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    expect(listRes.status).toBe(200);
+    expect((listRes.body as { id: string }[]).some((dc) => dc.id === directCostId)).toBe(true);
+
+    const approveRes = await request(app)
+      .post(`/direct-costs/${directCostId}/transition`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ toStatus: "approved" });
+    expect(approveRes.status).toBe(200);
+    expect(approveRes.body.status).toBe("approved");
+
+    const afterApprovedRes = await request(app).get("/budget-line-items").query({ projectId }).set("authorization", `Bearer ${omarToken}`);
+    const afterApprovedLine = afterApprovedRes.body.find((li: { id: string }) => li.id === lineItemId);
+    expect(Number(afterApprovedLine.directCosts) - baselineDirectCosts).toBe(1200);
+
+    // Already-approved is a dead end.
+    const reRejectRes = await request(app)
+      .post(`/direct-costs/${directCostId}/transition`)
+      .set("authorization", `Bearer ${omarToken}`)
+      .send({ toStatus: "rejected" });
+    expect(reRejectRes.status).toBe(409);
+  });
+
+  it("client_viewer is blocked from both prime contract and direct cost endpoints", async () => {
+    const karimToken = await loginAs("karim.abughazaleh@siteops.test");
+
+    const pcRes = await request(app).get("/prime-contracts").query({ projectId }).set("authorization", `Bearer ${karimToken}`);
+    expect(pcRes.status).toBe(403);
+
+    const dcRes = await request(app).get("/direct-costs").query({ projectId }).set("authorization", `Bearer ${karimToken}`);
+    expect(dcRes.status).toBe(403);
+  });
+});
+
 describe("Commitments + Progress Billing", () => {
   it("SOV line items plus computed pay-application amounts, with retention withheld", async () => {
     const omarToken = await loginAs("omar.nassar@siteops.test");
