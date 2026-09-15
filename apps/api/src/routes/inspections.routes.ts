@@ -135,6 +135,22 @@ export function inspectionsRouter(appDb: Database, env: Env): Router {
     }
   });
 
+  router.get("/:id/signature", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Inspection not found");
+      const inspection = await inspectionService.findInspectionById(appDb, authUser.id, id);
+      if (!inspection) throw new NotFoundError("Inspection not found");
+      const ctx = await loadPermissionContext(appDb, authUser.id, inspection.projectId);
+      const verification = await inspectionService.getInspectionSignature(appDb, authUser.id, ctx, id);
+      res.json(verification);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.get("/:id/report", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authUser = req.authUser;

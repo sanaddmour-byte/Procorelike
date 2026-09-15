@@ -3,11 +3,13 @@
 import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
+import { SignatureBadge } from "@/components/SignatureBadge";
+import { SignaturePad } from "@/components/SignaturePad";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { uploadAttachment } from "@/lib/upload";
-import type { ChecklistResponseType, InspectionResponseValue } from "@siteops/shared";
+import type { ChecklistResponseType, EsignatureVerification, InspectionResponseValue } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -58,6 +60,8 @@ export default function InspectionDetailScreen() {
   const [busy, setBusy] = useState(false);
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
   const [signedByName, setSignedByName] = useState("");
+  const [signatureImage, setSignatureImage] = useState<string | null>(null);
+  const [signature, setSignature] = useState<EsignatureVerification | null>(null);
   const pdfViewer = usePdfViewer();
 
   const load = useCallback(async () => {
@@ -69,6 +73,9 @@ export default function InspectionDetailScreen() {
       const nextDrafts: Record<string, InspectionResponseValue> = {};
       for (const response of detail.responses) nextDrafts[response.templateItemId] = response.value;
       setDrafts(nextDrafts);
+      if (detail.status === "completed") {
+        apiJson<EsignatureVerification>(`/inspections/${params.inspectionId}/signature`).then(setSignature).catch(() => undefined);
+      }
     } catch {
       setError(tc("errorGeneric"));
     }
@@ -148,7 +155,7 @@ export default function InspectionDetailScreen() {
     try {
       await apiJson(`/inspections/${params.inspectionId}/complete`, {
         method: "POST",
-        body: JSON.stringify({ signedByName: signedByName.trim() }),
+        body: JSON.stringify({ signedByName: signedByName.trim(), signatureImageBase64: signatureImage ?? undefined }),
       });
       await load();
     } catch {
@@ -317,6 +324,10 @@ export default function InspectionDetailScreen() {
                     className="rounded-lg border-3 border-ink px-3 py-2"
                   />
                 </label>
+                <div className="mb-2 flex flex-col gap-1 text-sm">
+                  <span>{t("signatureDraw")}</span>
+                  <SignaturePad onChange={setSignatureImage} clearLabel={t("signatureClear")} />
+                </div>
                 <button
                   onClick={() => void handleComplete()}
                   disabled={busy || !signedByName.trim()}
@@ -333,6 +344,15 @@ export default function InspectionDetailScreen() {
                   {t("signedOffBy")}: <span className="font-medium">{inspection.signedByName}</span>
                   {inspection.signedAt && ` — ${inspection.signedAt.replace("T", " ").slice(0, 16)}`}
                 </p>
+                {signature && (
+                  <SignatureBadge
+                    verification={signature}
+                    verifiedLabel={t("signatureVerified")}
+                    unverifiedLabel={t("signatureUnverified")}
+                    signedByLabel={t("signedBy")}
+                    hashLabel={t("signatureHash")}
+                  />
+                )}
                 <button
                   onClick={() =>
                     void pdfViewer.openPdf(`/inspections/${params.inspectionId}/report`, inspection.templateTitle, "inspection-report.pdf", {

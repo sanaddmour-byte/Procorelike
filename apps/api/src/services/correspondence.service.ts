@@ -7,6 +7,7 @@ import {
   type CorrespondenceStatus,
   type CorrespondenceType,
   type CreateCorrespondenceInput,
+  type EsignatureVerification,
   type PermissionContext,
   type TransitionCorrespondenceStatusInput,
 } from "@siteops/shared";
@@ -14,9 +15,23 @@ import { eq, inArray } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { getCompanyBranding, resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
+import { getLatestSignature, recordSignature, verifySignature } from "./esignature.service";
 import { withUserContext } from "./permission.service";
 
 type CorrespondenceRow = typeof schema.correspondence.$inferSelect;
+
+/** The exact content an e-signature on a "sent" correspondence certifies -- everything that would matter if this letter were later disputed, frozen at send time. */
+function signedContentSnapshot(row: CorrespondenceRow): unknown {
+  return {
+    correspondenceNumber: row.correspondenceNumber,
+    direction: row.direction,
+    type: row.type,
+    subject: row.subject,
+    body: row.body,
+    fromCompanyId: row.fromCompanyId,
+    toCompanyId: row.toCompanyId,
+  };
+}
 
 export async function createCorrespondence(
   appDb: Database,
@@ -112,6 +127,18 @@ export async function transitionCorrespondenceStatus(
       .returning();
     if (!updated) throw new Error("Failed to transition correspondence");
 
+    if (input.toStatus === "sent") {
+      await recordSignature(tx, {
+        projectId: updated.projectId,
+        documentType: "correspondence",
+        documentId: updated.id,
+        signerUserId: userId,
+        signerName: input.senderSignatureName ?? "",
+        signatureImageBase64: input.signatureImageBase64,
+        content: signedContentSnapshot(updated),
+      });
+    }
+
     await writeAuditLog(tx, {
       actorId: userId,
       entityType: "correspondence",
@@ -121,6 +148,23 @@ export async function transitionCorrespondenceStatus(
       after: { status: updated.status },
     });
     return updated;
+  });
+}
+
+/** Recomputes the content hash from the correspondence's current row and compares it to what its most recent e-signature certified -- the actual verification, not just a display of stored metadata. */
+export async function getCorrespondenceSignature(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  correspondenceId: string,
+): Promise<EsignatureVerification> {
+  requirePermission(ctx, "correspondence", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [row] = await tx.select().from(schema.correspondence).where(eq(schema.correspondence.id, correspondenceId)).limit(1);
+    if (!row) throw new NotFoundError("Correspondence not found");
+
+    const signature = await getLatestSignature(tx, "correspondence", correspondenceId);
+    return verifySignature(signature, signedContentSnapshot(row));
   });
 }
 

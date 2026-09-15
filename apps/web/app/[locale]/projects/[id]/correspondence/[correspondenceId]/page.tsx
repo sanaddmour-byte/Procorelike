@@ -3,6 +3,8 @@
 import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
+import { SignatureBadge } from "@/components/SignatureBadge";
+import { SignaturePad } from "@/components/SignaturePad";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
@@ -11,6 +13,7 @@ import {
   type CorrespondenceDirection,
   type CorrespondenceStatus,
   type CorrespondenceType,
+  type EsignatureVerification,
 } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -58,6 +61,8 @@ export default function CorrespondenceDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [signatureName, setSignatureName] = useState("");
+  const [signatureImage, setSignatureImage] = useState<string | null>(null);
+  const [signature, setSignature] = useState<EsignatureVerification | null>(null);
   const pdfViewer = usePdfViewer();
 
   const load = useCallback(async () => {
@@ -65,6 +70,9 @@ export default function CorrespondenceDetailScreen() {
       const rows = await apiJson<CorrespondenceDetail[]>(`/correspondence?projectId=${params.id}`);
       const detail = rows.find((r) => r.id === params.correspondenceId) ?? null;
       setItem(detail);
+      if (detail && detail.status !== "draft") {
+        apiJson<EsignatureVerification>(`/correspondence/${params.correspondenceId}/signature`).then(setSignature).catch(() => undefined);
+      }
     } catch {
       setError(tc("errorGeneric"));
     }
@@ -93,9 +101,14 @@ export default function CorrespondenceDetailScreen() {
     try {
       await apiJson(`/correspondence/${params.correspondenceId}/transition`, {
         method: "POST",
-        body: JSON.stringify(toStatus === "sent" ? { toStatus, senderSignatureName: signatureName.trim() } : { toStatus }),
+        body: JSON.stringify(
+          toStatus === "sent"
+            ? { toStatus, senderSignatureName: signatureName.trim(), signatureImageBase64: signatureImage ?? undefined }
+            : { toStatus },
+        ),
       });
       setSignatureName("");
+      setSignatureImage(null);
       await load();
     } catch {
       setError(tc("errorGeneric"));
@@ -156,6 +169,18 @@ export default function CorrespondenceDetailScreen() {
           <p className="whitespace-pre-wrap">{item.body}</p>
         </div>
 
+        {signature && (
+          <div className="mb-6">
+            <SignatureBadge
+              verification={signature}
+              verifiedLabel={t("signatureVerified")}
+              unverifiedLabel={t("signatureUnverified")}
+              signedByLabel={t("signedBy")}
+              hashLabel={t("signatureHash")}
+            />
+          </div>
+        )}
+
         {CORRESPONDENCE_STATUS_TRANSITIONS[item.status].includes("sent") && (
           <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             <label className="mb-2 flex flex-col gap-1 text-sm">
@@ -168,6 +193,10 @@ export default function CorrespondenceDetailScreen() {
                 className="rounded-lg border-3 border-ink px-3 py-2"
               />
             </label>
+            <div className="mb-2 flex flex-col gap-1 text-sm">
+              <span>{t("signatureDraw")}</span>
+              <SignaturePad onChange={setSignatureImage} clearLabel={t("signatureClear")} />
+            </div>
             <button
               onClick={() => void handleTransition("sent")}
               disabled={transitioning || !signatureName.trim()}

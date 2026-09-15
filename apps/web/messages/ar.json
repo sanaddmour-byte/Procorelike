@@ -398,7 +398,13 @@
     "responseTypeNumeric": "رقمي",
     "responseTypePhoto": "صورة",
     "responseTypeSignature": "توقيع",
-    "noTemplates": "لا توجد قوالب بعد — أنشئ واحداً أولاً."
+    "noTemplates": "لا توجد قوالب بعد — أنشئ واحداً أولاً.",
+    "signatureDraw": "ارسم توقيعك (اختياري)",
+    "signatureClear": "مسح",
+    "signatureVerified": "التوقيع موثّق",
+    "signatureUnverified": "تعذّر التحقق من التوقيع — قد يكون المحتوى تغيّر بعد التوقيع",
+    "signatureHash": "رمز التحقق",
+    "signedBy": "وقّعه"
   },
   "Budget": {
     "title": "الميزانية",
@@ -814,7 +820,12 @@
     "signaturePlaceholder": "الاسم الكامل",
     "signAndSend": "توقيع وإرسال",
     "signatureRequired": "اكتب اسمك لإرسال هذه المراسلة.",
-    "signedBy": "وقّعها"
+    "signedBy": "وقّعها",
+    "signatureDraw": "ارسم توقيعك (اختياري)",
+    "signatureClear": "مسح",
+    "signatureVerified": "التوقيع موثّق",
+    "signatureUnverified": "تعذّر التحقق من التوقيع — قد يكون المحتوى تغيّر بعد التوقيع",
+    "signatureHash": "رمز التحقق"
   },
   "Language": {
     "english": "English",

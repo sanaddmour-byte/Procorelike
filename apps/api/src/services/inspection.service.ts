@@ -11,6 +11,7 @@ import {
   type ChecklistResponseType,
   type CompleteInspectionInput,
   type CreateInspectionInput,
+  type EsignatureVerification,
   type FieldConflict,
   type InspectionResponseValue,
   type InspectionStatus,
@@ -21,10 +22,20 @@ import {
 import { and, eq, inArray } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { getLatestSignature, recordSignature, verifySignature } from "./esignature.service";
 
 type InspectionRow = typeof schema.inspections.$inferSelect;
 type InspectionResponseRow = typeof schema.inspectionResponses.$inferSelect;
 type ChecklistTemplateItemRow = typeof schema.checklistTemplateItems.$inferSelect;
+
+/** The exact content a completion e-signature certifies: every response as it stood at sign-off, in a fixed order so the hash doesn't depend on read order. */
+async function signedContentSnapshot(tx: Tx, inspectionId: string): Promise<unknown> {
+  const responses = await tx
+    .select({ templateItemId: schema.inspectionResponses.templateItemId, value: schema.inspectionResponses.value })
+    .from(schema.inspectionResponses)
+    .where(eq(schema.inspectionResponses.inspectionId, inspectionId));
+  return { responses: [...responses].sort((a, b) => a.templateItemId.localeCompare(b.templateItemId)) };
+}
 
 export interface InspectionDetail extends InspectionRow {
   templateTitle: string;
@@ -349,6 +360,16 @@ export async function completeInspection(
       .returning();
     if (!updated) throw new Error("Failed to complete inspection");
 
+    await recordSignature(tx, {
+      projectId: updated.projectId,
+      documentType: "inspection",
+      documentId: updated.id,
+      signerUserId: userId,
+      signerName: input.signedByName,
+      signatureImageBase64: input.signatureImageBase64,
+      content: await signedContentSnapshot(tx, inspectionId),
+    });
+
     await writeAuditLog(tx, {
       actorId: userId,
       entityType: "inspection",
@@ -358,6 +379,23 @@ export async function completeInspection(
       after: { status: "completed" },
     });
     return updated;
+  });
+}
+
+/** Recomputes the content hash from the inspection's current responses and compares it to what its completion e-signature certified. */
+export async function getInspectionSignature(
+  appDb: Database,
+  userId: string,
+  ctx: PermissionContext,
+  inspectionId: string,
+): Promise<EsignatureVerification> {
+  requirePermission(ctx, "inspections", "read");
+  return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+    const [inspection] = await tx.select().from(schema.inspections).where(eq(schema.inspections.id, inspectionId)).limit(1);
+    if (!inspection) throw new ApiError(404, "not_found", "Inspection not found");
+
+    const signature = await getLatestSignature(tx, "inspection", inspectionId);
+    return verifySignature(signature, await signedContentSnapshot(tx, inspectionId));
   });
 }
 

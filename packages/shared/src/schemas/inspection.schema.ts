@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { signatureImageBase64Schema } from "./esignature.schema";
 
 export const checklistResponseTypeSchema = z.enum(["pass_fail", "na", "numeric", "photo", "signature"]);
 export type ChecklistResponseType = z.infer<typeof checklistResponseTypeSchema>;
@@ -92,6 +93,7 @@ export const completeInspectionSchema = z
   .object({
     signedByName: z.string().min(1).max(200),
     signatureAttachmentId: z.string().uuid().optional(),
+    signatureImageBase64: signatureImageBase64Schema,
   })
   .strict();
 export type CompleteInspectionInput = z.infer<typeof completeInspectionSchema>;

@@ -334,7 +334,7 @@ DECLARE
     'tm_tickets', 'correspondence',
     'schedules', 'calendars', 'lookahead_plans',
     'transmittals', 'drawing_sets', 'corrective_actions',
-    'prime_contracts', 'direct_costs'
+    'prime_contracts', 'direct_costs', 'esignatures'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP

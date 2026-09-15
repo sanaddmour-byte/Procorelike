@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { signatureImageBase64Schema } from "./esignature.schema";
 
 export const correspondenceDirectionSchema = z.enum(["incoming", "outgoing"]);
 export type CorrespondenceDirection = z.infer<typeof correspondenceDirectionSchema>;
@@ -23,11 +24,12 @@ export const createCorrespondenceSchema = z
   .strict();
 export type CreateCorrespondenceInput = z.infer<typeof createCorrespondenceSchema>;
 
-/** `senderSignatureName` is required exactly when moving to "sent" -- a formal letter/notice/transmittal/memo can't go out unsigned (Phase 12). It's the sender typing their own name to certify/send, not a drawn signature. */
+/** `senderSignatureName` is required exactly when moving to "sent" -- a formal letter/notice/transmittal/memo can't go out unsigned (Phase 12). `signatureImageBase64` is the drawn e-signature layered on top of it (e-signature depth): when present, the service records a verifiable esignatures row alongside the typed name rather than trusting the string alone. */
 export const transitionCorrespondenceStatusSchema = z
   .object({
     toStatus: correspondenceStatusSchema,
     senderSignatureName: z.string().min(1).max(200).optional(),
+    signatureImageBase64: signatureImageBase64Schema,
   })
   .strict()
   .refine((data) => data.toStatus !== "sent" || Boolean(data.senderSignatureName?.trim()), {

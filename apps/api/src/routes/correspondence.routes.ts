@@ -82,6 +82,20 @@ export function correspondenceRouter(appDb: Database, env: Env): Router {
     },
   );
 
+  router.get("/:id/signature", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const id = paramAsString(req.params.id);
+      if (!id) throw new NotFoundError("Correspondence not found");
+      const { ctx } = await loadCtx(authUser.id, id);
+      const verification = await correspondenceService.getCorrespondenceSignature(appDb, authUser.id, ctx, id);
+      res.json(verification);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.get("/:id/report", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authUser = req.authUser;

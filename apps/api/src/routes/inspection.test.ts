@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { schema } from "@siteops/db";
+import { eq } from "drizzle-orm";
 import type { Express } from "express";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -106,14 +108,46 @@ describe("Checklist Templates + Inspections", () => {
       .send({ responses: [{ templateItemId: numericItem.id, value: { type: "pass_fail", passed: true } }] });
     expect(wrongTypeRes.status).toBe(400);
 
+    // A 1x1 transparent PNG, the smallest valid signature image a real canvas pad could produce.
+    const tinyPngBase64 =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
     const completeRes = await request(app)
       .post(`/inspections/${inspectionId}/complete`)
       .set("authorization", `Bearer ${token}`)
-      .send({ signedByName: "Omar Nassar" });
+      .send({ signedByName: "Omar Nassar", signatureImageBase64: tinyPngBase64 });
     expect(completeRes.status).toBe(200);
     expect(completeRes.body.status).toBe("completed");
     expect(completeRes.body.signedByName).toBe("Omar Nassar");
     expect(completeRes.body.signedAt).toBeTruthy();
+
+    const signatureRes = await request(app).get(`/inspections/${inspectionId}/signature`).set("authorization", `Bearer ${token}`);
+    expect(signatureRes.status).toBe(200);
+    expect(signatureRes.body.signed).toBe(true);
+    expect(signatureRes.body.signerName).toBe("Omar Nassar");
+    expect(signatureRes.body.hasImage).toBe(true);
+    expect(signatureRes.body.verified).toBe(true);
+    expect(signatureRes.body.contentHash).toHaveLength(64); // sha256 hex
+
+    // Responses are locked once completed (asserted below), so the only way
+    // content could drift post-signing is a direct DB write bypassing the
+    // API -- simulate exactly that to prove verification recomputes the
+    // hash live rather than trusting a stored flag.
+    const [oneResponse] = await clients.authDb.db
+      .select()
+      .from(schema.inspectionResponses)
+      .where(eq(schema.inspectionResponses.inspectionId, inspectionId))
+      .limit(1);
+    if (!oneResponse) throw new Error("Expected at least one inspection response");
+    await clients.authDb.db
+      .update(schema.inspectionResponses)
+      .set({ value: { type: "numeric", number: 999 } })
+      .where(eq(schema.inspectionResponses.id, oneResponse.id));
+
+    const tamperedSignatureRes = await request(app)
+      .get(`/inspections/${inspectionId}/signature`)
+      .set("authorization", `Bearer ${token}`);
+    expect(tamperedSignatureRes.body.verified).toBe(false);
 
     const editAfterCompleteRes = await request(app)
       .patch(`/inspections/${inspectionId}/responses`)

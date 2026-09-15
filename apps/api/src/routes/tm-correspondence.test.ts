@@ -1,3 +1,5 @@
+import { schema } from "@siteops/db";
+import { eq } from "drizzle-orm";
 import type { Express } from "express";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -259,6 +261,63 @@ describe("Correspondence", () => {
     const hudaIds = hudaList.body.map((c: { id: string }) => c.id);
     expect(hudaIds).toContain(toHuda.body.id);
     expect(hudaIds).not.toContain(toZiad.body.id);
+  });
+
+  it("records a verifiable e-signature (drawn image + content hash) when sending, and detects tampering", async () => {
+    const token = await loginAs("omar.nassar@siteops.test");
+    const huda = memberByEmail("huda.masri@siteops.test");
+    const omar = memberByEmail("omar.nassar@siteops.test");
+
+    const create = await request(app)
+      .post("/correspondence")
+      .set("authorization", `Bearer ${token}`)
+      .send({
+        projectId,
+        direction: "outgoing",
+        type: "notice",
+        subject: "E-signature depth probe",
+        body: "Original body text at signing time.",
+        fromCompanyId: omar.companyId,
+        toCompanyId: huda.companyId,
+      });
+    const correspondenceId = create.body.id as string;
+
+    // A 1x1 transparent PNG, the smallest valid signature image a real canvas pad could produce.
+    const tinyPngBase64 =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
+    const toSent = await request(app)
+      .post(`/correspondence/${correspondenceId}/transition`)
+      .set("authorization", `Bearer ${token}`)
+      .send({ toStatus: "sent", senderSignatureName: "Rana Odeh", signatureImageBase64: tinyPngBase64 });
+    expect(toSent.status).toBe(200);
+
+    const signatureRes = await request(app)
+      .get(`/correspondence/${correspondenceId}/signature`)
+      .set("authorization", `Bearer ${token}`);
+    expect(signatureRes.status).toBe(200);
+    expect(signatureRes.body.signed).toBe(true);
+    expect(signatureRes.body.signerName).toBe("Rana Odeh");
+    expect(signatureRes.body.hasImage).toBe(true);
+    expect(signatureRes.body.verified).toBe(true);
+    expect(typeof signatureRes.body.contentHash).toBe("string");
+    expect(signatureRes.body.contentHash).toHaveLength(64); // sha256 hex
+
+    // There's no edit endpoint for correspondence content -- the only way it
+    // could change post-signing is a direct DB write bypassing the API
+    // entirely. Simulate exactly that to prove verification actually
+    // recomputes the hash live rather than trusting a stored flag.
+    await clients.authDb.db
+      .update(schema.correspondence)
+      .set({ body: "Tampered body text -- this should never match the signed hash" })
+      .where(eq(schema.correspondence.id, correspondenceId));
+
+    const tamperedRes = await request(app)
+      .get(`/correspondence/${correspondenceId}/signature`)
+      .set("authorization", `Bearer ${token}`);
+    expect(tamperedRes.status).toBe(200);
+    expect(tamperedRes.body.verified).toBe(false);
+    expect(tamperedRes.body.contentHash).toBe(signatureRes.body.contentHash); // the stored hash itself is untouched -- only the live comparison changed
   });
 
   it("client_viewer can read correspondence but cannot create it", async () => {

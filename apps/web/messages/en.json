@@ -398,7 +398,13 @@
     "responseTypeNumeric": "Numeric",
     "responseTypePhoto": "Photo",
     "responseTypeSignature": "Signature",
-    "noTemplates": "No templates yet — create one first."
+    "noTemplates": "No templates yet — create one first.",
+    "signatureDraw": "Draw your signature (optional)",
+    "signatureClear": "Clear",
+    "signatureVerified": "Signature verified",
+    "signatureUnverified": "Signature could not be verified — content may have changed since signing",
+    "signatureHash": "Verification code",
+    "signedBy": "Signed by"
   },
   "Budget": {
     "title": "Budget",
@@ -814,7 +820,12 @@
     "signaturePlaceholder": "Full name",
     "signAndSend": "Sign & send",
     "signatureRequired": "Type your name to send this correspondence.",
-    "signedBy": "Signed by"
+    "signedBy": "Signed by",
+    "signatureDraw": "Draw your signature (optional)",
+    "signatureClear": "Clear",
+    "signatureVerified": "Signature verified",
+    "signatureUnverified": "Signature could not be verified — content may have changed since signing",
+    "signatureHash": "Verification code"
   },
   "Language": {
     "english": "English",
