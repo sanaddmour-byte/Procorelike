@@ -10,8 +10,9 @@ import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { loadPermissionContext } from "../services/permission.service";
 import * as rfiService from "../services/rfi.service";
+import { dispatchProjectEvent } from "../services/webhook.service";
 
-export function rfisRouter(appDb: Database, env: Env): Router {
+export function rfisRouter(appDb: Database, authDb: Database, env: Env): Router {
   const router = Router();
   router.use(requireAuth(env));
 
@@ -125,6 +126,14 @@ export function rfisRouter(appDb: Database, env: Env): Router {
         if (!rfi) throw new NotFoundError("RFI not found");
         const ctx = await loadPermissionContext(appDb, authUser.id, rfi.projectId);
         const updated = await rfiService.transitionRfiStatus(appDb, authUser.id, ctx, id, req.body);
+        if (updated.status === "closed") {
+          dispatchProjectEvent(authDb, rfi.projectId, "rfi.closed", {
+            rfiId: updated.id,
+            projectId: rfi.projectId,
+            number: updated.number,
+            subject: updated.subject,
+          }).catch((err) => console.error("webhook dispatch failed for rfi.closed", err));
+        }
         res.json(updated);
       } catch (err) {
         next(err);

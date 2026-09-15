@@ -31,6 +31,7 @@ function readFileAsBase64(file: File): Promise<string> {
 
 function CompanyLogoCard({ company, onUploaded }: { company: Company; onUploaded: () => void }) {
   const t = useTranslations("Companies");
+  const locale = useLocale();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -118,6 +119,14 @@ function CompanyLogoCard({ company, onUploaded }: { company: Company; onUploaded
           </button>
         </div>
         {error && <p className="text-sm text-maroon-700">{error}</p>}
+        <div className="flex flex-wrap gap-3 border-t-2 border-orange-200 pt-3">
+          <Link href={`/${locale}/companies/${company.id}/dashboard`} className="text-sm font-semibold text-navy-700 underline">
+            {t("dashboard")}
+          </Link>
+          <Link href={`/${locale}/companies/${company.id}/admin`} className="text-sm font-semibold text-navy-700 underline">
+            {t("adminConsole")}
+          </Link>
+        </div>
       </div>
     </li>
   );

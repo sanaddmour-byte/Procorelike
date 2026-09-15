@@ -28,7 +28,7 @@ export interface BudgetLineItemWithRollups extends BudgetLineItemRow {
   directCosts: string;
 }
 
-async function attachRollups(tx: Tx, projectId: string, lineItems: BudgetLineItemRow[]): Promise<BudgetLineItemWithRollups[]> {
+export async function attachRollups(tx: Tx, projectId: string, lineItems: BudgetLineItemRow[]): Promise<BudgetLineItemWithRollups[]> {
   if (lineItems.length === 0) return [];
   const lineItemIds = lineItems.map((li) => li.id);
   const costCodeIds = [...new Set(lineItems.map((li) => li.costCodeId))];

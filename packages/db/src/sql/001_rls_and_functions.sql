@@ -262,6 +262,33 @@ CREATE POLICY user_companies_self_or_company_select ON user_companies FOR ALL US
   OR is_company_visible(company_id)
 );
 
+-- ---------------------------------------------------------------------------
+-- 3b. Company-owned business data (Admin Console: API keys, webhooks).
+-- Stricter than companies_visible_select — only actual members manage
+-- these, not everyone sharing a project with the company — so it reuses
+-- is_company_member (already defined above for companies_member_update)
+-- rather than a new predicate. api_keys/webhook_subscriptions have no
+-- project_id, so neither generic loop below (direct_project_tables,
+-- child_fk_parent) fits; this is the one company-scoped equivalent.
+-- ---------------------------------------------------------------------------
+
+DO $$
+DECLARE
+  t text;
+  direct_company_tables text[] := ARRAY['api_keys', 'webhook_subscriptions'];
+BEGIN
+  FOREACH t IN ARRAY direct_company_tables LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON %I', t || '_company_member', t);
+    EXECUTE format(
+      'CREATE POLICY %I ON %I FOR ALL USING (is_company_member(company_id))',
+      t || '_company_member', t
+    );
+  END LOOP;
+END
+$$;
+
 ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE refresh_tokens FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS refresh_tokens_self ON refresh_tokens;
@@ -501,7 +528,8 @@ DECLARE
     ARRAY['drawing_set_items', 'drawing_set_id', 'drawing_sets'],
     ARRAY['bid_invitations', 'bid_package_id', 'bid_packages'],
     ARRAY['bids', 'bid_package_id', 'bid_packages'],
-    ARRAY['estimate_line_items', 'estimate_id', 'estimates']
+    ARRAY['estimate_line_items', 'estimate_id', 'estimates'],
+    ARRAY['webhook_deliveries', 'subscription_id', 'webhook_subscriptions']
   ];
   row_ text[];
 BEGIN

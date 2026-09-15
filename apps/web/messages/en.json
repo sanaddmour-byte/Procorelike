@@ -28,7 +28,9 @@
     "unlink": "Unlink",
     "commentTool": "Comment",
     "sketchTool": "Sketch",
-    "sketchHint": "Drag on the page to draw."
+    "sketchHint": "Drag on the page to draw.",
+    "dismiss": "Dismiss",
+    "delete": "Delete"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -55,7 +57,9 @@
     "uploading": "Uploading…",
     "noLogo": "No logo uploaded yet.",
     "pngOnly": "Only PNG files are supported.",
-    "uploadFailed": "Couldn't upload the logo. Please try again."
+    "uploadFailed": "Couldn't upload the logo. Please try again.",
+    "dashboard": "Dashboard",
+    "adminConsole": "Admin Console"
   },
   "Directory": {
     "title": "Project directory",
@@ -432,7 +436,8 @@
     "modificationTo": "To line item",
     "modificationAmount": "Amount",
     "modificationReason": "Reason (optional)",
-    "directCosts": "Direct costs"
+    "directCosts": "Direct costs",
+    "exportCsv": "Export CSV"
   },
   "Commitments": {
     "title": "Commitments",
@@ -452,7 +457,8 @@
     "description": "Description",
     "costCode": "Cost code",
     "amount": "Amount",
-    "noLineItems": "No line items yet."
+    "noLineItems": "No line items yet.",
+    "exportIif": "Export IIF"
   },
   "ChangeManagement": {
     "title": "Change Orders",
@@ -1016,5 +1022,38 @@
     "finalize": "Finalize",
     "convertToBudget": "Convert to Budget",
     "convertedToBudget": "Converted to Budget"
+  },
+  "CompanyDashboard": {
+    "title": "Company Dashboard",
+    "back": "Back to companies",
+    "intro": "A portfolio rollup across every project this company participates in.",
+    "empty": "No projects to show.",
+    "rfis": "RFIs",
+    "openOfTotal": "{open} open of {total}",
+    "punchList": "Punch List",
+    "changeOrders": "Change Orders",
+    "budgetVariance": "Budget Variance"
+  },
+  "AdminConsole": {
+    "title": "Admin Console",
+    "back": "Back to companies",
+    "intro": "Manage API keys and webhook subscriptions for this company -- the in-app equivalent of SSO/ERP integration.",
+    "apiKeys": "API Keys",
+    "apiKeysIntro": "An API key authenticates external requests as the user who created it, with the same permissions they have in the app.",
+    "keyNamePlaceholder": "Key name (e.g. \"Accounting sync\")",
+    "createKey": "Create Key",
+    "keyShownOnce": "Copy this key now -- it will not be shown again.",
+    "noKeys": "No API keys yet.",
+    "revoke": "Revoke",
+    "revoked": "Revoked",
+    "webhooks": "Webhooks",
+    "webhooksIntro": "Subscribe a URL to real events (change order approvals, RFI closures) across every project this company works on.",
+    "webhookUrlPlaceholder": "https://example.com/webhooks/siteops",
+    "createWebhook": "Create Webhook",
+    "secretShownOnce": "Copy this signing secret now -- it will not be shown again.",
+    "noWebhooks": "No webhook subscriptions yet.",
+    "viewDeliveries": "View Deliveries",
+    "noDeliveries": "No deliveries yet.",
+    "failed": "failed"
   }
 }

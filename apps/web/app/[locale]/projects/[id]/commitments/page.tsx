@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -65,6 +65,21 @@ export default function CommitmentsPage() {
     return companies.find((c) => c.companyId === id)?.name ?? id;
   }
 
+  async function handleExportIif(): Promise<void> {
+    const res = await apiFetch(`/admin/projects/${params.id}/exports/commitments.iif`);
+    if (!res.ok) {
+      setError(tc("errorGeneric"));
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `commitments-${params.id}.iif`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
     if (!companyId || !title.trim()) return;
@@ -91,9 +106,14 @@ export default function CommitmentsPage() {
       <main className="mx-auto max-w-3xl px-4 py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-            {t("newButton")}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => void handleExportIif()} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
+              {t("exportIif")}
+            </button>
+            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+              {t("newButton")}
+            </button>
+          </div>
         </div>
 
         {showForm && (

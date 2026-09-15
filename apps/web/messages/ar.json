@@ -28,7 +28,9 @@
     "unlink": "إلغاء الربط",
     "commentTool": "تعليق",
     "sketchTool": "رسم",
-    "sketchHint": "اسحب على الصفحة للرسم."
+    "sketchHint": "اسحب على الصفحة للرسم.",
+    "dismiss": "إغلاق",
+    "delete": "حذف"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
@@ -55,7 +57,9 @@
     "uploading": "جارٍ الرفع…",
     "noLogo": "لم يتم رفع شعار بعد.",
     "pngOnly": "يُدعم ملف PNG فقط.",
-    "uploadFailed": "تعذّر رفع الشعار. يرجى المحاولة مرة أخرى."
+    "uploadFailed": "تعذّر رفع الشعار. يرجى المحاولة مرة أخرى.",
+    "dashboard": "لوحة التحكم",
+    "adminConsole": "وحدة الإدارة"
   },
   "Directory": {
     "title": "دليل المشروع",
@@ -432,7 +436,8 @@
     "modificationTo": "إلى بند",
     "modificationAmount": "المبلغ",
     "modificationReason": "السبب (اختياري)",
-    "directCosts": "التكاليف المباشرة"
+    "directCosts": "التكاليف المباشرة",
+    "exportCsv": "تصدير CSV"
   },
   "Commitments": {
     "title": "الالتزامات",
@@ -452,7 +457,8 @@
     "description": "الوصف",
     "costCode": "رمز التكلفة",
     "amount": "المبلغ",
-    "noLineItems": "لا توجد بنود بعد."
+    "noLineItems": "لا توجد بنود بعد.",
+    "exportIif": "تصدير IIF"
   },
   "ChangeManagement": {
     "title": "أوامر التغيير",
@@ -1016,5 +1022,38 @@
     "finalize": "إنهاء",
     "convertToBudget": "تحويل إلى الميزانية",
     "convertedToBudget": "تم التحويل إلى الميزانية"
+  },
+  "CompanyDashboard": {
+    "title": "لوحة تحكم الشركة",
+    "back": "العودة إلى الشركات",
+    "intro": "ملخص شامل عبر كل مشروع تشارك فيه هذه الشركة.",
+    "empty": "لا توجد مشاريع لعرضها.",
+    "rfis": "طلبات المعلومات",
+    "openOfTotal": "{open} مفتوح من {total}",
+    "punchList": "قائمة الملاحظات",
+    "changeOrders": "أوامر التغيير",
+    "budgetVariance": "فرق الميزانية"
+  },
+  "AdminConsole": {
+    "title": "وحدة الإدارة",
+    "back": "العودة إلى الشركات",
+    "intro": "إدارة مفاتيح API واشتراكات webhook لهذه الشركة -- البديل داخل التطبيق لتكامل SSO/ERP.",
+    "apiKeys": "مفاتيح API",
+    "apiKeysIntro": "يقوم مفتاح API بمصادقة الطلبات الخارجية باسم المستخدم الذي أنشأه، وبنفس صلاحياته في التطبيق.",
+    "keyNamePlaceholder": "اسم المفتاح (مثال: \"مزامنة المحاسبة\")",
+    "createKey": "إنشاء مفتاح",
+    "keyShownOnce": "انسخ هذا المفتاح الآن -- لن يظهر مرة أخرى.",
+    "noKeys": "لا توجد مفاتيح API بعد.",
+    "revoke": "إلغاء",
+    "revoked": "ملغى",
+    "webhooks": "Webhooks",
+    "webhooksIntro": "اشترك برابط ليستقبل أحداثاً حقيقية (اعتماد أوامر التغيير، إغلاق طلبات المعلومات) عبر كل مشروع تعمل عليه هذه الشركة.",
+    "webhookUrlPlaceholder": "https://example.com/webhooks/siteops",
+    "createWebhook": "إنشاء Webhook",
+    "secretShownOnce": "انسخ مفتاح التوقيع هذا الآن -- لن يظهر مرة أخرى.",
+    "noWebhooks": "لا توجد اشتراكات webhook بعد.",
+    "viewDeliveries": "عرض عمليات التسليم",
+    "noDeliveries": "لا توجد عمليات تسليم بعد.",
+    "failed": "فشل"
   }
 }

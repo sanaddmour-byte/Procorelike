@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ProjectTabs } from "@/components/ProjectTabs";
-import { apiJson } from "@/lib/api-client";
+import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
@@ -128,6 +128,21 @@ export default function BudgetPage() {
     }
   }
 
+  async function handleExportCsv(): Promise<void> {
+    const res = await apiFetch(`/admin/projects/${params.id}/exports/budget.csv`);
+    if (!res.ok) {
+      setError(tc("errorGeneric"));
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `budget-${params.id}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleCreateModification(e: FormEvent): Promise<void> {
     e.preventDefault();
     if (!modFromId || !modToId || modFromId === modToId) return;
@@ -164,6 +179,9 @@ export default function BudgetPage() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <div className="flex flex-wrap gap-2">
+            <button onClick={() => void handleExportCsv()} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
+              {t("exportCsv")}
+            </button>
             <button
               onClick={() => setShowModForm((s) => !s)}
               className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800"

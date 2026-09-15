@@ -16,6 +16,7 @@ import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import * as changeManagementService from "../services/change-management.service";
 import { loadPermissionContext } from "../services/permission.service";
+import { dispatchProjectEvent } from "../services/webhook.service";
 
 export function changeEventsRouter(appDb: Database, env: Env): Router {
   const router = Router();
@@ -130,7 +131,7 @@ export function potentialChangeOrdersRouter(appDb: Database, env: Env): Router {
   return router;
 }
 
-export function changeOrdersRouter(appDb: Database, env: Env): Router {
+export function changeOrdersRouter(appDb: Database, authDb: Database, env: Env): Router {
   const router = Router();
   router.use(requireAuth(env));
 
@@ -220,6 +221,14 @@ export function changeOrdersRouter(appDb: Database, env: Env): Router {
       if (!co) throw new NotFoundError("Change order not found");
       const ctx = await loadPermissionContext(appDb, authUser.id, co.projectId);
       const updated = await changeManagementService.approveChangeOrder(appDb, authUser.id, ctx, id);
+      if (updated.status === "approved") {
+        dispatchProjectEvent(authDb, co.projectId, "change_order.approved", {
+          changeOrderId: updated.id,
+          projectId: co.projectId,
+          number: updated.number,
+          costImpact: updated.costImpact,
+        }).catch((err) => console.error("webhook dispatch failed for change_order.approved", err));
+      }
       res.json(updated);
     } catch (err) {
       next(err);
