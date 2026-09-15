@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { schema, withRequestContext, type Database } from "@siteops/db";
 import type { CreateCompanyInput, UploadCompanyLogoInput } from "@siteops/shared";
@@ -18,9 +19,18 @@ export async function createCompany(
   input: CreateCompanyInput,
 ): Promise<CompanyListItem> {
   return withRequestContext(appDb, { userId: creatorUserId }, async (tx) => {
-    const [company] = await tx.insert(schema.companies).values(input).returning();
+    // The id is generated here rather than left to the column default so
+    // the insert can skip `.returning()`: under FORCE ROW LEVEL SECURITY,
+    // RETURNING re-checks the new row against companies_visible_select,
+    // which the creator doesn't satisfy yet -- the linking user_companies
+    // row below is what grants that visibility, and it can't exist before
+    // the company row does. Re-select once that link is in place instead.
+    const id = randomUUID();
+    await tx.insert(schema.companies).values({ ...input, id });
+    await tx.insert(schema.userCompanies).values({ userId: creatorUserId, companyId: id });
+
+    const [company] = await tx.select().from(schema.companies).where(eq(schema.companies.id, id)).limit(1);
     if (!company) throw new Error("Failed to create company");
-    await tx.insert(schema.userCompanies).values({ userId: creatorUserId, companyId: company.id });
     return stripLogoData(company);
   });
 }

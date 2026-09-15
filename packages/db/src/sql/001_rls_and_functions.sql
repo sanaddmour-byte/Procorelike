@@ -334,7 +334,8 @@ DECLARE
     'tm_tickets', 'correspondence',
     'schedules', 'calendars', 'lookahead_plans',
     'transmittals', 'drawing_sets', 'corrective_actions',
-    'prime_contracts', 'direct_costs', 'esignatures'
+    'prime_contracts', 'direct_costs', 'esignatures',
+    'prequalifications', 'bid_packages', 'estimates'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP
@@ -497,7 +498,10 @@ DECLARE
     ARRAY['schedule_progress_updates', 'task_id', 'schedule_tasks'],
     ARRAY['transmittal_items', 'transmittal_id', 'transmittals'],
     ARRAY['transmittal_recipients', 'transmittal_id', 'transmittals'],
-    ARRAY['drawing_set_items', 'drawing_set_id', 'drawing_sets']
+    ARRAY['drawing_set_items', 'drawing_set_id', 'drawing_sets'],
+    ARRAY['bid_invitations', 'bid_package_id', 'bid_packages'],
+    ARRAY['bids', 'bid_package_id', 'bid_packages'],
+    ARRAY['estimate_line_items', 'estimate_id', 'estimates']
   ];
   row_ text[];
 BEGIN

@@ -15,3 +15,4 @@ export * from "./pdf-comments";
 export * from "./pdf-sketches";
 export * from "./document-control";
 export * from "./esignature";
+export * from "./preconstruction";

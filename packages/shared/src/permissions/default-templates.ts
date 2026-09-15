@@ -34,6 +34,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "admin",
     prime_contract: "admin",
     direct_costs: "admin",
+    prequalification: "admin",
+    bidding: "admin",
+    estimating: "admin",
   },
   project_engineer: {
     directory: "read",
@@ -57,6 +60,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "standard",
     prime_contract: "read",
     direct_costs: "read",
+    prequalification: "read",
+    bidding: "read",
+    estimating: "read",
   },
   superintendent: {
     directory: "read",
@@ -80,6 +86,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "read",
     prime_contract: "none",
     direct_costs: "none",
+    prequalification: "none",
+    bidding: "none",
+    estimating: "none",
   },
   foreman: {
     directory: "none",
@@ -103,6 +112,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "none",
     prime_contract: "none",
     direct_costs: "none",
+    prequalification: "none",
+    bidding: "none",
+    estimating: "none",
   },
   qa_qc: {
     directory: "read",
@@ -126,6 +138,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "read",
     prime_contract: "none",
     direct_costs: "none",
+    prequalification: "none",
+    bidding: "none",
+    estimating: "none",
   },
   safety_officer: {
     directory: "read",
@@ -149,6 +164,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "none",
     prime_contract: "none",
     direct_costs: "none",
+    prequalification: "none",
+    bidding: "none",
+    estimating: "none",
   },
   subcontractor: {
     directory: "none",
@@ -172,6 +190,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "read",
     prime_contract: "none",
     direct_costs: "none",
+    prequalification: "none",
+    bidding: "none",
+    estimating: "none",
   },
   consultant: {
     directory: "read",
@@ -195,6 +216,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "read",
     prime_contract: "none",
     direct_costs: "none",
+    prequalification: "none",
+    bidding: "none",
+    estimating: "none",
   },
   client_viewer: {
     directory: "read",
@@ -220,6 +244,9 @@ export const DEFAULT_ROLE_TEMPLATE_LEVELS: Record<ProjectRole, ModuleLevels> = {
     correspondence: "read",
     prime_contract: "none",
     direct_costs: "none",
+    prequalification: "none",
+    bidding: "none",
+    estimating: "none",
   },
 };
 
@@ -251,6 +278,9 @@ function allModulesAt(level: PermissionLevel): Record<Module, PermissionLevel> {
     "correspondence",
     "prime_contract",
     "direct_costs",
+    "prequalification",
+    "bidding",
+    "estimating",
   ];
   return Object.fromEntries(modules.map((m) => [m, level])) as Record<Module, PermissionLevel>;
 }

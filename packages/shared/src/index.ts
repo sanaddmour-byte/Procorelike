@@ -41,6 +41,9 @@ export * from "./schemas/cpm-schedule.schema";
 export * from "./schemas/document-control.schema";
 export * from "./schemas/corrective-action.schema";
 export * from "./schemas/esignature.schema";
+export * from "./schemas/prequalification.schema";
+export * from "./schemas/bidding.schema";
+export * from "./schemas/estimating.schema";
 
 export * from "./schedule/types";
 export * from "./schedule/validate";

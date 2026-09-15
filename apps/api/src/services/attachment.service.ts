@@ -45,6 +45,7 @@ const OWNER_TYPE_MODULES: Record<string, Module> = {
   rfi: "rfis",
   submittal: "submittals",
   punch_item: "punch_list",
+  bid_package: "bidding",
 };
 
 function moduleForOwnerType(ownerType: string): Module {

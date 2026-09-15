@@ -46,3 +46,11 @@ export function formatCorrespondenceNumber(value: number): string {
 export function formatTransmittalNumber(value: number): string {
   return formatSequenceNumber("TR", value, 4);
 }
+
+export function formatBidPackageNumber(value: number): string {
+  return formatSequenceNumber("BID", value, 3);
+}
+
+export function formatEstimateNumber(value: number): string {
+  return formatSequenceNumber("EST", value, 3);
+}

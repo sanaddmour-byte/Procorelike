@@ -253,6 +253,13 @@
       "when": 1789453342972,
       "tag": "0035_famous_pride",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1789454789517,
+      "tag": "0036_icy_spitfire",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatBidPackageNumber,
   formatChangeOrderNumber,
   formatCorrespondenceNumber,
+  formatEstimateNumber,
   formatPunchItemNumber,
   formatRfiNumber,
   formatSequenceNumber,
@@ -37,6 +39,14 @@ describe("numbering formatters", () => {
 
   it("formats a transmittal number zero-padded to 4 digits", () => {
     expect(formatTransmittalNumber(3)).toBe("TR-0003");
+  });
+
+  it("formats a bid package number zero-padded to 3 digits", () => {
+    expect(formatBidPackageNumber(4)).toBe("BID-004");
+  });
+
+  it("formats an estimate number zero-padded to 3 digits", () => {
+    expect(formatEstimateNumber(1)).toBe("EST-001");
   });
 
   it("does not truncate values wider than the pad length", () => {

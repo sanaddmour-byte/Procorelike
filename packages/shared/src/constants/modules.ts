@@ -20,6 +20,9 @@ export const MODULES = [
   "correspondence",
   "prime_contract",
   "direct_costs",
+  "prequalification",
+  "bidding",
+  "estimating",
 ] as const;
 
 export type Module = (typeof MODULES)[number];
@@ -40,4 +43,7 @@ export const FINANCIAL_MODULES: readonly Module[] = [
   "progress_billing",
   "prime_contract",
   "direct_costs",
+  "prequalification",
+  "bidding",
+  "estimating",
 ];
