@@ -1,12 +1,14 @@
 "use client";
 
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { apiJson, ApiClientError } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { PROJECT_ROLES } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 interface Member {
   userId: string;
@@ -39,6 +41,7 @@ export default function DirectoryPage() {
   const [members, setMembers] = useState<Member[] | null>(null);
   const [companies, setCompanies] = useState<DirectoryCompany[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -128,42 +131,74 @@ export default function DirectoryPage() {
     }
   }
 
+  const filteredMembers = useMemo(() => {
+    if (!members) return null;
+    const q = search.trim().toLowerCase();
+    if (!q) return members;
+    return members.filter((m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.companyName.toLowerCase().includes(q));
+  }, [members, search]);
+
+  const filteredCompanies = useMemo(() => {
+    if (!companies) return null;
+    const q = search.trim().toLowerCase();
+    if (!q) return companies;
+    return companies.filter((c) => c.name.toLowerCase().includes(q));
+  }, [companies, search]);
+
   return (
     <>
       <main className="mx-auto max-w-3xl px-4 py-8">
         <Link href={`/${locale}/projects`} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          {isAdmin && tab === "people" && (
-            <button
-              type="button"
-              onClick={() => setShowInviteForm((v) => !v)}
-              className="rounded-lg border-3 border-ink bg-maroon-600 px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_0_#1a1a1a] transition-transform hover:-translate-y-0.5"
-            >
-              {t("invitePerson")}
-            </button>
-          )}
-        </div>
+        <PageHeader
+          title={t("title")}
+          actions={
+            isAdmin && tab === "people" ? (
+              <button
+                type="button"
+                onClick={() => setShowInviteForm((v) => !v)}
+                className="rounded-lg border-3 border-ink bg-maroon-600 px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_0_#1a1a1a] transition-transform hover:-translate-y-0.5"
+              >
+                {t("invitePerson")}
+              </button>
+            ) : undefined
+          }
+        />
         {error && <p className="text-maroon-700">{error}</p>}
 
-        <div className="mb-4 mt-4 flex gap-1 border-b-3 border-ink">
+        <div className="mb-4 flex gap-1 border-b-3 border-ink">
           <button
             type="button"
-            onClick={() => setTab("people")}
+            onClick={() => {
+              setTab("people");
+              setSearch("");
+            }}
             className={`px-3 py-2 text-sm font-bold ${tab === "people" ? "border-b-4 border-maroon-600 text-maroon-700" : "text-navy-600"}`}
           >
             {t("peopleTab")}
           </button>
           <button
             type="button"
-            onClick={() => setTab("companies")}
+            onClick={() => {
+              setTab("companies");
+              setSearch("");
+            }}
             className={`px-3 py-2 text-sm font-bold ${tab === "companies" ? "border-b-4 border-maroon-600 text-maroon-700" : "text-navy-600"}`}
           >
             {t("companiesTab")}
           </button>
         </div>
+
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={tab === "people" ? t("searchPlaceholder") : t("companySearchPlaceholder")}
+          activeFilters={{}}
+          onFilterChange={() => undefined}
+          onClearAll={() => setSearch("")}
+          clearAllLabel={tc("clearAll")}
+        />
 
         {showInviteForm && isAdmin && (
           <form onSubmit={submitInvite} className="mb-6 rounded-xl border-3 border-ink bg-cream p-4 shadow-[4px_4px_0_0_#1a1a1a]">
@@ -231,7 +266,8 @@ export default function DirectoryPage() {
           <>
             {!members && !error && <p>{tc("loading")}</p>}
             {members && members.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-            {members && members.length > 0 && (
+            {members && members.length > 0 && filteredMembers && filteredMembers.length === 0 && <p className="text-navy-600">{t("noResults")}</p>}
+            {filteredMembers && filteredMembers.length > 0 && (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -246,7 +282,7 @@ export default function DirectoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {members.map((m) => (
+                    {filteredMembers.map((m) => (
                       <tr key={m.userId} className="border-b border-orange-200 align-top">
                         <td className="py-2">{m.name}</td>
                         <td className="py-2">{m.email}</td>
@@ -303,7 +339,8 @@ export default function DirectoryPage() {
           <>
             {!companies && !error && <p>{tc("loading")}</p>}
             {companies && companies.length === 0 && <p className="text-navy-600">{t("noCompanies")}</p>}
-            {companies && companies.length > 0 && (
+            {companies && companies.length > 0 && filteredCompanies && filteredCompanies.length === 0 && <p className="text-navy-600">{t("noCompanyResults")}</p>}
+            {filteredCompanies && filteredCompanies.length > 0 && (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -314,7 +351,7 @@ export default function DirectoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {companies.map((c) => (
+                    {filteredCompanies.map((c) => (
                       <tr key={c.companyId} className="border-b border-orange-200">
                         <td className="py-2">{c.name}</td>
                         <td className="py-2">{c.type}</td>
