@@ -26,11 +26,17 @@ export interface ChangeOrderRollup {
   byStatus: Record<string, number>;
 }
 
+export interface ActionRequiredItem {
+  type: "rfi_overdue" | "submittal_in_review" | "schedule_task_delayed" | "change_order_pending_approval";
+  count: number;
+}
+
 export interface ProjectDashboard {
   rfis?: RfiRollup;
   punchList?: PunchListRollup;
   budget?: BudgetRollup;
   changeOrders?: ChangeOrderRollup;
+  actionRequired: ActionRequiredItem[];
 }
 
 function countBy<T extends string>(values: T[]): Record<string, number> {
@@ -54,7 +60,7 @@ export async function getProjectDashboard(
   projectId: string,
 ): Promise<ProjectDashboard> {
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    const dashboard: ProjectDashboard = {};
+    const dashboard: ProjectDashboard = { actionRequired: [] };
 
     if (hasPermission(ctx, "rfis", "read")) {
       const rows = await tx.select().from(schema.rfis).where(eq(schema.rfis.projectId, projectId));
@@ -62,6 +68,7 @@ export async function getProjectDashboard(
       const open = rows.filter((r) => r.status === "open");
       const overdue = open.filter((r) => r.dueDate !== null && r.dueDate.getTime() < now);
       dashboard.rfis = { total: rows.length, open: open.length, overdue: overdue.length };
+      if (overdue.length > 0) dashboard.actionRequired.push({ type: "rfi_overdue", count: overdue.length });
     }
 
     if (hasPermission(ctx, "punch_list", "read")) {
@@ -81,6 +88,20 @@ export async function getProjectDashboard(
     if (hasPermission(ctx, "change_management", "read")) {
       const rows = await tx.select().from(schema.changeOrders).where(eq(schema.changeOrders.projectId, projectId));
       dashboard.changeOrders = { total: rows.length, byStatus: countBy(rows.map((r) => r.status)) };
+      const pendingApproval = rows.filter((r) => r.status === "pending_approval");
+      if (pendingApproval.length > 0) dashboard.actionRequired.push({ type: "change_order_pending_approval", count: pendingApproval.length });
+    }
+
+    if (hasPermission(ctx, "submittals", "read")) {
+      const rows = await tx.select().from(schema.submittals).where(eq(schema.submittals.projectId, projectId));
+      const inReview = rows.filter((r) => r.status === "in_review");
+      if (inReview.length > 0) dashboard.actionRequired.push({ type: "submittal_in_review", count: inReview.length });
+    }
+
+    if (hasPermission(ctx, "schedule", "read")) {
+      const rows = await tx.select().from(schema.scheduleTasks).where(eq(schema.scheduleTasks.projectId, projectId));
+      const delayed = rows.filter((r) => r.status === "delayed");
+      if (delayed.length > 0) dashboard.actionRequired.push({ type: "schedule_task_delayed", count: delayed.length });
     }
 
     return dashboard;
