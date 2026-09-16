@@ -26,9 +26,11 @@
  */
 body {
   font-family: var(--font-poppins);
-  /* A faint linear gradient instead of a flat fill -- the paper/material
-     backdrop skeuomorphism expects behind raised, shadowed panels. */
-  background: linear-gradient(180deg, #fdf9f0 0%, #fbf4e8 40%, #f5e9d5 100%);
+  /* A warm cream field, not a visible material gradient -- the earlier
+     3-stop gradient read as a distinct lit/shadowed band across the
+     viewport, which competes with real content hierarchy. One faint
+     stop keeps a touch of depth behind panels without drawing the eye. */
+  background: linear-gradient(180deg, #fcf8ef 0%, #fbf4e8 100%);
   background-attachment: fixed;
   color: #080f1c;
 }
@@ -66,9 +68,11 @@ body {
   textarea {
     font-family: inherit;
     background-color: #fff;
-    /* Recessed/"carved in" field, the skeuomorphic counterpart to a
-       raised panel -- an inner shadow instead of an outer one. */
-    box-shadow: inset 0 1px 3px rgba(23, 19, 16, 0.14), inset 0 1px 0 rgba(23, 19, 16, 0.06);
+    /* Recessed field, the tactile counterpart to a raised panel -- an
+       inner shadow instead of an outer one, toned down alongside the
+       rest of the surface system so it reads as "set into the page"
+       rather than deeply carved. */
+    box-shadow: inset 0 1px 2px rgba(23, 19, 16, 0.10), inset 0 1px 0 rgba(23, 19, 16, 0.04);
   }
 
   input::placeholder,
@@ -78,18 +82,19 @@ body {
 }
 
 @layer components {
-  /* Shared skeuomorphism primitives (names kept from the earlier
-     Neubrutalism build -- see the boxShadow comment in tailwind.config.ts
-     for why). A raised panel now reads as a subtle paper gradient +
-     soft shadow instead of a flat fill + hard offset; the interactive
-     variant brightens slightly on hover (a glossy highlight catching
-     light) and inverts to an inset shadow on press, simulating the
-     surface actually being pushed in rather than just lifting/dropping. */
+  /* Shared surface primitives (names kept from the earlier Neubrutalism/
+     Skeuomorphism builds -- see the boxShadow comment in
+     tailwind.config.ts for why). A raised panel reads as a subtle paper
+     gradient + restrained shadow, not a flat fill or a glossy card; the
+     interactive variant gives a barely-there lift on hover (just enough
+     to register as clickable) and a real inset press on active, since
+     "obvious but restrained" press feedback is the one tactile cue this
+     pass keeps at full strength rather than softening. */
   .brutal-panel {
     @apply rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal;
   }
 
   .brutal-interactive {
-    @apply shadow-brutal transition-all duration-150 ease-out hover:brightness-105 hover:shadow-brutal-lg active:brightness-95 active:shadow-brutal-inset;
+    @apply shadow-brutal transition-all duration-150 ease-out hover:brightness-[1.02] hover:shadow-brutal-lg active:brightness-[0.98] active:shadow-brutal-inset;
   }
 }

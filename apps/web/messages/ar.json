@@ -1055,5 +1055,30 @@
     "viewDeliveries": "عرض عمليات التسليم",
     "noDeliveries": "لا توجد عمليات تسليم بعد.",
     "failed": "فشل"
+  },
+  "Shell": {
+    "projectNavigation": "التنقل بين وحدات المشروع",
+    "groupProject": "المشروع",
+    "groupField": "الميدان",
+    "groupDocuments": "المستندات",
+    "groupFinancial": "الشؤون المالية",
+    "groupSchedule": "الجدول الزمني",
+    "groupPeople": "الأشخاص",
+    "selectProject": "اختر المشروع",
+    "loading": "جارٍ التحميل…",
+    "noProjects": "لا توجد مشاريع",
+    "searchPlaceholder": "ابحث في المشاريع وطلبات المعلومات والمخططات والمستندات…",
+    "searchTitle": "بحث",
+    "recentSearches": "عمليات البحث الأخيرة",
+    "noResults": "لا توجد نتائج",
+    "searchCategory_project": "المشاريع",
+    "searchCategory_company": "الشركات",
+    "searchCategory_rfi": "طلبات المعلومات",
+    "searchCategory_submittal": "المستندات الفنية",
+    "searchCategory_document": "المستندات",
+    "searchCategory_drawing": "المخططات",
+    "searchCategory_daily_log": "السجلات اليومية",
+    "searchCategory_schedule_task": "الجدول الزمني",
+    "searchCategory_person": "الأشخاص"
   }
 }

@@ -1,8 +1,6 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
@@ -104,8 +102,6 @@ export default function ChangeOrderDetailPage() {
   if (!co && !error) {
     return (
       <>
-        <Header />
-        <ProjectTabs projectId={params.id} />
         <main className="mx-auto max-w-2xl px-4 py-8">
           <p>{tc("loading")}</p>
         </main>
@@ -115,8 +111,6 @@ export default function ChangeOrderDetailPage() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-2xl px-4 py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Link href={`/${locale}/projects/${params.id}/change-orders`} className="inline-block text-sm text-maroon-700 underline">

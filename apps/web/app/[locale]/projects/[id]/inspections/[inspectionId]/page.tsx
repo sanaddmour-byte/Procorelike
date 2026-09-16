@@ -1,8 +1,6 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { SignatureBadge } from "@/components/SignatureBadge";
 import { SignaturePad } from "@/components/SignaturePad";
 import { apiJson } from "@/lib/api-client";
@@ -172,8 +170,6 @@ export default function InspectionDetailScreen() {
   if (!inspection) {
     return (
       <>
-        <Header />
-        <ProjectTabs projectId={params.id} />
         <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
       </>
     );
@@ -183,8 +179,6 @@ export default function InspectionDetailScreen() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <Link href={`/${locale}/projects/${params.id}/inspections`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}

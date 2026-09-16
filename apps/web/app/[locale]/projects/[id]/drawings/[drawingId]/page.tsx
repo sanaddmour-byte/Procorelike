@@ -2,8 +2,6 @@
 
 import { DrawingViewer, type MarkupCoords, type MarkupPin } from "@/components/DrawingViewer";
 import { DrawingCompareView } from "@/components/DrawingCompareView";
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { uploadAttachment } from "@/lib/upload";
@@ -182,8 +180,6 @@ export default function DrawingDetailScreen() {
   if (!drawing || !revisions) {
     return (
       <>
-        <Header />
-        <ProjectTabs projectId={params.id} />
         <main className="mx-auto max-w-3xl px-4 py-8">
           {error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}
         </main>
@@ -193,8 +189,6 @@ export default function DrawingDetailScreen() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-4xl px-4 py-8">
         <Link href={`/${locale}/projects/${params.id}/drawings`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}

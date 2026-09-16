@@ -1055,5 +1055,30 @@
     "viewDeliveries": "View Deliveries",
     "noDeliveries": "No deliveries yet.",
     "failed": "failed"
+  },
+  "Shell": {
+    "projectNavigation": "Project navigation",
+    "groupProject": "Project",
+    "groupField": "Field",
+    "groupDocuments": "Documents",
+    "groupFinancial": "Financial",
+    "groupSchedule": "Schedule",
+    "groupPeople": "People",
+    "selectProject": "Select project",
+    "loading": "Loading…",
+    "noProjects": "No projects",
+    "searchPlaceholder": "Search projects, RFIs, drawings, documents…",
+    "searchTitle": "Search",
+    "recentSearches": "Recent searches",
+    "noResults": "No results",
+    "searchCategory_project": "Projects",
+    "searchCategory_company": "Companies",
+    "searchCategory_rfi": "RFIs",
+    "searchCategory_submittal": "Submittals",
+    "searchCategory_document": "Documents",
+    "searchCategory_drawing": "Drawings",
+    "searchCategory_daily_log": "Daily Logs",
+    "searchCategory_schedule_task": "Schedule",
+    "searchCategory_person": "People"
   }
 }

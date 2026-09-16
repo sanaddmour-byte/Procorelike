@@ -1,7 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson, ApiClientError } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { PROJECT_ROLES } from "@siteops/shared";
@@ -132,8 +130,6 @@ export default function DirectoryPage() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <Link href={`/${locale}/projects`} className="text-sm text-navy-700 underline">
           {t("back")}

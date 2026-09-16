@@ -1,7 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { SCHEDULE_TASK_STATUS_TRANSITIONS, type ScheduleTaskStatus } from "@siteops/shared";
@@ -102,8 +100,6 @@ export default function ScheduleTaskDetailScreen() {
   if (!task) {
     return (
       <>
-        <Header />
-        <ProjectTabs projectId={params.id} />
         <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
       </>
     );
@@ -111,8 +107,6 @@ export default function ScheduleTaskDetailScreen() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <Link href={`/${locale}/projects/${params.id}/schedule`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}

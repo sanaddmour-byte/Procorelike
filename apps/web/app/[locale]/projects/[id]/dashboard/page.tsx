@@ -1,7 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
@@ -41,8 +39,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-4xl px-4 py-8">
         <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         {error && <p className="text-maroon-700">{error}</p>}

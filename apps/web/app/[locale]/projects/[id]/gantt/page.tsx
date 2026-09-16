@@ -4,8 +4,6 @@ import { ImpactPreviewModal, buildImpactRows, type ImpactRow } from "@/component
 import { ScheduleImportForm } from "@/components/gantt/ScheduleImportForm";
 import { TaskGrid, type TaskGridHandle } from "@/components/gantt/TaskGrid";
 import { Timeline, type TimelineHandle } from "@/components/gantt/Timeline";
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { toGanttTask, type ApiScheduleTask } from "@/lib/gantt/api";
@@ -234,8 +232,6 @@ export default function GanttPage() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-[1600px] px-4 py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-y-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>

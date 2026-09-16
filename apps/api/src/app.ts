@@ -44,6 +44,7 @@ import { rfisRouter } from "./routes/rfis.routes";
 import { scheduleRouter } from "./routes/schedule.routes";
 import { scheduleConstraintsRouter } from "./routes/schedule-constraints.routes";
 import { scheduleProgressRouter } from "./routes/schedule-progress.routes";
+import { searchRouter } from "./routes/search.routes";
 import { safetyIncidentsRouter, safetyObservationsRouter } from "./routes/safety.routes";
 import { submittalsRouter } from "./routes/submittals.routes";
 import { syncRouter } from "./routes/sync.routes";
@@ -115,6 +116,7 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
   app.use("/admin", adminRouter(clients.appDb.db, env));
   app.use("/external", externalRouter(clients.appDb.db, clients.authDb.db));
+  app.use("/search", searchRouter(clients.appDb.db, env));
 
   app.use(errorHandler);
   return app;

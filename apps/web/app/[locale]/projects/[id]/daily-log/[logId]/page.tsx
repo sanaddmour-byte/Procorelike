@@ -1,7 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { useLocale, useTranslations } from "next-intl";
 import Link, { type LinkProps } from "next/link";
@@ -81,8 +79,6 @@ export default function DailyLogDetailPage() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-lg px-4 py-8">
         <Link href={backHref} className="text-sm text-navy-700 underline">
           {t("back")}

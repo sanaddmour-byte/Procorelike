@@ -1,8 +1,6 @@
 "use client";
 
 import { AttachmentList } from "@/components/AttachmentList";
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { PUNCH_ITEM_STATUS_TRANSITIONS, type FieldConflict } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -103,8 +101,6 @@ export default function PunchItemDetailPage() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-lg px-4 py-8">
         <Link href={backHref} className="text-sm text-navy-700 underline">
           {t("back")}

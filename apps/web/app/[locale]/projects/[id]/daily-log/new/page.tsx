@@ -1,7 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
@@ -37,8 +35,6 @@ export default function NewDailyLogPage() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-lg px-4 py-8">
         <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("createTitle")}</h1>
         <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-3">

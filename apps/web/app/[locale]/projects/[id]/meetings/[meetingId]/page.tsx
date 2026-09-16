@@ -1,7 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
@@ -125,8 +123,6 @@ export default function MeetingDetailPage() {
   if (!meeting && !error) {
     return (
       <>
-        <Header />
-        <ProjectTabs projectId={params.id} />
         <main className="mx-auto max-w-2xl px-4 py-8">
           <p>{tc("loading")}</p>
         </main>
@@ -136,8 +132,6 @@ export default function MeetingDetailPage() {
 
   return (
     <>
-      <Header />
-      <ProjectTabs projectId={params.id} />
       <main className="mx-auto max-w-2xl px-4 py-8">
         <Link href={`/${locale}/projects/${params.id}/meetings`} className="mb-4 inline-block text-sm text-maroon-700 underline">
           {t("back")}
