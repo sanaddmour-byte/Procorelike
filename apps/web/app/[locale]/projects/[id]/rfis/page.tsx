@@ -2,13 +2,16 @@
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { PersonnelPicker } from "@/components/PersonnelPicker";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useMemo, useState, useEffect, type FormEvent } from "react";
 
 interface Rfi {
   id: string;
@@ -40,6 +43,8 @@ export default function RfisPage() {
   const [rfis, setRfis] = useState<Rfi[] | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState("");
   const [question, setQuestion] = useState("");
@@ -72,6 +77,40 @@ export default function RfisPage() {
     if (!userId) return t("unassigned");
     return members.find((m) => m.userId === userId)?.name ?? userId;
   }
+
+  const filteredRfis = useMemo(() => {
+    if (!rfis) return null;
+    const q = search.trim().toLowerCase();
+    return rfis.filter((rfi) => {
+      if (statusFilter && rfi.status !== statusFilter) return false;
+      if (q && !rfi.number.toLowerCase().includes(q) && !rfi.subject.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [rfis, search, statusFilter]);
+
+  const columns: DataTableColumn<Rfi>[] = [
+    { key: "number", header: t("number"), render: (rfi) => rfi.number, sortValue: (rfi) => rfi.number, width: "110px" },
+    { key: "subject", header: t("subject"), render: (rfi) => rfi.subject, sortValue: (rfi) => rfi.subject },
+    {
+      key: "status",
+      header: t("status"),
+      render: (rfi) => <StatusBadge status={rfi.status} label={statusLabel(rfi.status, t)} />,
+      sortValue: (rfi) => rfi.status,
+      width: "130px",
+    },
+    { key: "ballInCourt", header: t("ballInCourt"), render: (rfi) => memberName(rfi.ballInCourtUserId), width: "160px" },
+    {
+      key: "flags",
+      header: t("flags"),
+      render: (rfi) => (
+        <div className="flex gap-1">
+          {rfi.isPrivate && <StatusBadge tone="neutral" label={t("private")} />}
+          {rfi.isOverdue && <StatusBadge tone="danger" label={t("overdue")} />}
+        </div>
+      ),
+      width: "160px",
+    },
+  ];
 
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
@@ -112,21 +151,23 @@ export default function RfisPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => void pdfViewer.openPdf(`/rfis/summary-report?projectId=${params.id}`, t("title"), "rfi-register.pdf")}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
-            >
-              {tc("exportAllPdf")}
-            </button>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button
+                onClick={() => void pdfViewer.openPdf(`/rfis/summary-report?projectId=${params.id}`, t("title"), "rfi-register.pdf")}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
+              >
+                {tc("exportAllPdf")}
+              </button>
+              <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -197,34 +238,33 @@ export default function RfisPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!rfis && !error && <p>{tc("loading")}</p>}
-        {rfis && rfis.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {rfis?.map((rfi) => (
-            <li key={rfi.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/rfis/${rfi.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {rfi.number} — {rfi.subject}
-                  </span>
-                  <div className="flex shrink-0 gap-2">
-                    {rfi.isPrivate && <span className="rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("private")}</span>}
-                    {rfi.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
-                    <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                      {statusLabel(rfi.status, t)}
-                    </span>
-                  </div>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">
-                  {t("ballInCourt")}: {memberName(rfi.ballInCourtUserId)}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["draft", "open", "answered", "closed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+            },
+          ]}
+          activeFilters={{ status: statusFilter }}
+          onFilterChange={(_key, value) => setStatusFilter(value)}
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter("");
+          }}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<Rfi>
+          columns={columns}
+          rows={filteredRfis}
+          onRowClick={(rfi) => router.push(`/${locale}/projects/${params.id}/rfis/${rfi.id}`)}
+          emptyTitle={rfis && rfis.length > 0 ? t("noResults") : t("empty")}
+        />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>

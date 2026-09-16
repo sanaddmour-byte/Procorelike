@@ -1,11 +1,14 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { uploadAttachment } from "@/lib/upload";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface DocumentFolder {
   id: string;
@@ -35,6 +38,7 @@ export default function DocumentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   function loadFolders(): void {
     apiJson<DocumentFolder[]>(`/documents/folders?projectId=${params.id}`)
@@ -137,10 +141,47 @@ export default function DocumentsPage() {
     }
   }
 
+  const filteredDocuments = useMemo(() => {
+    if (!documents) return null;
+    const q = search.trim().toLowerCase();
+    if (!q) return documents;
+    return documents.filter((doc) => doc.title.toLowerCase().includes(q));
+  }, [documents, search]);
+
+  const columns: DataTableColumn<DocumentRecord>[] = [
+    { key: "title", header: t("documentTitle"), render: (doc) => doc.title, sortValue: (doc) => doc.title },
+    {
+      key: "actions",
+      header: t("actions"),
+      width: "220px",
+      align: "end",
+      render: (doc) => (
+        <div className="flex items-center justify-end gap-2">
+          <button onClick={() => void handleDownload(doc.currentAttachmentId)} className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800">
+            {t("download")}
+          </button>
+          <label className="cursor-pointer rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800">
+            {replacingId === doc.id ? t("uploading") : t("replaceFile")}
+            <input
+              ref={replaceInputRef}
+              type="file"
+              disabled={replacingId === doc.id}
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleReplace(doc.id, file);
+              }}
+            />
+          </label>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <>
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        <PageHeader title={t("title")} />
         {error && <p className="text-maroon-700">{error}</p>}
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
@@ -210,36 +251,20 @@ export default function DocumentsPage() {
                 />
               </label>
             </div>
-            {!documents && <p>{tc("loading")}</p>}
-            {documents && documents.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-            <ul className="flex flex-col gap-2">
-              {documents?.map((doc) => (
-                <li key={doc.id} className="flex items-center justify-between gap-2 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
-                  <span className="truncate font-medium">{doc.title}</span>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <button
-                      onClick={() => void handleDownload(doc.currentAttachmentId)}
-                      className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800"
-                    >
-                      {t("download")}
-                    </button>
-                    <label className="cursor-pointer rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800">
-                      {replacingId === doc.id ? t("uploading") : t("replaceFile")}
-                      <input
-                        ref={replaceInputRef}
-                        type="file"
-                        disabled={replacingId === doc.id}
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) void handleReplace(doc.id, file);
-                        }}
-                      />
-                    </label>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <FilterBar
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder={t("searchPlaceholder")}
+              activeFilters={{}}
+              onFilterChange={() => undefined}
+              onClearAll={() => setSearch("")}
+              clearAllLabel={tc("clearAll")}
+            />
+            <DataTable<DocumentRecord>
+              columns={columns}
+              rows={filteredDocuments}
+              emptyTitle={documents && documents.length > 0 ? t("noResults") : t("empty")}
+            />
           </section>
         </div>
       </main>
