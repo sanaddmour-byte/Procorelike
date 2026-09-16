@@ -110,7 +110,14 @@ export function ProjectSidebar({ projectId, collapsed, onNavigate }: Props) {
                       active ? "bg-maroon-50 text-maroon-700" : "text-navy-700 hover:bg-navy-50 hover:text-navy-900"
                     }`}
                   >
-                    {collapsed ? t(item.labelKey).slice(0, 1) : t(item.labelKey)}
+                    {collapsed ? (
+                      <>
+                        <span aria-hidden="true">{t(item.labelKey).slice(0, 1)}</span>
+                        <span className="sr-only">{t(item.labelKey)}</span>
+                      </>
+                    ) : (
+                      t(item.labelKey)
+                    )}
                   </Link>
                 </li>
               );

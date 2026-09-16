@@ -3,7 +3,7 @@
 import { clearStoredAuth, loadStoredAuth } from "@/lib/auth-storage";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -15,6 +15,8 @@ export function UserMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const auth = loadStoredAuth();
 
   useEffect(() => {
@@ -23,6 +25,7 @@ export function UserMenu() {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
+    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
@@ -33,9 +36,29 @@ export function UserMenu() {
     router.push("/");
   }
 
+  function closeAndRefocus(): void {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  function handleMenuKeyDown(e: KeyboardEvent<HTMLDivElement>): void {
+    if (e.key === "Escape") {
+      closeAndRefocus();
+      return;
+    }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    if (items.length === 0) return;
+    const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+    const nextIndex = e.key === "ArrowDown" ? (currentIndex + 1) % items.length : (currentIndex - 1 + items.length) % items.length;
+    items[nextIndex]?.focus();
+  }
+
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
@@ -46,12 +69,20 @@ export function UserMenu() {
         {initials(auth.user.name)}
       </button>
       {open && (
-        <div role="menu" className="absolute end-0 top-full z-40 mt-1 w-56 rounded-lg border-3 border-ink bg-white py-1 text-sm shadow-brutal-lg">
+        <div ref={menuRef} role="menu" onKeyDown={handleMenuKeyDown} className="absolute end-0 top-full z-40 mt-1 w-56 rounded-lg border-3 border-ink bg-white py-1 text-sm shadow-brutal-lg">
           <div className="border-b border-navy-100 px-3 py-2">
             <p className="truncate font-semibold text-navy-900">{auth.user.name}</p>
             <p className="truncate text-xs text-navy-500">{auth.user.email}</p>
           </div>
-          <button type="button" role="menuitem" onClick={handleLogout} className="block w-full px-3 py-2 text-start text-maroon-700 hover:bg-maroon-50">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              closeAndRefocus();
+              handleLogout();
+            }}
+            className="block w-full px-3 py-2 text-start text-maroon-700 hover:bg-maroon-50"
+          >
             {t("logout")}
           </button>
         </div>

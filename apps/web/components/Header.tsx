@@ -25,6 +25,7 @@ interface Props {
  */
 export function Header({ projectId, onToggleSidebar }: Props) {
   const t = useTranslations("Common");
+  const tShell = useTranslations("Shell");
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export function Header({ projectId, onToggleSidebar }: Props) {
   return (
     <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b-3 border-ink bg-gradient-to-b from-navy-700 to-navy-900 px-4 py-2.5 text-white shadow-brutal-sm sm:px-6">
       {onToggleSidebar && (
-        <button type="button" onClick={onToggleSidebar} aria-label="Toggle navigation" className="rounded p-1 text-white/80 hover:bg-white/10 md:hidden">
+        <button type="button" onClick={onToggleSidebar} aria-label={tShell("openNavigation")} className="rounded p-1 text-white/80 hover:bg-white/10 md:hidden">
           ☰
         </button>
       )}

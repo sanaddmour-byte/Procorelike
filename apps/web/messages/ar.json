@@ -30,6 +30,10 @@
     "commentTool": "تعليق",
     "sketchTool": "رسم",
     "sketchHint": "اسحب على الصفحة للرسم.",
+    "colorRed": "أحمر",
+    "colorBlue": "أزرق",
+    "colorGreen": "أخضر",
+    "colorBlack": "أسود",
     "dismiss": "إغلاق",
     "delete": "حذف"
   },
@@ -1088,6 +1092,10 @@
   },
   "Shell": {
     "projectNavigation": "التنقل بين وحدات المشروع",
+    "collapseNavigation": "طي شريط التنقل",
+    "expandNavigation": "توسيع شريط التنقل",
+    "closeNavigation": "إغلاق شريط التنقل",
+    "openNavigation": "فتح شريط التنقل",
     "groupProject": "المشروع",
     "groupField": "الميدان",
     "groupDocuments": "المستندات",

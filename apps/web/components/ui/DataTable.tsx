@@ -31,10 +31,21 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate
     <div
       style={{ ...style, gridTemplateColumns: gridTemplate }}
       onClick={() => onRowClick?.(row)}
+      onKeyDown={
+        onRowClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onRowClick(row);
+              }
+            }
+          : undefined
+      }
       role="row"
-      className={`grid items-center gap-3 border-b border-navy-100 px-3 text-sm ${onRowClick ? "cursor-pointer hover:bg-orange-50" : ""} ${
-        index % 2 === 1 ? "bg-cream/50" : "bg-white"
-      }`}
+      tabIndex={onRowClick ? 0 : undefined}
+      className={`grid items-center gap-3 border-b border-navy-100 px-3 text-sm ${
+        onRowClick ? "cursor-pointer hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700" : ""
+      } ${index % 2 === 1 ? "bg-cream/50" : "bg-white"}`}
     >
       {columns.map((col) => (
         <div key={col.key} role="cell" className={`truncate ${col.align === "end" ? "text-end" : ""}`}>
@@ -43,6 +54,15 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate
       ))}
     </div>
   );
+}
+
+const MIN_FLEX_COLUMN_WIDTH = 160;
+
+function minTableWidth(columns: DataTableColumn<unknown>[]): number {
+  const columnWidths = columns.reduce((sum, c) => sum + (c.width?.endsWith("px") ? parseFloat(c.width) : MIN_FLEX_COLUMN_WIDTH), 0);
+  const gaps = (columns.length - 1) * 12;
+  const padding = 24;
+  return columnWidths + gaps + padding;
 }
 
 interface Props<T> {
@@ -101,31 +121,37 @@ export function DataTable<T>({ columns, rows, error, onRetry, onRowClick, emptyT
   if (!rows) return <LoadingState rows={6} />;
   if (rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
 
+  const minWidth = minTableWidth(columns as DataTableColumn<unknown>[]);
+
   return (
-    <div role="table" aria-rowcount={rows.length} className="overflow-hidden rounded-xl border-3 border-ink shadow-brutal-sm">
-      <div role="row" className="grid items-center gap-3 border-b-3 border-ink bg-cream px-3 text-xs font-semibold text-navy-800" style={{ gridTemplateColumns: gridTemplate, height: 36 }}>
-        {columns.map((col) => (
-          <button
-            key={col.key}
-            type="button"
-            role="columnheader"
-            aria-sort={sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : col.sortValue ? "none" : undefined}
-            onClick={() => handleSort(col)}
-            disabled={!col.sortValue}
-            className={`truncate ${col.align === "end" ? "text-end" : "text-start"} ${col.sortValue ? "cursor-pointer hover:text-maroon-700" : "cursor-default"}`}
-          >
-            {col.header}
-            {sortKey === col.key && (sortDir === "asc" ? " ▲" : " ▼")}
-          </button>
-        ))}
+    <div role="table" aria-rowcount={rows.length + 1} className="overflow-hidden rounded-xl border-3 border-ink shadow-brutal-sm">
+      <div className="overflow-x-auto">
+        <div style={{ minWidth }}>
+          <div role="row" className="grid items-center gap-3 border-b-3 border-ink bg-cream px-3 text-xs font-semibold text-navy-800" style={{ gridTemplateColumns: gridTemplate, height: 36 }}>
+            {columns.map((col) => (
+              <button
+                key={col.key}
+                type="button"
+                role="columnheader"
+                aria-sort={sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : col.sortValue ? "none" : undefined}
+                onClick={() => handleSort(col)}
+                disabled={!col.sortValue}
+                className={`truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 ${col.align === "end" ? "text-end" : "text-start"} ${col.sortValue ? "cursor-pointer hover:text-maroon-700" : "cursor-default"}`}
+              >
+                {col.header}
+                {sortKey === col.key && (sortDir === "asc" ? " ▲" : " ▼")}
+              </button>
+            ))}
+          </div>
+          <List<RowProps<T>>
+            rowComponent={DataTableRow}
+            rowCount={sortedRows.length}
+            rowHeight={rowHeight}
+            rowProps={{ rows: sortedRows, columns, onRowClick, gridTemplate }}
+            style={{ height: Math.min(maxHeight, sortedRows.length * rowHeight) }}
+          />
+        </div>
       </div>
-      <List<RowProps<T>>
-        rowComponent={DataTableRow}
-        rowCount={sortedRows.length}
-        rowHeight={rowHeight}
-        rowProps={{ rows: sortedRows, columns, onRowClick, gridTemplate }}
-        style={{ height: Math.min(maxHeight, sortedRows.length * rowHeight) }}
-      />
     </div>
   );
 }

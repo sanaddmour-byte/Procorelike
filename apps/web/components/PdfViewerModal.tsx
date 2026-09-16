@@ -13,6 +13,13 @@ const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
 const SCALE_STEP = 0.25;
 const DEFAULT_SCALE = 1.25;
+const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+const SKETCH_COLOR_LABEL_KEYS: Record<string, string> = {
+  "#dc2626": "colorRed",
+  "#2563eb": "colorBlue",
+  "#16a34a": "colorGreen",
+  "#111827": "colorBlack",
+};
 
 export interface PdfCommentContext {
   projectId: string;
@@ -76,6 +83,8 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
   const locale = useLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const docRef = useRef<PDFDocumentProxy | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNum, setPageNum] = useState(1);
   const [scale, setScale] = useState(DEFAULT_SCALE);
@@ -205,11 +214,33 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
 
   useEffect(() => {
     if (!open) return;
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    panel?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+
     function onKeyDown(e: KeyboardEvent): void {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab" || !panel) return;
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
     }
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      previouslyFocused.current?.focus();
+    };
   }, [open, onClose]);
 
   function handleDownload(): void {
@@ -339,11 +370,18 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4" onClick={onClose}>
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pdf-viewer-title"
+        tabIndex={-1}
         className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-wrap items-center justify-between gap-3 border-b-3 border-ink px-4 py-3">
-          <h2 className="truncate text-sm font-bold text-navy-900">{title}</h2>
+          <h2 id="pdf-viewer-title" className="truncate text-sm font-bold text-navy-900">
+            {title}
+          </h2>
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
@@ -381,7 +419,7 @@ export function PdfViewerModal({ open, data, error, title, fileName, onClose, co
                   <button
                     key={c}
                     type="button"
-                    aria-label={c}
+                    aria-label={SKETCH_COLOR_LABEL_KEYS[c] ? t(SKETCH_COLOR_LABEL_KEYS[c]) : c}
                     onClick={() => setSketchColor(c)}
                     className={`h-5 w-5 rounded-full border-2 ${sketchColor === c ? "border-ink" : "border-white"} shadow`}
                     style={{ backgroundColor: c }}

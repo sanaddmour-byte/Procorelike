@@ -30,6 +30,10 @@
     "commentTool": "Comment",
     "sketchTool": "Sketch",
     "sketchHint": "Drag on the page to draw.",
+    "colorRed": "Red",
+    "colorBlue": "Blue",
+    "colorGreen": "Green",
+    "colorBlack": "Black",
     "dismiss": "Dismiss",
     "delete": "Delete"
   },
@@ -1088,6 +1092,10 @@
   },
   "Shell": {
     "projectNavigation": "Project navigation",
+    "collapseNavigation": "Collapse navigation",
+    "expandNavigation": "Expand navigation",
+    "closeNavigation": "Close navigation",
+    "openNavigation": "Open navigation",
     "groupProject": "Project",
     "groupField": "Field",
     "groupDocuments": "Documents",
