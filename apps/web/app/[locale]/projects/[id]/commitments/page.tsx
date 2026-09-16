@@ -1,11 +1,14 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 interface ProjectCompany {
   companyId: string;
@@ -32,6 +35,7 @@ export default function CommitmentsPage() {
   const [commitments, setCommitments] = useState<Commitment[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [companyId, setCompanyId] = useState("");
@@ -97,20 +101,42 @@ export default function CommitmentsPage() {
     }
   }
 
+  const filteredCommitments = useMemo(() => {
+    if (!commitments) return null;
+    const q = search.trim().toLowerCase();
+    if (!q) return commitments;
+    return commitments.filter((c) => c.number.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || companyName(c.companyId).toLowerCase().includes(q));
+  }, [commitments, search, companies]);
+
+  const columns: DataTableColumn<Commitment>[] = [
+    { key: "number", header: t("number"), render: (c) => c.number, sortValue: (c) => c.number, width: "110px" },
+    { key: "title", header: t("titleField"), render: (c) => c.title, sortValue: (c) => c.title },
+    { key: "company", header: t("company"), render: (c) => companyName(c.companyId), sortValue: (c) => companyName(c.companyId), width: "200px" },
+    {
+      key: "type",
+      header: t("type"),
+      render: (c) => <StatusBadge tone="neutral" label={c.type === "po" ? t("typePo") : t("typeSubcontract")} />,
+      sortValue: (c) => c.type,
+      width: "150px",
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => void handleExportIif()} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
-              {t("exportIif")}
-            </button>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button onClick={() => void handleExportIif()} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
+                {t("exportIif")}
+              </button>
+              <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -146,29 +172,23 @@ export default function CommitmentsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!commitments && !error && <p>{tc("loading")}</p>}
-        {commitments && commitments.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
 
-        <ul className="flex flex-col gap-3">
-          {commitments?.map((c) => (
-            <li key={c.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/commitments/${c.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-navy-900">
-                    {c.number} — {c.title}
-                  </span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                    {c.type === "po" ? t("typePo") : t("typeSubcontract")}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">{companyName(c.companyId)}</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("searchPlaceholder")}
+          activeFilters={{}}
+          onFilterChange={() => undefined}
+          onClearAll={() => setSearch("")}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<Commitment>
+          columns={columns}
+          rows={filteredCommitments}
+          onRowClick={(c) => router.push(`/${locale}/projects/${params.id}/commitments/${c.id}`)}
+          emptyTitle={commitments && commitments.length > 0 ? t("noResults") : t("empty")}
+        />
       </main>
     </>
   );

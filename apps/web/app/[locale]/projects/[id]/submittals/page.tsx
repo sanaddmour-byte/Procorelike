@@ -2,13 +2,17 @@
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { PersonnelPicker } from "@/components/PersonnelPicker";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 interface SpecSection {
   id: string;
@@ -86,6 +90,16 @@ function statusLabel(status: Submittal["status"], t: (key: string) => string): s
   }[status];
 }
 
+const STATUS_TONE: Record<Submittal["status"], StatusTone> = {
+  draft: "neutral",
+  in_review: "warning",
+  approved: "success",
+  approved_as_noted: "success",
+  revise_resubmit: "danger",
+  rejected: "danger",
+  closed: "neutral",
+};
+
 export default function SubmittalsPage() {
   const t = useTranslations("Submittals");
   const tc = useTranslations("Common");
@@ -97,6 +111,8 @@ export default function SubmittalsPage() {
   const [specSections, setSpecSections] = useState<SpecSection[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [specSectionId, setSpecSectionId] = useState("");
   const [title, setTitle] = useState("");
@@ -181,23 +197,59 @@ export default function SubmittalsPage() {
     }
   }
 
+  const filteredSubmittals = useMemo(() => {
+    if (!submittals) return null;
+    const q = search.trim().toLowerCase();
+    return submittals.filter((s) => {
+      if (statusFilter && s.status !== statusFilter) return false;
+      if (q && !s.number.toLowerCase().includes(q) && !s.title.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [submittals, search, statusFilter]);
+
+  const columns: DataTableColumn<Submittal>[] = [
+    { key: "number", header: t("number"), render: (s) => s.number, sortValue: (s) => s.number, width: "110px" },
+    { key: "title", header: t("submittalTitle"), render: (s) => s.title, sortValue: (s) => s.title },
+    {
+      key: "status",
+      header: t("status"),
+      render: (s) => <StatusBadge tone={STATUS_TONE[s.status]} label={statusLabel(s.status, t)} />,
+      sortValue: (s) => s.status,
+      width: "150px",
+    },
+    { key: "ballInCourt", header: t("ballInCourt"), render: (s) => memberName(s.ballInCourtUserId), width: "160px" },
+    {
+      key: "flags",
+      header: t("flags"),
+      render: (s) => (
+        <div className="flex gap-1">
+          {s.isPrivate && <StatusBadge tone="neutral" label={t("private")} />}
+          {s.isOverdue && <StatusBadge tone="danger" label={t("overdue")} />}
+        </div>
+      ),
+      width: "160px",
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => void pdfViewer.openPdf(`/submittals/summary-report?projectId=${params.id}`, t("title"), "submittal-register.pdf")}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
-            >
-              {tc("exportAllPdf")}
-            </button>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button
+                onClick={() => void pdfViewer.openPdf(`/submittals/summary-report?projectId=${params.id}`, t("title"), "submittal-register.pdf")}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
+              >
+                {tc("exportAllPdf")}
+              </button>
+              <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -284,32 +336,36 @@ export default function SubmittalsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!submittals && !error && <p>{tc("loading")}</p>}
-        {submittals && submittals.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {submittals?.map((s) => (
-            <li key={s.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/submittals/${s.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {s.number} — {s.title}
-                  </span>
-                  <div className="flex shrink-0 gap-2">
-                    {s.isPrivate && <span className="rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("private")}</span>}
-                    {s.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
-                    <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(s.status, t)}</span>
-                  </div>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">
-                  {t("ballInCourt")}: {memberName(s.ballInCourtUserId)}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["draft", "in_review", "approved", "approved_as_noted", "revise_resubmit", "rejected", "closed"] as const).map((s) => ({
+                value: s,
+                label: statusLabel(s, t),
+              })),
+            },
+          ]}
+          activeFilters={{ status: statusFilter }}
+          onFilterChange={(_key, value) => setStatusFilter(value)}
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter("");
+          }}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<Submittal>
+          columns={columns}
+          rows={filteredSubmittals}
+          onRowClick={(s) => router.push(`/${locale}/projects/${params.id}/submittals/${s.id}`)}
+          emptyTitle={submittals && submittals.length > 0 ? t("noResults") : t("empty")}
+        />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>

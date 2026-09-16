@@ -1,13 +1,16 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 type ChangeReason =
   | "owner_change"
@@ -106,6 +109,14 @@ function statusKey(status: ChangeOrder["status"]): string {
   return { draft: "statusDraft", pending_approval: "statusPendingApproval", approved: "statusApproved", rejected: "statusRejected", void: "statusVoid" }[status];
 }
 
+const CHANGE_ORDER_STATUS_TONE: Record<ChangeOrder["status"], StatusTone> = {
+  draft: "neutral",
+  pending_approval: "warning",
+  approved: "success",
+  rejected: "danger",
+  void: "neutral",
+};
+
 export default function ChangeOrdersPage() {
   const t = useTranslations("ChangeManagement");
   const tc = useTranslations("Common");
@@ -119,6 +130,8 @@ export default function ChangeOrdersPage() {
   const [budgetLineItems, setBudgetLineItems] = useState<BudgetLineItem[]>([]);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [coSearch, setCoSearch] = useState("");
+  const [coStatusFilter, setCoStatusFilter] = useState("");
 
   const [showEventForm, setShowEventForm] = useState(false);
   const [eventTitle, setEventTitle] = useState("");
@@ -259,6 +272,35 @@ export default function ChangeOrdersPage() {
   }
 
   const targetOptions = coTargetType === "prime" ? budgetLineItems.map((li) => ({ id: li.id, label: budgetLineItemLabel(li) })) : commitments.map((c) => ({ id: c.id, label: `${c.number} — ${c.title}` }));
+
+  const filteredChangeOrders = useMemo(() => {
+    if (!changeOrders) return null;
+    const q = coSearch.trim().toLowerCase();
+    return changeOrders.filter((co) => {
+      if (coStatusFilter && co.status !== coStatusFilter) return false;
+      if (q && !co.number.toLowerCase().includes(q) && !(co.title ?? "").toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [changeOrders, coSearch, coStatusFilter]);
+
+  const changeOrderColumns: DataTableColumn<ChangeOrder>[] = [
+    { key: "number", header: t("number"), render: (co) => co.number, sortValue: (co) => co.number, width: "110px" },
+    { key: "title", header: t("coTitle"), render: (co) => co.title ?? "" },
+    {
+      key: "status",
+      header: t("status"),
+      render: (co) => <StatusBadge tone={CHANGE_ORDER_STATUS_TONE[co.status]} label={t(statusKey(co.status))} />,
+      sortValue: (co) => co.status,
+      width: "150px",
+    },
+    { key: "costImpact", header: t("costImpact"), align: "end", width: "140px", render: (co) => Number(co.costImpact).toLocaleString(undefined, { minimumFractionDigits: 2 }), sortValue: (co) => Number(co.costImpact) },
+    {
+      key: "executed",
+      header: "",
+      width: "110px",
+      render: (co) => (co.executed ? <StatusBadge tone="neutral" label={t("executed")} /> : null),
+    },
+  ];
 
   return (
     <>
@@ -439,37 +481,32 @@ export default function ChangeOrdersPage() {
             </form>
           )}
 
-          {!changeOrders && <p>{tc("loading")}</p>}
-          {changeOrders && changeOrders.length === 0 && <p className="text-navy-600">{t("noChangeOrders")}</p>}
-          <ul className="flex flex-col gap-3">
-            {changeOrders?.map((co) => (
-              <li key={co.id}>
-                <Link href={`/${locale}/projects/${params.id}/change-orders/${co.id}`} className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-navy-900">
-                      {co.number}
-                      {co.title ? ` — ${co.title}` : ""}
-                    </span>
-                    <div className="flex shrink-0 gap-2">
-                      {co.executed && <span className="whitespace-nowrap rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("executed")}</span>}
-                      <span
-                        className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${
-                          co.status === "approved"
-                            ? "bg-orange-100 text-navy-800"
-                            : co.status === "rejected" || co.status === "void"
-                              ? "bg-maroon-100 text-maroon-800"
-                              : "bg-navy-100 text-navy-800"
-                        }`}
-                      >
-                        {t(statusKey(co.status))}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="mt-1 text-sm text-navy-600">{Number(co.costImpact).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <FilterBar
+            searchValue={coSearch}
+            onSearchChange={setCoSearch}
+            searchPlaceholder={t("searchPlaceholder")}
+            filters={[
+              {
+                key: "status",
+                label: t("status"),
+                options: (["draft", "pending_approval", "approved", "rejected", "void"] as const).map((s) => ({ value: s, label: t(statusKey(s)) })),
+              },
+            ]}
+            activeFilters={{ status: coStatusFilter }}
+            onFilterChange={(_key, value) => setCoStatusFilter(value)}
+            onClearAll={() => {
+              setCoSearch("");
+              setCoStatusFilter("");
+            }}
+            clearAllLabel={tc("clearAll")}
+          />
+
+          <DataTable<ChangeOrder>
+            columns={changeOrderColumns}
+            rows={filteredChangeOrders}
+            onRowClick={(co) => router.push(`/${locale}/projects/${params.id}/change-orders/${co.id}`)}
+            emptyTitle={changeOrders && changeOrders.length > 0 ? t("noChangeOrderResults") : t("noChangeOrders")}
+          />
         </section>
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
