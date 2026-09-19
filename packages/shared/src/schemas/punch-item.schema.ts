@@ -6,7 +6,7 @@ export const punchItemStatusSchema = z.enum(["open", "ready_for_review", "not_ac
 export type PunchItemPriority = z.infer<typeof punchItemPrioritySchema>;
 export type PunchItemStatus = z.infer<typeof punchItemStatusSchema>;
 
-export const PUNCH_ITEM_SORT_KEYS = ["number", "status", "priority", "dueDate"] as const;
+export const PUNCH_ITEM_SORT_KEYS = ["number", "description", "status", "priority", "dueDate"] as const;
 export type PunchItemSortKey = (typeof PUNCH_ITEM_SORT_KEYS)[number];
 
 /** GET /punch-items's query contract (Phase 22, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). Search matches description (punch items have no separate title field) and number. */

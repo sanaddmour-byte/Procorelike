@@ -3336,6 +3336,94 @@ been started.
   test suite would run at all. Not a code issue, but worth recording here
   since it will recur in any fresh session of this sandbox.
 
+## Phase 24 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21/22/23's server-query contract out
+to Inspections, T&M Tickets, Transmittals, and Safety Incidents, per the
+user's "Proceed" after Phase 23's gate report was delivered) --
+**PASSED**, see Verification.
+
+**What was built:** the same Phase 21 pattern once more, on four modules:
+
+- **Inspections**: `listInspectionsQuerySchema` -- `status` filter, sort
+  by `templateTitle`/`status`/`scheduledAt`. Inspections carry no
+  title/subject of their own, so both search and the `templateTitle` sort
+  key operate on the joined `checklist_templates.title` (the only
+  human-readable label the list page has ever shown) -- `listInspections`
+  in `inspection.service.ts` was rewritten with an `innerJoin` against
+  `checklistTemplates`, using drizzle's `getTableColumns()` to keep the
+  return type a flat `InspectionRow[]` rather than the nested per-table
+  shape a join produces by default.
+- **T&M Tickets**: `listTmTicketsQuerySchema` (search on
+  description/ticketNumber, `status` filter, sort by
+  ticketNumber/description/workDate/status). No `company` sort key --
+  the list page's Company column is a joined lookup by `companyId`, not
+  a plain column (see the sort-key/column-key gotcha below).
+- **Transmittals**: `listTransmittalsQuerySchema` (search on
+  subject/transmittalNumber, `status` filter, sort by
+  transmittalNumber/subject/purpose/status) -- every list-page column
+  here is a plain `transmittals` column, so no joined-field exclusion was
+  needed. `transmittals/page.tsx` intentionally does **not** get a
+  `SavedViewsBar`: `Module` (the type `SavedViewsBar`'s saved-view rows
+  are scoped by, and the same type `requirePermission` checks) has no
+  `"transmittals"` entry -- transmittals' own create/read permission
+  checks ride on `"documents"` instead. Reusing `"documents"` as the
+  `SavedViewsBar` module would leak saved views between this page and the
+  Documents list (their filter/sort shapes don't match, which is exactly
+  the column-key/sort-key contract bug below), and giving transmittals
+  its own `Module` entry means wiring default permission levels for every
+  role in `default-templates.ts` too -- judged out of scope for a
+  list-query migration and deferred, documented inline in the page.
+- **Safety Incidents**: `listSafetyIncidentsQuerySchema` (search on
+  description, `status` filter, sort by
+  description/occurredAt/severity/status). Safety Observations
+  deliberately excluded from this phase's scope, same documented cut as
+  Change Events in Phase 22. No `company` sort key, same joined-lookup
+  reasoning as T&M Tickets.
+- **`apps/api/src/routes/phase24-list-query.test.ts`** (new): 12 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module, plus a `sort=company` 400-rejection regression test each for
+  T&M Tickets and Safety Incidents.
+
+**Found and fixed mid-phase, not user-reported**: a real bug class
+spanning three already-shipped modules, where a `DataTable` column had a
+`sortValue` prop (making it appear clickable-sortable) but its `key`
+wasn't a member of that module's server-side sort-key enum, so clicking
+that header 400s. Punch List's "description" column (shipped Phase 22)
+was a genuine plain column missing from the enum -- fixed by adding it to
+both the enum and the service's sort-column map, plus a regression test.
+Commitments' "company" column (Phase 22) and, newly found this phase,
+T&M Tickets' and Safety Incidents' "company"/"involved company" columns
+are all joined/derived lookups with no server sort support -- fixed by
+removing `sortValue` from each (display-only, matching Commitments'
+existing precedent for its equivalent search gap). Full writeup and the
+general rule for future migrations is in `docs/DATA_MODEL.md` §9n.
+
+**Explicitly not built this phase, on record**: Schedule, Direct Costs,
+Prime Contract, Billing, Prequalification, Bidding, Estimating, and
+Safety Observations remain on client-side filtering -- migrating each is
+a mechanical repeat of this pattern per `docs/DATA_MODEL.md` §9n, not a
+redesign, and is future work rather than a defect. The rest of the parent
+spec's phases (global search, navigation/icon-rail shell, the PDF
+architecture overhaul, bulk actions, column customization, etc.) have not
+been started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 204 tests across 38 files (192 pre-existing plus the 12 new
+  Phase 24 tests; all pre-existing suites re-verified unaffected,
+  including `inspection.test.ts`, `tm-correspondence.test.ts`,
+  `transmittals.test.ts`, and `schedule-safety.test.ts`), `apps/web`: 28,
+  unaffected. The expected stderr blocks in the API test run
+  (mailer/Expo-push network calls failing in this sandbox) are
+  pre-existing and unrelated. Full `next build` succeeded across all
+  routes including the four migrated pages. Also restarted the sandbox's
+  Postgres 16 cluster (`pg_ctlcluster 16 main start`) before the API test
+  suite would run -- it had stopped between sessions again, same
+  recurring sandbox note as Phase 23's gate report.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

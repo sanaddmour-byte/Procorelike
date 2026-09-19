@@ -3,15 +3,17 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { InjuryIllnessType, OshaClassification, SafetyIncidentSeverity, SafetyIncidentStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface SafetySummary {
   incidentsBySeverity: Record<string, number>;
@@ -70,12 +72,9 @@ export default function SafetyIncidentsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [incidents, setIncidents] = useState<SafetyIncident[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [summary, setSummary] = useState<SafetySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [occurredAt, setOccurredAt] = useState("");
   const [severity, setSeverity] = useState<SafetyIncidentSeverity>("near_miss");
@@ -88,20 +87,14 @@ export default function SafetyIncidentsPage() {
   const [daysAwayFromWork, setDaysAwayFromWork] = useState("0");
   const [daysJobTransferOrRestriction, setDaysJobTransferOrRestriction] = useState("0");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<SafetyIncident[]>(`/safety-incidents?projectId=${params.id}`)
-      .then(setIncidents)
-      .catch(() => setError(tc("errorGeneric")));
-    apiJson<SafetySummary>(`/safety-incidents/summary?projectId=${params.id}`).then(setSummary).catch(() => undefined);
-  }
+  const serverTable = useServerTable<SafetyIncident>({ basePath: "/safety-incidents", projectId: params.id, defaultSort: { key: "occurredAt", direction: "desc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
+    apiJson<SafetySummary>(`/safety-incidents/summary?projectId=${params.id}`).then(setSummary).catch(() => undefined);
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`).then(setCompanies).catch(() => undefined);
   }, [router, locale, params.id]);
 
@@ -141,7 +134,8 @@ export default function SafetyIncidentsPage() {
       setDaysAwayFromWork("0");
       setDaysJobTransferOrRestriction("0");
       setShowForm(false);
-      load();
+      serverTable.reload();
+      apiJson<SafetySummary>(`/safety-incidents/summary?projectId=${params.id}`).then(setSummary).catch(() => undefined);
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -149,15 +143,7 @@ export default function SafetyIncidentsPage() {
     }
   }
 
-  const filteredIncidents = useMemo(() => {
-    if (!incidents) return null;
-    const q = search.trim().toLowerCase();
-    return incidents.filter((incident) => {
-      if (statusFilter && incident.status !== statusFilter) return false;
-      if (q && !incident.description.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [incidents, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<SafetyIncident>[] = [
     { key: "description", header: t("description"), render: (incident) => incident.description, sortValue: (incident) => incident.description },
@@ -168,7 +154,7 @@ export default function SafetyIncidentsPage() {
       sortValue: (incident) => incident.occurredAt,
       width: "130px",
     },
-    { key: "company", header: t("involvedCompany"), render: (incident) => companyName(incident.involvedCompanyId), sortValue: (incident) => companyName(incident.involvedCompanyId) },
+    { key: "company", header: t("involvedCompany"), render: (incident) => companyName(incident.involvedCompanyId) },
     {
       key: "severity",
       header: t("severity"),
@@ -364,9 +350,16 @@ export default function SafetyIncidentsPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="safety"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -375,20 +368,22 @@ export default function SafetyIncidentsPage() {
               options: (["open", "investigating", "closed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<SafetyIncident>
           columns={columns}
-          rows={filteredIncidents}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(incident) => router.push(`/${locale}/projects/${params.id}/safety/${incident.id}`)}
-          emptyTitle={incidents && incidents.length > 0 ? t("noResults") : t("emptyIncidents")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("emptyIncidents")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

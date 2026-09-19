@@ -100,7 +100,7 @@ export default function CommitmentsPage() {
   const columns: DataTableColumn<Commitment>[] = [
     { key: "number", header: t("number"), render: (c) => c.number, sortValue: (c) => c.number, width: "110px" },
     { key: "title", header: t("titleField"), render: (c) => c.title, sortValue: (c) => c.title },
-    { key: "company", header: t("company"), render: (c) => companyName(c.companyId), sortValue: (c) => companyName(c.companyId), width: "200px" },
+    { key: "company", header: t("company"), render: (c) => companyName(c.companyId), width: "200px" },
     {
       key: "type",
       header: t("type"),

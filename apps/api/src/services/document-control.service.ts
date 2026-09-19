@@ -1,12 +1,16 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   formatTransmittalNumber,
   requirePermission,
   type CreateDrawingSetInput,
   type CreateTransmittalInput,
+  type ListTransmittalsQuery,
+  type PaginatedResult,
   type PermissionContext,
+  type TransmittalSortKey,
 } from "@siteops/shared";
-import { eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -64,15 +68,55 @@ export async function findTransmittalById(appDb: Database, userId: string, trans
   });
 }
 
+const TRANSMITTAL_SORT_COLUMNS: Record<
+  TransmittalSortKey,
+  | typeof schema.transmittals.transmittalNumber
+  | typeof schema.transmittals.subject
+  | typeof schema.transmittals.purpose
+  | typeof schema.transmittals.status
+> = {
+  transmittalNumber: schema.transmittals.transmittalNumber,
+  subject: schema.transmittals.subject,
+  purpose: schema.transmittals.purpose,
+  status: schema.transmittals.status,
+};
+
 export async function listTransmittals(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<TransmittalRow[]> {
+  query: ListTransmittalsQuery = {},
+): Promise<PaginatedResult<TransmittalRow>> {
   requirePermission(ctx, "documents", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.transmittals).where(eq(schema.transmittals.projectId, projectId));
+    const conditions = [eq(schema.transmittals.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.transmittals.status, query.status));
+    if (query.search) {
+      conditions.push(
+        or(ilike(schema.transmittals.subject, `%${query.search}%`), ilike(schema.transmittals.transmittalNumber, `%${query.search}%`))!,
+      );
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = TRANSMITTAL_SORT_COLUMNS[query.sort ?? "transmittalNumber"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.transmittals).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.transmittals).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

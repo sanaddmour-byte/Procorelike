@@ -1,5 +1,6 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database, type Tx } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   formatGeneratedPunchItemDescription,
   formatInspectionResponseValue,
   formatPunchItemNumber,
@@ -15,11 +16,13 @@ import {
   type FieldConflict,
   type InspectionResponseValue,
   type InspectionStatus,
+  type ListInspectionsQuery,
+  type PaginatedResult,
   type PermissionContext,
   type TransitionInspectionStatusInput,
   type UpdateInspectionResponsesInput,
 } from "@siteops/shared";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, ilike, inArray } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { getLatestSignature, recordSignature, verifySignature } from "./esignature.service";
@@ -145,10 +148,45 @@ export async function listInspections(
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<InspectionRow[]> {
+  query: ListInspectionsQuery = {},
+): Promise<PaginatedResult<InspectionRow>> {
   requirePermission(ctx, "inspections", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.inspections).where(eq(schema.inspections.projectId, projectId));
+    const conditions = [eq(schema.inspections.projectId, projectId)];
+    if (query.status) conditions.push(eq(schema.inspections.status, query.status));
+    if (query.search) conditions.push(ilike(schema.checklistTemplates.title, `%${query.search}%`));
+    const where = and(...conditions)!;
+
+    // Inspections carry no title/subject of their own -- both search and the templateTitle sort key
+    // operate on the joined checklist_templates.title (see the shared schema's doc comment on this
+    // contract), so every query here joins it rather than filtering/sorting on the base table alone.
+    const orderColumn =
+      query.sort === "status" ? schema.inspections.status : query.sort === "scheduledAt" ? schema.inspections.scheduledAt : schema.checklistTemplates.title;
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx
+      .select(getTableColumns(schema.inspections))
+      .from(schema.inspections)
+      .innerJoin(schema.checklistTemplates, eq(schema.inspections.templateId, schema.checklistTemplates.id))
+      .where(where)
+      .orderBy(orderFn(orderColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx
+        .select({ value: count() })
+        .from(schema.inspections)
+        .innerJoin(schema.checklistTemplates, eq(schema.inspections.templateId, schema.checklistTemplates.id))
+        .where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

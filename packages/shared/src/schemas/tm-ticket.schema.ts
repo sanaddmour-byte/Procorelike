@@ -1,7 +1,20 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const tmTicketStatusSchema = z.enum(["draft", "submitted", "approved", "rejected"]);
 export type TmTicketStatus = z.infer<typeof tmTicketStatusSchema>;
+
+export const TM_TICKET_SORT_KEYS = ["ticketNumber", "description", "workDate", "status"] as const;
+export type TmTicketSortKey = (typeof TM_TICKET_SORT_KEYS)[number];
+
+/** GET /tm-tickets's query contract (Phase 24, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). No `company` sort key -- the list page's Company column is rendered from a joined lookup (see docs/DATA_MODEL.md §9n's note on Commitments), not a plain column, and sorting/searching by it isn't supported here either. */
+export const listTmTicketsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(TM_TICKET_SORT_KEYS).optional(),
+    status: tmTicketStatusSchema.optional(),
+  })
+  .strict();
+export type ListTmTicketsQuery = z.infer<typeof listTmTicketsQuerySchema>;
 
 const tmTicketLaborEntrySchema = z
   .object({

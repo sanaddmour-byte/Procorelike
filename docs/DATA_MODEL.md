@@ -589,15 +589,46 @@ library, and adopting one now would touch every existing page's dependency
 footprint for no problem it uniquely solves. Revisit only if a real
 caching/dedup need surfaces once more modules migrate.
 
-**Migrated so far** (Phase 21 + 22 + 23): RFIs, Submittals, Change Orders,
-Punch List, Commitments, Documents, Drawings, Meetings, Correspondence.
-Roughly 12 more list modules (Inspections, T&M Tickets, Transmittals,
-Schedule, Safety, Direct Costs, Prime Contract, Billing, Prequalification,
-Bidding, Estimating, and others) are still on the old "fetch everything,
-filter client-side" path; migrating each is now a matter of repeating this
-pattern (extend the shared query schema, move the service's filter/sort/
-pagination into SQL, wire the page onto `useServerTable` +
-`DataTable`'s server props), not re-designing it.
+**Migrated so far** (Phase 21 + 22 + 23 + 24): RFIs, Submittals, Change
+Orders, Punch List, Commitments, Documents, Drawings, Meetings,
+Correspondence, Inspections, T&M Tickets, Transmittals, Safety Incidents.
+Still on the old "fetch everything, filter client-side" path: Schedule,
+Direct Costs, Prime Contract, Billing, Prequalification, Bidding,
+Estimating, and Safety Observations (deliberately left out of Phase 24,
+same documented scope cut as Change Events in Phase 22 -- see
+`safety.schema.ts`'s doc comment). Migrating each remaining module is a
+matter of repeating this pattern (extend the shared query schema, move
+the service's filter/sort/pagination into SQL, wire the page onto
+`useServerTable` + `DataTable`'s server props), not re-designing it.
+
+**A `DataTable` column's `key` must exactly match a member of its
+module's server sort-key enum whenever that column also sets
+`sortValue` -- found as a live bug in three already-shipped modules
+during Phase 24, none of them user-reported.** `DataTable.tsx`'s
+`handleSort(col)` calls `onServerSortChange(col.key)` for any
+server-sortable column (guarded by `if (!col.sortValue) return;`), which
+means the resulting `sort=<key>` query param must be a member of that
+module's `z.enum(...)` sort-key list or the request 400s -- surfacing to
+the user as a generic error only when they click that specific column
+header, which nothing in typecheck/lint/the existing test suite catches.
+Two shapes of the same bug, and two different fixes:
+  1. **The sorted field is a genuine plain column that was simply left out
+     of the enum** (Punch List's "description" column, shipped in Phase
+     22): add it to both the sort-key enum and the service's sort-column
+     map. Straightforward, no behavior lost.
+  2. **The sorted field is a joined/derived value with no server sort
+     support** (Commitments' "company" column in Phase 22, T&M Tickets'
+     "company" column and Safety Incidents' "involved company" column
+     both in Phase 24 -- all three render a company name looked up by
+     `companyId`, not a plain column): remove the `sortValue` prop
+     entirely, making the column display-only. Plumbing an actual SQL
+     join through just to sort one column wasn't judged worth it, same
+     call already made for Commitments' matching search gap.
+When migrating or auditing any module's list page, check every column
+with a `sortValue` against that module's sort-key enum -- a mismatch is
+silent until a user clicks that exact header. `phase24-list-query.test.ts`
+has a `sort=company` rejection test for both T&M Tickets and Safety
+Incidents as regression coverage for shape 2's fix holding.
 
 **A module's "essential scoping param" is not the same thing as an
 optional FilterBar filter, and the two need different treatment.**

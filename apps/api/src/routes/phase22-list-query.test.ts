@@ -250,6 +250,18 @@ describe("GET /punch-items query contract (Phase 22)", () => {
     expect(firstPage.body).toHaveLength(2);
     expect(firstPage.headers["x-total-count"]).toBe("3");
   });
+
+  it("sorts by description (the list page's Description column header, which is sortable client-side)", async () => {
+    const pageMarker = `${MARKER}-pi-desc`;
+    await createPunchItem(`${pageMarker}-bbb`);
+    await createPunchItem(`${pageMarker}-aaa`);
+
+    const res = await request(app)
+      .get(`/punch-items?projectId=${projectId}&search=${encodeURIComponent(pageMarker)}&sort=description&direction=asc`)
+      .set("authorization", `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body[0].description).toBe(`${pageMarker}-aaa`);
+  });
 });
 
 describe("GET /commitments query contract (Phase 22)", () => {

@@ -4,15 +4,17 @@ import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface ChecklistTemplate {
   id: string;
@@ -43,29 +45,20 @@ export default function InspectionsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [inspections, setInspections] = useState<Inspection[] | null>(null);
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [templateId, setTemplateId] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
-
-  function load(): void {
-    apiJson<Inspection[]>(`/inspections?projectId=${params.id}`)
-      .then(setInspections)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Inspection>({ basePath: "/inspections", projectId: params.id, defaultSort: { key: "templateTitle", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ChecklistTemplate[]>(`/checklist-templates?projectId=${params.id}`)
       .then((tpls) => {
         setTemplates(tpls);
@@ -93,7 +86,7 @@ export default function InspectionsPage() {
       });
       setScheduledAt("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -101,18 +94,10 @@ export default function InspectionsPage() {
     }
   }
 
-  const filteredInspections = useMemo(() => {
-    if (!inspections) return null;
-    const q = search.trim().toLowerCase();
-    return inspections.filter((i) => {
-      if (statusFilter && i.status !== statusFilter) return false;
-      if (q && !templateTitle(i.templateId).toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [inspections, search, statusFilter, templates]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<Inspection>[] = [
-    { key: "template", header: t("template"), render: (i) => templateTitle(i.templateId), sortValue: (i) => templateTitle(i.templateId) },
+    { key: "templateTitle", header: t("template"), render: (i) => templateTitle(i.templateId), sortValue: (i) => templateTitle(i.templateId) },
     {
       key: "status",
       header: t("status"),
@@ -182,9 +167,16 @@ export default function InspectionsPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="inspections"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -193,20 +185,22 @@ export default function InspectionsPage() {
               options: (["scheduled", "in_progress", "completed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<Inspection>
           columns={columns}
-          rows={filteredInspections}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(inspection) => router.push(`/${locale}/projects/${params.id}/inspections/${inspection.id}`)}
-          emptyTitle={inspections && inspections.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />

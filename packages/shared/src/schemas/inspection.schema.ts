@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { signatureImageBase64Schema } from "./esignature.schema";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const checklistResponseTypeSchema = z.enum(["pass_fail", "na", "numeric", "photo", "signature"]);
 export type ChecklistResponseType = z.infer<typeof checklistResponseTypeSchema>;
@@ -33,6 +34,18 @@ export type CreateChecklistTemplateInput = z.infer<typeof createChecklistTemplat
 
 export const inspectionStatusSchema = z.enum(["scheduled", "in_progress", "completed"]);
 export type InspectionStatus = z.infer<typeof inspectionStatusSchema>;
+
+export const INSPECTION_SORT_KEYS = ["templateTitle", "status", "scheduledAt"] as const;
+export type InspectionSortKey = (typeof INSPECTION_SORT_KEYS)[number];
+
+/** GET /inspections's query contract (Phase 24, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). Inspections carry no title/subject of their own -- both search and the `templateTitle` sort key operate on the joined checklist_templates.title, since that's the only human-readable label the list page has ever shown (see inspection.service.ts's listInspections). */
+export const listInspectionsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(INSPECTION_SORT_KEYS).optional(),
+    status: inspectionStatusSchema.optional(),
+  })
+  .strict();
+export type ListInspectionsQuery = z.infer<typeof listInspectionsQuerySchema>;
 
 export const createInspectionSchema = z
   .object({

@@ -7,10 +7,11 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 interface Transmittal {
   id: string;
@@ -59,14 +60,12 @@ export default function TransmittalsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [transmittals, setTransmittals] = useState<Transmittal[] | null>(null);
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [companies, setCompanies] = useState<DirectoryCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const serverTable = useServerTable<Transmittal>({ basePath: "/transmittals", projectId: params.id, defaultSort: { key: "transmittalNumber", direction: "asc" } });
 
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState("");
@@ -78,18 +77,11 @@ export default function TransmittalsPage() {
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  function reload(): void {
-    apiJson<Transmittal[]>(`/transmittals?projectId=${params.id}`)
-      .then(setTransmittals)
-      .catch(() => setError(tc("errorGeneric")));
-  }
-
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    reload();
     apiJson<DocumentRecord[]>(`/documents?projectId=${params.id}`).then(setDocuments).catch(() => undefined);
     apiJson<Drawing[]>(`/drawings?projectId=${params.id}`).then(setDrawings).catch(() => undefined);
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
@@ -135,7 +127,7 @@ export default function TransmittalsPage() {
       setSelectedDrawingIds([]);
       setSelectedUserIds([]);
       setSelectedCompanyIds([]);
-      reload();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -145,18 +137,10 @@ export default function TransmittalsPage() {
 
   const canSubmit = subject.trim().length > 0 && (selectedDocumentIds.length > 0 || selectedDrawingIds.length > 0) && (selectedUserIds.length > 0 || selectedCompanyIds.length > 0);
 
-  const filteredTransmittals = useMemo(() => {
-    if (!transmittals) return null;
-    const q = search.trim().toLowerCase();
-    return transmittals.filter((tr) => {
-      if (statusFilter && tr.status !== statusFilter) return false;
-      if (q && !tr.transmittalNumber.toLowerCase().includes(q) && !tr.subject.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [transmittals, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<Transmittal>[] = [
-    { key: "number", header: t("number"), render: (tr) => tr.transmittalNumber, sortValue: (tr) => tr.transmittalNumber, width: "110px" },
+    { key: "transmittalNumber", header: t("number"), render: (tr) => tr.transmittalNumber, sortValue: (tr) => tr.transmittalNumber, width: "110px" },
     { key: "subject", header: t("subject"), render: (tr) => tr.subject, sortValue: (tr) => tr.subject },
     { key: "purpose", header: t("purpose"), render: (tr) => t(`purpose_${tr.purpose}`), sortValue: (tr) => tr.purpose, width: "150px" },
     {
@@ -255,9 +239,17 @@ export default function TransmittalsPage() {
           </form>
         )}
 
+        {/* No SavedViewsBar here: transmittals has no module of its own in packages/shared/src/constants/modules.ts
+            (its create/read permission checks ride on "documents"), and that Module type is also what
+            SavedViewsBar's saved-view rows are scoped by. Reusing "documents" would leak saved views between
+            this page and the Documents list -- their filter/sort shapes don't match, which is exactly the
+            column-key/sort-key contract bug class documented in docs/DATA_MODEL.md's Phase 24 gotcha. Giving
+            transmittals its own module means wiring default permission levels for every role too, which is
+            out of scope for this list-query migration -- deferred, same as Safety Observations this phase. */}
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -269,20 +261,22 @@ export default function TransmittalsPage() {
               ],
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<Transmittal>
           columns={columns}
-          rows={filteredTransmittals}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(tr) => router.push(`/${locale}/projects/${params.id}/transmittals/${tr.id}`)}
-          emptyTitle={transmittals && transmittals.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

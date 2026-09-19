@@ -95,9 +95,10 @@ export async function findPunchItemById(
 
 const PUNCH_ITEM_SORT_COLUMNS: Record<
   PunchItemSortKey,
-  typeof schema.punchItems.number | typeof schema.punchItems.status | typeof schema.punchItems.priority | typeof schema.punchItems.dueDate
+  typeof schema.punchItems.number | typeof schema.punchItems.description | typeof schema.punchItems.status | typeof schema.punchItems.priority | typeof schema.punchItems.dueDate
 > = {
   number: schema.punchItems.number,
+  description: schema.punchItems.description,
   status: schema.punchItems.status,
   priority: schema.punchItems.priority,
   dueDate: schema.punchItems.dueDate,

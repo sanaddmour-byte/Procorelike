@@ -3,14 +3,16 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { TmTicketStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface TmTicket {
   id: string;
@@ -67,11 +69,8 @@ export default function TmTicketsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [tickets, setTickets] = useState<TmTicket[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [companyId, setCompanyId] = useState("");
   const [workDate, setWorkDate] = useState("");
@@ -80,19 +79,13 @@ export default function TmTicketsPage() {
   const [equipmentEntries, setEquipmentEntries] = useState<EquipmentEntry[]>([]);
   const [materialEntries, setMaterialEntries] = useState<MaterialEntry[]>([]);
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<TmTicket[]>(`/tm-tickets?projectId=${params.id}`)
-      .then(setTickets)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<TmTicket>({ basePath: "/tm-tickets", projectId: params.id, defaultSort: { key: "ticketNumber", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`)
       .then((cos) => {
         setCompanies(cos);
@@ -137,7 +130,7 @@ export default function TmTicketsPage() {
         }),
       });
       resetForm();
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -145,21 +138,13 @@ export default function TmTicketsPage() {
     }
   }
 
-  const filteredTickets = useMemo(() => {
-    if (!tickets) return null;
-    const q = search.trim().toLowerCase();
-    return tickets.filter((ticket) => {
-      if (statusFilter && ticket.status !== statusFilter) return false;
-      if (q && !ticket.ticketNumber.toLowerCase().includes(q) && !ticket.description.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [tickets, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<TmTicket>[] = [
-    { key: "number", header: t("number"), render: (ticket) => ticket.ticketNumber, sortValue: (ticket) => ticket.ticketNumber, width: "110px" },
-    { key: "company", header: t("company"), render: (ticket) => companyName(ticket.companyId), sortValue: (ticket) => companyName(ticket.companyId), width: "180px" },
+    { key: "ticketNumber", header: t("number"), render: (ticket) => ticket.ticketNumber, sortValue: (ticket) => ticket.ticketNumber, width: "110px" },
+    { key: "company", header: t("company"), render: (ticket) => companyName(ticket.companyId), width: "180px" },
     { key: "workDate", header: t("workDate"), render: (ticket) => ticket.workDate.slice(0, 10), sortValue: (ticket) => ticket.workDate, width: "130px" },
-    { key: "description", header: t("description"), render: (ticket) => ticket.description },
+    { key: "description", header: t("description"), render: (ticket) => ticket.description, sortValue: (ticket) => ticket.description },
     {
       key: "status",
       header: t("status"),
@@ -357,9 +342,16 @@ export default function TmTicketsPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="tm_tickets"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -368,20 +360,22 @@ export default function TmTicketsPage() {
               options: (["draft", "submitted", "approved", "rejected"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<TmTicket>
           columns={columns}
-          rows={filteredTickets}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(ticket) => router.push(`/${locale}/projects/${params.id}/tm-tickets/${ticket.id}`)}
-          emptyTitle={tickets && tickets.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

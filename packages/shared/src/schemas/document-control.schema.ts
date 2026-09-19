@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const transmittalPurposeSchema = z.enum([
   "for_review",
@@ -15,6 +16,18 @@ export type TransmittalStatus = z.infer<typeof transmittalStatusSchema>;
 
 export const transmittalItemTypeSchema = z.enum(["document", "drawing_revision", "drawing_set"]);
 export type TransmittalItemType = z.infer<typeof transmittalItemTypeSchema>;
+
+export const TRANSMITTAL_SORT_KEYS = ["transmittalNumber", "subject", "purpose", "status"] as const;
+export type TransmittalSortKey = (typeof TRANSMITTAL_SORT_KEYS)[number];
+
+/** GET /transmittals's query contract (Phase 24, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). Every list-page column here is a plain transmittals column, so unlike T&M Tickets/Commitments there's no joined/derived field to exclude. */
+export const listTransmittalsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(TRANSMITTAL_SORT_KEYS).optional(),
+    status: transmittalStatusSchema.optional(),
+  })
+  .strict();
+export type ListTransmittalsQuery = z.infer<typeof listTransmittalsQuerySchema>;
 
 const transmittalItemInputSchema = z
   .object({
