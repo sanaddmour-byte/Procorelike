@@ -4,15 +4,17 @@ import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { useServerTable } from "@/lib/use-server-table";
 import type { CorrespondenceDirection, CorrespondenceStatus, CorrespondenceType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface CorrespondenceItem {
   id: string;
@@ -52,11 +54,8 @@ export default function CorrespondencePage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [items, setItems] = useState<CorrespondenceItem[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [direction, setDirection] = useState<CorrespondenceDirection>("outgoing");
   const [type, setType] = useState<CorrespondenceType>("letter");
@@ -67,19 +66,13 @@ export default function CorrespondencePage() {
   const [responseRequiredBy, setResponseRequiredBy] = useState("");
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
-
-  function load(): void {
-    apiJson<CorrespondenceItem[]>(`/correspondence?projectId=${params.id}`)
-      .then(setItems)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<CorrespondenceItem>({ basePath: "/correspondence", projectId: params.id, defaultSort: { key: "correspondenceNumber", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`)
       .then((cos) => {
         setCompanies(cos);
@@ -114,7 +107,7 @@ export default function CorrespondencePage() {
       setBody("");
       setResponseRequiredBy("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -122,15 +115,7 @@ export default function CorrespondencePage() {
     }
   }
 
-  const filteredItems = useMemo(() => {
-    if (!items) return null;
-    const q = search.trim().toLowerCase();
-    return items.filter((item) => {
-      if (statusFilter && item.status !== statusFilter) return false;
-      if (q && !item.correspondenceNumber.toLowerCase().includes(q) && !item.subject.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [items, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<CorrespondenceItem>[] = [
     { key: "number", header: t("number"), render: (item) => item.correspondenceNumber, sortValue: (item) => item.correspondenceNumber, width: "110px" },
@@ -253,9 +238,16 @@ export default function CorrespondencePage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="correspondence"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -264,20 +256,22 @@ export default function CorrespondencePage() {
               options: (["draft", "sent", "acknowledged", "closed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<CorrespondenceItem>
           columns={columns}
-          rows={filteredItems}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(item) => router.push(`/${locale}/projects/${params.id}/correspondence/${item.id}`)}
-          emptyTitle={items && items.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />

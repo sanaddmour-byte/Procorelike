@@ -1,5 +1,5 @@
 import type { Database } from "@siteops/db";
-import { createDrawingRevisionSchema, createDrawingSchema, createMarkupSchema, updateDrawingSchema } from "@siteops/shared";
+import { createDrawingRevisionSchema, createDrawingSchema, createMarkupSchema, listDrawingsQuerySchema, updateDrawingSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -32,8 +32,19 @@ export function drawingsRouter(appDb: Database, env: Env): Router {
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const drawings = await drawingService.listDrawings(appDb, authUser.id, ctx, projectId);
-      res.json(drawings);
+      const listQuery = listDrawingsQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        discipline: req.query.discipline,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await drawingService.listDrawings(appDb, authUser.id, ctx, projectId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
+      res.json(rows);
     } catch (err) {
       next(err);
     }

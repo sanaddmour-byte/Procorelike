@@ -81,26 +81,27 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 22 (server-driven list
-query contract rolled out to Submittals, Change Orders, Punch List, and
-Commitments) is complete and gate-verified** -- continuing the
-user-directed "Enterprise UX, Data Architecture & PDF System Upgrade"
-initiative Phase 21 started. Phase 21 built the reusable contract
-(`packages/shared/schemas/list-query.schema.ts`, `PaginatedResult<T>`) and
-proved it end-to-end on RFIs; Phase 22 repeats that exact pattern on four
-more modules with no changes to the contract itself. Two variations
-surfaced along the way, both documented in `docs/DATA_MODEL.md` §9n
-rather than left implicit: Submittals' distribution-list privacy rule
-needed the same SQL `EXISTS` treatment RFIs already got, and Commitments
-has neither a `status` nor a `dueDate` column, so its query schema filters
-on `type`/`companyId` instead -- the contract adapts to what a module's
-schema actually has, it doesn't force a shape onto it. Punch List's
-migration also retired that page's older bespoke single-filter saved-views
-UI in favor of the shared `SavedViewsBar` component Phase 21 built. 16 of
-the ~20 total list modules remain on client-side filtering; migrating each
-is now a mechanical repeat of this pattern, not a redesign -- see
-`docs/DATA_MODEL.md` §9n for the full pattern and the "migrated so far"
-list. Before Phase 21, Phase 20
+mid-build corrections). As of this writing: **Phase 23 (server-driven list
+query contract rolled out to Documents, Drawings, Meetings, and
+Correspondence) is complete and gate-verified** -- the third installment
+of the user-directed "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative, continuing Phase 21/22's rollout with no changes to
+the shared contract (`packages/shared/schemas/list-query.schema.ts`,
+`PaginatedResult<T>`) itself. Two shapes worth knowing about: Documents'
+list is folder-scoped (`folderId` is an essential query param the
+folder-browser sidebar always sends, not a FilterBar-style optional
+filter, and its migration kept a second, separately-fetched unpaginated
+drawing/document list where a feature -- Drawings' "publish a set" picker
+-- genuinely needs the complete set rather than one page of it); Meetings
+and Correspondence have no `status`/`assignee`-shaped filters at all
+(Meetings has none, Correspondence only `status`), matching Commitments'
+Phase 22 precedent of the contract adapting to what a module's schema
+supports rather than a uniform shape. 12 of the ~20 total list modules
+remain on client-side filtering; migrating each is now a mechanical
+repeat of this pattern, not a redesign -- see `docs/DATA_MODEL.md` §9n
+for the full pattern and the "migrated so far" list. Phase 22 (Submittals,
+Change Orders, Punch List, Commitments) preceded this, and Phase 21
+(RFIs, the original proof of concept) before that. Before Phase 21, Phase 20
 (Mobile push notifications) completed the sixth of 7 planned phases
 addressing a Procore competitive-gap analysis (see Phase 15's gate report
 for the full 7-phase plan); SSO/SAML was explicitly descoped by the user

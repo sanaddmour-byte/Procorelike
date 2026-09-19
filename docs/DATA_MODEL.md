@@ -589,14 +589,45 @@ library, and adopting one now would touch every existing page's dependency
 footprint for no problem it uniquely solves. Revisit only if a real
 caching/dedup need surfaces once more modules migrate.
 
-**Migrated so far** (Phase 21 + Phase 22): RFIs, Submittals, Change
-Orders, Punch List, Commitments. Roughly 16 more list modules (Documents,
-Drawings, Meetings, Inspections, Correspondence, T&M Tickets,
-Transmittals, and others) are still on the old "fetch everything, filter
-client-side" path; migrating each is now a matter of repeating this
+**Migrated so far** (Phase 21 + 22 + 23): RFIs, Submittals, Change Orders,
+Punch List, Commitments, Documents, Drawings, Meetings, Correspondence.
+Roughly 12 more list modules (Inspections, T&M Tickets, Transmittals,
+Schedule, Safety, Direct Costs, Prime Contract, Billing, Prequalification,
+Bidding, Estimating, and others) are still on the old "fetch everything,
+filter client-side" path; migrating each is now a matter of repeating this
 pattern (extend the shared query schema, move the service's filter/sort/
 pagination into SQL, wire the page onto `useServerTable` +
 `DataTable`'s server props), not re-designing it.
+
+**A module's "essential scoping param" is not the same thing as an
+optional FilterBar filter, and the two need different treatment.**
+Documents (Phase 23) is folder-scoped: `folderId` is something the
+folder-browser sidebar *always* sends, never something a user toggles
+in the FilterBar UI the way a status chip works. It stays a plain
+function parameter on `document.service.ts`'s `listDocuments`, outside
+the `ListDocumentsQuery` bag entirely -- on the web side, folder
+selection drives it by calling `serverTable.onFilterChange("folderId",
+...)` directly (bypassing the `FilterBar` component, which never renders
+a "folder" filter chip at all) rather than inventing a separate code path
+for one scoping param. Any future module with a similar "always-present,
+UI-driven-elsewhere" scoping dimension should follow this same split:
+real optional filters go in the query schema; an essential scope
+parameter that some other piece of UI (a sidebar, a tab, a parent
+record) always supplies stays a plain parameter.
+
+**A migrated page's `serverTable.rows` (one page of results) is not
+always sufficient for every feature on that same page.** Drawings'
+"publish a set" picker (Phase 23) needs the complete list of every
+drawing with a current revision to choose from -- paginating the
+DataTable must never silently truncate what that picker can see. The fix
+is a second, separately-fetched, deliberately unpaginated request
+(`revisionedDrawings` in `drawings/page.tsx`) alongside the paginated
+`useServerTable` instance, refreshed on the same create/publish events.
+Change Orders' target-company dropdowns (Phase 22) took the same shape
+one phase earlier, sourced from an already-separate unpaginated endpoint.
+Before migrating any page, check whether its data list is reused
+somewhere else on the same page (a picker, a dropdown, a lookup) --
+if so, that consumer needs its own fetch, not `serverTable.rows`.
 
 **The contract adapts to what a module's schema actually has, rather than
 forcing a uniform filter shape onto every module.** Two examples from

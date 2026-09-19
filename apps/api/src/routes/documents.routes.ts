@@ -1,5 +1,5 @@
 import type { Database } from "@siteops/db";
-import { createDocumentFolderSchema, createDocumentSchema, updateDocumentSchema } from "@siteops/shared";
+import { createDocumentFolderSchema, createDocumentSchema, listDocumentsQuerySchema, updateDocumentSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -59,8 +59,18 @@ export function documentsRouter(appDb: Database, env: Env): Router {
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const folderId = typeof req.query.folderId === "string" ? req.query.folderId : null;
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const documents = await documentService.listDocuments(appDb, authUser.id, ctx, projectId, folderId);
-      res.json(documents);
+      const listQuery = listDocumentsQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await documentService.listDocuments(appDb, authUser.id, ctx, projectId, folderId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
+      res.json(rows);
     } catch (err) {
       next(err);
     }

@@ -1,13 +1,17 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   requirePermission,
   type CarryForwardMeetingItemInput,
   type CreateMeetingInput,
   type CreateMeetingItemInput,
+  type ListMeetingsQuery,
+  type MeetingSortKey,
+  type PaginatedResult,
   type PermissionContext,
   type TransitionMeetingItemStatusInput,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
 import { NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { createPunchItem } from "./punch-item.service";
@@ -70,15 +74,44 @@ export async function findMeetingItemById(
   });
 }
 
+const MEETING_SORT_COLUMNS: Record<MeetingSortKey, typeof schema.meetings.title | typeof schema.meetings.occurredAt> = {
+  title: schema.meetings.title,
+  occurredAt: schema.meetings.occurredAt,
+};
+
 export async function listMeetings(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<MeetingRow[]> {
+  query: ListMeetingsQuery = {},
+): Promise<PaginatedResult<MeetingRow>> {
   requirePermission(ctx, "meetings", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.meetings).where(eq(schema.meetings.projectId, projectId));
+    const conditions = [eq(schema.meetings.projectId, projectId)];
+    if (query.search) conditions.push(ilike(schema.meetings.title, `%${query.search}%`));
+    const where = and(...conditions)!;
+
+    // Meetings' only pre-existing caller (mobile, view-only) always re-sorts the full result client-side
+    // itself, so unlike every other migrated module's callers there's no default-order behavior to preserve
+    // here -- this follows the same asc-by-default convention as every other module's contract for consistency.
+    const sortColumn = MEETING_SORT_COLUMNS[query.sort ?? "occurredAt"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.meetings).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.meetings).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

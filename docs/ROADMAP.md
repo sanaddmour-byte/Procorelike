@@ -3255,6 +3255,87 @@ column customization, etc.) have not been started.
   slightly (client-side filtering/`useMemo` logic removed), consistent
   with the RFIs page's Phase 21 build output.
 
+## Phase 23 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21/22's server-query contract out to
+Documents, Drawings, Meetings, and Correspondence, per the user's
+"Proceed" after Phase 22's gate report was delivered) -- **PASSED**, see
+Verification.
+
+**What was built:** the same Phase 21 pattern once more, on four modules
+with meaningfully different shapes than the financial/workflow modules
+Phase 22 covered:
+
+- **Documents**: `listDocumentsQuerySchema` -- search + sort by `title`
+  only (documents have no status/assignee/type to filter by). The one
+  real wrinkle: `document.service.ts`'s `listDocuments` is scoped by
+  `folderId`, an essential parameter the folder-browser sidebar UI always
+  sends, not an optional FilterBar-style filter -- it stays a separate
+  function parameter outside the query-schema bag, documented in the
+  schema's own comment so a future module with a similar "always-present
+  scoping param" copies this precedent rather than forcing it into the
+  optional-filters shape. `documents/page.tsx` migrated onto
+  `useServerTable`, with folder selection now driving the hook's filter
+  state via `onFilterChange("folderId", ...)` (a filter the FilterBar UI
+  itself never renders -- selecting a folder in the sidebar is what sets
+  it) rather than a fresh network call shaped by hand.
+- **Drawings**: `listDrawingsQuerySchema` (`discipline` filter, sort by
+  sheetNumber/title/discipline). The page's "publish a drawing set"
+  picker needs the complete list of every drawing with a current
+  revision to choose from, not one page of the migrated DataTable --
+  so this migration keeps a second, separately-fetched unpaginated
+  `revisionedDrawings` list alongside the paginated `serverTable`,
+  refreshed on the same create/publish events. This is a pattern worth
+  reusing verbatim on any future module where one page also drives a
+  full-set picker from the same data (Change Orders' target-company
+  dropdowns took the same approach in Phase 22, fetched from a different,
+  already-unpaginated endpoint rather than a second call to the same
+  one).
+- **Meetings**: `listMeetingsQuerySchema` -- search + sort by
+  title/occurredAt only; meetings have no status or assignee field at
+  all, so the filter bag is empty (search/sort/pagination only). The
+  list's only pre-existing caller (mobile, explicitly view-only per the
+  Phase 7 gate report) already re-sorts the full result client-side
+  itself, so there was no default-order behavior to preserve, and the
+  contract uses the same ascending-by-default convention as every other
+  module for consistency rather than inventing a per-module default.
+- **Correspondence**: `listCorrespondenceQuerySchema` (`status` filter,
+  sort by correspondenceNumber/subject/type/status) -- the closest to
+  Phase 21/22's RFI-shaped modules of this batch, migrated with no
+  surprises.
+- **`apps/api/src/routes/phase23-list-query.test.ts`** (new): 10 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module.
+
+**Explicitly not built this phase, on record**: 12 of the ~20 total list
+modules (Inspections, T&M Tickets, Transmittals, Schedule, Safety, Direct
+Costs, Prime Contract, Billing, Prequalification, Bidding, Estimating,
+and others) remain on client-side filtering -- migrating each is now a
+mechanical repeat of this pattern per `docs/DATA_MODEL.md` §9n, not a
+redesign, and is future work rather than a defect. The rest of the parent
+spec's phases (global search, navigation/icon-rail shell, the PDF
+architecture overhaul, bulk actions, column customization, etc.) have not
+been started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. 420 tests total (`packages/shared`: 200,
+  `packages/db`: 1, `apps/api`: 191 across 37 files -- 181 pre-existing
+  plus the 10 new Phase 23 tests, all pre-existing suites re-verified
+  unaffected including `document-control.test.ts`, `meeting.test.ts`, and
+  `tm-correspondence.test.ts`; `apps/web`: 28, unaffected). The two
+  expected stderr blocks in the API test run (mailer/Expo-push network
+  calls failing in this sandbox) are pre-existing and unrelated. Full
+  `next build` succeeded; the four migrated routes' bundle sizes shrank
+  slightly (client-side filtering/`useMemo` logic removed), consistent
+  with every earlier phase's migrated pages. Also discovered and fixed
+  mid-phase: the sandbox's Postgres 16 cluster (`pg_ctlcluster`, not
+  Docker -- this environment has no Docker daemon) had stopped between
+  sessions; restarted via `pg_ctlcluster 16 main start` before the API
+  test suite would run at all. Not a code issue, but worth recording here
+  since it will recur in any fresh session of this sandbox.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

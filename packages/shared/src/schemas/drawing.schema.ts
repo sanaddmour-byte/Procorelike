@@ -1,4 +1,17 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
+
+export const DRAWING_SORT_KEYS = ["sheetNumber", "title", "discipline"] as const;
+export type DrawingSortKey = (typeof DRAWING_SORT_KEYS)[number];
+
+/** GET /drawings's query contract (Phase 23, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). */
+export const listDrawingsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(DRAWING_SORT_KEYS).optional(),
+    discipline: z.string().max(100).optional(),
+  })
+  .strict();
+export type ListDrawingsQuery = z.infer<typeof listDrawingsQuerySchema>;
 
 export const createDrawingSchema = z
   .object({

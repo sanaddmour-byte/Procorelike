@@ -1,17 +1,21 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
   CORRESPONDENCE_STATUS_TRANSITIONS,
+  DEFAULT_PAGE_SIZE,
   formatCorrespondenceNumber,
   requirePermission,
   type CorrespondenceDirection,
+  type CorrespondenceSortKey,
   type CorrespondenceStatus,
   type CorrespondenceType,
   type CreateCorrespondenceInput,
   type EsignatureVerification,
+  type ListCorrespondenceQuery,
+  type PaginatedResult,
   type PermissionContext,
   type TransitionCorrespondenceStatusInput,
 } from "@siteops/shared";
-import { eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { getCompanyBranding, resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
@@ -76,15 +80,50 @@ export async function findCorrespondenceById(
   });
 }
 
+const CORRESPONDENCE_SORT_COLUMNS: Record<
+  CorrespondenceSortKey,
+  typeof schema.correspondence.correspondenceNumber | typeof schema.correspondence.subject | typeof schema.correspondence.type | typeof schema.correspondence.status
+> = {
+  correspondenceNumber: schema.correspondence.correspondenceNumber,
+  subject: schema.correspondence.subject,
+  type: schema.correspondence.type,
+  status: schema.correspondence.status,
+};
+
 export async function listCorrespondence(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<CorrespondenceRow[]> {
+  query: ListCorrespondenceQuery = {},
+): Promise<PaginatedResult<CorrespondenceRow>> {
   requirePermission(ctx, "correspondence", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.correspondence).where(eq(schema.correspondence.projectId, projectId));
+    const conditions = [eq(schema.correspondence.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.correspondence.status, query.status));
+    if (query.search) {
+      conditions.push(or(ilike(schema.correspondence.subject, `%${query.search}%`), ilike(schema.correspondence.correspondenceNumber, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = CORRESPONDENCE_SORT_COLUMNS[query.sort ?? "correspondenceNumber"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.correspondence).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.correspondence).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

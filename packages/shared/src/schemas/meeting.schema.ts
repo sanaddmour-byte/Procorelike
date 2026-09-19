@@ -1,4 +1,16 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
+
+export const MEETING_SORT_KEYS = ["title", "occurredAt"] as const;
+export type MeetingSortKey = (typeof MEETING_SORT_KEYS)[number];
+
+/** GET /meetings's query contract (Phase 23, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). No status/assignee on this module -- meetings have neither, so the filter bag is empty; only search/sort/pagination apply. */
+export const listMeetingsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(MEETING_SORT_KEYS).optional(),
+  })
+  .strict();
+export type ListMeetingsQuery = z.infer<typeof listMeetingsQuerySchema>;
 
 export const createMeetingSchema = z
   .object({

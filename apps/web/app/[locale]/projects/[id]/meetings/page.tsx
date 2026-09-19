@@ -5,9 +5,10 @@ import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface Meeting {
   id: string;
@@ -22,27 +23,19 @@ export default function MeetingsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [meetings, setMeetings] = useState<Meeting[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [occurredAt, setOccurredAt] = useState("");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<Meeting[]>(`/meetings?projectId=${params.id}`)
-      .then((rows) => setMeetings(rows.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))))
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Meeting>({ basePath: "/meetings", projectId: params.id, defaultSort: { key: "occurredAt", direction: "desc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
-  }, [router, locale, params.id]);
+  }, [router, locale]);
 
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
@@ -56,7 +49,7 @@ export default function MeetingsPage() {
       setTitle("");
       setOccurredAt("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -64,12 +57,7 @@ export default function MeetingsPage() {
     }
   }
 
-  const filteredMeetings = useMemo(() => {
-    if (!meetings) return null;
-    const q = search.trim().toLowerCase();
-    if (!q) return meetings;
-    return meetings.filter((m) => m.title.toLowerCase().includes(q));
-  }, [meetings, search]);
+  const hasActiveQuery = Boolean(serverTable.search);
 
   const columns: DataTableColumn<Meeting>[] = [
     { key: "title", header: t("titleField"), render: (m) => m.title, sortValue: (m) => m.title },
@@ -107,20 +95,25 @@ export default function MeetingsPage() {
         {error && <p className="text-maroon-700">{error}</p>}
 
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           activeFilters={{}}
           onFilterChange={() => undefined}
-          onClearAll={() => setSearch("")}
+          onClearAll={() => serverTable.onSearchChange("")}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<Meeting>
           columns={columns}
-          rows={filteredMeetings}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(m) => router.push(`/${locale}/projects/${params.id}/meetings/${m.id}`)}
-          emptyTitle={meetings && meetings.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

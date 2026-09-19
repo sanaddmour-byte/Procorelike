@@ -1,5 +1,5 @@
 import type { Database } from "@siteops/db";
-import { createCorrespondenceSchema, transitionCorrespondenceStatusSchema } from "@siteops/shared";
+import { createCorrespondenceSchema, listCorrespondenceQuerySchema, transitionCorrespondenceStatusSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { generateCorrespondenceListPdf } from "../lib/correspondence-list-report";
@@ -41,7 +41,18 @@ export function correspondenceRouter(appDb: Database, env: Env): Router {
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const rows = await correspondenceService.listCorrespondence(appDb, authUser.id, ctx, projectId);
+      const listQuery = listCorrespondenceQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await correspondenceService.listCorrespondence(appDb, authUser.id, ctx, projectId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
       res.json(rows);
     } catch (err) {
       next(err);

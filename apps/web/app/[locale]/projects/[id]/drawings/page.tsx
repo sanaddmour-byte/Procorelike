@@ -3,12 +3,14 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { detectSheetInfoFromPdf } from "@/lib/ocr";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface Drawing {
   id: string;
@@ -32,10 +34,8 @@ export default function DrawingsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [drawings, setDrawings] = useState<Drawing[] | null>(null);
   const [drawingSets, setDrawingSets] = useState<DrawingSet[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [sheetNumber, setSheetNumber] = useState("");
   const [discipline, setDiscipline] = useState("");
@@ -49,11 +49,14 @@ export default function DrawingsPage() {
   const [setDate, setSetDate] = useState("");
   const [setDrawingIds, setSetDrawingIds] = useState<string[]>([]);
   const [publishingSet, setPublishingSet] = useState(false);
+  const serverTable = useServerTable<Drawing>({ basePath: "/drawings", projectId: params.id, defaultSort: { key: "sheetNumber", direction: "asc" } });
+  /** Every drawing with a current revision, unpaginated -- the "publish set" picker below needs the full set to choose from, not just the DataTable's current page. */
+  const [revisionedDrawings, setRevisionedDrawings] = useState<Drawing[]>([]);
 
-  function load(): void {
+  function loadAux(): void {
     apiJson<Drawing[]>(`/drawings?projectId=${params.id}`)
-      .then(setDrawings)
-      .catch(() => setError(tc("errorGeneric")));
+      .then((all) => setRevisionedDrawings(all.filter((d) => d.currentRevisionId)))
+      .catch(() => undefined);
     apiJson<DrawingSet[]>(`/drawing-sets?projectId=${params.id}`)
       .then(setDrawingSets)
       .catch(() => undefined);
@@ -64,7 +67,7 @@ export default function DrawingsPage() {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
+    loadAux();
   }, [router, locale, params.id]);
 
   function toggleSetDrawing(id: string): void {
@@ -76,7 +79,7 @@ export default function DrawingsPage() {
     setPublishingSet(true);
     try {
       const drawingRevisionIds = setDrawingIds
-        .map((id) => drawings?.find((d) => d.id === id)?.currentRevisionId)
+        .map((id) => revisionedDrawings.find((d) => d.id === id)?.currentRevisionId)
         .filter((id): id is string => Boolean(id));
       await apiJson("/drawing-sets", {
         method: "POST",
@@ -86,7 +89,7 @@ export default function DrawingsPage() {
       setSetDate("");
       setSetDrawingIds([]);
       setShowSetForm(false);
-      load();
+      loadAux();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -121,7 +124,8 @@ export default function DrawingsPage() {
       setDiscipline("");
       setTitle("");
       setShowForm(false);
-      load();
+      serverTable.reload();
+      loadAux();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -129,12 +133,7 @@ export default function DrawingsPage() {
     }
   }
 
-  const filteredDrawings = useMemo(() => {
-    if (!drawings) return null;
-    const q = search.trim().toLowerCase();
-    if (!q) return drawings;
-    return drawings.filter((d) => d.sheetNumber.toLowerCase().includes(q) || d.title.toLowerCase().includes(q));
-  }, [drawings, search]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<Drawing>[] = [
     { key: "sheetNumber", header: t("sheetNumber"), render: (d) => d.sheetNumber, sortValue: (d) => d.sheetNumber, width: "140px" },
@@ -177,14 +176,12 @@ export default function DrawingsPage() {
             </label>
             <p className="text-sm font-semibold text-navy-800">{t("setSheets")}</p>
             <div className="grid gap-1 sm:grid-cols-2">
-              {drawings
-                ?.filter((d) => d.currentRevisionId)
-                .map((d) => (
-                  <label key={d.id} className="flex items-center gap-2 text-xs">
-                    <input type="checkbox" checked={setDrawingIds.includes(d.id)} onChange={() => toggleSetDrawing(d.id)} />
-                    {d.sheetNumber} — {d.title}
-                  </label>
-                ))}
+              {revisionedDrawings.map((d) => (
+                <label key={d.id} className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={setDrawingIds.includes(d.id)} onChange={() => toggleSetDrawing(d.id)} />
+                  {d.sheetNumber} — {d.title}
+                </label>
+              ))}
             </div>
             <button
               type="submit"
@@ -253,21 +250,33 @@ export default function DrawingsPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="drawings"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
-          activeFilters={{}}
-          onFilterChange={() => undefined}
-          onClearAll={() => setSearch("")}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<Drawing>
           columns={columns}
-          rows={filteredDrawings}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(drawing) => router.push(`/${locale}/projects/${params.id}/drawings/${drawing.id}`)}
-          emptyTitle={drawings && drawings.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

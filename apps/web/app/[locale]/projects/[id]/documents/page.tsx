@@ -5,10 +5,11 @@ import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { useServerTable } from "@/lib/use-server-table";
 import { uploadAttachment } from "@/lib/upload";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface DocumentFolder {
   id: string;
@@ -33,23 +34,15 @@ export default function DocumentsPage() {
 
   const [folders, setFolders] = useState<DocumentFolder[] | null>(null);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
-  const [documents, setDocuments] = useState<DocumentRecord[] | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const serverTable = useServerTable<DocumentRecord>({ basePath: "/documents", projectId: params.id, defaultSort: { key: "title", direction: "asc" } });
 
   function loadFolders(): void {
     apiJson<DocumentFolder[]>(`/documents/folders?projectId=${params.id}`)
       .then(setFolders)
-      .catch(() => setError(tc("errorGeneric")));
-  }
-
-  function loadDocuments(folderId: string | null): void {
-    const query = folderId ? `&folderId=${folderId}` : "";
-    apiJson<DocumentRecord[]>(`/documents?projectId=${params.id}${query}`)
-      .then(setDocuments)
       .catch(() => setError(tc("errorGeneric")));
   }
 
@@ -59,12 +52,12 @@ export default function DocumentsPage() {
       return;
     }
     loadFolders();
-    loadDocuments(null);
   }, [router, locale, params.id]);
 
   function selectFolder(folderId: string | null): void {
     setActiveFolderId(folderId);
-    loadDocuments(folderId);
+    // `folderId` scopes the query -- it isn't a user-facing FilterBar filter, just the essential param the folder browser sidebar drives (see list-query.schema.ts's doc comment on documents' contract).
+    serverTable.onFilterChange("folderId", folderId ?? "");
   }
 
   async function handleCreateFolder(): Promise<void> {
@@ -100,7 +93,7 @@ export default function DocumentsPage() {
           attachmentId,
         }),
       });
-      loadDocuments(activeFolderId);
+      serverTable.reload();
     } catch (err) {
       setError(err instanceof ApiClientError ? err.code : "unknown_error");
     } finally {
@@ -123,7 +116,7 @@ export default function DocumentsPage() {
         method: "PATCH",
         body: JSON.stringify({ attachmentId }),
       });
-      loadDocuments(activeFolderId);
+      serverTable.reload();
     } catch (err) {
       setError(err instanceof ApiClientError ? err.code : "unknown_error");
     } finally {
@@ -141,12 +134,7 @@ export default function DocumentsPage() {
     }
   }
 
-  const filteredDocuments = useMemo(() => {
-    if (!documents) return null;
-    const q = search.trim().toLowerCase();
-    if (!q) return documents;
-    return documents.filter((doc) => doc.title.toLowerCase().includes(q));
-  }, [documents, search]);
+  const hasActiveQuery = Boolean(serverTable.search);
 
   const columns: DataTableColumn<DocumentRecord>[] = [
     { key: "title", header: t("documentTitle"), render: (doc) => doc.title, sortValue: (doc) => doc.title },
@@ -252,18 +240,23 @@ export default function DocumentsPage() {
               </label>
             </div>
             <FilterBar
-              searchValue={search}
-              onSearchChange={setSearch}
+              searchValue={serverTable.search}
+              onSearchChange={serverTable.onSearchChange}
               searchPlaceholder={t("searchPlaceholder")}
               activeFilters={{}}
               onFilterChange={() => undefined}
-              onClearAll={() => setSearch("")}
+              onClearAll={() => serverTable.onSearchChange("")}
               clearAllLabel={tc("clearAll")}
             />
             <DataTable<DocumentRecord>
               columns={columns}
-              rows={filteredDocuments}
-              emptyTitle={documents && documents.length > 0 ? t("noResults") : t("empty")}
+              rows={serverTable.rows}
+              error={serverTable.error ? tc("errorGeneric") : null}
+              onRetry={serverTable.reload}
+              emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+              serverSort={serverTable.sort}
+              onServerSortChange={serverTable.onServerSortChange}
+              pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
             />
           </section>
         </div>
