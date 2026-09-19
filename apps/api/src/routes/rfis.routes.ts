@@ -1,5 +1,5 @@
 import type { Database } from "@siteops/db";
-import { createRfiResponseSchema, createRfiSchema, transitionRfiStatusSchema, updateRfiSchema } from "@siteops/shared";
+import { createRfiResponseSchema, createRfiSchema, listRfisQuerySchema, transitionRfiStatusSchema, updateRfiSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -36,8 +36,23 @@ export function rfisRouter(appDb: Database, authDb: Database, env: Env): Router 
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const rfis = await rfiService.listRfis(appDb, authUser.id, ctx, projectId);
-      res.json(rfis);
+      const listQuery = listRfisQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        assigneeUserId: req.query.assigneeUserId,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await rfiService.listRfis(appDb, authUser.id, ctx, projectId, listQuery);
+      // The body is always a plain array -- a pre-existing caller (e.g. the mobile
+      // app's read-only RFI list, which sends none of the query params above) sees
+      // no shape change at all. `X-Total-Count` is purely additive: a client that
+      // wants server-side pagination reads it, everyone else ignores an unfamiliar
+      // header exactly as they always have.
+      res.setHeader("X-Total-Count", String(total));
+      res.json(rows);
     } catch (err) {
       next(err);
     }

@@ -201,6 +201,11 @@
     "uploadPhoto": "Upload photo",
     "uploadingPhoto": "Uploading…"
   },
+  "SavedViews": {
+    "saveView": "Save view",
+    "viewNamePlaceholder": "View name",
+    "deleteView": "Delete view \"{name}\""
+  },
   "Photos": {
     "title": "Photos",
     "albumsTitle": "Albums",

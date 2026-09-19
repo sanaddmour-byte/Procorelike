@@ -1,7 +1,21 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const rfiStatusSchema = z.enum(["draft", "open", "answered", "closed"]);
 export type RfiStatus = z.infer<typeof rfiStatusSchema>;
+
+export const RFI_SORT_KEYS = ["number", "subject", "status", "dueDate"] as const;
+export type RfiSortKey = (typeof RFI_SORT_KEYS)[number];
+
+/** GET /rfis's query contract (Phase 21): the generic search/sort/pagination shape plus this module's own filters. See list-query.schema.ts's doc comment for why every field here is optional. */
+export const listRfisQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(RFI_SORT_KEYS).optional(),
+    status: rfiStatusSchema.optional(),
+    assigneeUserId: z.string().uuid().optional(),
+  })
+  .strict();
+export type ListRfisQuery = z.infer<typeof listRfisQuerySchema>;
 
 /** Matches Procore's Cost Impact / Schedule Impact fields: Yes, No, or N/A -- not a plain flag. */
 export const rfiImpactSchema = z.enum(["yes", "no", "na"]);

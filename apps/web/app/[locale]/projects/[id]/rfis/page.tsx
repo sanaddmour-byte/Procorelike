@@ -5,13 +5,15 @@ import { PersonnelPicker } from "@/components/PersonnelPicker";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 
 interface Rfi {
   id: string;
@@ -40,11 +42,8 @@ export default function RfisPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [rfis, setRfis] = useState<Rfi[] | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState("");
   const [question, setQuestion] = useState("");
@@ -57,19 +56,13 @@ export default function RfisPage() {
   const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
-
-  function load(): void {
-    apiJson<Rfi[]>(`/rfis?projectId=${params.id}`)
-      .then(setRfis)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Rfi>({ basePath: "/rfis", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
   }, [router, locale, params.id]);
 
@@ -78,15 +71,7 @@ export default function RfisPage() {
     return members.find((m) => m.userId === userId)?.name ?? userId;
   }
 
-  const filteredRfis = useMemo(() => {
-    if (!rfis) return null;
-    const q = search.trim().toLowerCase();
-    return rfis.filter((rfi) => {
-      if (statusFilter && rfi.status !== statusFilter) return false;
-      if (q && !rfi.number.toLowerCase().includes(q) && !rfi.subject.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [rfis, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<Rfi>[] = [
     { key: "number", header: t("number"), render: (rfi) => rfi.number, sortValue: (rfi) => rfi.number, width: "110px" },
@@ -141,7 +126,7 @@ export default function RfisPage() {
       setIsPrivate(false);
       setDistributionUserIds([]);
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -245,9 +230,16 @@ export default function RfisPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="rfis"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -255,21 +247,28 @@ export default function RfisPage() {
               label: t("status"),
               options: (["draft", "open", "answered", "closed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
             },
+            {
+              key: "assigneeUserId",
+              label: t("ballInCourt"),
+              options: members.map((m) => ({ value: m.userId, label: m.name })),
+            },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<Rfi>
           columns={columns}
-          rows={filteredRfis}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(rfi) => router.push(`/${locale}/projects/${params.id}/rfis/${rfi.id}`)}
-          emptyTitle={rfis && rfis.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />

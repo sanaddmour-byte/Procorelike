@@ -1,18 +1,22 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   formatRfiNumber,
   requirePermission,
   resolveEffectiveLevel,
   RFI_STATUS_TRANSITIONS,
   type CreateRfiInput,
   type CreateRfiResponseInput,
+  type ListRfisQuery,
+  type PaginatedResult,
   type PermissionContext,
   type RfiImpact,
+  type RfiSortKey,
   type RfiStatus,
   type TransitionRfiStatusInput,
   type UpdateRfiInput,
 } from "@siteops/shared";
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { notifyUsers } from "./notification.service";
@@ -108,21 +112,75 @@ export async function findRfiById(appDb: Database, userId: string, rfiId: string
   });
 }
 
+const RFI_SORT_COLUMNS: Record<RfiSortKey, typeof schema.rfis.number | typeof schema.rfis.subject | typeof schema.rfis.status | typeof schema.rfis.dueDate> = {
+  number: schema.rfis.number,
+  subject: schema.rfis.subject,
+  status: schema.rfis.status,
+  dueDate: schema.rfis.dueDate,
+};
+
+/**
+ * Phase 21's server-query contract, proven here first: `query` is entirely
+ * optional, and a caller that passes none of it (every pre-existing
+ * caller, including the mobile app's read-only RFI list) gets back every
+ * visible row with no pagination -- the exact behavior this function had
+ * before this phase. Pagination/search/sort/filtering only activate when
+ * a caller actually asks for them, via docs/DATA_MODEL.md's list-query
+ * contract (packages/shared's `paginationQuerySchema` + a module's own
+ * `listXQuerySchema` extension).
+ *
+ * The private-RFI visibility rule (`canViewPrivateRfi`'s old JS-side
+ * logic) is now expressed directly as a SQL predicate rather than a
+ * post-fetch filter -- necessary for `total`/pagination to be correct at
+ * all (filtering after LIMIT/OFFSET would make both wrong), and a
+ * worthwhile simplification even ignoring that: one WHERE clause instead
+ * of a second query plus a JS filter.
+ */
 export async function listRfis(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<RfiWithOverdue[]> {
+  query: ListRfisQuery = {},
+): Promise<PaginatedResult<RfiWithOverdue>> {
   requirePermission(ctx, "rfis", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    const rows = await tx.select().from(schema.rfis).where(eq(schema.rfis.projectId, projectId));
-    const privateIds = rows.filter((r) => r.isPrivate).map((r) => r.id);
-    const distribution = privateIds.length > 0 ? await tx.select().from(schema.rfiDistribution).where(inArray(schema.rfiDistribution.rfiId, privateIds)) : [];
-    const distributionByRfiId = new Map<string, RfiDistributionRow[]>();
-    for (const d of distribution) distributionByRfiId.set(d.rfiId, [...(distributionByRfiId.get(d.rfiId) ?? []), d]);
+    const conditions = [eq(schema.rfis.projectId, projectId)];
 
-    return rows.filter((r) => canViewPrivateRfi(userId, ctx, r, distributionByRfiId.get(r.id) ?? [])).map(withOverdue);
+    if (resolveEffectiveLevel(ctx, "rfis") !== "admin") {
+      conditions.push(
+        or(
+          eq(schema.rfis.isPrivate, false),
+          eq(schema.rfis.createdBy, userId),
+          eq(schema.rfis.ballInCourtUserId, userId),
+          sql`exists (select 1 from ${schema.rfiDistribution} where ${schema.rfiDistribution.rfiId} = ${schema.rfis.id} and ${schema.rfiDistribution.userId} = ${userId})`,
+        )!,
+      );
+    }
+    if (query.status) conditions.push(eq(schema.rfis.status, query.status));
+    if (query.assigneeUserId) conditions.push(eq(schema.rfis.ballInCourtUserId, query.assigneeUserId));
+    if (query.search) {
+      conditions.push(or(ilike(schema.rfis.subject, `%${query.search}%`), ilike(schema.rfis.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = RFI_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.rfis).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.rfis).where(where),
+    ]);
+
+    return { rows: rows.map(withOverdue), total: totalRow?.value ?? 0 };
   });
 }
 

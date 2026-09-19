@@ -61,7 +61,11 @@ import { createMailer } from "./lib/mailer";
 export function createApp(env: Env, clients: ApiDbClients): Express {
   const app = express();
   app.use(helmet());
-  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  // exposedHeaders: browsers hide every response header from fetch()'s Headers
+  // object except a small built-in safelist unless the server explicitly opts a
+  // header in here -- X-Total-Count (Phase 21's server-pagination contract) is
+  // invisible to apps/web's lib/use-server-table.ts without this.
+  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true, exposedHeaders: ["X-Total-Count"] }));
   // Default 100kb is fine for every other endpoint, but a schedule import
   // (docs/SCHEDULING.md A2: "handle a 5,000-task file") sends the whole
   // source file as JSON text -- a few MB for a large P6 XER/MSP XML export.

@@ -201,6 +201,11 @@
     "uploadPhoto": "رفع صورة",
     "uploadingPhoto": "جارٍ الرفع…"
   },
+  "SavedViews": {
+    "saveView": "حفظ العرض",
+    "viewNamePlaceholder": "اسم العرض",
+    "deleteView": "حذف العرض \"{name}\""
+  },
   "Photos": {
     "title": "الصور",
     "albumsTitle": "الألبومات",

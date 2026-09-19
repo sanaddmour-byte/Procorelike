@@ -81,11 +81,29 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 20 (Mobile push
-notifications) is complete and gate-verified.** This is the sixth of 7
-planned phases addressing a Procore competitive-gap analysis (see Phase
-15's gate report for the full 7-phase plan); SSO/SAML was explicitly
-descoped by the user pending a real enterprise customer. The original
+mid-build corrections). As of this writing: **Phase 21 (server-driven list
+query contract, first proven on RFIs) is complete and gate-verified** --
+the first slice of a larger user-directed "Enterprise UX, Data
+Architecture & PDF System Upgrade" initiative (a 42-section spec covering
+DataTable/saved-views/global-search/navigation/status-system UX plus a PDF
+architecture overhaul, to be delivered incrementally across ten phases
+rather than as one rebuild). This phase's audit found every list endpoint
+fetching every row unfiltered/unpaginated with client-side-only search/
+sort, and that CLAUDE.md's stack table names TanStack Query + Zustand for
+web state even though neither is actually used anywhere in `apps/web` --
+both flagged rather than silently carried forward. It built the reusable
+contract (`packages/shared/schemas/list-query.schema.ts`,
+`PaginatedResult<T>`), migrated RFIs' list service/route/page onto it
+end-to-end (search/filter/sort/pagination all server-side, backward
+compatible -- the response body shape never changes, so untouched callers
+including mobile are unaffected), and extracted `useServerTable`/
+`SavedViewsBar`/`DataTable`'s new server-mode props as the reusable pieces
+the other ~19 list modules will migrate onto next -- see
+`docs/DATA_MODEL.md` §9n for the full pattern. Before this, Phase 20
+(Mobile push notifications) completed the sixth of 7 planned phases
+addressing a Procore competitive-gap analysis (see Phase 15's gate report
+for the full 7-phase plan); SSO/SAML was explicitly descoped by the user
+pending a real enterprise customer. The original
 10-item gap list's items #1, #10, #13 were never recorded verbatim in
 this repo (only #5-#9/#11/#12 got named in their own gate reports), so
 Phase 20 closed a different, long-standing item instead: Assumption #8

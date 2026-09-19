@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo, useState, type ReactNode } from "react";
 import { List, type RowComponentProps } from "react-window";
 import { EmptyState } from "./EmptyState";
@@ -65,9 +66,21 @@ function minTableWidth(columns: DataTableColumn<unknown>[]): number {
   return columnWidths + gaps + padding;
 }
 
+export interface DataTableServerSort {
+  key: string;
+  direction: "asc" | "desc";
+}
+
+export interface DataTablePagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (page: number) => void;
+}
+
 interface Props<T> {
   columns: DataTableColumn<T>[];
-  /** null = loading. */
+  /** null = loading. In server mode (`pagination` set), this is just the current page's rows, not the full result set. */
   rows: T[] | null;
   error?: string | null;
   onRetry?: () => void;
@@ -77,6 +90,22 @@ interface Props<T> {
   emptyAction?: ReactNode;
   rowHeight?: number;
   maxHeight?: number;
+  /**
+   * Opts a column's sort into server-driven mode: clicking a header calls
+   * `onServerSortChange(key)` instead of sorting `rows` locally, and the
+   * sort arrow reflects `serverSort` rather than internal state. Omit
+   * both (the default) to keep the original client-side sort-the-full-
+   * array behavior every existing caller already relies on.
+   */
+  serverSort?: DataTableServerSort | null;
+  onServerSortChange?: (key: string) => void;
+  /**
+   * Opts into a paged footer instead of assuming `rows` is the complete,
+   * already-sorted result set to virtualize as one long list. `rows` must
+   * already be just the requested page. See lib/use-server-table.ts for
+   * the hook that drives this alongside `serverSort`/`onServerSortChange`.
+   */
+  pagination?: DataTablePagination;
 }
 
 /**
@@ -87,15 +116,37 @@ interface Props<T> {
  * page the way a plain `.map()` over `<li>` cards did before. Column
  * resize, visibility toggles, and bulk row selection are deliberately
  * not in this first pass -- flagged as follow-up, not silently dropped.
+ *
+ * Server-driven sort/pagination (Phase 21) are additive: a caller that
+ * passes neither `serverSort`/`onServerSortChange` nor `pagination` gets
+ * the exact original client-side behavior, unchanged.
  */
-export function DataTable<T>({ columns, rows, error, onRetry, onRowClick, emptyTitle, emptyDescription, emptyAction, rowHeight = 40, maxHeight = 600 }: Props<T>) {
+export function DataTable<T>({
+  columns,
+  rows,
+  error,
+  onRetry,
+  onRowClick,
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
+  rowHeight = 40,
+  maxHeight = 600,
+  serverSort,
+  onServerSortChange,
+  pagination,
+}: Props<T>) {
+  const tc = useTranslations("Common");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const gridTemplate = columns.map((c) => c.width ?? "1fr").join(" ");
+  const activeSortKey = onServerSortChange ? (serverSort?.key ?? null) : sortKey;
+  const activeSortDir = onServerSortChange ? (serverSort?.direction ?? "asc") : sortDir;
 
   const sortedRows = useMemo(() => {
     if (!rows) return [];
+    if (onServerSortChange) return rows; // already sorted server-side
     const col = sortKey ? columns.find((c) => c.key === sortKey) : undefined;
     if (!col?.sortValue) return rows;
     const withValues = rows.map((row) => ({ row, value: col.sortValue!(row) }));
@@ -105,10 +156,14 @@ export function DataTable<T>({ columns, rows, error, onRetry, onRowClick, emptyT
       return 0;
     });
     return withValues.map((w) => w.row);
-  }, [rows, sortKey, sortDir, columns]);
+  }, [rows, sortKey, sortDir, columns, onServerSortChange]);
 
   function handleSort(col: DataTableColumn<T>): void {
     if (!col.sortValue) return;
+    if (onServerSortChange) {
+      onServerSortChange(col.key);
+      return;
+    }
     if (sortKey === col.key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
@@ -122,10 +177,11 @@ export function DataTable<T>({ columns, rows, error, onRetry, onRowClick, emptyT
   if (rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
 
   const minWidth = minTableWidth(columns as DataTableColumn<unknown>[]);
+  const pageCount = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize)) : null;
 
   return (
-    <div role="table" aria-rowcount={rows.length + 1} className="overflow-hidden rounded-xl border-3 border-ink shadow-brutal-sm">
-      <div className="overflow-x-auto">
+    <div className="overflow-hidden rounded-xl border-3 border-ink shadow-brutal-sm">
+      <div role="table" aria-rowcount={(pagination?.total ?? rows.length) + 1} className="overflow-x-auto">
         <div style={{ minWidth }}>
           <div role="row" className="grid items-center gap-3 border-b-3 border-ink bg-cream px-3 text-xs font-semibold text-navy-800" style={{ gridTemplateColumns: gridTemplate, height: 36 }}>
             {columns.map((col) => (
@@ -133,13 +189,13 @@ export function DataTable<T>({ columns, rows, error, onRetry, onRowClick, emptyT
                 key={col.key}
                 type="button"
                 role="columnheader"
-                aria-sort={sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : col.sortValue ? "none" : undefined}
+                aria-sort={activeSortKey === col.key ? (activeSortDir === "asc" ? "ascending" : "descending") : col.sortValue ? "none" : undefined}
                 onClick={() => handleSort(col)}
                 disabled={!col.sortValue}
                 className={`truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 ${col.align === "end" ? "text-end" : "text-start"} ${col.sortValue ? "cursor-pointer hover:text-maroon-700" : "cursor-default"}`}
               >
                 {col.header}
-                {sortKey === col.key && (sortDir === "asc" ? " ▲" : " ▼")}
+                {activeSortKey === col.key && (activeSortDir === "asc" ? " ▲" : " ▼")}
               </button>
             ))}
           </div>
@@ -152,6 +208,29 @@ export function DataTable<T>({ columns, rows, error, onRetry, onRowClick, emptyT
           />
         </div>
       </div>
+      {pagination && pageCount !== null && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t-3 border-ink bg-cream px-3 py-2">
+          <button
+            type="button"
+            onClick={() => pagination.onPageChange(pagination.page - 1)}
+            disabled={pagination.page <= 1}
+            aria-label={tc("previousPage")}
+            className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+          >
+            &#8249;
+          </button>
+          <span className="whitespace-nowrap text-xs font-semibold text-navy-700">{tc("pageIndicator", { current: pagination.page, total: pageCount })}</span>
+          <button
+            type="button"
+            onClick={() => pagination.onPageChange(pagination.page + 1)}
+            disabled={pagination.page >= pageCount}
+            aria-label={tc("nextPage")}
+            className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+          >
+            &#8250;
+          </button>
+        </div>
+      )}
     </div>
   );
 }

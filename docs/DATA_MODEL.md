@@ -521,6 +521,81 @@ four modules with a detail screen to land on).
 - No badge count sync between the OS app icon badge and the in-app unread
   count; `shouldSetBadge: false` in the foreground handler is deliberate.
 
+## 9n. Server-driven list query contract (Phase 21, first module: RFIs)
+
+No new tables. This documents the reusable pattern a module's list
+endpoint follows once migrated off "fetch everything, filter client-side"
+-- the pattern proven on RFIs, meant to be copied by future module
+migrations rather than re-invented per module.
+
+**Shared contract** (`packages/shared/src/schemas/list-query.schema.ts`):
+`paginationQuerySchema` -- `search?`, `sort?`, `direction?` (`asc`/`desc`),
+`page?`, `pageSize?` (capped at `MAX_PAGE_SIZE=200`, default
+`DEFAULT_PAGE_SIZE=50`) -- all optional. A module extends it with its own
+sort-key enum and filter fields (see `listRfisQuerySchema` in
+`rfi.schema.ts` for the RFI shape: `sort` narrowed to
+`"number"|"subject"|"status"|"dueDate"`, plus `status`/`assigneeUserId`),
+`.strict()`'d so an unrecognized query param 400s rather than being
+silently ignored. The service layer returns
+`PaginatedResult<T> = { rows: T[]; total: number }`.
+
+**Backward-compatibility rule, load-bearing for every migration**: the
+response body never changes shape -- it's always the plain array it
+always was, never wrapped in an envelope. Pagination/search/sort/filtering
+only activate when the caller's query string explicitly sends those
+params; omitting `page`/`pageSize` returns every row, exactly as before.
+`total` rides along as an `X-Total-Count` response header, not a body
+field. This is why mobile and every not-yet-migrated web caller needed
+zero changes when the RFI endpoint gained this contract. A route parses an
+explicit object of the relevant query keys before calling
+`.parse()` -- never `schema.parse(req.query)` directly -- since `req.query`
+carries other keys (e.g. `projectId`) the `.strict()` schema would reject.
+
+**CORS**: any header a migrated endpoint adds (here, `X-Total-Count`) must
+be added to `apps/api/src/app.ts`'s `cors({ exposedHeaders: [...] })` or
+it's invisible to `apps/web`'s cross-origin `fetch()` in dev -- a class of
+bug supertest-based API tests cannot catch, since supertest doesn't
+enforce browser header-visibility rules. Confirm this whenever a new
+module's migration adds its own count/meta header.
+
+**Privacy/visibility filters move into SQL, not post-fetch JS**: RFI's
+private-RFI visibility rule (`canViewPrivateRfi`, used elsewhere by
+`getRfi`) was re-expressed as a SQL `OR`/`EXISTS` predicate in `listRfis`
+once `LIMIT`/`OFFSET` entered the picture -- filtering rows out after the
+database has already paginated them produces wrong `total` counts and
+short pages. Any module with a similar per-row visibility rule (beyond the
+project-membership/permission-level check already enforced upstream)
+needs the same treatment when it migrates.
+
+**Web side** (`apps/web`): `components/ui/DataTable.tsx` gained optional
+`serverSort`/`onServerSortChange`/`pagination` props -- omitting them keeps
+a table's original fully-client-side sort behavior unchanged, so migrating
+one module's list page never affects any other page still on `DataTable`.
+`lib/use-server-table.ts`'s `useServerTable<T>` hook owns the fetch glue
+(debounced search, immediate filter/sort/page refetch, request-id
+guarding against out-of-order responses, reads `X-Total-Count`) a
+migrated page wires into `DataTable`'s new props and a `FilterBar`.
+`components/ui/SavedViewsBar.tsx` reuses the existing generic
+`/saved-views` API unchanged -- its `filters` column is schemaless
+`jsonb`, so a view's stored blob was simply extended to flatten
+`search`/`sortKey`/`sortDirection` in alongside a module's own filter
+keys (see `SavedViewsBar.tsx`'s `toStoredState`/`fromStoredState`).
+
+**Deliberately not adopted**: TanStack Query, despite CLAUDE.md's stack
+table naming it -- nothing in `apps/web` actually depended on it before or
+after this phase. `useServerTable` is a small local hook because the
+actual problem (no server query contract) doesn't require a caching
+library, and adopting one now would touch every existing page's dependency
+footprint for no problem it uniquely solves. Revisit only if a real
+caching/dedup need surfaces once more modules migrate.
+
+**Migrated so far**: RFIs only. Every other list module (Punch List,
+Submittals, Change Orders, Documents, Drawings, etc. -- roughly 19 more)
+is still on the old "fetch everything, filter client-side" path; migrating
+each is now a matter of repeating this pattern (extend the shared query
+schema, move the service's filter/sort/pagination into SQL, wire the page
+onto `useServerTable` + `DataTable`'s server props), not re-designing it.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

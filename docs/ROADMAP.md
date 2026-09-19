@@ -3075,6 +3075,102 @@ see Verification.
   phase). Full `next build` also confirmed unaffected (no web routes
   touched).
 
+## Phase 21 gate report
+
+**Gate** (first slice of the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- a 42-section spec covering server-driven
+data tables, saved views, global search, navigation, a centralized status
+system, and a PDF architecture overhaul, to be delivered incrementally
+rather than as one rebuild; the user authorized starting with a single
+word, "Proceed," after this phase's audit and sequencing were proposed) --
+**PASSED**, see Verification. This phase covers the audit plus the first
+two of the spec's ten implementation phases (shared data infrastructure +
+DataTable server mode), proven end-to-end on one module (RFIs) before
+rolling out further.
+
+**Audit finding that shaped this phase**: every existing list endpoint ran
+an unfiltered, unpaginated `SELECT * WHERE project_id = ?`, with all
+search/filter/sort happening client-side via `useMemo` after fetching every
+row. This works at today's seed scale but doesn't scale to a real project's
+record volume, and is the reason the spec asks for a server query contract
+before any further DataTable/UX work. Separately, CLAUDE.md's stack table
+names TanStack Query + Zustand for web state management, but neither is
+actually installed or used anywhere in `apps/web` -- every page uses plain
+`useState`/`useEffect`. That gap is flagged here rather than silently
+carried forward.
+
+**What was built:**
+- **`packages/shared`**: `schemas/list-query.schema.ts` -- a generic
+  `paginationQuerySchema` (`search`/`sort`/`direction`/`page`/`pageSize`,
+  all optional, `MAX_PAGE_SIZE=200`), `DEFAULT_PAGE_SIZE=50`, and a
+  `PaginatedResult<T> = { rows: T[]; total: number }` type -- the reusable
+  contract every future module migration extends. `schemas/rfi.schema.ts`
+  gained `listRfisQuerySchema` (extends the generic schema with a narrowed
+  `sort` enum and RFI-specific `status`/`assigneeUserId` filters), `.strict()`.
+- **`apps/api`**: `rfi.service.ts`'s `listRfis` now accepts an optional
+  query object and returns `PaginatedResult<RfiWithOverdue>`. Search/status/
+  assignee filters and sort became SQL `WHERE`/`ORDER BY` clauses;
+  pagination (`LIMIT`/`OFFSET` plus a parallel `count()` query) only
+  activates when the caller sends `page`/`pageSize` explicitly, so every
+  caller that doesn't (mobile, any not-yet-migrated code) gets the exact
+  same "return everything" response it always did. The private-RFI
+  visibility rule (`canViewPrivateRfi`) was re-expressed as a SQL
+  `OR`/`EXISTS` predicate rather than a post-fetch JS filter -- required
+  once `LIMIT`/`OFFSET` entered the picture, since filtering after the
+  database page would produce wrong `total` counts and short pages.
+  `rfis.routes.ts`'s `GET /` responds with the same plain array body as
+  before (never an envelope) plus a new `X-Total-Count` header --
+  fully additive and backward compatible. `app.ts`'s CORS config gained
+  `exposedHeaders: ["X-Total-Count"]`; without it the header is invisible
+  to `apps/web`'s cross-origin `fetch()` calls in dev, a bug class
+  supertest-based API tests cannot catch since supertest doesn't enforce
+  browser header-visibility rules.
+- **`apps/web`**: `DataTable.tsx` gained optional `serverSort`/
+  `onServerSortChange`/`pagination` props -- a caller that doesn't pass
+  them keeps its existing fully-client-side sort with zero behavior
+  change (verified against every one of the ~20 other list pages already
+  on `DataTable`). `lib/use-server-table.ts` -- a small local
+  `useServerTable<T>` hook (debounced search, immediate filter/sort/page
+  refetch, request-id guarding against out-of-order responses, reads
+  `X-Total-Count`) standardizing the fetch glue every migrated module
+  needs, deliberately not built on TanStack Query (see the hook's own doc
+  comment: adopting a caching library to solve one hook's fetch/debounce
+  logic would touch every one of the ~100 existing pages' dependency
+  footprint for no problem it uniquely solves -- revisit if a real
+  caching/dedup need shows up once more modules migrate).
+  `components/ui/SavedViewsBar.tsx` -- a reusable saved-views bar
+  generalized from Punch List's earlier bespoke single-filter version,
+  backed by the pre-existing generic `/saved-views` API with no schema
+  change (its `filters` column is already schemaless `jsonb`; this phase
+  just flattens `search`/`sortKey`/`sortDirection` into that same blob
+  alongside a module's own filter keys). The RFIs list page
+  (`app/[locale]/projects/[id]/rfis/page.tsx`) was migrated end-to-end onto
+  this stack: `useServerTable` replaced its local `useState`/`useEffect`
+  fetch logic, `SavedViewsBar` sits above its `FilterBar` (which gained a
+  new ball-in-court/assignee filter it didn't have before), and `DataTable`
+  is wired to the hook's server-sort and pagination state.
+- **Explicitly not built this phase, on record**: the other ~19 list
+  modules (including Punch List's own data-fetching -- only its
+  saved-views *UI pattern* was extracted/generalized, its page.tsx is
+  untouched) were deliberately left on client-side filtering; migrating
+  them is now comparatively cheap given the pattern above, and is future
+  work rather than a defect. The remaining eight phases of the parent
+  spec (global search, navigation/icon-rail shell, the PDF architecture
+  overhaul, bulk actions, column customization, etc.) have not been
+  started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green across
+  every package. 397 tests total (`packages/shared`: 200, `packages/db`: 1,
+  `apps/api`: 168 across 35 files including the new 6-test
+  `rfi-list-query.test.ts` -- backward compatibility with no query params,
+  search, status+assignee filters, sort direction, pagination with correct
+  `total`, and private-RFI exclusion from both results and count;
+  `apps/web`: 28, unaffected). Two expected stderr blocks in the API test
+  run (mailer/Expo-push network calls failing in this sandbox) are
+  pre-existing and unrelated to this phase. Full `next build` succeeded
+  with the RFIs route unaffected in size/behavior beyond the new filter.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the
