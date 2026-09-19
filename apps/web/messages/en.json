@@ -1234,5 +1234,22 @@
     "searchCategory_daily_log": "Daily Logs",
     "searchCategory_schedule_task": "Schedule",
     "searchCategory_person": "People"
+  },
+  "Notifications": {
+    "title": "Notifications",
+    "loading": "Loading…",
+    "empty": "No notifications yet.",
+    "markAllRead": "Mark all read"
+  },
+  "WorkflowRules": {
+    "heading": "Workflow rules",
+    "intro": "Restrict specific status transitions for RFIs and Punch List items beyond their default rules -- disable a transition outright, or require a higher permission level to perform it.",
+    "module": "Module",
+    "noTransitions": "This module has no configurable transitions.",
+    "transition": "Transition",
+    "enabled": "Enabled",
+    "requiredLevel": "Required level",
+    "save": "Save",
+    "saved": "Saved."
   }
 }

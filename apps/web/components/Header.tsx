@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { GlobalSearch } from "./shell/GlobalSearch";
+import { NotificationBell } from "./shell/NotificationBell";
 import { ProjectSelector } from "./shell/ProjectSelector";
 import { UserMenu } from "./shell/UserMenu";
 import { LanguageToggle } from "./LanguageToggle";
@@ -51,6 +52,7 @@ export function Header({ projectId, onToggleSidebar }: Props) {
       )}
       <div className="ms-auto flex items-center gap-2 sm:gap-3">
         <LanguageToggle />
+        {authed && <NotificationBell />}
         {authed && <UserMenu />}
       </div>
     </header>

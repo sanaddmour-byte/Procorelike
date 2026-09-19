@@ -1,6 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/ui/PageHeader";
+import { WorkflowRulesSection } from "@/components/WorkflowRulesSection";
 import { apiJson, ApiClientError } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { MODULES, CUSTOM_FIELD_TYPES, type CustomFieldType, type Module } from "@siteops/shared";
@@ -276,6 +277,8 @@ export default function ProjectSettingsPage() {
           </button>
         </form>
       </section>
+
+      <WorkflowRulesSection projectId={params.id} moduleLabel={(m) => tm(m)} />
     </main>
   );
 }

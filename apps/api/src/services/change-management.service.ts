@@ -21,6 +21,7 @@ import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { applyApprovedPrimeChangeToLineItem } from "./budget.service";
+import { notifyUsers } from "./notification.service";
 import { withUserContext } from "./permission.service";
 
 type ChangeEventRow = typeof schema.changeEvents.$inferSelect;
@@ -372,6 +373,14 @@ export async function approveChangeOrder(
       before: { status: co.status },
       after: { status: updated.status },
     });
+    if (finalize) {
+      await notifyUsers(tx, [co.createdBy], userId, "change_order_status_changed", {
+        projectId: co.projectId,
+        entityType: "change_order",
+        entityId: co.id,
+        summary: `Change Order ${co.number} — ${updated.status}`,
+      });
+    }
     return updated;
   });
 }
@@ -408,6 +417,12 @@ export async function executeChangeOrder(
     if (!updated) throw new Error("Failed to execute change order");
 
     await writeAuditLog(tx, { actorId: userId, entityType: "change_order", entityId: changeOrderId, action: "execute", before: { executed: false }, after: { executed: true } });
+    await notifyUsers(tx, [co.createdBy], userId, "change_order_status_changed", {
+      projectId: co.projectId,
+      entityType: "change_order",
+      entityId: co.id,
+      summary: `Change Order ${co.number} — executed`,
+    });
     return updated;
   });
 }
@@ -440,6 +455,12 @@ export async function rejectChangeOrder(
       action: "reject",
       before: { status: co.status },
       after: { status: updated.status },
+    });
+    await notifyUsers(tx, [co.createdBy], userId, "change_order_status_changed", {
+      projectId: co.projectId,
+      entityType: "change_order",
+      entityId: co.id,
+      summary: `Change Order ${co.number} — rejected`,
     });
     return updated;
   });

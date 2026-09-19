@@ -80,12 +80,17 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 15 (Enterprise/Admin
-foundations — custom fields, scoped record history, multi-currency depth)
-is complete and gate-verified.** This is the first of 7 planned phases
-addressing a Procore competitive-gap analysis (see Phase 15's gate report);
-SSO/SAML was explicitly descoped by the user pending a real enterprise
-customer.
+mid-build corrections). As of this writing: **Phase 16 (Notifications +
+Workflow configurability) is complete and gate-verified.** This is the
+second of 7 planned phases addressing a Procore competitive-gap analysis
+(see Phase 15's gate report for the full 7-phase plan); SSO/SAML was
+explicitly descoped by the user pending a real enterprise customer.
+Notifications (`notification.service.ts`) are wired into RFI/Submittal/
+Punch Item/Change Order key events and surfaced via a bell in the web
+header; workflow transition rules (`workflow-rule.service.ts`) let a
+`directory:admin` narrow — never widen — the RFI and Punch List modules'
+hardcoded status-transition machines, configurable from the project
+Settings page.
 
 Two things worth knowing before touching
 `packages/db/src/sql/001_rls_and_functions.sql`: a table's RLS policy must

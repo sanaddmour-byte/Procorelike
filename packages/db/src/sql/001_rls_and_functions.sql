@@ -320,7 +320,22 @@ CREATE POLICY trades_authenticated_read ON trades FOR ALL USING (
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS notifications_self ON notifications;
-CREATE POLICY notifications_self ON notifications FOR ALL USING (
+-- A notification's user_id is its *recipient*, almost always someone other
+-- than the actor whose action triggered it (e.g. an RFI's ball-in-court
+-- user, notified by the responder). INSERT is therefore gated only on
+-- "authenticated session" -- the API layer picks the recipient -- while
+-- SELECT/UPDATE (marking read) stay restricted to the recipient themself.
+-- No DELETE policy: deletes are refused outright, same as audit_log.
+DROP POLICY IF EXISTS notifications_insert ON notifications;
+CREATE POLICY notifications_insert ON notifications FOR INSERT WITH CHECK (
+  current_setting('app.user_id', true) IS NOT NULL
+);
+DROP POLICY IF EXISTS notifications_select ON notifications;
+CREATE POLICY notifications_select ON notifications FOR SELECT USING (
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+);
+DROP POLICY IF EXISTS notifications_update ON notifications;
+CREATE POLICY notifications_update ON notifications FOR UPDATE USING (
   user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 
@@ -363,7 +378,7 @@ DECLARE
     'transmittals', 'drawing_sets', 'corrective_actions',
     'prime_contracts', 'direct_costs', 'esignatures',
     'prequalifications', 'bid_packages', 'estimates',
-    'custom_field_definitions'
+    'custom_field_definitions', 'workflow_transition_rules'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP

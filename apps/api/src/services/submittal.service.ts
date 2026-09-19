@@ -15,6 +15,7 @@ import {
 import { and, asc, eq, inArray, max, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { notifyUsers } from "./notification.service";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { withUserContext } from "./permission.service";
 
@@ -171,6 +172,12 @@ export async function createSubmittal(
     }
 
     await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittal.id, action: "create", after: submittal });
+    await notifyUsers(tx, [submittal.ballInCourtUserId, ...input.distributionUserIds], userId, "submittal_assigned", {
+      projectId: submittal.projectId,
+      entityType: "submittal",
+      entityId: submittal.id,
+      summary: `Submittal ${submittal.number}: ${submittal.title}`,
+    });
     return withOverdue(submittal);
   });
 }
@@ -207,6 +214,14 @@ export async function updateSubmittal(
     if (!updated) throw new Error("Failed to update submittal");
 
     await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittalId, action: "update", before: existing, after: updated });
+    if (input.ballInCourtUserId && input.ballInCourtUserId !== existing.ballInCourtUserId) {
+      await notifyUsers(tx, [updated.ballInCourtUserId], userId, "submittal_assigned", {
+        projectId: updated.projectId,
+        entityType: "submittal",
+        entityId: updated.id,
+        summary: `Submittal ${updated.number}: ${updated.title}`,
+      });
+    }
     return withOverdue(updated);
   });
 }
@@ -501,26 +516,40 @@ export async function submitSubmittalReview(
 
     const allReviewed = refreshedReviews.every((r) => r.reviewedAt !== null);
     if (allReviewed) {
+      const newStatus = aggregateSubmittalStatus(refreshedReviews);
       await tx
         .update(schema.submittals)
         .set({
-          status: aggregateSubmittalStatus(refreshedReviews),
+          status: newStatus,
           ballInCourtUserId: submittal.createdBy,
           updatedBy: userId,
           updatedAt: new Date(),
           serverRevision: submittal.serverRevision + 1,
         })
         .where(eq(schema.submittals.id, submittal.id));
+      await notifyUsers(tx, [submittal.createdBy], userId, "submittal_status_changed", {
+        projectId: submittal.projectId,
+        entityType: "submittal",
+        entityId: submittal.id,
+        summary: `Submittal ${submittal.number}: ${submittal.title} — ${newStatus}`,
+      });
     } else {
+      const nextReviewer = nextBallInCourt(refreshedReviews);
       await tx
         .update(schema.submittals)
         .set({
-          ballInCourtUserId: nextBallInCourt(refreshedReviews),
+          ballInCourtUserId: nextReviewer,
           updatedBy: userId,
           updatedAt: new Date(),
           serverRevision: submittal.serverRevision + 1,
         })
         .where(eq(schema.submittals.id, submittal.id));
+      await notifyUsers(tx, [nextReviewer], userId, "submittal_assigned", {
+        projectId: submittal.projectId,
+        entityType: "submittal",
+        entityId: submittal.id,
+        summary: `Submittal ${submittal.number}: ${submittal.title}`,
+      });
     }
 
     await writeAuditLog(tx, {

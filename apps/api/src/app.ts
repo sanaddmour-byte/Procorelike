@@ -31,6 +31,7 @@ import { inspectionsRouter } from "./routes/inspections.routes";
 import { internalRouter } from "./routes/internal.routes";
 import { lookaheadRouter } from "./routes/lookahead.routes";
 import { meetingItemsRouter, meetingsRouter } from "./routes/meetings.routes";
+import { notificationsRouter } from "./routes/notifications.routes";
 import { savedViewsRouter } from "./routes/saved-views.routes";
 import { pdfCommentsRouter } from "./routes/pdf-comments.routes";
 import { pdfSketchesRouter } from "./routes/pdf-sketches.routes";
@@ -50,6 +51,7 @@ import { safetyIncidentsRouter, safetyObservationsRouter } from "./routes/safety
 import { submittalsRouter } from "./routes/submittals.routes";
 import { syncRouter } from "./routes/sync.routes";
 import { tmTicketsRouter } from "./routes/tm-ticket.routes";
+import { workflowTransitionRulesRouter } from "./routes/workflow-rules.routes";
 import { createS3Client } from "./lib/s3";
 import { createMailer } from "./lib/mailer";
 
@@ -120,6 +122,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/search", searchRouter(clients.appDb.db, env));
   app.use("/custom-field-definitions", customFieldDefinitionsRouter(clients.appDb.db, env));
   app.use("/custom-field-values", customFieldValuesRouter(clients.appDb.db, env));
+  app.use("/notifications", notificationsRouter(clients.appDb.db, env));
+  app.use("/workflow-transition-rules", workflowTransitionRulesRouter(clients.appDb.db, env));
 
   app.use(errorHandler);
   return app;

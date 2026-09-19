@@ -18,6 +18,8 @@ import { eq } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import type { SyncApplyResult } from "./daily-log.service";
+import { notifyUsers } from "./notification.service";
+import { enforceWorkflowTransitionRule } from "./workflow-rule.service";
 
 type PunchItemRow = typeof schema.punchItems.$inferSelect;
 type PunchItemDistributionRow = typeof schema.punchItemDistribution.$inferSelect;
@@ -65,6 +67,12 @@ export async function createPunchItem(
     });
 
     await writeAuditLog(tx, { actorId: userId, entityType: "punch_item", entityId: item.id, action: "create", after: item });
+    await notifyUsers(tx, [item.assigneeUserId, item.finalApproverUserId, ...distributionUserIds], userId, "punch_item_assigned", {
+      projectId: item.projectId,
+      entityType: "punch_item",
+      entityId: item.id,
+      summary: `Punch item ${item.number}: ${item.description}`,
+    });
     return item;
   });
 }
@@ -152,6 +160,14 @@ export async function updatePunchItem(
       before: existing,
       after: updated,
     });
+    if (input.assigneeUserId && input.assigneeUserId !== existing.assigneeUserId) {
+      await notifyUsers(tx, [updated.assigneeUserId], userId, "punch_item_assigned", {
+        projectId: updated.projectId,
+        entityType: "punch_item",
+        entityId: updated.id,
+        summary: `Punch item ${updated.number}: ${updated.description}`,
+      });
+    }
     return updated;
   });
 }
@@ -177,6 +193,7 @@ export async function transitionPunchItemStatus(
         `Cannot move a punch item from '${existing.status}' to '${input.toStatus}'`,
       );
     }
+    await enforceWorkflowTransitionRule(tx, ctx, "punch_list", existing.projectId, existing.status, input.toStatus);
 
     // Procore's Final Approver role: once one is assigned, only that person
     // (or someone with admin-level punch_list permission) may sign off the
@@ -213,6 +230,18 @@ export async function transitionPunchItemStatus(
       before: { status: existing.status },
       after: { status: updated.status },
     });
+    await notifyUsers(
+      tx,
+      [updated.assigneeUserId, updated.finalApproverUserId, updated.createdBy],
+      userId,
+      "punch_item_status_changed",
+      {
+        projectId: updated.projectId,
+        entityType: "punch_item",
+        entityId: updated.id,
+        summary: `Punch item ${updated.number}: ${updated.description} — ${updated.status}`,
+      },
+    );
     return updated;
   });
 }

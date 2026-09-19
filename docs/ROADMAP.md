@@ -2593,6 +2593,125 @@ half of item 11) was explicitly descoped by the user to "skip for now.") —
   Full `next build` also confirmed the new `/settings` route compiles
   and prerenders correctly.
 
+## Phase 16 gate report
+
+**Gate** (Phase 2 of the same 7-phase, user-directed follow-up as Phase 15
+— gap items #5 "Notifications" and #6 "Workflow configurability") —
+**PASSED**, see Verification.
+
+**What was built:**
+- **`packages/db`**: the `notifications` table already existed
+  (user_id, type, payload jsonb, read_at, created_at) but was unused —
+  its RLS policy was `FOR ALL` scoped to `user_id = current user`, which
+  would have blocked every insert, since a notification's `user_id` is
+  its *recipient*, almost always someone other than the actor whose
+  action creates it. Split into three policies: `notifications_insert`
+  (any authenticated session — the API picks the recipient), and
+  `notifications_select`/`notifications_update` scoped to the recipient;
+  no DELETE policy, deletes refused outright, same as `audit_log`. New
+  `workflow_transition_rules` table (project_id, module reusing
+  `permission_module`, from_status/to_status varchar since status
+  vocabularies vary per module, enabled boolean default true,
+  required_level reusing `permission_level` default "standard", unique on
+  (project_id, module, from_status, to_status)) — migration 0039, added
+  to the direct `project_id` RLS loop.
+- **`packages/shared`**: `schemas/notification.schema.ts` —
+  `NOTIFICATION_TYPES` (rfi_assigned/rfi_answered/rfi_overdue/
+  submittal_assigned/submittal_status_changed/punch_item_assigned/
+  punch_item_status_changed/change_order_status_changed),
+  `notificationPayloadSchema` (projectId/entityType/entityId/summary,
+  passthrough), `listNotificationsQuerySchema`.
+  `schemas/workflow-rule.schema.ts` — `upsertWorkflowTransitionRuleSchema`/
+  `listWorkflowTransitionRulesQuerySchema`/`deleteWorkflowTransitionRuleSchema`.
+- **`apps/api`**: `notification.service.ts` — `notifyUser`/`notifyUsers`
+  (insert, skipping the actor and duplicate recipients — called from
+  inside the caller's own `withRequestContext` transaction, valid under
+  the new insert policy) plus `listNotifications`/
+  `countUnreadNotifications`/`markNotificationRead`/
+  `markAllNotificationsRead`, routed at `/notifications`. Wired into
+  `rfi.service.ts` (create → assignee + distribution list;
+  ball-in-court reassignment via update; an official response →
+  notifies the original asker), `submittal.service.ts` (create →
+  ball-in-court + distribution; reassignment; each review event →
+  either the next reviewer or, once all reviews are in, the creator),
+  `punch-item.service.ts` (create → assignee + final approver +
+  distribution; reassignment; every status transition → assignee, final
+  approver, and creator), and `change-management.service.ts` (a change
+  order's approve/reject/execute → its creator). The RFI overdue-sweep
+  job (`jobs/rfi-overdue-sweep.ts`, a system sweep with no per-user
+  request context) now also inserts an `rfi_overdue` notification
+  directly via `authDb` alongside its existing escalation email.
+  `workflow-rule.service.ts` — CRUD at `/workflow-transition-rules`
+  (`directory:admin` gated, same convention as custom fields and
+  permission templates) plus `enforceWorkflowTransitionRule()`, called
+  from inside `rfi.service.ts`'s and `punch-item.service.ts`'s own
+  `transitionXStatus` after their hardcoded transition table has already
+  accepted the move. A rule can only make an already-legal transition
+  *stricter* — disable it outright (`transition_disabled`, 403), or
+  raise the permission level required for it above the module's own base
+  check (`PermissionDeniedError`) — never widen the state machine: an
+  admin creating a rule for a `(module, fromStatus, toStatus)` tuple the
+  module's own transition table doesn't contain gets a 400
+  (`unsupported_transition`), and rules are only accepted for the two
+  pilot modules (`rfis`, `punch_list`) rather than all 24, since
+  validating a tuple requires that module's own transition table and
+  wiring enforcement into every module's own service was out of
+  proportion to this phase. A `(module, fromStatus, toStatus)` with no
+  saved rule behaves exactly as the module's hardcoded default
+  (enabled, no elevated level) — this table starts empty and only ever
+  holds explicit admin overrides.
+- **`apps/web`**: `components/shell/NotificationBell.tsx` — a bell icon
+  in `Header.tsx` (next to `UserMenu`, same dropdown/focus-management
+  pattern), unread-count badge polled every 30s (no websocket/push
+  infra exists), a panel listing notifications that marks one read and
+  navigates to its entity on click, and a "mark all read" action.
+  `components/WorkflowRulesSection.tsx` — a new section on the existing
+  Settings page (`projects/[id]/settings`) letting a `directory:admin`
+  narrow the RFI/Punch List modules' transitions: every transition the
+  module's hardcoded table allows is always listed (not just ones an
+  admin has touched), each with an enabled checkbox and a required-level
+  select that upserts on change.
+- **`docs`**: this gate report; `DATA_MODEL.md` updated for
+  `notifications` (now in active use) and `workflow_transition_rules`.
+
+**Explicitly not built, on record:**
+- **Mobile push / websocket delivery**: the notification bell polls;
+  there's no push channel or live socket in this stack (per
+  Assumption 8, mobile push was already out of scope for v1). A 30s lag
+  on the unread badge was accepted as proportionate rather than adding
+  that infrastructure for this phase.
+- **Workflow rules beyond the two pilot modules**: narrowing-only
+  enforcement is wired for `rfis` and `punch_list` only. Widening to
+  every module needing its own `enforceWorkflowTransitionRule()` call
+  and its own hardcoded transition table read is straightforward
+  per-module follow-up, not a design gap — deferred to keep this phase's
+  blast radius bounded to two well-understood state machines.
+- **A generic "workflow builder"** (arbitrary custom statuses, branching
+  approval chains): out of scope per the user's own framing of gap #6 as
+  "workflow *configurability*", not a full BPM engine — Procore itself
+  only exposes narrowing/require-approval controls on its built-in
+  workflows, not arbitrary new ones.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 178 tests across 21 files,
+  unaffected; `apps/api`: 143 tests across 30 files, including the new
+  3-test `notifications.test.ts` — an RFI's ball-in-court user gets
+  notified on assignment while the creator/actor does not, a user
+  cannot mark another user's notification read (RLS), and read-all
+  clears every unread notification for the caller — and the new 6-test
+  `workflow-rules.test.ts` — non-admin rejected, an unsupported
+  transition rejected (`closed→open` isn't in `RFI_STATUS_TRANSITIONS`),
+  an unsupported module rejected (`submittals`), disabling
+  `open→closed` blocks even an admin caller and is restored afterward,
+  raising a punch item transition's required level to `admin` blocks a
+  `standard`-level foreman but not an admin caller, and rules list
+  scoped by module; `apps/web`: 28 tests unaffected; i18n key parity
+  confirmed identical between `en.json`/`ar.json`, `Notifications` and
+  `WorkflowRules` namespaces added to both). Full `next build` also
+  confirmed the `/settings` route (now with the workflow-rules section)
+  still compiles and prerenders correctly.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

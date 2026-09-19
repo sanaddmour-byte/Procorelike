@@ -15,8 +15,10 @@ import {
 import { desc, eq, inArray } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { notifyUsers } from "./notification.service";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { withUserContext } from "./permission.service";
+import { enforceWorkflowTransitionRule } from "./workflow-rule.service";
 
 type RfiRow = typeof schema.rfis.$inferSelect;
 type RfiResponseRow = typeof schema.rfiResponses.$inferSelect;
@@ -88,6 +90,12 @@ export async function createRfi(
     }
 
     await writeAuditLog(tx, { actorId: userId, entityType: "rfi", entityId: rfi.id, action: "create", after: rfi });
+    await notifyUsers(tx, [rfi.ballInCourtUserId, ...input.distributionUserIds], userId, "rfi_assigned", {
+      projectId: rfi.projectId,
+      entityType: "rfi",
+      entityId: rfi.id,
+      summary: `RFI ${rfi.number}: ${rfi.subject}`,
+    });
     return withOverdue(rfi);
   });
 }
@@ -164,6 +172,14 @@ export async function updateRfi(
       })
       .where(eq(schema.rfis.id, rfiId))
       .returning();
+    if (updated && input.ballInCourtUserId && input.ballInCourtUserId !== existing.ballInCourtUserId) {
+      await notifyUsers(tx, [updated.ballInCourtUserId], userId, "rfi_assigned", {
+        projectId: updated.projectId,
+        entityType: "rfi",
+        entityId: updated.id,
+        summary: `RFI ${updated.number}: ${updated.subject}`,
+      });
+    }
     return updated ? withOverdue(updated) : undefined;
   });
 }
@@ -217,6 +233,14 @@ export async function addRfiResponse(
     }
 
     await writeAuditLog(tx, { actorId: userId, entityType: "rfi_response", entityId: response.id, action: "create", after: response });
+    if (input.isOfficial) {
+      await notifyUsers(tx, [rfi.createdBy], userId, "rfi_answered", {
+        projectId: rfi.projectId,
+        entityType: "rfi",
+        entityId: rfi.id,
+        summary: `RFI ${rfi.number}: ${rfi.subject}`,
+      });
+    }
     return { ...response, isOfficial: input.isOfficial };
   });
 }
@@ -237,6 +261,7 @@ export async function transitionRfiStatus(
     if (!allowed.includes(input.toStatus)) {
       throw new ApiError(400, "invalid_transition", `Cannot move RFI from '${rfi.status}' to '${input.toStatus}'`);
     }
+    await enforceWorkflowTransitionRule(tx, ctx, "rfis", rfi.projectId, rfi.status, input.toStatus);
 
     const [updated] = await tx
       .update(schema.rfis)

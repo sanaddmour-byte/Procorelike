@@ -48,6 +48,8 @@ export * from "./schemas/bidding.schema";
 export * from "./schemas/estimating.schema";
 export * from "./schemas/admin.schema";
 export * from "./schemas/custom-field.schema";
+export * from "./schemas/notification.schema";
+export * from "./schemas/workflow-rule.schema";
 
 export * from "./schedule/types";
 export * from "./schedule/validate";
