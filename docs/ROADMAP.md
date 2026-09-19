@@ -3171,6 +3171,90 @@ carried forward.
   pre-existing and unrelated to this phase. Full `next build` succeeded
   with the RFIs route unaffected in size/behavior beyond the new filter.
 
+## Phase 22 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21's server-query contract out from
+its RFIs proof-of-concept to the next tier of high-traffic list modules,
+per the user's "Proceed" after Phase 21's gate report was delivered) --
+**PASSED**, see Verification.
+
+**What was built:** the exact Phase 21 pattern (extend the shared
+`paginationQuerySchema`, move the service's filter/sort/pagination into
+SQL, wire the page onto `useServerTable` + `DataTable`'s server props),
+repeated for four modules with zero changes to the shared contract
+itself:
+
+- **Submittals**: `listSubmittalsQuerySchema` (`status`/`assigneeUserId`
+  filters, sort by number/title/status/dueDate). `submittal.service.ts`'s
+  `listSubmittals` gained the same treatment `rfi.service.ts` got in
+  Phase 21 -- including re-expressing `canViewPrivateSubmittal`'s
+  distribution-list check as a SQL `EXISTS` predicate (submittals have
+  their own `submittalDistribution` join table, structurally identical to
+  RFIs' `rfiDistribution`), required for the same reason: a post-fetch JS
+  filter after `LIMIT`/`OFFSET` produces wrong totals and short pages.
+  `submittals/page.tsx` migrated onto `useServerTable` + `SavedViewsBar`
+  exactly like the RFIs page, gaining a ball-in-court/assignee filter it
+  didn't have before.
+- **Change Orders**: `listChangeOrdersQuerySchema` (`status` filter, sort
+  by number/title/status/costImpact). No privacy/distribution concept on
+  this module, so `change-management.service.ts`'s `listChangeOrders`
+  needed only the search/filter/sort/pagination SQL, no visibility
+  predicate. The page has two independent sections (Change Events, Change
+  Orders); only the Change Orders `DataTable` was migrated -- Change
+  Events' own simple unpaginated list was deliberately left alone as
+  out of scope, consistent with Phase 21's "narrow the migration, don't
+  redesign the whole page" discipline.
+- **Punch List**: `listPunchItemsQuerySchema` (`status`/`assigneeUserId`
+  filters, sort by number/status/priority/dueDate; search matches
+  `description` since punch items have no separate title field).
+  `punch-item.service.ts`'s `listPunchItems` gained the standard
+  treatment. This page's migration also retired its own older, bespoke
+  single-filter saved-views UI (a plain button row storing only a status
+  value) in favor of the shared `SavedViewsBar` component Phase 21 built
+  for RFIs -- the first consumer of that generalization, confirming it
+  was built broadly enough to fit a second, independently-evolved
+  saved-views implementation without changes.
+- **Commitments**: `listCommitmentsQuerySchema` -- notably different from
+  every other migrated module: commitments have no `status` and no
+  `dueDate` column at all (`packages/db/src/schema/financial.ts`'s
+  `commitments` table), so the query schema filters on `type`
+  (subcontract/po) and `companyId` instead, and sorts by
+  number/title/type. This is the contract adapting to what a module's
+  schema actually has rather than forcing every module into an identical
+  filter shape. One deliberate behavior change, called out in the
+  schema's own doc comment: the page's prior client-side search also
+  matched the *joined* company name, which the SQL-side search does not
+  (matching only `number`/`title`, like every other migrated module) --
+  matching a joined field would require a join in the query, judged not
+  worth adding for this one page's search box.
+- **`apps/api/src/routes/phase22-list-query.test.ts`** (new): 13 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module, plus Submittals' private/distribution-exclusion case mirroring
+  `rfi-list-query.test.ts`'s.
+
+**Explicitly not built this phase, on record**: 16 of the ~20 total list
+modules (Documents, Drawings, Meetings, Inspections, Correspondence, T&M
+Tickets, Transmittals, and others) remain on client-side filtering --
+migrating each is now a mechanical repeat of this pattern per
+`docs/DATA_MODEL.md` §9n, not a redesign, and is future work rather than a
+defect. The rest of the parent spec's phases (global search,
+navigation/icon-rail shell, the PDF architecture overhaul, bulk actions,
+column customization, etc.) have not been started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. 410 tests total (`packages/shared`: 200,
+  `packages/db`: 1, `apps/api`: 181 across 36 files -- 168 pre-existing
+  plus the 13 new Phase 22 tests, all pre-existing suites re-verified
+  unaffected including `rfi-list-query.test.ts`, `submittal.test.ts`, and
+  `financial.test.ts`; `apps/web`: 28, unaffected). The two expected
+  stderr blocks in the API test run (mailer/Expo-push network calls
+  failing in this sandbox) are pre-existing and unrelated. Full
+  `next build` succeeded; the four migrated routes' bundle sizes shrank
+  slightly (client-side filtering/`useMemo` logic removed), consistent
+  with the RFIs page's Phase 21 build output.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

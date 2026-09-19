@@ -81,25 +81,26 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 21 (server-driven list
-query contract, first proven on RFIs) is complete and gate-verified** --
-the first slice of a larger user-directed "Enterprise UX, Data
-Architecture & PDF System Upgrade" initiative (a 42-section spec covering
-DataTable/saved-views/global-search/navigation/status-system UX plus a PDF
-architecture overhaul, to be delivered incrementally across ten phases
-rather than as one rebuild). This phase's audit found every list endpoint
-fetching every row unfiltered/unpaginated with client-side-only search/
-sort, and that CLAUDE.md's stack table names TanStack Query + Zustand for
-web state even though neither is actually used anywhere in `apps/web` --
-both flagged rather than silently carried forward. It built the reusable
-contract (`packages/shared/schemas/list-query.schema.ts`,
-`PaginatedResult<T>`), migrated RFIs' list service/route/page onto it
-end-to-end (search/filter/sort/pagination all server-side, backward
-compatible -- the response body shape never changes, so untouched callers
-including mobile are unaffected), and extracted `useServerTable`/
-`SavedViewsBar`/`DataTable`'s new server-mode props as the reusable pieces
-the other ~19 list modules will migrate onto next -- see
-`docs/DATA_MODEL.md` §9n for the full pattern. Before this, Phase 20
+mid-build corrections). As of this writing: **Phase 22 (server-driven list
+query contract rolled out to Submittals, Change Orders, Punch List, and
+Commitments) is complete and gate-verified** -- continuing the
+user-directed "Enterprise UX, Data Architecture & PDF System Upgrade"
+initiative Phase 21 started. Phase 21 built the reusable contract
+(`packages/shared/schemas/list-query.schema.ts`, `PaginatedResult<T>`) and
+proved it end-to-end on RFIs; Phase 22 repeats that exact pattern on four
+more modules with no changes to the contract itself. Two variations
+surfaced along the way, both documented in `docs/DATA_MODEL.md` §9n
+rather than left implicit: Submittals' distribution-list privacy rule
+needed the same SQL `EXISTS` treatment RFIs already got, and Commitments
+has neither a `status` nor a `dueDate` column, so its query schema filters
+on `type`/`companyId` instead -- the contract adapts to what a module's
+schema actually has, it doesn't force a shape onto it. Punch List's
+migration also retired that page's older bespoke single-filter saved-views
+UI in favor of the shared `SavedViewsBar` component Phase 21 built. 16 of
+the ~20 total list modules remain on client-side filtering; migrating each
+is now a mechanical repeat of this pattern, not a redesign -- see
+`docs/DATA_MODEL.md` §9n for the full pattern and the "migrated so far"
+list. Before Phase 21, Phase 20
 (Mobile push notifications) completed the sixth of 7 planned phases
 addressing a Procore competitive-gap analysis (see Phase 15's gate report
 for the full 7-phase plan); SSO/SAML was explicitly descoped by the user

@@ -589,12 +589,42 @@ library, and adopting one now would touch every existing page's dependency
 footprint for no problem it uniquely solves. Revisit only if a real
 caching/dedup need surfaces once more modules migrate.
 
-**Migrated so far**: RFIs only. Every other list module (Punch List,
-Submittals, Change Orders, Documents, Drawings, etc. -- roughly 19 more)
-is still on the old "fetch everything, filter client-side" path; migrating
-each is now a matter of repeating this pattern (extend the shared query
-schema, move the service's filter/sort/pagination into SQL, wire the page
-onto `useServerTable` + `DataTable`'s server props), not re-designing it.
+**Migrated so far** (Phase 21 + Phase 22): RFIs, Submittals, Change
+Orders, Punch List, Commitments. Roughly 16 more list modules (Documents,
+Drawings, Meetings, Inspections, Correspondence, T&M Tickets,
+Transmittals, and others) are still on the old "fetch everything, filter
+client-side" path; migrating each is now a matter of repeating this
+pattern (extend the shared query schema, move the service's filter/sort/
+pagination into SQL, wire the page onto `useServerTable` +
+`DataTable`'s server props), not re-designing it.
+
+**The contract adapts to what a module's schema actually has, rather than
+forcing a uniform filter shape onto every module.** Two examples from
+Phase 22: Submittals has its own `submittalDistribution` join table
+structurally identical to RFIs' `rfiDistribution`, so
+`canViewPrivateSubmittal`'s visibility rule got the exact same SQL
+`EXISTS` rewrite `canViewPrivateRfi` did in Phase 21 -- any future module
+with a distribution-list-style privacy flag should follow this same
+recipe. Commitments, by contrast, has neither a `status` nor a `dueDate`
+column at all (`packages/db/src/schema/financial.ts`), so its query
+schema filters on `type` (subcontract/po) and `companyId` instead of the
+`status`/`assigneeUserId` shape every other migrated module uses --
+check what a module's schema and its existing detail-page fields actually
+support before choosing that module's filter set, don't copy the RFI
+shape reflexively. Commitments' migration also dropped one narrow bit of
+behavior: its page previously searched the *joined* company name
+client-side, which the SQL-side search does not match (only
+`number`/`title`, like every other module) -- matching a joined field
+would need an actual join in the query, and wasn't judged worth it for
+one page's search box; flag this if a user ever asks for it back.
+
+**`SavedViewsBar` proved reusable on its second consumer.** Punch List
+had its own older, bespoke saved-views UI (a plain button row storing
+only a single status value) predating Phase 21's generalized component;
+Phase 22 retired it in favor of `SavedViewsBar` with no changes needed to
+the component itself -- confirming it was built broadly enough in Phase
+21 to fit an independently-evolved saved-views implementation, not just
+the one page it was extracted from.
 
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 

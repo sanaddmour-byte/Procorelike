@@ -3,6 +3,7 @@ import {
   createChangeEventSchema,
   createChangeOrderSchema,
   createPotentialChangeOrderSchema,
+  listChangeOrdersQuerySchema,
   transitionChangeEventStatusSchema,
   updatePotentialChangeOrderStatusSchema,
 } from "@siteops/shared";
@@ -155,7 +156,18 @@ export function changeOrdersRouter(appDb: Database, authDb: Database, env: Env):
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const rows = await changeManagementService.listChangeOrders(appDb, authUser.id, ctx, projectId);
+      const listQuery = listChangeOrdersQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await changeManagementService.listChangeOrders(appDb, authUser.id, ctx, projectId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
       res.json(rows);
     } catch (err) {
       next(err);

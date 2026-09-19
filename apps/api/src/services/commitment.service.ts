@@ -1,12 +1,16 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database, type Tx } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   formatCommitmentNumber,
   requirePermission,
+  type CommitmentSortKey,
   type CreateCommitmentInput,
   type CreateCommitmentLineItemInput,
+  type ListCommitmentsQuery,
+  type PaginatedResult,
   type PermissionContext,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or } from "drizzle-orm";
 import { NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -59,15 +63,50 @@ export async function findCommitmentById(appDb: Database, userId: string, commit
   });
 }
 
+const COMMITMENT_SORT_COLUMNS: Record<
+  CommitmentSortKey,
+  typeof schema.commitments.number | typeof schema.commitments.title | typeof schema.commitments.type
+> = {
+  number: schema.commitments.number,
+  title: schema.commitments.title,
+  type: schema.commitments.type,
+};
+
 export async function listCommitments(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<CommitmentRow[]> {
+  query: ListCommitmentsQuery = {},
+): Promise<PaginatedResult<CommitmentRow>> {
   requirePermission(ctx, "commitments", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.commitments).where(eq(schema.commitments.projectId, projectId));
+    const conditions = [eq(schema.commitments.projectId, projectId)];
+
+    if (query.type) conditions.push(eq(schema.commitments.type, query.type));
+    if (query.companyId) conditions.push(eq(schema.commitments.companyId, query.companyId));
+    if (query.search) {
+      conditions.push(or(ilike(schema.commitments.title, `%${query.search}%`), ilike(schema.commitments.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = COMMITMENT_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.commitments).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.commitments).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

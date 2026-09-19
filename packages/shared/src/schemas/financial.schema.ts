@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 const money = z.number().finite();
 const currencyCode = z.string().length(3).default("USD");
@@ -49,6 +50,19 @@ export type CreateBudgetModificationInput = z.infer<typeof createBudgetModificat
 
 export const commitmentTypeSchema = z.enum(["subcontract", "po"]);
 export type CommitmentType = z.infer<typeof commitmentTypeSchema>;
+
+export const COMMITMENT_SORT_KEYS = ["number", "title", "type"] as const;
+export type CommitmentSortKey = (typeof COMMITMENT_SORT_KEYS)[number];
+
+/** GET /commitments's query contract (Phase 22, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). Commitments have no status field, so `type` (subcontract/po) is the closest analog filter; search matches number/title only -- unlike the page's prior client-side search, it does not match the joined company name. */
+export const listCommitmentsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(COMMITMENT_SORT_KEYS).optional(),
+    type: commitmentTypeSchema.optional(),
+    companyId: z.string().uuid().optional(),
+  })
+  .strict();
+export type ListCommitmentsQuery = z.infer<typeof listCommitmentsQuerySchema>;
 
 export const createCommitmentSchema = z
   .object({
@@ -137,6 +151,18 @@ export type UpdatePotentialChangeOrderStatusInput = z.infer<typeof updatePotenti
 
 export const changeOrderTargetTypeSchema = z.enum(["prime", "commitment"]);
 export type ChangeOrderTargetType = z.infer<typeof changeOrderTargetTypeSchema>;
+
+export const CHANGE_ORDER_SORT_KEYS = ["number", "title", "status", "costImpact"] as const;
+export type ChangeOrderSortKey = (typeof CHANGE_ORDER_SORT_KEYS)[number];
+
+/** GET /change-orders's query contract (Phase 22, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). */
+export const listChangeOrdersQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(CHANGE_ORDER_SORT_KEYS).optional(),
+    status: changeStatusSchema.optional(),
+  })
+  .strict();
+export type ListChangeOrdersQuery = z.infer<typeof listChangeOrdersQuerySchema>;
 
 /**
  * `targetId` is polymorphic on `targetType` (docs/DATA_MODEL.md §9): for

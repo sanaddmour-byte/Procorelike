@@ -3,14 +3,15 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 
 interface PunchItem {
   id: string;
@@ -19,12 +20,6 @@ interface PunchItem {
   priority: "low" | "medium" | "high";
   status: "open" | "ready_for_review" | "not_accepted" | "in_dispute" | "approved" | "closed";
   needsReview: boolean;
-}
-
-interface SavedView {
-  id: string;
-  name: string;
-  filters: { status?: string };
 }
 
 const STATUS_TONE: Record<PunchItem["status"], StatusTone> = {
@@ -43,30 +38,14 @@ export default function PunchListPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [items, setItems] = useState<PunchItem[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
-  const [newViewName, setNewViewName] = useState("");
-  const [savingView, setSavingView] = useState(false);
-
-  function loadSavedViews(): void {
-    apiJson<SavedView[]>(`/saved-views?projectId=${params.id}&module=punch_list`)
-      .then(setSavedViews)
-      .catch(() => undefined);
-  }
+  const serverTable = useServerTable<PunchItem>({ basePath: "/punch-items", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    apiJson<PunchItem[]>(`/punch-items?projectId=${params.id}`)
-      .then(setItems)
-      .catch(() => setError(tc("errorGeneric")));
-    loadSavedViews();
-  }, [router, locale, params.id, tc]);
+  }, [router, locale]);
 
   function statusLabel(status: PunchItem["status"]): string {
     return {
@@ -79,32 +58,7 @@ export default function PunchListPage() {
     }[status];
   }
 
-  async function handleSaveView(): Promise<void> {
-    if (!newViewName.trim()) return;
-    setSavingView(true);
-    try {
-      await apiJson("/saved-views", {
-        method: "POST",
-        body: JSON.stringify({ projectId: params.id, module: "punch_list", name: newViewName.trim(), filters: { status: statusFilter } }),
-      });
-      setNewViewName("");
-      loadSavedViews();
-    } catch {
-      setError(tc("errorGeneric"));
-    } finally {
-      setSavingView(false);
-    }
-  }
-
-  const filteredItems = useMemo(() => {
-    if (!items) return null;
-    const q = search.trim().toLowerCase();
-    return items.filter((item) => {
-      if (statusFilter && item.status !== statusFilter) return false;
-      if (q && !item.number.toLowerCase().includes(q) && !item.description.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [items, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<PunchItem>[] = [
     { key: "number", header: t("number"), render: (item) => item.number, sortValue: (item) => item.number, width: "110px" },
@@ -139,30 +93,16 @@ export default function PunchListPage() {
           }
         />
 
-        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
-          <label className="flex flex-col gap-1 text-sm">
-            {t("saveViewAs")}
-            <input value={newViewName} onChange={(e) => setNewViewName(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" placeholder={t("viewNamePlaceholder")} />
-          </label>
-          <button onClick={() => void handleSaveView()} disabled={savingView || !newViewName.trim()} className="rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-3 py-2 text-sm font-bold text-ink disabled:opacity-50">
-            {t("saveView")}
-          </button>
-          {savedViews.map((view) => (
-            <button
-              key={view.id}
-              onClick={() => setStatusFilter(view.filters.status ?? "")}
-              className="rounded-full border-3 border-ink bg-navy-100 px-3 py-1 text-xs font-semibold text-navy-800"
-            >
-              {view.name}
-            </button>
-          ))}
-        </div>
-
-        {error && <p className="text-maroon-700">{error}</p>}
+        <SavedViewsBar
+          projectId={params.id}
+          module="punch_list"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
 
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -171,20 +111,22 @@ export default function PunchListPage() {
               options: (["open", "ready_for_review", "not_accepted", "in_dispute", "approved", "closed"] as const).map((s) => ({ value: s, label: statusLabel(s) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<PunchItem>
           columns={columns}
-          rows={filteredItems}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(item) => router.push(`/${locale}/projects/${params.id}/punch-list/${item.id}`)}
-          emptyTitle={items && items.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

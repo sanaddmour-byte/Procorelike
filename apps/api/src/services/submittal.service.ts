@@ -1,18 +1,22 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   formatSubmittalNumber,
   requirePermission,
   resolveEffectiveLevel,
   type CreateSubmittalInput,
   type CreateSubmittalRevisionInput,
+  type ListSubmittalsQuery,
+  type PaginatedResult,
   type PermissionContext,
   type SubmittalResponseCode,
+  type SubmittalSortKey,
   type SubmittalStatus,
   type SubmittalType,
   type SubmitSubmittalReviewInput,
   type UpdateSubmittalInput,
 } from "@siteops/shared";
-import { and, asc, eq, inArray, max, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, max, or, sql } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { notifyUsers } from "./notification.service";
@@ -57,6 +61,16 @@ function canViewPrivateSubmittal(userId: string, ctx: PermissionContext, submitt
   if (submittal.createdBy === userId || submittal.ballInCourtUserId === userId) return true;
   return distribution.some((d) => d.userId === userId);
 }
+
+const SUBMITTAL_SORT_COLUMNS: Record<
+  SubmittalSortKey,
+  typeof schema.submittals.number | typeof schema.submittals.title | typeof schema.submittals.status | typeof schema.submittals.dueDate
+> = {
+  number: schema.submittals.number,
+  title: schema.submittals.title,
+  status: schema.submittals.status,
+  dueDate: schema.submittals.dueDate,
+};
 
 export async function listSpecSections(
   appDb: Database,
@@ -274,17 +288,46 @@ export async function listSubmittals(
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<SubmittalWithOverdue[]> {
+  query: ListSubmittalsQuery = {},
+): Promise<PaginatedResult<SubmittalWithOverdue>> {
   requirePermission(ctx, "submittals", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    const rows = await tx.select().from(schema.submittals).where(eq(schema.submittals.projectId, projectId));
-    const privateIds = rows.filter((s) => s.isPrivate).map((s) => s.id);
-    const distribution =
-      privateIds.length > 0 ? await tx.select().from(schema.submittalDistribution).where(inArray(schema.submittalDistribution.submittalId, privateIds)) : [];
-    const distributionBySubmittalId = new Map<string, SubmittalDistributionRow[]>();
-    for (const d of distribution) distributionBySubmittalId.set(d.submittalId, [...(distributionBySubmittalId.get(d.submittalId) ?? []), d]);
+    const conditions = [eq(schema.submittals.projectId, projectId)];
 
-    return rows.filter((s) => canViewPrivateSubmittal(userId, ctx, s, distributionBySubmittalId.get(s.id) ?? [])).map(withOverdue);
+    if (resolveEffectiveLevel(ctx, "submittals") !== "admin") {
+      conditions.push(
+        or(
+          eq(schema.submittals.isPrivate, false),
+          eq(schema.submittals.createdBy, userId),
+          eq(schema.submittals.ballInCourtUserId, userId),
+          sql`exists (select 1 from ${schema.submittalDistribution} where ${schema.submittalDistribution.submittalId} = ${schema.submittals.id} and ${schema.submittalDistribution.userId} = ${userId})`,
+        )!,
+      );
+    }
+    if (query.status) conditions.push(eq(schema.submittals.status, query.status));
+    if (query.assigneeUserId) conditions.push(eq(schema.submittals.ballInCourtUserId, query.assigneeUserId));
+    if (query.search) {
+      conditions.push(or(ilike(schema.submittals.title, `%${query.search}%`), ilike(schema.submittals.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = SUBMITTAL_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.submittals).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.submittals).where(where),
+    ]);
+
+    return { rows: rows.map(withOverdue), total: totalRow?.value ?? 0 };
   });
 }
 

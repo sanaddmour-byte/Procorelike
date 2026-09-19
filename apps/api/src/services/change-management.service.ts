@@ -1,22 +1,26 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database, type Tx } from "@siteops/db";
 import {
   CHANGE_EVENT_STATUS_TRANSITIONS,
+  DEFAULT_PAGE_SIZE,
   formatChangeOrderNumber,
   isValidSecondApprover,
   requiresSecondApprover,
   requirePermission,
   type Approver,
+  type ChangeOrderSortKey,
   type ChangeOrderTargetType,
   type ChangeReason,
   type ChangeStatus,
   type CreateChangeEventInput,
   type CreateChangeOrderInput,
   type CreatePotentialChangeOrderInput,
+  type ListChangeOrdersQuery,
+  type PaginatedResult,
   type PermissionContext,
   type TransitionChangeEventStatusInput,
   type UpdatePotentialChangeOrderStatusInput,
 } from "@siteops/shared";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
@@ -242,15 +246,50 @@ export async function findChangeOrderById(appDb: Database, userId: string, chang
   });
 }
 
+const CHANGE_ORDER_SORT_COLUMNS: Record<
+  ChangeOrderSortKey,
+  typeof schema.changeOrders.number | typeof schema.changeOrders.title | typeof schema.changeOrders.status | typeof schema.changeOrders.costImpact
+> = {
+  number: schema.changeOrders.number,
+  title: schema.changeOrders.title,
+  status: schema.changeOrders.status,
+  costImpact: schema.changeOrders.costImpact,
+};
+
 export async function listChangeOrders(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<ChangeOrderRow[]> {
+  query: ListChangeOrdersQuery = {},
+): Promise<PaginatedResult<ChangeOrderRow>> {
   requirePermission(ctx, "change_management", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.changeOrders).where(eq(schema.changeOrders.projectId, projectId));
+    const conditions = [eq(schema.changeOrders.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.changeOrders.status, query.status));
+    if (query.search) {
+      conditions.push(or(ilike(schema.changeOrders.title, `%${query.search}%`), ilike(schema.changeOrders.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = CHANGE_ORDER_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.changeOrders).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.changeOrders).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

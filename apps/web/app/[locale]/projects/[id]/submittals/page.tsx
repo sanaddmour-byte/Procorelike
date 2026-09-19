@@ -5,14 +5,16 @@ import { PersonnelPicker } from "@/components/PersonnelPicker";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface SpecSection {
   id: string;
@@ -107,12 +109,9 @@ export default function SubmittalsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [submittals, setSubmittals] = useState<Submittal[] | null>(null);
   const [specSections, setSpecSections] = useState<SpecSection[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [specSectionId, setSpecSectionId] = useState("");
   const [title, setTitle] = useState("");
@@ -126,19 +125,13 @@ export default function SubmittalsPage() {
   const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
-
-  function load(): void {
-    apiJson<Submittal[]>(`/submittals?projectId=${params.id}`)
-      .then(setSubmittals)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Submittal>({ basePath: "/submittals", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<SpecSection[]>(`/submittals/spec-sections?projectId=${params.id}`)
       .then((sections) => {
         setSpecSections(sections);
@@ -189,7 +182,7 @@ export default function SubmittalsPage() {
       setBallInCourtUserId("");
       setDistributionUserIds([]);
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -197,15 +190,7 @@ export default function SubmittalsPage() {
     }
   }
 
-  const filteredSubmittals = useMemo(() => {
-    if (!submittals) return null;
-    const q = search.trim().toLowerCase();
-    return submittals.filter((s) => {
-      if (statusFilter && s.status !== statusFilter) return false;
-      if (q && !s.number.toLowerCase().includes(q) && !s.title.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [submittals, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<Submittal>[] = [
     { key: "number", header: t("number"), render: (s) => s.number, sortValue: (s) => s.number, width: "110px" },
@@ -343,9 +328,16 @@ export default function SubmittalsPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="submittals"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -356,21 +348,28 @@ export default function SubmittalsPage() {
                 label: statusLabel(s, t),
               })),
             },
+            {
+              key: "assigneeUserId",
+              label: t("ballInCourt"),
+              options: members.map((m) => ({ value: m.userId, label: m.name })),
+            },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<Submittal>
           columns={columns}
-          rows={filteredSubmittals}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(s) => router.push(`/${locale}/projects/${params.id}/submittals/${s.id}`)}
-          emptyTitle={submittals && submittals.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />

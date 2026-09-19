@@ -3,16 +3,18 @@
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
 import { useProjectCurrency } from "@/lib/use-project-currency";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { useServerTable } from "@/lib/use-server-table";
 import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 type ChangeReason =
   | "owner_change"
@@ -129,13 +131,11 @@ export default function ChangeOrdersPage() {
   const money = (value: string | number): string => formatMoney(value, currency, locale);
 
   const [events, setEvents] = useState<ChangeEventDetail[] | null>(null);
-  const [changeOrders, setChangeOrders] = useState<ChangeOrder[] | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
   const [budgetLineItems, setBudgetLineItems] = useState<BudgetLineItem[]>([]);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [coSearch, setCoSearch] = useState("");
-  const [coStatusFilter, setCoStatusFilter] = useState("");
+  const serverTable = useServerTable<ChangeOrder>({ basePath: "/change-orders", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   const [showEventForm, setShowEventForm] = useState(false);
   const [eventTitle, setEventTitle] = useState("");
@@ -163,17 +163,12 @@ export default function ChangeOrdersPage() {
     setEvents(details);
   }
 
-  function loadChangeOrders(): void {
-    apiJson<ChangeOrder[]>(`/change-orders?projectId=${params.id}`).then(setChangeOrders).catch(() => setError(tc("errorGeneric")));
-  }
-
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
     loadEvents().catch(() => setError(tc("errorGeneric")));
-    loadChangeOrders();
     apiJson<CostCode[]>(`/projects/${params.id}/cost-codes`).then(setCostCodes).catch(() => undefined);
     apiJson<BudgetLineItem[]>(`/budget-line-items?projectId=${params.id}`).then(setBudgetLineItems).catch(() => undefined);
     apiJson<Commitment[]>(`/commitments?projectId=${params.id}`).then(setCommitments).catch(() => undefined);
@@ -267,7 +262,7 @@ export default function ChangeOrdersPage() {
       setCoCostImpact("");
       setCoTimeImpact("0");
       setShowCoForm(false);
-      loadChangeOrders();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -277,15 +272,7 @@ export default function ChangeOrdersPage() {
 
   const targetOptions = coTargetType === "prime" ? budgetLineItems.map((li) => ({ id: li.id, label: budgetLineItemLabel(li) })) : commitments.map((c) => ({ id: c.id, label: `${c.number} — ${c.title}` }));
 
-  const filteredChangeOrders = useMemo(() => {
-    if (!changeOrders) return null;
-    const q = coSearch.trim().toLowerCase();
-    return changeOrders.filter((co) => {
-      if (coStatusFilter && co.status !== coStatusFilter) return false;
-      if (q && !co.number.toLowerCase().includes(q) && !(co.title ?? "").toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [changeOrders, coSearch, coStatusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const changeOrderColumns: DataTableColumn<ChangeOrder>[] = [
     { key: "number", header: t("number"), render: (co) => co.number, sortValue: (co) => co.number, width: "110px" },
@@ -491,9 +478,16 @@ export default function ChangeOrdersPage() {
             </form>
           )}
 
+          <SavedViewsBar
+            projectId={params.id}
+            module="change_management"
+            currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+            onApply={(state) => serverTable.applyView(state)}
+          />
+
           <FilterBar
-            searchValue={coSearch}
-            onSearchChange={setCoSearch}
+            searchValue={serverTable.search}
+            onSearchChange={serverTable.onSearchChange}
             searchPlaceholder={t("searchPlaceholder")}
             filters={[
               {
@@ -502,20 +496,22 @@ export default function ChangeOrdersPage() {
                 options: (["draft", "pending_approval", "approved", "rejected", "void"] as const).map((s) => ({ value: s, label: t(statusKey(s)) })),
               },
             ]}
-            activeFilters={{ status: coStatusFilter }}
-            onFilterChange={(_key, value) => setCoStatusFilter(value)}
-            onClearAll={() => {
-              setCoSearch("");
-              setCoStatusFilter("");
-            }}
+            activeFilters={serverTable.filters}
+            onFilterChange={serverTable.onFilterChange}
+            onClearAll={serverTable.clearAll}
             clearAllLabel={tc("clearAll")}
           />
 
           <DataTable<ChangeOrder>
             columns={changeOrderColumns}
-            rows={filteredChangeOrders}
+            rows={serverTable.rows}
+            error={serverTable.error ? tc("errorGeneric") : null}
+            onRetry={serverTable.reload}
             onRowClick={(co) => router.push(`/${locale}/projects/${params.id}/change-orders/${co.id}`)}
-            emptyTitle={changeOrders && changeOrders.length > 0 ? t("noChangeOrderResults") : t("noChangeOrders")}
+            emptyTitle={hasActiveQuery ? t("noChangeOrderResults") : t("noChangeOrders")}
+            serverSort={serverTable.sort}
+            onServerSortChange={serverTable.onServerSortChange}
+            pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
           />
         </section>
       </main>

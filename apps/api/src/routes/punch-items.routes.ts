@@ -1,5 +1,5 @@
 import type { Database } from "@siteops/db";
-import { createPunchItemSchema, transitionPunchItemStatusSchema, updatePunchItemSchema } from "@siteops/shared";
+import { createPunchItemSchema, listPunchItemsQuerySchema, transitionPunchItemStatusSchema, updatePunchItemSchema } from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -32,8 +32,20 @@ export function punchItemsRouter(appDb: Database, env: Env): Router {
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const items = await punchItemService.listPunchItems(appDb, authUser.id, ctx, projectId);
-      res.json(items);
+      const listQuery = listPunchItemsQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        assigneeUserId: req.query.assigneeUserId,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await punchItemService.listPunchItems(appDb, authUser.id, ctx, projectId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
+      res.json(rows);
     } catch (err) {
       next(err);
     }

@@ -3,12 +3,14 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface ProjectCompany {
   companyId: string;
@@ -32,29 +34,21 @@ export default function CommitmentsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [commitments, setCommitments] = useState<Commitment[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [type, setType] = useState<"subcontract" | "po">("subcontract");
   const [retentionPct, setRetentionPct] = useState("0");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<Commitment[]>(`/commitments?projectId=${params.id}`)
-      .then(setCommitments)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Commitment>({ basePath: "/commitments", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`)
       .then((cos) => {
         setCompanies(cos);
@@ -93,7 +87,7 @@ export default function CommitmentsPage() {
       });
       setTitle("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -101,12 +95,7 @@ export default function CommitmentsPage() {
     }
   }
 
-  const filteredCommitments = useMemo(() => {
-    if (!commitments) return null;
-    const q = search.trim().toLowerCase();
-    if (!q) return commitments;
-    return commitments.filter((c) => c.number.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || companyName(c.companyId).toLowerCase().includes(q));
-  }, [commitments, search, companies]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<Commitment>[] = [
     { key: "number", header: t("number"), render: (c) => c.number, sortValue: (c) => c.number, width: "110px" },
@@ -173,21 +162,48 @@ export default function CommitmentsPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="commitments"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
-          activeFilters={{}}
-          onFilterChange={() => undefined}
-          onClearAll={() => setSearch("")}
+          filters={[
+            {
+              key: "type",
+              label: t("type"),
+              options: [
+                { value: "subcontract", label: t("typeSubcontract") },
+                { value: "po", label: t("typePo") },
+              ],
+            },
+            {
+              key: "companyId",
+              label: t("company"),
+              options: companies.map((c) => ({ value: c.companyId, label: c.name })),
+            },
+          ]}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<Commitment>
           columns={columns}
-          rows={filteredCommitments}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(c) => router.push(`/${locale}/projects/${params.id}/commitments/${c.id}`)}
-          emptyTitle={commitments && commitments.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

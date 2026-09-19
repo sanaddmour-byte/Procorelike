@@ -1,6 +1,7 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
   canEditOwnedRecord,
+  DEFAULT_PAGE_SIZE,
   formatPunchItemNumber,
   hasPermission,
   mergeFields,
@@ -10,11 +11,14 @@ import {
   resolveEffectiveLevel,
   type CreatePunchItemInput,
   type FieldConflict,
+  type ListPunchItemsQuery,
+  type PaginatedResult,
   type PermissionContext,
+  type PunchItemSortKey,
   type TransitionPunchItemStatusInput,
   type UpdatePunchItemInput,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import type { SyncApplyResult } from "./daily-log.service";
@@ -89,15 +93,51 @@ export async function findPunchItemById(
   });
 }
 
+const PUNCH_ITEM_SORT_COLUMNS: Record<
+  PunchItemSortKey,
+  typeof schema.punchItems.number | typeof schema.punchItems.status | typeof schema.punchItems.priority | typeof schema.punchItems.dueDate
+> = {
+  number: schema.punchItems.number,
+  status: schema.punchItems.status,
+  priority: schema.punchItems.priority,
+  dueDate: schema.punchItems.dueDate,
+};
+
 export async function listPunchItems(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<PunchItemRow[]> {
+  query: ListPunchItemsQuery = {},
+): Promise<PaginatedResult<PunchItemRow>> {
   requirePermission(ctx, "punch_list", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.punchItems).where(eq(schema.punchItems.projectId, projectId));
+    const conditions = [eq(schema.punchItems.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.punchItems.status, query.status));
+    if (query.assigneeUserId) conditions.push(eq(schema.punchItems.assigneeUserId, query.assigneeUserId));
+    if (query.search) {
+      conditions.push(or(ilike(schema.punchItems.description, `%${query.search}%`), ilike(schema.punchItems.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = PUNCH_ITEM_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.punchItems).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.punchItems).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

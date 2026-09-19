@@ -1,9 +1,23 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const punchItemPrioritySchema = z.enum(["low", "medium", "high"]);
 export const punchItemStatusSchema = z.enum(["open", "ready_for_review", "not_accepted", "in_dispute", "approved", "closed"]);
 export type PunchItemPriority = z.infer<typeof punchItemPrioritySchema>;
 export type PunchItemStatus = z.infer<typeof punchItemStatusSchema>;
+
+export const PUNCH_ITEM_SORT_KEYS = ["number", "status", "priority", "dueDate"] as const;
+export type PunchItemSortKey = (typeof PUNCH_ITEM_SORT_KEYS)[number];
+
+/** GET /punch-items's query contract (Phase 22, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). Search matches description (punch items have no separate title field) and number. */
+export const listPunchItemsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(PUNCH_ITEM_SORT_KEYS).optional(),
+    status: punchItemStatusSchema.optional(),
+    assigneeUserId: z.string().uuid().optional(),
+  })
+  .strict();
+export type ListPunchItemsQuery = z.infer<typeof listPunchItemsQuerySchema>;
 
 export const createPunchItemSchema = z
   .object({
