@@ -377,6 +377,38 @@ one.
   data already exists, so there's no history before a record's own
   creation date.
 
+## 9k. Action Plans (user-directed, Phase 18)
+
+| Table | Key fields | Relationships | Notes |
+|---|---|---|---|
+| `action_plan_templates` | project_id, name, description | fk projects | Admin-authored, reusable; `directory:admin` gated writes |
+| `action_plan_template_items` | template_id, description, default_due_days, sort_order | fk action_plan_templates, cascade delete | `default_due_days` is a UI hint only, never enforced server-side |
+| `action_plans` | project_id, template_id (nullable), name, source_type (reuses `corrective_action_source_type`), source_id | fk projects; fk action_plan_templates, set null on delete | No `status` column -- derived at read time from linked `corrective_actions` rows |
+
+`corrective_actions` gained a nullable `action_plan_id` fk (set null on
+delete) -- instantiating a plan bulk-creates one ordinary
+`corrective_actions` row per item, each stamped with the new plan's id,
+rather than a parallel item-tracking system. Every existing corrective-
+action list/transition/permission code path (9b) keeps working
+unchanged; an Action Plan is a named, templated *batch* of corrective
+actions, not a new kind of tracked item. Full detail in
+`docs/ROADMAP.md`'s Phase 18 gate report.
+
+**API surface**: `/action-plan-templates` (template + item CRUD,
+`directory:admin` writes / `safety:read` listing) and `/action-plans`
+(`POST` instantiates -- `safety:standard`, matching
+`createCorrectiveAction`'s own gate; `GET` lists with a derived
+`status`/`itemCount`/`completedCount` per plan, `safety:read`).
+
+**Scope cuts, documented rather than silently incomplete:**
+- Project-scoped templates only -- no company-level template library.
+- No automatic triggering -- every instantiation is an explicit action
+  from `CorrectiveActionsPanel`, never a rule engine.
+- Only reachable from the Safety Incident and Safety Observation pages
+  today, the same reach `CorrectiveActionsPanel` itself already had
+  (the `inspection` source type is schema/service-supported but has no
+  UI entry point yet, predating this phase).
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

@@ -2814,6 +2814,108 @@ half of item 11) was explicitly descoped by the user to "skip for now.") —
   confirmed the new `/analytics` route compiles and prerenders
   correctly.
 
+## Phase 18 gate report
+
+**Gate** (Phase 4 of the same 7-phase, user-directed follow-up as Phases
+15-17 — gap item #8 "Action Plans") — **PASSED**, see Verification.
+
+**What was built:**
+- **`packages/db`**: three new tables, deliberately a thin layer on top
+  of the existing `corrective_actions` table rather than a parallel
+  item-tracking system. `action_plan_templates` (project_id, name,
+  description) and `action_plan_template_items` (template_id fk cascade,
+  description, `default_due_days` — a UI hint only, never enforced
+  server-side — sort_order) hold the reusable, admin-authored template.
+  `action_plans` (project_id, template_id fk set-null, name, source_type
+  reusing the existing `corrective_action_source_type` enum, source_id)
+  is one instantiation of a template (or an ad-hoc plan with no
+  template) against a source record. `corrective_actions` gained a
+  nullable `action_plan_id` fk (set null on delete) — instantiating a
+  plan bulk-creates one ordinary `corrective_actions` row per item,
+  each stamped with the new plan's id, so every existing corrective-
+  action list/transition/permission code path keeps working completely
+  unchanged. An Action Plan has no `status` column of its own: it's
+  derived at read time from its linked corrective actions' own statuses
+  (`completed` only once every linked row reaches `completed`/`verified`,
+  otherwise `in_progress`), so the two can never drift the way a
+  separately-stored status would. RLS: templates/plans in the direct
+  `project_id` loop, template items in the child-via-parent loop.
+- **`packages/shared`**: `schemas/action-plan.schema.ts` — template
+  CRUD schemas, and `instantiateActionPlanSchema`, which takes the
+  final, concrete item list directly (description/assignedToUserId/
+  dueDate per item — the same required fields `createCorrectiveActionSchema`
+  already has for a single one-off action) rather than re-deriving
+  defaults server-side; the web client resolves a template's items into
+  pre-filled suggestions, but the server only ever accepts the caller's
+  confirmed values.
+- **`apps/api`**: `action-plan-template.service.ts` — template/item CRUD
+  gated `directory:admin` for writes (same "an admin manages structure
+  from one place" convention as custom field definitions and workflow
+  transition rules) but `safety:read` for listing, since any project
+  member who can already see corrective actions needs to be able to
+  pick a template when applying one. Routed at `/action-plan-templates`.
+  `action-plan.service.ts` — `instantiateActionPlan()` (gated
+  `safety:standard`, the same level `createCorrectiveAction` already
+  uses) inserts the plan row and every item's corrective-action row in
+  one transaction; `listActionPlans()` (`safety:read`) joins in each
+  plan's linked corrective actions to compute the derived status/
+  item-count/completed-count in application code, mirroring how
+  `dashboard.service.ts` already aggregates in JS rather than SQL for
+  small per-project result sets. Routed at `/action-plans`.
+- **`apps/web`**: `ActionPlanTemplatesSection.tsx` — a new section on
+  the project Settings page (alongside Custom Fields and Workflow
+  Rules) where a `directory:admin` defines templates and their ordered
+  items. `CorrectiveActionsPanel.tsx` (already shared across the Safety
+  Incident detail and Safety Observations list pages) gained an "Apply
+  action plan" flow: pick a template, confirm a plan name, then fill in
+  an assignee and due date per item (each pre-filled from
+  `defaultDueDays` where the template item set one) and submit --
+  instantiation refreshes the same corrective-actions list the panel
+  already renders, so the new items simply appear as ordinary,
+  independently-transitionable corrective actions, each carrying a
+  small "from action plan" badge.
+
+**Explicitly not built, on record:**
+- **Company-level (cross-project) action plan templates.** Templates
+  are project-scoped only, matching how Phase 15's custom fields and
+  Phase 16's workflow rules were also scoped per-project rather than
+  company-wide, to keep this phase's blast radius bounded.
+- **Automatic triggering** (e.g. "always apply this template when a
+  `critical`-severity incident is logged"). Every instantiation is an
+  explicit action from the Corrective Actions panel; there is no rule
+  engine deciding to apply a plan on the caller's behalf, which would
+  be a materially larger and riskier feature (silently creating
+  due-dated, assigned work items without a human choosing to).
+- **Inspection-sourced Action Plans.** `correctiveActionSourceTypeEnum`
+  already includes `inspection`, and the schema/service layer accepts
+  it, but `CorrectiveActionsPanel` (and therefore the new "Apply
+  action plan" entry point) is only actually rendered on the Safety
+  Incident and Safety Observation pages today -- the same gap Phase 9's
+  own corrective-actions work already had, not something this phase
+  introduced or was asked to close.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 188 tests across 22 files,
+  unaffected; `apps/api`: 151 tests across 32 files, including the new
+  4-test `action-plans.test.ts` — a non-admin is rejected from creating
+  a template, an admin creates a template with two ordered items and
+  fetches its detail, instantiating a plan creates linked corrective
+  actions whose derived plan status starts `in_progress` and flips to
+  `completed` only once *both* linked actions reach `completed`, and a
+  non-`safety:standard` caller is rejected from instantiating; a
+  pre-existing, unrelated test-fragility bug was also fixed in
+  `submittal.test.ts`, whose number-format assertion assumed exactly 3
+  digits when `formatSubmittalNumber`'s zero-padding is actually a
+  *minimum* of 3 -- this project's spec-section sequence had run past
+  999 after many session test runs, so the regex was widened from
+  `\d{3}$` to `\d{3,}$` to match the real invariant; `apps/web`: 28
+  tests unaffected; i18n key parity confirmed identical between
+  `en.json`/`ar.json`, `ActionPlans` namespace and 4 new
+  `CorrectiveActions` keys added to both). Full `next build` also
+  confirmed the `/settings` route (now with the Action Plan Templates
+  section) still compiles and prerenders correctly.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

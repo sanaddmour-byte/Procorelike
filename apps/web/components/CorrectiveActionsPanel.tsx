@@ -13,11 +13,39 @@ interface CorrectiveAction {
   status: CorrectiveActionStatus;
   completedAt: string | null;
   verifiedAt: string | null;
+  actionPlanId: string | null;
 }
 
 interface Member {
   userId: string;
   name: string;
+}
+
+interface ActionPlanTemplate {
+  id: string;
+  name: string;
+}
+
+interface ActionPlanTemplateItem {
+  id: string;
+  description: string;
+  defaultDueDays: number | null;
+}
+
+interface ActionPlanTemplateDetail extends ActionPlanTemplate {
+  items: ActionPlanTemplateItem[];
+}
+
+interface PlanItemDraft {
+  description: string;
+  assignedToUserId: string;
+  dueDate: string;
+}
+
+function todayPlusDays(days: number | null): string {
+  const date = new Date();
+  date.setDate(date.getDate() + (days ?? 0));
+  return date.toISOString().slice(0, 10);
 }
 
 const NEXT_STATUS: Record<CorrectiveActionStatus, CorrectiveActionStatus[]> = {
@@ -55,6 +83,13 @@ export function CorrectiveActionsPanel({
   // action) and overwriting fresher state with stale data.
   const loadRequestId = useRef(0);
 
+  const [templates, setTemplates] = useState<ActionPlanTemplate[]>([]);
+  const [showApplyPlan, setShowApplyPlan] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [planName, setPlanName] = useState("");
+  const [planItems, setPlanItems] = useState<PlanItemDraft[]>([]);
+  const [applyingPlan, setApplyingPlan] = useState(false);
+
   function load(): void {
     const requestId = ++loadRequestId.current;
     apiJson<CorrectiveAction[]>(`/corrective-actions?projectId=${projectId}&sourceType=${sourceType}&sourceId=${sourceId}`)
@@ -67,6 +102,52 @@ export function CorrectiveActionsPanel({
   useEffect(() => {
     load();
   }, [projectId, sourceType, sourceId]);
+
+  useEffect(() => {
+    apiJson<ActionPlanTemplate[]>(`/action-plan-templates?projectId=${projectId}`)
+      .then(setTemplates)
+      .catch(() => setTemplates([]));
+  }, [projectId]);
+
+  function handleSelectTemplate(templateId: string): void {
+    setSelectedTemplateId(templateId);
+    if (!templateId) {
+      setPlanItems([]);
+      setPlanName("");
+      return;
+    }
+    apiJson<ActionPlanTemplateDetail>(`/action-plan-templates/${templateId}?projectId=${projectId}`)
+      .then((detail) => {
+        setPlanName(detail.name);
+        setPlanItems(detail.items.map((item) => ({ description: item.description, assignedToUserId: "", dueDate: todayPlusDays(item.defaultDueDays) })));
+      })
+      .catch(() => setError(tc("errorGeneric")));
+  }
+
+  function updatePlanItem(index: number, patch: Partial<PlanItemDraft>): void {
+    setPlanItems((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  }
+
+  async function handleApplyPlan(e: FormEvent): Promise<void> {
+    e.preventDefault();
+    if (planItems.some((item) => !item.assignedToUserId || !item.dueDate)) return;
+    setApplyingPlan(true);
+    try {
+      await apiJson("/action-plans", {
+        method: "POST",
+        body: JSON.stringify({ projectId, templateId: selectedTemplateId, name: planName, sourceType, sourceId, items: planItems }),
+      });
+      setShowApplyPlan(false);
+      setSelectedTemplateId("");
+      setPlanName("");
+      setPlanItems([]);
+      load();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setApplyingPlan(false);
+    }
+  }
 
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
@@ -110,17 +191,93 @@ export function CorrectiveActionsPanel({
 
   return (
     <div className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="text-sm font-bold text-navy-900">{t("title")}</h2>
-        <button
-          type="button"
-          onClick={() => setShowForm((s) => !s)}
-          className="rounded-lg border-2 border-ink bg-white px-2 py-1 text-xs font-semibold text-navy-800"
-        >
-          {t("newAction")}
-        </button>
+        <div className="flex gap-2">
+          {templates.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowApplyPlan((s) => !s)}
+              className="rounded-lg border-2 border-ink bg-white px-2 py-1 text-xs font-semibold text-navy-800"
+            >
+              {t("applyPlan")}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowForm((s) => !s)}
+            className="rounded-lg border-2 border-ink bg-white px-2 py-1 text-xs font-semibold text-navy-800"
+          >
+            {t("newAction")}
+          </button>
+        </div>
       </div>
       {error && <p className="text-sm text-maroon-700">{error}</p>}
+
+      {showApplyPlan && (
+        <form onSubmit={(e) => void handleApplyPlan(e)} className="mb-3 flex flex-col gap-2 rounded-lg border-2 border-orange-200 bg-white p-3">
+          <select
+            required
+            value={selectedTemplateId}
+            onChange={(e) => handleSelectTemplate(e.target.value)}
+            className="rounded-lg border-2 border-ink px-2 py-1 text-sm"
+          >
+            <option value="">{t("selectTemplate")}</option>
+            {templates.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.name}
+              </option>
+            ))}
+          </select>
+          {selectedTemplateId && (
+            <>
+              <input
+                required
+                placeholder={t("planNamePlaceholder")}
+                value={planName}
+                onChange={(e) => setPlanName(e.target.value)}
+                className="rounded-lg border-2 border-ink px-2 py-1 text-sm"
+              />
+              <ol className="flex list-decimal flex-col gap-2 ps-4">
+                {planItems.map((item, i) => (
+                  <li key={i} className="text-sm">
+                    <p className="mb-1">{item.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <select
+                        required
+                        value={item.assignedToUserId}
+                        onChange={(e) => updatePlanItem(i, { assignedToUserId: e.target.value })}
+                        className="rounded-lg border-2 border-ink px-2 py-1 text-xs"
+                      >
+                        <option value="">{t("assignTo")}</option>
+                        {members.map((m) => (
+                          <option key={m.userId} value={m.userId}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="date"
+                        required
+                        value={item.dueDate}
+                        onChange={(e) => updatePlanItem(i, { dueDate: e.target.value })}
+                        className="rounded-lg border-2 border-ink px-2 py-1 text-xs"
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <button
+                type="submit"
+                disabled={applyingPlan}
+                className="self-start rounded-lg border-2 border-ink bg-navy-700 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+              >
+                {applyingPlan ? tc("saving") : t("applyPlan")}
+              </button>
+            </>
+          )}
+        </form>
+      )}
 
       {showForm && (
         <form onSubmit={(e) => void handleCreate(e)} className="mb-3 flex flex-col gap-2 rounded-lg border-2 border-orange-200 bg-white p-3">
@@ -173,6 +330,7 @@ export function CorrectiveActionsPanel({
             </div>
             <p className="mt-1 text-xs text-navy-600">
               {t("assignedTo")}: {memberName(a.assignedToUserId)} · {t("due")}: {a.dueDate.slice(0, 10)}
+              {a.actionPlanId && <span className="ms-2 rounded bg-navy-50 px-1.5 py-0.5 text-navy-700">{t("fromPlan")}</span>}
             </p>
             {NEXT_STATUS[a.status].length > 0 && (
               <div className="mt-2 flex gap-2">

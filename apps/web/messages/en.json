@@ -1047,7 +1047,11 @@
     "statusOpen": "Open",
     "statusInProgress": "In progress",
     "statusCompleted": "Completed",
-    "statusVerified": "Verified"
+    "statusVerified": "Verified",
+    "applyPlan": "Apply action plan",
+    "selectTemplate": "Select a template…",
+    "planNamePlaceholder": "Plan name",
+    "fromPlan": "From action plan"
   },
   "PrimeContract": {
     "title": "Prime Contract",
@@ -1274,5 +1278,18 @@
     "avgTimeToClose": "Average time to close",
     "days": "days",
     "noData": "No data yet"
+  },
+  "ActionPlans": {
+    "templatesHeading": "Action plan templates",
+    "templatesIntro": "Define a reusable set of action items that can be applied in one step to a safety incident or observation, instead of logging each corrective action by hand.",
+    "noTemplates": "No action plan templates defined for this project yet.",
+    "noItems": "No items in this template yet.",
+    "newTemplate": "New template",
+    "templateNamePlaceholder": "Template name",
+    "templateDescriptionPlaceholder": "Description (optional)",
+    "itemDescriptionPlaceholder": "Item description",
+    "dueInDaysPlaceholder": "Due in (days)",
+    "dueInDays": "due in {days} days",
+    "addItem": "Add item"
   }
 }

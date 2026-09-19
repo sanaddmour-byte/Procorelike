@@ -124,6 +124,78 @@ export const correctiveActionStatusEnum = pgEnum("corrective_action_status", [
 ]);
 
 /**
+ * Procore's Action Plans: a reusable, admin-defined template of action
+ * items that gets instantiated in one shot against a source record (an
+ * incident, observation, or failed inspection) instead of logging each
+ * corrective action one at a time. Deliberately built as a thin layer on
+ * top of `correctiveActions` rather than a parallel item-tracking table:
+ * instantiating a template bulk-creates one `correctiveActions` row per
+ * item, each stamped with `actionPlanId`, so every existing corrective-
+ * action list/transition/permission code path keeps working unchanged --
+ * an Action Plan is just a named, templated *batch* of corrective actions.
+ */
+export const actionPlanTemplates = pgTable(
+  "action_plan_templates",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    name: varchar("name", { length: 200 }).notNull(),
+    description: text("description"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...auditColumns(),
+  },
+  (table) => [index("action_plan_templates_project_id_idx").on(table.projectId)],
+);
+
+export const actionPlanTemplateItems = pgTable(
+  "action_plan_template_items",
+  {
+    id: idColumn(),
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => actionPlanTemplates.id, { onDelete: "cascade" }),
+    description: text("description").notNull(),
+    /** A UI hint only ("due in N days from today") -- instantiation always takes an explicit due date per item, the same required field createCorrectiveActionSchema already has. */
+    defaultDueDays: integer("default_due_days"),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (table) => [index("action_plan_template_items_template_id_idx").on(table.templateId)],
+);
+
+/**
+ * One instantiation of a template (or an ad-hoc plan with no template)
+ * against a source record. Has no `status` column of its own -- whether
+ * a plan is "in progress" or "completed" is derived from its linked
+ * `correctiveActions` rows' own statuses at read time, so the two can
+ * never drift apart the way a separately-stored status would.
+ */
+export const actionPlans = pgTable(
+  "action_plans",
+  {
+    id: idColumn(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    templateId: uuid("template_id").references(() => actionPlanTemplates.id, { onDelete: "set null" }),
+    name: varchar("name", { length: 200 }).notNull(),
+    sourceType: correctiveActionSourceTypeEnum("source_type").notNull(),
+    sourceId: uuid("source_id").notNull(),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("action_plans_project_id_idx").on(table.projectId),
+    index("action_plans_source_idx").on(table.sourceType, table.sourceId),
+  ],
+);
+
+/**
  * Procore's Corrective Actions: a trackable, assignable, due-dated action
  * item spawned from an incident, observation, or failed inspection --
  * distinct from safetyIncidents.correctiveAction, which is just a free-text
@@ -150,6 +222,8 @@ export const correctiveActions = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     verifiedBy: uuid("verified_by").references(() => users.id),
     verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    /** Set when this action was created as part of an Action Plan instantiation rather than logged one-off; null'd out (not blocked) if the plan is ever deleted. */
+    actionPlanId: uuid("action_plan_id").references(() => actionPlans.id, { onDelete: "set null" }),
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id),
@@ -159,5 +233,6 @@ export const correctiveActions = pgTable(
   (table) => [
     index("corrective_actions_project_id_idx").on(table.projectId),
     index("corrective_actions_source_idx").on(table.sourceType, table.sourceId),
+    index("corrective_actions_action_plan_id_idx").on(table.actionPlanId),
   ],
 );

@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionPlanTemplatesSection } from "@/components/ActionPlanTemplatesSection";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { WorkflowRulesSection } from "@/components/WorkflowRulesSection";
 import { apiJson, ApiClientError } from "@/lib/api-client";
@@ -279,6 +280,8 @@ export default function ProjectSettingsPage() {
       </section>
 
       <WorkflowRulesSection projectId={params.id} moduleLabel={(m) => tm(m)} />
+
+      <ActionPlanTemplatesSection projectId={params.id} />
     </main>
   );
 }

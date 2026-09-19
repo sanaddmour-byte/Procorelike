@@ -43,6 +43,7 @@ export * from "./schemas/pdf-sketch.schema";
 export * from "./schemas/cpm-schedule.schema";
 export * from "./schemas/document-control.schema";
 export * from "./schemas/corrective-action.schema";
+export * from "./schemas/action-plan.schema";
 export * from "./schemas/esignature.schema";
 export * from "./schemas/prequalification.schema";
 export * from "./schemas/bidding.schema";

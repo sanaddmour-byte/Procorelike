@@ -5,6 +5,8 @@ import type { ApiDbClients } from "./db";
 import type { Env } from "./env";
 import { correlationMiddleware } from "./lib/correlation";
 import { errorHandler } from "./lib/errors";
+import { actionPlanTemplatesRouter } from "./routes/action-plan-templates.routes";
+import { actionPlansRouter } from "./routes/action-plans.routes";
 import { adminRouter } from "./routes/admin.routes";
 import { attachmentsRouter } from "./routes/attachments.routes";
 import { authRouter } from "./routes/auth.routes";
@@ -109,6 +111,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/transmittals", transmittalsRouter(clients.appDb.db, env));
   app.use("/drawing-sets", drawingSetsRouter(clients.appDb.db, env));
   app.use("/corrective-actions", correctiveActionsRouter(clients.appDb.db, env));
+  app.use("/action-plan-templates", actionPlanTemplatesRouter(clients.appDb.db, env));
+  app.use("/action-plans", actionPlansRouter(clients.appDb.db, env));
   app.use("/prime-contracts", primeContractRouter(clients.appDb.db, env));
   app.use("/direct-costs", directCostRouter(clients.appDb.db, env));
   app.use("/prequalifications", prequalificationRouter(clients.appDb.db, env));

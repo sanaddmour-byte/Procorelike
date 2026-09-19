@@ -93,7 +93,9 @@ describe("Submittals", () => {
       .set("authorization", `Bearer ${omarToken}`)
       .send({ projectId, specSectionId, title: "Concrete mix design submittal" });
     expect(submittalRes.status).toBe(201);
-    expect(submittalRes.body.number).toMatch(/^SUB-03\.30\.00-\d{3}$/);
+    // formatSubmittalNumber zero-pads to a *minimum* of 3 digits (packages/shared/src/business-rules/numbering.ts)
+    // -- this project's spec-section sequence has run past 999 after many session test runs, so \d{3,} (not \d{3}) is the real invariant.
+    expect(submittalRes.body.number).toMatch(/^SUB-03\.30\.00-\d{3,}$/);
     const submittalId = submittalRes.body.id as string;
 
     const packageRes = await request(app)

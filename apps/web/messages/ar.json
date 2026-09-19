@@ -1047,7 +1047,11 @@
     "statusOpen": "مفتوح",
     "statusInProgress": "قيد التنفيذ",
     "statusCompleted": "مكتمل",
-    "statusVerified": "تم التحقق"
+    "statusVerified": "تم التحقق",
+    "applyPlan": "تطبيق خطة عمل",
+    "selectTemplate": "اختر قالبًا…",
+    "planNamePlaceholder": "اسم الخطة",
+    "fromPlan": "من خطة عمل"
   },
   "PrimeContract": {
     "title": "العقد الرئيسي",
@@ -1274,5 +1278,18 @@
     "avgTimeToClose": "متوسط زمن الإغلاق",
     "days": "أيام",
     "noData": "لا توجد بيانات بعد"
+  },
+  "ActionPlans": {
+    "templatesHeading": "قوالب خطط العمل",
+    "templatesIntro": "عرّف مجموعة قابلة لإعادة الاستخدام من بنود العمل يمكن تطبيقها بخطوة واحدة على حادثة أو ملاحظة سلامة، بدلاً من تسجيل كل إجراء تصحيحي يدويًا.",
+    "noTemplates": "لا توجد قوالب خطط عمل معرّفة لهذا المشروع بعد.",
+    "noItems": "لا توجد بنود في هذا القالب بعد.",
+    "newTemplate": "قالب جديد",
+    "templateNamePlaceholder": "اسم القالب",
+    "templateDescriptionPlaceholder": "الوصف (اختياري)",
+    "itemDescriptionPlaceholder": "وصف البند",
+    "dueInDaysPlaceholder": "الاستحقاق خلال (أيام)",
+    "dueInDays": "الاستحقاق خلال {days} أيام",
+    "addItem": "إضافة بند"
   }
 }
