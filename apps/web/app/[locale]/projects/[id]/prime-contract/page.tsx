@@ -1,7 +1,10 @@
 "use client";
 
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import type { PrimeContractStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
@@ -36,6 +39,12 @@ const NEXT_STATUS: Record<PrimeContractStatus, PrimeContractStatus[]> = {
 function money(value: string): string {
   return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+const STATUS_TONE: Record<PrimeContractStatus, StatusTone> = {
+  draft: "neutral",
+  executed: "success",
+  closed: "neutral",
+};
 
 export default function PrimeContractPage() {
   const t = useTranslations("PrimeContract");
@@ -161,7 +170,7 @@ export default function PrimeContractPage() {
   return (
     <>
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        <PageHeader title={t("title")} />
         {error && <p className="text-maroon-700">{error}</p>}
 
         {!contract && !notFound && !error && <p>{tc("loading")}</p>}
@@ -204,9 +213,9 @@ export default function PrimeContractPage() {
         {contract && (
           <div className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
             <div className="mb-2 flex items-center justify-between">
-              <div>
+              <div className="flex items-center gap-2">
                 <span className="font-bold text-navy-900">{contract.contractNumber}</span>
-                <span className="ml-2 whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(contract.status)}</span>
+                <StatusBadge tone={STATUS_TONE[contract.status]} label={statusLabel(contract.status)} />
               </div>
               {!editing && (
                 <button onClick={startEdit} className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800">

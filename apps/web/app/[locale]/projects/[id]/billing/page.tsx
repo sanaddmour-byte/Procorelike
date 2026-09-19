@@ -1,11 +1,15 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 interface Commitment {
   id: string;
@@ -25,6 +29,13 @@ function statusKey(status: PaymentApplication["status"]): string {
   return { draft: "statusDraft", submitted: "statusSubmitted", certified: "statusCertified", paid: "statusPaid" }[status];
 }
 
+const STATUS_TONE: Record<PaymentApplication["status"], StatusTone> = {
+  draft: "neutral",
+  submitted: "warning",
+  certified: "info",
+  paid: "success",
+};
+
 export default function BillingPage() {
   const t = useTranslations("Billing");
   const tc = useTranslations("Common");
@@ -35,6 +46,8 @@ export default function BillingPage() {
   const [applications, setApplications] = useState<PaymentApplication[] | null>(null);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [commitmentId, setCommitmentId] = useState("");
   const [periodStart, setPeriodStart] = useState("");
@@ -91,15 +104,45 @@ export default function BillingPage() {
     }
   }
 
+  const filteredApplications = useMemo(() => {
+    if (!applications) return null;
+    const q = search.trim().toLowerCase();
+    return applications.filter((app) => {
+      if (statusFilter && app.status !== statusFilter) return false;
+      if (q && !commitmentLabel(app.commitmentId).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [applications, commitments, search, statusFilter]);
+
+  const columns: DataTableColumn<PaymentApplication>[] = [
+    { key: "commitment", header: t("commitment"), render: (app) => commitmentLabel(app.commitmentId), sortValue: (app) => commitmentLabel(app.commitmentId) },
+    {
+      key: "period",
+      header: t("period"),
+      render: (app) => `${app.periodStart.slice(0, 10)} — ${app.periodEnd.slice(0, 10)}`,
+      sortValue: (app) => app.periodStart,
+      width: "220px",
+    },
+    {
+      key: "status",
+      header: t("status"),
+      render: (app) => <StatusBadge tone={STATUS_TONE[app.status]} label={t(statusKey(app.status))} />,
+      sortValue: (app) => app.status,
+      width: "120px",
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-            {t("newButton")}
-          </button>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+              {t("newButton")}
+            </button>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -133,24 +176,33 @@ export default function BillingPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!applications && !error && <p>{tc("loading")}</p>}
-        {applications && applications.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
 
-        <ul className="flex flex-col gap-3">
-          {applications?.map((app) => (
-            <li key={app.id}>
-              <Link href={`/${locale}/projects/${params.id}/billing/${app.id}`} className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-navy-900">{commitmentLabel(app.commitmentId)}</span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{t(statusKey(app.status))}</span>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">
-                  {app.periodStart.slice(0, 10)} — {app.periodEnd.slice(0, 10)}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["draft", "submitted", "certified", "paid"] as const).map((s) => ({ value: s, label: t(statusKey(s)) })),
+            },
+          ]}
+          activeFilters={{ status: statusFilter }}
+          onFilterChange={(_key, value) => setStatusFilter(value)}
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter("");
+          }}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<PaymentApplication>
+          columns={columns}
+          rows={filteredApplications}
+          onRowClick={(app) => router.push(`/${locale}/projects/${params.id}/billing/${app.id}`)}
+          emptyTitle={applications && applications.length > 0 ? t("noResults") : t("empty")}
+        />
       </main>
     </>
   );

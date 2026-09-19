@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { MODULES, PERMISSION_LEVELS, type Module, type PermissionLevel } from "@siteops/shared";
@@ -170,7 +171,9 @@ export default function PermissionsPage() {
         <Link href={`/${locale}/projects`} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
-        <h1 className="mb-4 mt-2 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        <div className="mt-2">
+          <PageHeader title={t("title")} />
+        </div>
         {error && <p className="text-maroon-700">{error}</p>}
         {forbidden && <p className="text-navy-600">{t("forbidden")}</p>}
 

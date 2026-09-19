@@ -1,13 +1,17 @@
 "use client";
 
 import { CorrectiveActionsPanel } from "@/components/CorrectiveActionsPanel";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import type { SafetyObservationCategory, SafetyObservationStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 interface Member {
   userId: string;
@@ -35,6 +39,11 @@ function statusLabel(status: SafetyObservationStatus, t: (key: string) => string
   return { open: t("statusOpen"), resolved: t("statusResolved") }[status];
 }
 
+const STATUS_TONE: Record<SafetyObservationStatus, StatusTone> = {
+  open: "warning",
+  resolved: "success",
+};
+
 export default function SafetyObservationsPage() {
   const t = useTranslations("Safety");
   const tc = useTranslations("Common");
@@ -45,6 +54,8 @@ export default function SafetyObservationsPage() {
   const [observations, setObservations] = useState<SafetyObservation[] | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [observedAt, setObservedAt] = useState("");
   const [category, setCategory] = useState<SafetyObservationCategory>("unsafe_condition");
@@ -105,18 +116,30 @@ export default function SafetyObservationsPage() {
     }
   }
 
+  const filteredObservations = useMemo(() => {
+    if (!observations) return null;
+    const q = search.trim().toLowerCase();
+    return observations.filter((obs) => {
+      if (statusFilter && obs.status !== statusFilter) return false;
+      if (q && !obs.description.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [observations, search, statusFilter]);
+
   return (
     <>
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <Link
-            href={`/${locale}/projects/${params.id}/safety`}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800"
-          >
-            {t("incidentsTab")}
-          </Link>
-        </div>
+        <PageHeader
+          title={t("title")}
+          actions={
+            <Link
+              href={`/${locale}/projects/${params.id}/safety`}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800"
+            >
+              {t("incidentsTab")}
+            </Link>
+          }
+        />
 
         <div className="mb-4 flex gap-2 border-b-3 border-ink">
           <span className="border-b-4 border-maroon-600 px-3 py-2 text-sm font-semibold text-maroon-700">{t("observationsTab")}</span>
@@ -180,19 +203,41 @@ export default function SafetyObservationsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
+
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["open", "resolved"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+            },
+          ]}
+          activeFilters={{ status: statusFilter }}
+          onFilterChange={(_key, value) => setStatusFilter(value)}
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter("");
+          }}
+          clearAllLabel={tc("clearAll")}
+        />
+
         {!observations && !error && <p>{tc("loading")}</p>}
         {observations && observations.length === 0 && <p className="text-navy-600">{t("emptyObservations")}</p>}
+        {observations && observations.length > 0 && filteredObservations && filteredObservations.length === 0 && (
+          <p className="text-navy-600">{t("noResultsObservations")}</p>
+        )}
         <ul className="flex flex-col gap-3">
-          {observations?.map((obs) => (
+          {filteredObservations?.map((obs) => (
             <li
               key={obs.id}
               className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium">{categoryLabel(obs.category, t)}</span>
-                <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                  {statusLabel(obs.status, t)}
-                </span>
+                <StatusBadge tone={STATUS_TONE[obs.status]} label={statusLabel(obs.status, t)} />
               </div>
               <p className="mt-1 text-sm text-navy-700">{obs.description}</p>
               <p className="mt-1 text-xs text-navy-600">{obs.observedAt.slice(0, 16).replace("T", " ")}</p>

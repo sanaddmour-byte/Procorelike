@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
@@ -101,23 +102,25 @@ export default function PhotosPage() {
   return (
     <>
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <label className="cursor-pointer rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-            {uploading ? t("uploading") : t("uploadButton")}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              disabled={uploading}
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void handleFileSelected(file);
-              }}
-            />
-          </label>
-        </div>
+        <PageHeader
+          title={t("title")}
+          actions={
+            <label className="cursor-pointer rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+              {uploading ? t("uploading") : t("uploadButton")}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                disabled={uploading}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleFileSelected(file);
+                }}
+              />
+            </label>
+          }
+        />
         {error && <p className="text-maroon-700">{error}</p>}
         {!photos && !error && <p>{tc("loading")}</p>}
         {photos && photos.length === 0 && <p>{t("empty")}</p>}

@@ -1,11 +1,15 @@
 "use client";
 
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import type { PrequalificationStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 interface Company {
   id: string;
@@ -38,6 +42,14 @@ function money(value: string | null): string {
   return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const STATUS_TONE: Record<PrequalificationStatus, StatusTone> = {
+  invited: "neutral",
+  submitted: "info",
+  under_review: "warning",
+  qualified: "success",
+  disqualified: "danger",
+};
+
 export default function PrequalificationPage() {
   const t = useTranslations("Prequalification");
   const tc = useTranslations("Common");
@@ -48,6 +60,8 @@ export default function PrequalificationPage() {
   const [items, setItems] = useState<Prequalification[] | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [companyId, setCompanyId] = useState("");
   const [inviting, setInviting] = useState(false);
@@ -149,18 +163,30 @@ export default function PrequalificationPage() {
     }
   }
 
+  const filteredItems = useMemo(() => {
+    if (!items) return null;
+    const q = search.trim().toLowerCase();
+    return items.filter((item) => {
+      if (statusFilter && item.status !== statusFilter) return false;
+      if (q && !companyName(item.companyId).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [items, companies, search, statusFilter]);
+
   return (
     <>
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-          >
-            {t("newButton")}
-          </button>
-        </div>
+        <PageHeader
+          title={t("title")}
+          actions={
+            <button
+              onClick={() => setShowForm((s) => !s)}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+            >
+              {t("newButton")}
+            </button>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleInvite(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -181,18 +207,40 @@ export default function PrequalificationPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
+
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["invited", "submitted", "under_review", "qualified", "disqualified"] as const).map((s) => ({ value: s, label: statusLabel(s) })),
+            },
+          ]}
+          activeFilters={{ status: statusFilter }}
+          onFilterChange={(_key, value) => setStatusFilter(value)}
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter("");
+          }}
+          clearAllLabel={tc("clearAll")}
+        />
+
         {!items && !error && <p>{tc("loading")}</p>}
         {items && items.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
+        {items && items.length > 0 && filteredItems && filteredItems.length === 0 && <p className="text-navy-600">{t("noResults")}</p>}
 
         <div className="flex flex-col gap-3">
-          {items?.map((item) => {
+          {filteredItems?.map((item) => {
             const draft = submitDrafts[item.id] ?? { bondingCapacity: "", experienceModRate: "", annualRevenue: "", yearsInBusiness: "", referencesText: "" };
             const review = reviewDrafts[item.id] ?? { overallScore: "", reviewNotes: "" };
             return (
               <div key={item.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="font-bold text-navy-900">{companyName(item.companyId)}</span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(item.status)}</span>
+                  <StatusBadge tone={STATUS_TONE[item.status]} label={statusLabel(item.status)} />
                 </div>
 
                 {item.status !== "invited" && (

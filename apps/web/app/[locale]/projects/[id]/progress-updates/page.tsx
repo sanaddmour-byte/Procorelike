@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/ui/PageHeader";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
@@ -77,8 +78,7 @@ export default function ProgressUpdatesPage() {
   return (
     <>
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-        <p className="mb-4 text-sm text-navy-600">{t("subtitle")}</p>
+        <PageHeader title={t("title")} description={t("subtitle")} />
 
         {error && <p className="mb-4 text-maroon-700">{error}</p>}
         {!updates && !error && <p>{tc("loading")}</p>}

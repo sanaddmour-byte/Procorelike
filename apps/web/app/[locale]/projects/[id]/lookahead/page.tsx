@@ -1,7 +1,10 @@
 "use client";
 
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
@@ -76,6 +79,17 @@ interface ProjectCompany {
 }
 
 const CONSTRAINT_CATEGORIES: ConstraintCategory[] = ["design", "material", "permit", "access", "labour", "prerequisite", "other"];
+
+const CONSTRAINT_STATUS_TONE: Record<ScheduleConstraint["status"], StatusTone> = {
+  open: "warning",
+  cleared: "success",
+};
+
+const COMMITMENT_STATUS_TONE: Record<Commitment["status"], StatusTone> = {
+  promised: "neutral",
+  confirmed: "success",
+  declined: "danger",
+};
 
 export default function LookaheadPage() {
   const t = useTranslations("Lookahead");
@@ -271,7 +285,7 @@ export default function LookaheadPage() {
   return (
     <>
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
+        <PageHeader title={t("title")} />
 
         <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm">
           <label className="flex flex-col gap-1 text-sm">
@@ -385,7 +399,7 @@ export default function LookaheadPage() {
                       {t("clear")}
                     </button>
                   ) : (
-                    <span className="whitespace-nowrap rounded bg-navy-100 px-2 py-1 text-xs text-navy-800">{t("cleared")}</span>
+                    <StatusBadge tone={CONSTRAINT_STATUS_TONE[c.status]} label={t("cleared")} />
                   )}
                 </li>
               ))}
@@ -455,7 +469,7 @@ export default function LookaheadPage() {
                         {c.actualFinish && <span className="ml-2 text-navy-600">→ {c.actualFinish.slice(0, 10)}</span>}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{t(`commitmentStatus_${c.status}`)}</span>
+                        <StatusBadge tone={COMMITMENT_STATUS_TONE[c.status]} label={t(`commitmentStatus_${c.status}`)} />
                         {c.status === "promised" && (
                           <>
                             <button onClick={() => void handleCommitmentAction(c.id, "confirm")} className="rounded bg-navy-100 px-2 py-1 text-xs text-navy-800">
