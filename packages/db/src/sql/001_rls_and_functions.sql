@@ -339,6 +339,34 @@ CREATE POLICY notifications_update ON notifications FOR UPDATE USING (
   user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 
+ALTER TABLE push_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE push_tokens FORCE ROW LEVEL SECURITY;
+-- Two operations need to cross the "owns this row" boundary a strict
+-- self-only policy can't express in one statement: (1) dispatching a push
+-- runs under the *actor* whose action triggered a notification, not the
+-- *recipient*, and needs to read the recipient's tokens (the same "any
+-- authenticated session" reasoning notifications_insert already documents
+-- above); (2) Expo issues the same push token to whoever is logged into
+-- the same app install, so re-registering a device that changed hands is
+-- an UPDATE (via ON CONFLICT upsert) of a row the *previous* owner, not
+-- the caller, still holds. So this table trusts the API layer the same
+-- way notifications already does for INSERT: any authenticated session
+-- may read, insert, update, or delete a row; WITH CHECK only pins the
+-- *written* row's user_id to the caller's own, so nobody can make a row
+-- belong to someone else, but reassigning their own device onto an
+-- existing row is always possible. DELETE has no WITH CHECK to pin
+-- (Postgres doesn't apply one to a deleted row), so it relies on the
+-- service layer's own `WHERE user_id = caller` scoping
+-- (push-token.service.ts's unregisterPushToken) -- acceptable since a
+-- push token is an opaque device identifier with no access value of its
+-- own, the same trade notifications_insert already makes.
+DROP POLICY IF EXISTS push_tokens_all ON push_tokens;
+CREATE POLICY push_tokens_all ON push_tokens FOR ALL USING (
+  current_setting('app.user_id', true) IS NOT NULL
+) WITH CHECK (
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+);
+
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS audit_log_actor_insert ON audit_log;

@@ -9,6 +9,6 @@
     "newArchEnabled": true,
     "ios": { "supportsTablet": true },
     "android": {},
-    "plugins": ["expo-router"]
+    "plugins": ["expo-router", "expo-notifications"]
   }
 }

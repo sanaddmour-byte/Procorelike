@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { clearStoredAuth, loadStoredAuth, type StoredAuth } from "./auth-storage";
+import { registerForPushNotifications, unregisterForPushNotifications } from "./push-notifications";
 
 interface AuthContextValue {
   auth: StoredAuth | null;
@@ -20,7 +21,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
+  // Covers both a fresh login and a restored session on app relaunch -- either
+  // way, once we know who's logged in, this device should be registered for push.
+  useEffect(() => {
+    if (auth) void registerForPushNotifications();
+  }, [auth]);
+
   async function logout(): Promise<void> {
+    await unregisterForPushNotifications();
     await clearStoredAuth();
     setAuth(null);
   }

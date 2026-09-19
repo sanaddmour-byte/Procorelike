@@ -54,6 +54,7 @@ export * from "./schemas/custom-field.schema";
 export * from "./schemas/notification.schema";
 export * from "./schemas/workflow-rule.schema";
 export * from "./schemas/inbound-email.schema";
+export * from "./schemas/push-token.schema";
 
 export * from "./schedule/types";
 export * from "./schedule/validate";

@@ -2,8 +2,24 @@ import { schema, withRequestContext, type Database, type Tx } from "@siteops/db"
 import type { ListNotificationsQuery, NotificationPayload, NotificationType } from "@siteops/shared";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { NotFoundError } from "../lib/errors";
+import { sendExpoPushMessages } from "../lib/push";
 
 type NotificationRow = typeof schema.notifications.$inferSelect;
+
+/**
+ * Best-effort push fan-out to every device the recipient has registered
+ * (push_tokens_select's RLS lets the *actor's* session read the
+ * *recipient's* tokens -- see 001_rls_and_functions.sql). Never awaited by
+ * its caller and never throws past this point: a down or slow push
+ * provider must not affect the notification row it accompanies, exactly
+ * like auth.service.ts's invite-email precedent.
+ */
+async function dispatchPush(tx: Tx, recipientUserId: string, payload: NotificationPayload): Promise<void> {
+  const tokens = await tx.select({ token: schema.pushTokens.token }).from(schema.pushTokens).where(eq(schema.pushTokens.userId, recipientUserId));
+  if (tokens.length === 0) return;
+  const messages = tokens.map((t) => ({ to: t.token, title: "SiteOps", body: payload.summary, data: payload as Record<string, unknown> }));
+  sendExpoPushMessages(messages).catch((err) => console.error("Failed to send push notification", err));
+}
 
 /**
  * Inserts a notification for one recipient. Callers run this from inside
@@ -21,6 +37,7 @@ export async function notifyUser(
 ): Promise<void> {
   if (recipientUserId === actorUserId) return;
   await tx.insert(schema.notifications).values({ userId: recipientUserId, type, payload });
+  await dispatchPush(tx, recipientUserId, payload);
 }
 
 /** Convenience for the common "notify every id in this list, skipping the actor and duplicates" case. */

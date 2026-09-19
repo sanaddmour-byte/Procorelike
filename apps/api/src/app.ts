@@ -39,6 +39,7 @@ import { pdfCommentsRouter } from "./routes/pdf-comments.routes";
 import { pdfSketchesRouter } from "./routes/pdf-sketches.routes";
 import { permissionOverridesRouter, permissionTemplatesRouter } from "./routes/permissions.routes";
 import { photosRouter } from "./routes/photos.routes";
+import { pushTokensRouter } from "./routes/push-tokens.routes";
 import { prequalificationRouter } from "./routes/prequalification.routes";
 import { primeContractRouter } from "./routes/prime-contract.routes";
 import { projectsRouter } from "./routes/projects.routes";
@@ -127,6 +128,7 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/custom-field-definitions", customFieldDefinitionsRouter(clients.appDb.db, env));
   app.use("/custom-field-values", customFieldValuesRouter(clients.appDb.db, env));
   app.use("/notifications", notificationsRouter(clients.appDb.db, env));
+  app.use("/push-tokens", pushTokensRouter(clients.appDb.db, env));
   app.use("/workflow-transition-rules", workflowTransitionRulesRouter(clients.appDb.db, env));
 
   app.use(errorHandler);

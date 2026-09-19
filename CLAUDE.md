@@ -57,6 +57,7 @@ This is a multi-session build executed phase-by-phase (see `docs/ROADMAP.md`).
 | Auth | JWT access+refresh, argon2, email invite, per-device refresh tokens, optional TOTP 2FA |
 | Storage | S3-compatible (MinIO dev), pre-signed URLs only |
 | Offline (mobile) | expo-sqlite + outbox queue, `/sync/pull` + `/sync/push` (was WatermelonDB per this table's original lock — see `docs/ROADMAP.md` Phase 2 gate report for the deviation and why) |
+| Push (mobile) | expo-notifications + Expo's push API (`exp.host`) — added Phase 20, no EAS project configured yet (deployment-time step) |
 | Web data/state | TanStack Query + Zustand (UI state only) |
 | PDF | pdf-lib (generate), pdf.js (view/markup) |
 | i18n | next-intl (web), i18n-js (mobile); logical CSS properties only |
@@ -80,11 +81,17 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 19 (Email-to-project
-logging) is complete and gate-verified.** This is the fifth of 7 planned
-phases addressing a Procore competitive-gap analysis (see Phase 15's gate
-report for the full 7-phase plan); SSO/SAML was explicitly descoped by
-the user pending a real enterprise customer. Phase 16 added notifications
+mid-build corrections). As of this writing: **Phase 20 (Mobile push
+notifications) is complete and gate-verified.** This is the sixth of 7
+planned phases addressing a Procore competitive-gap analysis (see Phase
+15's gate report for the full 7-phase plan); SSO/SAML was explicitly
+descoped by the user pending a real enterprise customer. The original
+10-item gap list's items #1, #10, #13 were never recorded verbatim in
+this repo (only #5-#9/#11/#12 got named in their own gate reports), so
+Phase 20 closed a different, long-standing item instead: Assumption #8
+("mobile push notifications," on record since Phase 1) rather than guess
+at the missing numbering -- flagged plainly in Phase 20's own gate
+report. Phase 16 added notifications
 (`notification.service.ts`, wired into RFI/Submittal/Punch Item/Change
 Order key events, surfaced via a header bell) and workflow transition
 rules (`workflow-rule.service.ts`, letting a `directory:admin` narrow —
@@ -115,7 +122,16 @@ subtype. Wiring a real inbound-email provider (SendGrid Inbound Parse /
 Mailgun Routes / SES) is a deployment-time config step outside this
 repo, since translating a provider's native webhook format into this
 app's generic payload contract varies per provider and no production
-inbound-email account exists yet.
+inbound-email account exists yet. Phase 20 extended Phase 16's
+notification pipeline to `apps/mobile` via Expo push: a new `push_tokens`
+table, and `notifyUser()` (the one choke point every existing
+notification call site already goes through) now also fires a
+fire-and-forget push to every device a recipient has registered, never
+awaited, every failure swallowed — the same "best-effort side effect"
+posture `auth.service.ts` already takes for invite emails. Registration
+happens in `apps/mobile`'s `AuthProvider` on login/relaunch; a tapped
+notification deep-links straight to its RFI/Submittal/Punch Item/Change
+Order screen.
 
 Two things worth knowing before touching
 `packages/db/src/sql/001_rls_and_functions.sql`: a table's RLS policy must

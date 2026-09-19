@@ -464,6 +464,63 @@ they'd made the request with a real session.
   Correspondence row; there's no concept of an email thread mapping to a
   single, growing record.
 
+## 9m. Mobile push notifications (Phase 20)
+
+New `push_tokens` table (`user_id`, `token` unique, `platform` enum
+`ios`/`android`, `created_at`) -- one row per registered device, extending
+Phase 16's notification pipeline (`notification.service.ts`) from the web
+bell to `apps/mobile` via Expo's push service. `notifyUser()` (the single
+choke point every RFI/Submittal/Punch Item/Change Order notification call
+site already goes through, unchanged) now also reads the recipient's
+tokens and fires a fire-and-forget POST to Expo's push API
+(`apps/api/src/lib/push.ts`) after inserting the notification row -- never
+awaited, every failure swallowed, exactly like `auth.service.ts`'s
+existing `sendInviteEmail(...).catch(...)` precedent for invite emails. No
+existing call site changed.
+
+**RLS**: `push_tokens` needed a policy shape none of this schema's
+existing tables have -- two legitimate operations cross the "owns this
+row" boundary a strict self-only policy can't express in one statement:
+dispatching a push (the *actor* reads the *recipient*'s tokens) and a
+device changing hands (Expo issues the same token to whoever's logged
+into the same app install, so re-registering upserts across an ownership
+boundary). Rather than a `SECURITY DEFINER` helper, this table trusts the
+API layer the way `notifications_insert` already does for INSERT: any
+authenticated session may read/insert/update/delete, `WITH CHECK` only
+pins the *written* row's `user_id` to the caller's own. See the policy's
+own comment in `001_rls_and_functions.sql` for the full reasoning,
+including why DELETE has no equivalent DB-level pin (relies on
+`push-token.service.ts`'s own `WHERE user_id = caller` scoping).
+
+**API surface**: `POST /push-tokens` (register/reassign, upsert on the
+token's own uniqueness) and `DELETE /push-tokens` (self-scoped removal,
+a no-op rather than an error if the caller doesn't own that token) --
+both under `requireAuth`, no per-project permission (a device isn't
+scoped to a project).
+
+**Mobile wiring** (`apps/mobile`): `expo-notifications` (`~0.29.14`, the
+SDK 52-bundled version) -- flagged here as a new dependency per CLAUDE.md
+rule 10, though it's a first-party Expo package extending the
+already-locked Expo stack, not an outside-the-stack swap.
+`AuthProvider` requests permission and registers the device's Expo push
+token whenever `auth` becomes non-null (covers both a fresh login and a
+restored session on relaunch), and unregisters it on logout, while the
+session is still valid to authenticate the call. `app/_layout.tsx`'s
+`NotificationTapHandler` deep-links a tapped notification straight to its
+RFI/Submittal/Punch Item/Change Order screen, mirroring
+`NotificationBell.entityPath` on web exactly (same payload shape, same
+four modules with a detail screen to land on).
+
+**Scope cuts, documented rather than silently incomplete:**
+- No EAS project is configured in this sandbox, so `getExpoPushTokenAsync()`
+  will typically fail (swallowed, logged) in this dev environment; wiring
+  a real EAS project id is a deployment-time step, not application code.
+- No notification categories/actions (e.g. an inline "Mark read" action
+  from the OS notification tray) -- tapping only opens the app to the
+  entity.
+- No badge count sync between the OS app icon badge and the in-app unread
+  count; `shouldSetBadge: false` in the foreground handler is deliberate.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

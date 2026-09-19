@@ -376,6 +376,29 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const pushPlatformEnum = pgEnum("push_platform", ["ios", "android"]);
+
+/**
+ * One row per registered device (Expo push token), Phase 20's mobile
+ * extension of the Phase 16 notifications pipeline. `token` is globally
+ * unique -- a device re-registering (e.g. after a different user logs in
+ * on a shared device) upserts onto the same row rather than accumulating
+ * stale duplicates.
+ */
+export const pushTokens = pgTable(
+  "push_tokens",
+  {
+    id: idColumn(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    token: varchar("token", { length: 300 }).notNull(),
+    platform: pushPlatformEnum("platform").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("push_tokens_token_unique").on(table.token), index("push_tokens_user_id_idx").on(table.userId)],
+);
+
 export const numberSequences = pgTable(
   "number_sequences",
   {

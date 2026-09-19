@@ -2990,6 +2990,91 @@ Verification.
   confirmed the `/settings` route still compiles and prerenders
   correctly with the new inbound-email display.
 
+## Phase 20 gate report
+
+**Gate** (Phase 6 of the same 7-phase, user-directed follow-up as Phase
+15 -- items #1, #10, #13 of the original 10-candidate gap list were never
+recorded verbatim anywhere in this repo, only items #5-#9/#11/#12 got
+named in earlier gate reports, so with the user unavailable to re-supply
+them, this phase instead closes Assumption #8 on record since Phase 1:
+"mobile push notifications," a genuine Procore-parity gap and a direct
+extension of Phase 16's already-built notification pipeline) -- **PASSED**,
+see Verification.
+
+**What was built:**
+- **`packages/db`**: new `push_tokens` table (`user_id`, `token` unique,
+  `platform` enum `ios`/`android`, `created_at`) -- migration 0042. RLS:
+  a single `push_tokens_all` policy trusting the API layer (any
+  authenticated session may read/insert/update/delete, `WITH CHECK` pins
+  only the *written* row's `user_id` to the caller) rather than a strict
+  self-only policy, since two legitimate operations need to cross the
+  ownership boundary in one statement -- dispatching a push (the actor
+  reads the recipient's tokens) and a device changing hands (the same
+  Expo token gets re-registered under a different logged-in user). Full
+  reasoning is in the policy's own comment in
+  `001_rls_and_functions.sql`; discovered mid-build when a naive
+  self-only policy (mirroring `refresh_tokens_self`) correctly rejected
+  the reassignment case in a test, which is what surfaced the design gap
+  before it shipped.
+- **`packages/shared`**: `schemas/push-token.schema.ts` --
+  `registerPushTokenSchema`/`unregisterPushTokenSchema`.
+- **`apps/api`**: `lib/push.ts` -- `sendExpoPushMessages()`, a
+  fire-and-forget POST to Expo's push API (`https://exp.host/--/api/v2/push/send`)
+  with a 5s timeout, no new dependency (Node 20+'s global `fetch`).
+  `push-token.service.ts` -- register (upsert on the token's own
+  uniqueness) / unregister. `POST /push-tokens` and `DELETE /push-tokens`,
+  both `requireAuth`-gated, no per-project permission (a device isn't
+  project-scoped). `notification.service.ts`'s `notifyUser()` --
+  the single choke point every existing notification call site
+  (RFI/Submittal/Punch Item/Change Order, 13 call sites across 4
+  service files) already goes through, unchanged -- now also reads the
+  recipient's registered tokens and fires the push, never awaited and
+  every failure swallowed, exactly mirroring `auth.service.ts`'s
+  existing `sendInviteEmail(...).catch(...)` precedent for invite
+  emails. Since no seeded test user has a push token registered, none of
+  the pre-existing 157 API tests changed behavior or slowed down.
+- **`apps/mobile`**: added `expo-notifications` (`~0.29.14`, the SDK
+  52-bundled version -- flagged per CLAUDE.md rule 10, though it's a
+  first-party Expo package extending the already-locked stack, not an
+  outside-the-stack swap) and the `expo-notifications` config plugin.
+  `lib/push-notifications.ts` -- `registerForPushNotifications()`
+  (permission request + token fetch + register, called whenever
+  `AuthProvider`'s `auth` becomes non-null, covering both a fresh login
+  and a restored session on relaunch) and
+  `unregisterForPushNotifications()` (called from `logout()` while the
+  session is still valid to authenticate the call). `app/_layout.tsx`'s
+  new `NotificationTapHandler` deep-links a tapped notification straight
+  to its RFI/Submittal/Punch Item/Change Order screen via `entityPath()`,
+  a byte-for-byte port of `NotificationBell.entityPath` on web (same
+  payload shape, same four modules with a detail screen today). Every
+  step is wrapped in try/catch with the failure swallowed and logged --
+  a denied permission, an emulator with no push credentials, or (the
+  common case in this sandbox) no EAS project configured must never
+  block using the rest of the app.
+- **Explicitly not built, on record**: a real EAS project id (so
+  `getExpoPushTokenAsync()` will typically no-op in this dev sandbox --
+  wiring one is a deployment-time step); notification categories/actions
+  (an inline "Mark read" from the OS tray); OS app-icon badge count sync
+  with the in-app unread count (`shouldSetBadge: false` is deliberate).
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/db`: unaffected, RLS policy verified
+  manually via `psql \d push_tokens` showing both new policies applied;
+  `apps/api`: 162 tests across 34 files, including the new 5-test
+  `push-tokens.test.ts` -- rejects registration without a session,
+  registers a token, re-registering the same token under a different
+  user reassigns it (the case that caught the RLS design gap above),
+  unregistering another user's token is a no-op rather than an error,
+  and a notification to a recipient with a registered (deliberately
+  fake) token doesn't fail the underlying RFI-creation write it
+  accompanies; every pre-existing notification-triggering test file
+  re-verified unaffected; `apps/web`: 28 tests unaffected, no web
+  changes this phase; `apps/mobile`: `tsc`/`eslint` both clean, no test
+  files exist for mobile in this repo, consistent with every earlier
+  phase). Full `next build` also confirmed unaffected (no web routes
+  touched).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the
@@ -3019,10 +3104,10 @@ Verification.
    fully defined (docker-compose). Production topology (managed Postgres,
    container hosting, CDN, mobile app store distribution) is deferred to a
    decision point before Phase 8, once real infra constraints are known.
-8. **Mobile push notifications**: not called out in the functional spec
-   (only in-app notifications and email digests are). Treated as out of
-   scope for v1; the mobile sync-status indicator covers the "did my
-   stuff sync" need without push infra.
+8. **Mobile push notifications**: not called out in the original
+   functional spec (only in-app notifications and email digests were).
+   Superseded by Phase 20 (user-directed follow-up), which built push
+   delivery via Expo -- see Phase 20's gate report.
 9. **Structured safety incidents in T1**: the brief lists "safety
    incidents" as a Daily Log field (T1 #5) but a full structured
    `safety_incidents` table only appears with the T3 Safety module (#15).
