@@ -35,7 +35,8 @@
     "colorGreen": "أخضر",
     "colorBlack": "أسود",
     "dismiss": "إغلاق",
-    "delete": "حذف"
+    "delete": "حذف",
+    "exportAllCsv": "تصدير الكل (CSV)"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
@@ -126,7 +127,8 @@
     "prequalification": "التأهيل المسبق",
     "bidding": "المناقصات",
     "estimating": "التقدير",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "analytics": "التحليلات"
   },
   "DailyLog": {
     "title": "سجلات الأعمال اليومية",
@@ -1251,5 +1253,26 @@
     "requiredLevel": "المستوى المطلوب",
     "save": "حفظ",
     "saved": "تم الحفظ."
+  },
+  "Analytics": {
+    "title": "التحليلات",
+    "intro": "اتجاهات ومقاييس زمن الدورة مستمدة من سجل هذا المشروع نفسه -- لا بيانات ملفّقة، فقط ما هو مسجّل بالفعل.",
+    "forbidden": "ليس لديك صلاحية لعرض التحليلات في هذا المشروع.",
+    "noSections": "لا تتوفر أقسام تحليلات ضمن صلاحياتك في هذا المشروع.",
+    "rfisHeading": "طلبات المعلومات",
+    "punchListHeading": "قائمة الملاحظات",
+    "submittalsHeading": "المستندات المقدمة",
+    "safetyHeading": "السلامة",
+    "changeOrdersHeading": "أوامر التغيير",
+    "created": "تم الإنشاء",
+    "answered": "تمت الإجابة",
+    "closed": "مغلق",
+    "resolved": "تمت التسوية",
+    "incidents": "الحوادث",
+    "avgResponseTime": "متوسط زمن الاستجابة",
+    "avgCycleTime": "متوسط زمن الدورة",
+    "avgTimeToClose": "متوسط زمن الإغلاق",
+    "days": "أيام",
+    "noData": "لا توجد بيانات بعد"
   }
 }

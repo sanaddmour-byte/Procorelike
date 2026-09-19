@@ -4,7 +4,7 @@ import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { apiJson } from "@/lib/api-client";
+import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
 import { useProjectCurrency } from "@/lib/use-project-currency";
@@ -421,6 +421,12 @@ export default function ChangeOrdersPage() {
                 className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
               >
                 {tc("exportAllPdf")}
+              </button>
+              <button
+                onClick={() => void downloadFile(`/change-orders/summary-report?projectId=${params.id}&format=csv`, "change-order-register.csv")}
+                className="rounded-lg border-3 border-ink bg-white brutal-interactive px-3 py-1.5 text-sm font-semibold text-navy-800"
+              >
+                {tc("exportAllCsv")}
               </button>
               <button onClick={() => setShowCoForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white">
                 {t("newChangeOrder")}

@@ -2712,6 +2712,108 @@ half of item 11) was explicitly descoped by the user to "skip for now.") —
   confirmed the `/settings` route (now with the workflow-rules section)
   still compiles and prerenders correctly.
 
+## Phase 17 gate report
+
+**Gate** (Phase 3 of the same 7-phase, user-directed follow-up as Phases
+15-16 — gap item #7 "Analytics/BI") — **PASSED**, see Verification.
+
+**What was built:**
+- **The `reports` permission module's first real use.** It was defined
+  in `packages/shared`'s permission engine and seeded into every role's
+  default template from Phase 1 onward, but nothing ever checked it —
+  granting or revoking "Reports" access changed nothing observable. The
+  new analytics endpoint requires `reports:read`, closing that gap;
+  every other module's own read permission still separately gates its
+  own section within the response (see below), so a `reports:read`
+  caller only sees the sections their other permissions already allow.
+- **`packages/shared`**: `business-rules/trends.ts` (new, 10 tests) —
+  `bucketByWeek`/`bucketSumByMonth` (fixed-width time buckets, oldest
+  first, every bucket present even at zero so a quiet week/month isn't
+  silently dropped from a chart) and `averageDurationDays` (null for an
+  empty set, not `NaN` — "no data yet" and "zero days" are different
+  facts). Pure functions, no I/O, following the same convention as
+  `schedule/calendar.ts`.
+- **`apps/api`**: `analytics.service.ts` — `getProjectAnalytics()`
+  mirrors `dashboard.service.ts`'s per-section permission-gated
+  aggregation, but adds real trend/cycle-time math instead of a
+  snapshot count: RFIs (created-vs-officially-answered weekly, average
+  response time from the official response's `createdAt` minus the
+  RFI's own), Punch List (created-vs-closed weekly using
+  `punch_item_history` rows where `to_status = 'closed'`, average cycle
+  time), Submittals (created-vs-resolved weekly, where "resolved" means
+  reaching any status besides draft/in_review, using `updatedAt` as the
+  resolution timestamp), Safety (incidents-per-week from `occurred_at`,
+  by-severity, average time-to-close from `occurred_at` to `closed_at`),
+  Change Orders (approved cost impact summed by month, using the
+  `approval_chain`'s last entry's timestamp, by-status). Every number
+  comes from a timestamp the app already stored for some other reason —
+  no periodic snapshot job was added, so there is deliberately no trend
+  data before a record's own creation date. Routed at `GET
+  /projects/:id/analytics` in `projects.routes.ts`, next to the
+  existing dashboard route.
+- **`apps/api`**: CSV register-export twins of the five existing PDF
+  "export all" registers from Phase 13 (RFI/Submittal/Change
+  Order/Correspondence/Inspection) — `export.service.ts` gained
+  `toRfiRegisterCsv`/`toSubmittalRegisterCsv`/`toChangeOrderRegisterCsv`/
+  `toCorrespondenceRegisterCsv`/`toInspectionRegisterCsv`, reusing the
+  same `getXListReportData()` each PDF generator already calls, so the
+  two formats can never drift on what rows they include. Each module's
+  existing `GET /summary-report` route now branches on `?format=csv` —
+  no new route, no new permission gate (same `read`-level check the PDF
+  already used, since it's the same data a list page already shows a
+  `read`-level caller).
+- **`apps/web`**: new `projects/[id]/analytics` page (nav link added
+  next to Dashboard), gated on `reports:read` with the same
+  forbidden-state pattern as the Settings page. Three small hand-rolled
+  inline-SVG chart components (`components/charts/TrendBarChart.tsx`,
+  `MonthlyBarChart.tsx`, `StatusBreakdown.tsx`) — no charting library
+  dependency, following the Gantt module's own precedent (Phase 11b) of
+  hand-rolling visualization rather than adding one for a handful of
+  chart types. `lib/api-client.ts` gained `downloadFile()` (fetch
+  through the authenticated client, save via a synthetic anchor click)
+  — the CSV-download equivalent of the existing `usePdfViewer` hook's
+  fetch-then-render, wired into a new "Export All (CSV)" button next to
+  each of the five existing "Export All (PDF)" buttons.
+
+**Explicitly not built, on record:**
+- **Company-level (cross-project) analytics.** `company-dashboard.
+  service.ts`'s existing per-project rollup list was left as-is; a
+  portfolio-wide trend view is a reasonable next step but was out of
+  scope here to keep this phase to the per-project case, matching how
+  Phase 15's custom fields and Phase 16's workflow rules were also
+  scoped to specific tables/modules rather than every surface at once.
+- **A custom report builder** (arbitrary metric/dimension selection).
+  Out of scope per the user's own framing of gap #7 as "Analytics/BI
+  foundations" — five fixed, real trend views plus raw-data CSV export
+  covers the two things a small GC's "BI" actually means in practice
+  (a few key charts, and a spreadsheet to build their own charts from),
+  not an ad-hoc query builder.
+- **A periodic metrics-snapshot job.** Every trend above is derived
+  from timestamps already stored for another reason (creation dates,
+  status-history rows, `occurred_at`/`closed_at`). No cron/snapshot
+  infrastructure was added to pre-aggregate history, consistent with
+  this codebase's standing note (Phase 4's gate report) that there is
+  no in-process scheduler this sandbox can verify.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 188 tests across 22 files,
+  including the new 10-test `trends.test.ts`; `apps/api`: 147 tests
+  across 31 files, including the new 3-test `analytics.test.ts` — a
+  caller with no `reports` permission is rejected, a caller with
+  `reports:read` and read-or-above on every module gets every section
+  populated with real trend/status data from freshly-seeded records,
+  and a caller whose own module permission excludes one section (`qa_qc`:
+  `change_management:none`) gets that section omitted while others
+  still appear — and 2 new cases added to `summary-report.test.ts`
+  confirming `?format=csv` returns `text/csv` with the expected header
+  row and the same rows as the PDF version; `apps/web`: 28 tests
+  unaffected; i18n key parity confirmed identical between `en.json`/
+  `ar.json`, `Analytics` namespace and `ProjectNav.analytics`/
+  `Common.exportAllCsv` keys added to both). Full `next build` also
+  confirmed the new `/analytics` route compiles and prerenders
+  correctly.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

@@ -35,7 +35,8 @@
     "colorGreen": "Green",
     "colorBlack": "Black",
     "dismiss": "Dismiss",
-    "delete": "Delete"
+    "delete": "Delete",
+    "exportAllCsv": "Export All (CSV)"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -126,7 +127,8 @@
     "prequalification": "Prequalification",
     "bidding": "Bidding",
     "estimating": "Estimating",
-    "settings": "Settings"
+    "settings": "Settings",
+    "analytics": "Analytics"
   },
   "DailyLog": {
     "title": "Daily Logs",
@@ -1251,5 +1253,26 @@
     "requiredLevel": "Required level",
     "save": "Save",
     "saved": "Saved."
+  },
+  "Analytics": {
+    "title": "Analytics",
+    "intro": "Trends and cycle-time metrics derived from this project's own history -- no fabricated data, only what's already recorded.",
+    "forbidden": "You don't have permission to view analytics on this project.",
+    "noSections": "No analytics sections are available for your permissions on this project.",
+    "rfisHeading": "RFIs",
+    "punchListHeading": "Punch List",
+    "submittalsHeading": "Submittals",
+    "safetyHeading": "Safety",
+    "changeOrdersHeading": "Change Orders",
+    "created": "Created",
+    "answered": "Answered",
+    "closed": "Closed",
+    "resolved": "Resolved",
+    "incidents": "Incidents",
+    "avgResponseTime": "Average response time",
+    "avgCycleTime": "Average cycle time",
+    "avgTimeToClose": "Average time to close",
+    "days": "days",
+    "noData": "No data yet"
   }
 }

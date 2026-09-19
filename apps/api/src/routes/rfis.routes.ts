@@ -8,6 +8,7 @@ import { generateRfiListPdf } from "../lib/rfi-list-report";
 import { generateRfiPdf } from "../lib/rfi-report";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
+import { toRfiRegisterCsv } from "../services/export.service";
 import { loadPermissionContext } from "../services/permission.service";
 import * as rfiService from "../services/rfi.service";
 import { dispatchProjectEvent } from "../services/webhook.service";
@@ -50,6 +51,12 @@ export function rfisRouter(appDb: Database, authDb: Database, env: Env): Router 
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await rfiService.getRfiListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="rfi-register.csv"`);
+        res.send(toRfiRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateRfiListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="rfi-register.pdf"`);

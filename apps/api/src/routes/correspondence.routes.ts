@@ -9,6 +9,7 @@ import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import * as correspondenceService from "../services/correspondence.service";
+import { toCorrespondenceRegisterCsv } from "../services/export.service";
 import { loadPermissionContext } from "../services/permission.service";
 
 export function correspondenceRouter(appDb: Database, env: Env): Router {
@@ -55,6 +56,12 @@ export function correspondenceRouter(appDb: Database, env: Env): Router {
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await correspondenceService.getCorrespondenceListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="correspondence-register.csv"`);
+        res.send(toCorrespondenceRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateCorrespondenceListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="correspondence-register.pdf"`);

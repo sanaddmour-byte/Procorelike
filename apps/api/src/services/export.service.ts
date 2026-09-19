@@ -1,5 +1,10 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
 import { attachRollups } from "./budget.service";
+import type { ChangeOrderListReportData } from "./change-management.service";
+import type { CorrespondenceListReportData } from "./correspondence.service";
+import type { InspectionListReportData } from "./inspection.service";
+import type { RfiListReportData } from "./rfi.service";
+import type { SubmittalListReportData } from "./submittal.service";
 import { requirePermission, type PermissionContext } from "@siteops/shared";
 import { eq } from "drizzle-orm";
 
@@ -12,6 +17,49 @@ function csvField(value: string | number): string {
 
 function csvRow(values: (string | number)[]): string {
   return values.map(csvField).join(",");
+}
+
+function csvDate(d: Date | null): string {
+  return d ? d.toISOString().slice(0, 10) : "";
+}
+
+/**
+ * CSV twins of the existing PDF "export all" registers (docs/ROADMAP.md
+ * Phase 13's summary-report routes) -- same data each already fetches for
+ * its PDF, just serialized as CSV for spreadsheet-based analysis instead
+ * of a printable table. No stricter permission gate than the PDF: it's
+ * the same rows a `read`-level caller can already see on the list page.
+ */
+export function toRfiRegisterCsv(data: RfiListReportData): string {
+  const header = csvRow(["Number", "Subject", "Status", "Ball In Court", "Due Date"]);
+  const rows = data.rows.map((r) => csvRow([r.number, r.subject, r.status, r.ballInCourtName ?? "", csvDate(r.dueDate)]));
+  return [header, ...rows].join("\r\n") + "\r\n";
+}
+
+export function toSubmittalRegisterCsv(data: SubmittalListReportData): string {
+  const header = csvRow(["Number", "Title", "Status", "Ball In Court", "Required On Site"]);
+  const rows = data.rows.map((r) => csvRow([r.number, r.title, r.status, r.ballInCourtName ?? "", csvDate(r.requiredOnSiteDate)]));
+  return [header, ...rows].join("\r\n") + "\r\n";
+}
+
+export function toChangeOrderRegisterCsv(data: ChangeOrderListReportData): string {
+  const header = csvRow(["Number", "Title", "Target Type", "Status", "Executed", "Cost Impact", "Time Impact (Days)"]);
+  const rows = data.rows.map((r) =>
+    csvRow([r.number, r.title ?? "", r.targetType, r.status, r.executed ? "Yes" : "No", r.costImpact, r.timeImpactDays]),
+  );
+  return [header, ...rows].join("\r\n") + "\r\n";
+}
+
+export function toCorrespondenceRegisterCsv(data: CorrespondenceListReportData): string {
+  const header = csvRow(["Number", "Subject", "From", "To", "Status", "Sent Date"]);
+  const rows = data.rows.map((r) => csvRow([r.correspondenceNumber, r.subject, r.fromCompanyName, r.toCompanyName, r.status, csvDate(r.sentDate)]));
+  return [header, ...rows].join("\r\n") + "\r\n";
+}
+
+export function toInspectionRegisterCsv(data: InspectionListReportData): string {
+  const header = csvRow(["Template", "Location", "Status", "Performed By", "Scheduled At"]);
+  const rows = data.rows.map((r) => csvRow([r.templateTitle, r.locationName ?? "", r.status, r.performedByName ?? "", csvDate(r.scheduledAt)]));
+  return [header, ...rows].join("\r\n") + "\r\n";
 }
 
 /**

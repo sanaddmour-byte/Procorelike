@@ -17,7 +17,14 @@ interface NavGroup {
 }
 
 const NAV_GROUPS: NavGroup[] = [
-  { key: "project", groupLabelKey: "groupProject", items: [{ key: "dashboard", labelKey: "dashboard", segment: "dashboard" }] },
+  {
+    key: "project",
+    groupLabelKey: "groupProject",
+    items: [
+      { key: "dashboard", labelKey: "dashboard", segment: "dashboard" },
+      { key: "analytics", labelKey: "analytics", segment: "analytics" },
+    ],
+  },
   {
     key: "field",
     groupLabelKey: "groupField",

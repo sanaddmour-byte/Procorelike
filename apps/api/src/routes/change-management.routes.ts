@@ -15,6 +15,7 @@ import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import * as changeManagementService from "../services/change-management.service";
+import { toChangeOrderRegisterCsv } from "../services/export.service";
 import { loadPermissionContext } from "../services/permission.service";
 import { dispatchProjectEvent } from "../services/webhook.service";
 
@@ -169,6 +170,12 @@ export function changeOrdersRouter(appDb: Database, authDb: Database, env: Env):
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await changeManagementService.getChangeOrderListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="change-order-register.csv"`);
+        res.send(toChangeOrderRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateChangeOrderListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="change-order-register.pdf"`);

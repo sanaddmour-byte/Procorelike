@@ -13,6 +13,7 @@ import { generateInspectionReportPdf } from "../lib/inspection-report";
 import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
+import { toInspectionRegisterCsv } from "../services/export.service";
 import * as inspectionService from "../services/inspection.service";
 import { loadPermissionContext } from "../services/permission.service";
 
@@ -54,6 +55,12 @@ export function inspectionsRouter(appDb: Database, env: Env): Router {
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await inspectionService.getInspectionListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="inspection-register.csv"`);
+        res.send(toInspectionRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateInspectionListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="inspection-register.pdf"`);

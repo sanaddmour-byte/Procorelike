@@ -109,4 +109,25 @@ describe("Phase 13: summary (export-all) PDF registers", () => {
     assertPdf(await fetchSummaryReport("/correspondence/summary-report", saraToken));
     assertPdf(await fetchSummaryReport("/inspections/summary-report", saraToken));
   });
+
+  it("returns the same register as CSV when ?format=csv is given (Phase 17)", async () => {
+    const saraToken = await loginAs("sara.haddad@siteops.test");
+
+    const rfiCsvRes = await request(app)
+      .get("/rfis/summary-report")
+      .query({ projectId, format: "csv" })
+      .set("authorization", `Bearer ${saraToken}`);
+    expect(rfiCsvRes.status).toBe(200);
+    expect(rfiCsvRes.headers["content-type"]).toContain("text/csv");
+    expect(rfiCsvRes.text.split("\r\n")[0]).toBe("Number,Subject,Status,Ball In Court,Due Date");
+    expect(rfiCsvRes.text).toContain("Summary export smoke RFI");
+
+    const submittalCsvRes = await request(app)
+      .get("/submittals/summary-report")
+      .query({ projectId, format: "csv" })
+      .set("authorization", `Bearer ${saraToken}`);
+    expect(submittalCsvRes.status).toBe(200);
+    expect(submittalCsvRes.headers["content-type"]).toContain("text/csv");
+    expect(submittalCsvRes.text).toContain("Summary export smoke submittal");
+  });
 });

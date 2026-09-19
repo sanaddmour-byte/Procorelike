@@ -80,17 +80,22 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 16 (Notifications +
-Workflow configurability) is complete and gate-verified.** This is the
-second of 7 planned phases addressing a Procore competitive-gap analysis
-(see Phase 15's gate report for the full 7-phase plan); SSO/SAML was
-explicitly descoped by the user pending a real enterprise customer.
-Notifications (`notification.service.ts`) are wired into RFI/Submittal/
-Punch Item/Change Order key events and surfaced via a bell in the web
-header; workflow transition rules (`workflow-rule.service.ts`) let a
-`directory:admin` narrow — never widen — the RFI and Punch List modules'
-hardcoded status-transition machines, configurable from the project
-Settings page.
+mid-build corrections). As of this writing: **Phase 17 (Analytics/BI
+foundations) is complete and gate-verified.** This is the third of 7
+planned phases addressing a Procore competitive-gap analysis (see Phase
+15's gate report for the full 7-phase plan); SSO/SAML was explicitly
+descoped by the user pending a real enterprise customer. Phase 16 added
+notifications (`notification.service.ts`, wired into RFI/Submittal/Punch
+Item/Change Order key events, surfaced via a header bell) and workflow
+transition rules (`workflow-rule.service.ts`, letting a `directory:admin`
+narrow — never widen — the RFI and Punch List modules' hardcoded
+status-transition machines from the project Settings page). Phase 17
+added `analytics.service.ts` (`GET /projects/:id/analytics`, the first
+real use of the long-defined `reports` permission module) — trend charts
+and cycle-time metrics for RFIs/Punch List/Submittals/Safety/Change
+Orders, all derived from timestamps the app already stores rather than a
+synthetic snapshot history — plus CSV register-export twins of the
+existing PDF "export all" registers.
 
 Two things worth knowing before touching
 `packages/db/src/sql/001_rls_and_functions.sql`: a table's RLS policy must

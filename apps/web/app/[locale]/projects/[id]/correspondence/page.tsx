@@ -5,7 +5,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { apiJson } from "@/lib/api-client";
+import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
@@ -158,6 +158,12 @@ export default function CorrespondencePage() {
                 className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
               >
                 {tc("exportAllPdf")}
+              </button>
+              <button
+                onClick={() => void downloadFile(`/correspondence/summary-report?projectId=${params.id}&format=csv`, "correspondence-register.csv")}
+                className="rounded-lg border-3 border-ink bg-white brutal-interactive px-3 py-2 text-sm font-semibold text-navy-800"
+              >
+                {tc("exportAllCsv")}
               </button>
               <button
                 onClick={() => setShowForm((s) => !s)}

@@ -8,6 +8,7 @@ import { generateSubmittalListPdf } from "../lib/submittal-list-report";
 import { generateSubmittalPdf } from "../lib/submittal-report";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
+import { toSubmittalRegisterCsv } from "../services/export.service";
 import { loadPermissionContext } from "../services/permission.service";
 import * as submittalService from "../services/submittal.service";
 
@@ -80,6 +81,12 @@ export function submittalsRouter(appDb: Database, env: Env): Router {
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await submittalService.getSubmittalListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="submittal-register.csv"`);
+        res.send(toSubmittalRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateSubmittalListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="submittal-register.pdf"`);

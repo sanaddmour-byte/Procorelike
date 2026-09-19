@@ -14,6 +14,7 @@ export * from "./business-rules/budget";
 export * from "./business-rules/billing";
 export * from "./business-rules/esignature";
 export * from "./business-rules/format-money";
+export * from "./business-rules/trends";
 
 export * from "./schemas/auth.schema";
 export * from "./schemas/company.schema";

@@ -57,3 +57,18 @@ export async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
   if (res.status === 204) return undefined as T; // e.g. DELETE endpoints, which return no body
   return res.json() as Promise<T>;
 }
+
+/** Fetches a file (e.g. a CSV register export) through the authenticated client and saves it under `fileName` -- the download equivalent of usePdfViewer's fetch-then-render, for files meant to be saved rather than viewed in-app. */
+export async function downloadFile(path: string, fileName: string): Promise<void> {
+  const res = await apiFetch(path);
+  if (!res.ok) throw new Error("download_failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}

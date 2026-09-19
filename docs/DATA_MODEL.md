@@ -347,9 +347,35 @@ predates Phase 12's letterhead).
 **Scope cuts, documented rather than silently incomplete:**
 - No filtering/sorting on a summary endpoint -- every item on the project,
   matching "export all" literally.
-- No CSV/Excel export -- PDF only, as asked.
+- No CSV/Excel export -- PDF only, as asked. (Added in Phase 17, see
+  9j -- each of these five registers now also answers `?format=csv`.)
 - Inspection's register left unbranded rather than retrofitting Phase 12's
   letterhead onto Phase 5's generator.
+
+## 9j. Analytics/BI + CSV registers (user-directed, Phase 17)
+
+No schema change -- every trend/cycle-time figure is derived from
+timestamps already stored for another reason (`created_at`, status-history
+rows, `occurred_at`/`closed_at`, `approval_chain` entries). Full detail in
+`docs/ROADMAP.md`'s Phase 17 gate report.
+
+**API surface**: `GET /projects/:id/analytics` -- gated on `reports:read`
+(the first real enforcement of that long-defined-but-unused permission
+module), with each section additionally gated on its own module's `read`
+permission, mirroring `dashboard.service.ts`'s per-section omission.
+Sections: RFIs, Punch List, Submittals, Safety, Change Orders. Also: the
+five Phase 13 `summary-report` routes (9i) now accept `?format=csv` and
+return the same rows as their PDF twin, serialized via `export.service.ts`'s
+`to*RegisterCsv()` functions -- same permission gate as the PDF, no new
+one.
+
+**Scope cuts, documented rather than silently incomplete:**
+- Company-level (cross-project) analytics -- per-project only.
+- No custom report builder -- five fixed trend views, not an ad-hoc query
+  interface.
+- No periodic metrics-snapshot job -- trends only cover what timestamped
+  data already exists, so there's no history before a record's own
+  creation date.
 
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
