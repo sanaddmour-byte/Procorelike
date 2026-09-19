@@ -6,7 +6,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
-import type { PrequalificationStatus } from "@siteops/shared";
+import { useProjectCurrency } from "@/lib/use-project-currency";
+import { formatMoney, type PrequalificationStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
@@ -37,11 +38,6 @@ const NEXT_STATUS: Record<PrequalificationStatus, PrequalificationStatus[]> = {
   disqualified: ["under_review"],
 };
 
-function money(value: string | null): string {
-  if (value === null) return "—";
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 const STATUS_TONE: Record<PrequalificationStatus, StatusTone> = {
   invited: "neutral",
   submitted: "info",
@@ -56,6 +52,8 @@ export default function PrequalificationPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string | null): string => formatMoney(value, currency, locale);
 
   const [items, setItems] = useState<Prequalification[] | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);

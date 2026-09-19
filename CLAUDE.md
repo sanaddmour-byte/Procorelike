@@ -79,9 +79,13 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 ## 5. Where things stand
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
-status table, and the Phase 1 gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 1 (Foundation) is
-complete and gate-verified in a real browser; Phase 2 (Field core) is next.**
+status table, and each phase's gate report (what was verified, known gaps,
+mid-build corrections). As of this writing: **Phase 15 (Enterprise/Admin
+foundations — custom fields, scoped record history, multi-currency depth)
+is complete and gate-verified.** This is the first of 7 planned phases
+addressing a Procore competitive-gap analysis (see Phase 15's gate report);
+SSO/SAML was explicitly descoped by the user pending a real enterprise
+customer.
 
 Two things worth knowing before touching
 `packages/db/src/sql/001_rls_and_functions.sql`: a table's RLS policy must

@@ -17,3 +17,4 @@ export * from "./document-control";
 export * from "./esignature";
 export * from "./preconstruction";
 export * from "./admin";
+export * from "./custom-fields";

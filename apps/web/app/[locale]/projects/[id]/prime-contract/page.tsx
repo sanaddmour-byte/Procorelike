@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
-import type { PrimeContractStatus } from "@siteops/shared";
+import { formatMoney, type PrimeContractStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -36,10 +36,6 @@ const NEXT_STATUS: Record<PrimeContractStatus, PrimeContractStatus[]> = {
   closed: [],
 };
 
-function money(value: string): string {
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 const STATUS_TONE: Record<PrimeContractStatus, StatusTone> = {
   draft: "neutral",
   executed: "success",
@@ -52,6 +48,7 @@ export default function PrimeContractPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const money = (value: string, currency: string): string => formatMoney(value, currency, locale);
 
   const [contract, setContract] = useState<PrimeContract | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -253,19 +250,19 @@ export default function PrimeContractPage() {
                   </div>
                   <div>
                     <div className="text-navy-600">{t("originalContractSum")}</div>
-                    <div className="font-medium">{money(contract.originalContractSum)}</div>
+                    <div className="font-medium">{money(contract.originalContractSum, contract.currency)}</div>
                   </div>
                   <div>
                     <div className="text-navy-600">{t("approvedChanges")}</div>
-                    <div className="font-medium">{money(contract.approvedChangesAmount)}</div>
+                    <div className="font-medium">{money(contract.approvedChangesAmount, contract.currency)}</div>
                   </div>
                   <div>
                     <div className="text-navy-600">{t("pendingChanges")}</div>
-                    <div className="font-medium">{money(contract.pendingChangesAmount)}</div>
+                    <div className="font-medium">{money(contract.pendingChangesAmount, contract.currency)}</div>
                   </div>
                   <div>
                     <div className="text-navy-600">{t("revisedContractSum")}</div>
-                    <div className="font-bold">{money(contract.revisedContractSum)}</div>
+                    <div className="font-bold">{money(contract.revisedContractSum, contract.currency)}</div>
                   </div>
                   <div>
                     <div className="text-navy-600">{t("retentionPct")}</div>

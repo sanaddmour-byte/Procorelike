@@ -18,6 +18,7 @@ import { companiesRouter } from "./routes/companies.routes";
 import { correctiveActionsRouter } from "./routes/corrective-actions.routes";
 import { correspondenceRouter } from "./routes/correspondence.routes";
 import { cpmScheduleRouter } from "./routes/cpm-schedule.routes";
+import { customFieldDefinitionsRouter, customFieldValuesRouter } from "./routes/custom-fields.routes";
 import { dailyLogsRouter } from "./routes/daily-logs.routes";
 import { directCostRouter } from "./routes/direct-cost.routes";
 import { documentsRouter } from "./routes/documents.routes";
@@ -117,6 +118,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/admin", adminRouter(clients.appDb.db, env));
   app.use("/external", externalRouter(clients.appDb.db, clients.authDb.db));
   app.use("/search", searchRouter(clients.appDb.db, env));
+  app.use("/custom-field-definitions", customFieldDefinitionsRouter(clients.appDb.db, env));
+  app.use("/custom-field-values", customFieldValuesRouter(clients.appDb.db, env));
 
   app.use(errorHandler);
   return app;

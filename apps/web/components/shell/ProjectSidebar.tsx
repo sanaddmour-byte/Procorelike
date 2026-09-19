@@ -74,6 +74,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "directory", labelKey: "directory", segment: "directory" },
       { key: "permissions", labelKey: "permissions", segment: "permissions" },
+      { key: "settings", labelKey: "settings", segment: "settings" },
     ],
   },
 ];

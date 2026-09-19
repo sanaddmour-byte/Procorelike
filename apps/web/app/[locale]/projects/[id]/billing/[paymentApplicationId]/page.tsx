@@ -2,6 +2,8 @@
 
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { useProjectCurrency } from "@/lib/use-project-currency";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -47,6 +49,8 @@ export default function PaymentApplicationDetailPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; paymentApplicationId: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string | number): string => formatMoney(value, currency, locale);
 
   const [application, setApplication] = useState<PaymentApplicationDetail | null>(null);
   const [commitmentLineItems, setCommitmentLineItems] = useState<CommitmentLineItem[]>([]);
@@ -149,7 +153,7 @@ export default function PaymentApplicationDetailPage() {
                       <div key={li.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
                         <div className="mb-2 flex items-center justify-between">
                           <span className="font-medium">{li.description}</span>
-                          <span className="text-sm text-navy-600">{Number(li.scheduleOfValuesAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                          <span className="text-sm text-navy-600">{money(Number(li.scheduleOfValuesAmount))}</span>
                         </div>
                         <div className="flex flex-wrap items-end gap-3 text-sm">
                           <div>
@@ -173,19 +177,19 @@ export default function PaymentApplicationDetailPage() {
                             <>
                               <div>
                                 <div className="text-navy-600">{t("completedToDate")}</div>
-                                <div className="font-medium">{detail.completedToDate.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                <div className="font-medium">{money(detail.completedToDate)}</div>
                               </div>
                               <div>
                                 <div className="text-navy-600">{t("amountThisPeriod")}</div>
-                                <div className="font-medium">{detail.amountThisPeriod.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                <div className="font-medium">{money(detail.amountThisPeriod)}</div>
                               </div>
                               <div>
                                 <div className="text-navy-600">{t("retentionThisPeriod")}</div>
-                                <div className="font-medium">{detail.retentionThisPeriod.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                <div className="font-medium">{money(detail.retentionThisPeriod)}</div>
                               </div>
                               <div>
                                 <div className="text-navy-600">{t("netThisPeriod")}</div>
-                                <div className="font-bold text-navy-900">{detail.netThisPeriod.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                <div className="font-bold text-navy-900">{money(detail.netThisPeriod)}</div>
                               </div>
                             </>
                           )}
@@ -204,7 +208,7 @@ export default function PaymentApplicationDetailPage() {
                 {application.lines.length > 0 && (
                   <div className="mb-6 rounded-xl border-3 border-ink bg-orange-50 shadow-brutal-sm p-4">
                     <div className="text-sm text-navy-700">{t("totalNetThisPeriod")}</div>
-                    <div className="text-2xl font-extrabold text-navy-900">{application.totalNetThisPeriod.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                    <div className="text-2xl font-extrabold text-navy-900">{money(application.totalNetThisPeriod)}</div>
                   </div>
                 )}
               </>

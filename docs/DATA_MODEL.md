@@ -42,6 +42,12 @@ numbering locks, sync conflict detection, and optimistic concurrency).
 | `notifications` | user_id, type, payload jsonb, read_at | — | In-app + source for email digests |
 | `number_sequences` | project_id, sequence_key (e.g. `RFI`, `SUB.03.30.00`, `CO`), next_value | — | Row-locked by the numbering function (§ ARCHITECTURE.md §7) |
 | `record_links` | source_type, source_id, target_type, target_id | polymorphic, both directions queryable | e.g. RFI↔Drawing, Punch Item↔Inspection |
+| `custom_field_definitions` | project_id, module (permission_module enum), label, field_type (text/number/date/boolean/select), options jsonb, required, sort_order | fk projects | Admin-defined extra fields per project+module; `directory:admin` gated writes |
+| `custom_field_values` | definition_id, entity_id (polymorphic), value jsonb | fk custom_field_definitions, cascade delete; unique (definition_id, entity_id) | Value type validated server-side against the live definition's field_type/options |
+
+`projects` gained a `default_currency` (ISO 4217, default `USD`) column — the fallback currency for financial records that don't carry their own `currency` column (direct costs, change orders, payment applications). `budget_line_items`, `prime_contracts`, and `commitments` already had their own per-row `currency` column from earlier phases; both are now actually rendered (via `packages/shared`'s `formatMoney`) instead of every financial page silently stripping the currency and showing a bare number. `PATCH /projects/:id/settings` (directory:admin gated) is the first write path for `default_currency`/`change_order_threshold`/`timezone` past project creation.
+
+`audit_log` has no `project_id` (see its row above) — `GET /projects/:id/history?entityType=&entityId=` (packages: `entity-history.service.ts`) resolves project-scoping by reading the entity through its own RLS-protected table first (currently wired for `rfi` and `punch_item`; extend `HISTORY_ENTITY_TYPES` for more), rather than denormalizing `project_id` onto audit_log's ~100 existing `writeAuditLog` call sites.
 
 ## 2. T1 — Documents & Drawings
 

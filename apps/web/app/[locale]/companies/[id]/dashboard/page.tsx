@@ -3,6 +3,7 @@
 import { Header } from "@/components/Header";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -42,11 +43,8 @@ interface ProjectDashboard {
 interface CompanyProjectDashboard {
   projectId: string;
   projectName: string;
+  defaultCurrency: string;
   dashboard: ProjectDashboard;
-}
-
-function money(value: number): string {
-  return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export default function CompanyDashboardPage() {
@@ -55,6 +53,7 @@ export default function CompanyDashboardPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const money = (value: number, currency: string): string => formatMoney(value, currency, locale);
 
   const [rows, setRows] = useState<CompanyProjectDashboard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +112,7 @@ export default function CompanyDashboardPage() {
                   {row.dashboard.budget && (
                     <div className="rounded-lg border-2 border-orange-200 bg-white p-3">
                       <div className="text-xs font-semibold uppercase text-navy-600">{t("budgetVariance")}</div>
-                      <div className="text-xl font-extrabold text-navy-900">{money(row.dashboard.budget.varianceTotal)}</div>
+                      <div className="text-xl font-extrabold text-navy-900">{money(row.dashboard.budget.varianceTotal, row.defaultCurrency)}</div>
                     </div>
                   )}
                 </div>

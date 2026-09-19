@@ -2,6 +2,7 @@
 
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -26,6 +27,7 @@ interface CommitmentDetail {
   title: string;
   type: "subcontract" | "po";
   retentionPct: string;
+  currency: string;
   lineItems: CommitmentLineItem[];
   contractValue: number;
 }
@@ -36,6 +38,7 @@ export default function CommitmentDetailPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; commitmentId: string }>();
+  const money = (value: number | string, currency: string): string => formatMoney(value, currency, locale);
 
   const [commitment, setCommitment] = useState<CommitmentDetail | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
@@ -120,7 +123,7 @@ export default function CommitmentDetailPage() {
             <div className="mb-6 rounded-xl border-3 border-ink bg-orange-50 shadow-brutal-sm p-4">
               <div className="text-sm text-navy-700">{t("contractValue")}</div>
               <div className="text-2xl font-extrabold text-navy-900">
-                {commitment.contractValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {money(commitment.contractValue, commitment.currency)}
               </div>
             </div>
 
@@ -165,7 +168,7 @@ export default function CommitmentDetailPage() {
                     <div className="font-medium">{li.description}</div>
                     <div className="text-xs text-navy-600">{costCodeLabel(li.costCodeId)}</div>
                   </div>
-                  <div className="font-bold text-navy-900">{Number(li.scheduleOfValuesAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                  <div className="font-bold text-navy-900">{money(Number(li.scheduleOfValuesAmount), commitment.currency)}</div>
                 </li>
               ))}
             </ul>

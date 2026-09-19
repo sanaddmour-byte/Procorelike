@@ -267,6 +267,13 @@
       "when": 1789456532923,
       "tag": "0037_slow_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1789804256421,
+      "tag": "0038_black_selene",
+      "breakpoints": true
     }
   ]
 }

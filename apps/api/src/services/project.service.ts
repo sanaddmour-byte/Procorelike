@@ -1,8 +1,15 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
-import { defaultTemplateNameForRole, type CreateProjectInput } from "@siteops/shared";
+import {
+  defaultTemplateNameForRole,
+  requirePermission,
+  type CreateProjectInput,
+  type PermissionContext,
+  type UpdateProjectSettingsInput,
+} from "@siteops/shared";
 import { eq } from "drizzle-orm";
-import { ApiError } from "../lib/errors";
+import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { withUserContext } from "./permission.service";
 
 export async function createProject(
   appDb: Database,
@@ -69,5 +76,44 @@ export async function listMyProjects(
 ): Promise<(typeof schema.projects.$inferSelect)[]> {
   return withRequestContext(appDb, { userId }, async (tx) => {
     return tx.select().from(schema.projects);
+  });
+}
+
+/**
+ * General project-settings panel (defaultCurrency, changeOrderThreshold,
+ * timezone) — directory:admin gated, same convention as permission
+ * templates. These fields previously had no update path past project
+ * creation.
+ */
+export async function updateProjectSettings(
+  appDb: Database,
+  callerUserId: string,
+  ctx: PermissionContext,
+  projectId: string,
+  input: UpdateProjectSettingsInput,
+): Promise<typeof schema.projects.$inferSelect> {
+  requirePermission(ctx, "directory", "admin");
+  return withUserContext(appDb, callerUserId, async (tx) => {
+    const [before] = await tx.select().from(schema.projects).where(eq(schema.projects.id, projectId)).limit(1);
+    if (!before) throw new NotFoundError("Project not found");
+
+    const patch: { defaultCurrency?: string; changeOrderThreshold?: string; timezone?: string } = {};
+    if (input.defaultCurrency !== undefined) patch.defaultCurrency = input.defaultCurrency;
+    if (input.changeOrderThreshold !== undefined) patch.changeOrderThreshold = input.changeOrderThreshold.toString();
+    if (input.timezone !== undefined) patch.timezone = input.timezone;
+
+    const [updated] = await tx.update(schema.projects).set(patch).where(eq(schema.projects.id, projectId)).returning();
+    if (!updated) throw new Error("Failed to update project settings");
+
+    await writeAuditLog(tx, {
+      actorId: callerUserId,
+      entityType: "project",
+      entityId: projectId,
+      action: "update_settings",
+      before,
+      after: updated,
+    });
+
+    return updated;
   });
 }

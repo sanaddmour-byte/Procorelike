@@ -7,6 +7,7 @@ import { loadPermissionContext } from "./permission.service";
 export interface CompanyProjectDashboard {
   projectId: string;
   projectName: string;
+  defaultCurrency: string;
   dashboard: ProjectDashboard;
 }
 
@@ -25,7 +26,7 @@ export async function getCompanyDashboard(appDb: Database, userId: string, compa
     if (isMember.length === 0) throw new ApiError(403, "not_company_member", "You are not a member of this company");
 
     return tx
-      .select({ id: schema.projects.id, name: schema.projects.name })
+      .select({ id: schema.projects.id, name: schema.projects.name, defaultCurrency: schema.projects.defaultCurrency })
       .from(schema.projectCompanies)
       .innerJoin(schema.projects, eq(schema.projects.id, schema.projectCompanies.projectId))
       .where(eq(schema.projectCompanies.companyId, companyId));
@@ -36,7 +37,7 @@ export async function getCompanyDashboard(appDb: Database, userId: string, compa
     try {
       const ctx = await loadPermissionContext(appDb, userId, project.id);
       const dashboard = await getProjectDashboard(appDb, userId, ctx, project.id);
-      results.push({ projectId: project.id, projectName: project.name, dashboard });
+      results.push({ projectId: project.id, projectName: project.name, defaultCurrency: project.defaultCurrency, dashboard });
     } catch {
       // Not a member of this particular project -- omit it, same as a
       // single project dashboard omitting a section the caller can't see.

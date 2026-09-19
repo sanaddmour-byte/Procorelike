@@ -7,7 +7,9 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useProjectCurrency } from "@/lib/use-project-currency";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
@@ -123,6 +125,8 @@ export default function ChangeOrdersPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string | number): string => formatMoney(value, currency, locale);
 
   const [events, setEvents] = useState<ChangeEventDetail[] | null>(null);
   const [changeOrders, setChangeOrders] = useState<ChangeOrder[] | null>(null);
@@ -293,7 +297,7 @@ export default function ChangeOrdersPage() {
       sortValue: (co) => co.status,
       width: "150px",
     },
-    { key: "costImpact", header: t("costImpact"), align: "end", width: "140px", render: (co) => Number(co.costImpact).toLocaleString(undefined, { minimumFractionDigits: 2 }), sortValue: (co) => Number(co.costImpact) },
+    { key: "costImpact", header: t("costImpact"), align: "end", width: "140px", render: (co) => money(Number(co.costImpact)), sortValue: (co) => Number(co.costImpact) },
     {
       key: "executed",
       header: "",
@@ -366,7 +370,7 @@ export default function ChangeOrdersPage() {
                 <div className="mb-2 flex flex-wrap gap-2">
                   {ev.potentialChangeOrders.map((pco) => (
                     <span key={pco.id} className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                      {pco.costImpact ? Number(pco.costImpact).toLocaleString() : "—"} / {pco.timeImpactDays ?? 0}d
+                      {pco.costImpact ? money(Number(pco.costImpact)) : "—"} / {pco.timeImpactDays ?? 0}d
                     </span>
                   ))}
                 </div>

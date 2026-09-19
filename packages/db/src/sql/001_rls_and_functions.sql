@@ -362,7 +362,8 @@ DECLARE
     'schedules', 'calendars', 'lookahead_plans',
     'transmittals', 'drawing_sets', 'corrective_actions',
     'prime_contracts', 'direct_costs', 'esignatures',
-    'prequalifications', 'bid_packages', 'estimates'
+    'prequalifications', 'bid_packages', 'estimates',
+    'custom_field_definitions'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP
@@ -529,7 +530,8 @@ DECLARE
     ARRAY['bid_invitations', 'bid_package_id', 'bid_packages'],
     ARRAY['bids', 'bid_package_id', 'bid_packages'],
     ARRAY['estimate_line_items', 'estimate_id', 'estimates'],
-    ARRAY['webhook_deliveries', 'subscription_id', 'webhook_subscriptions']
+    ARRAY['webhook_deliveries', 'subscription_id', 'webhook_subscriptions'],
+    ARRAY['custom_field_values', 'definition_id', 'custom_field_definitions']
   ];
   row_ text[];
 BEGIN

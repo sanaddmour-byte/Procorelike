@@ -1,6 +1,7 @@
 "use client";
 
 import { AttachmentList } from "@/components/AttachmentList";
+import { RecordHistory } from "@/components/ui/RecordHistory";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { PUNCH_ITEM_STATUS_TRANSITIONS, type FieldConflict } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -204,6 +205,8 @@ export default function PunchItemDetailPage() {
                 ))}
               </ul>
             </section>
+
+            <RecordHistory projectId={params.id} entityType="punch_item" entityId={item.id} />
           </>
         )}
       </main>

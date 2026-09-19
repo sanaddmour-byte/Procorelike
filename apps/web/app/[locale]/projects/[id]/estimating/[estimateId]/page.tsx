@@ -2,7 +2,8 @@
 
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
-import type { EstimateStatus } from "@siteops/shared";
+import { useProjectCurrency } from "@/lib/use-project-currency";
+import { formatMoney, type EstimateStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -34,16 +35,14 @@ interface EstimateDetail {
   total: string;
 }
 
-function money(value: string): string {
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 export default function EstimateDetailPage() {
   const t = useTranslations("Estimating");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; estimateId: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string): string => formatMoney(value, currency, locale);
 
   const [detail, setDetail] = useState<EstimateDetail | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);

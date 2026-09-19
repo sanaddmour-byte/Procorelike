@@ -2496,6 +2496,103 @@ assertions) before this phase could be called done:**
   rejected (403) from toggling the flag and that a cycle-creating
   dependency add is rejected (409) without mutating anything.
 
+## Phase 15 gate report
+
+**Gate** (user-directed follow-up: a competitive-gap analysis against
+Procore identified 10 candidate gaps; user selected items 1, 5, 6, 7, 8, 9,
+10, 11, 12, 13 to build, sequenced into 7 dependency-ordered phases with a
+gate after each. This is Phase 15, the first: "Enterprise/Admin
+foundations" — custom fields + a scoped record-history viewer (the
+audit-log-viewer half of item 11) + multi-currency depth (item 12,
+descoped per user decision to "deepen en/ar only, no new language" — the
+currency work is the tractable slice of that decision). SSO (the other
+half of item 11) was explicitly descoped by the user to "skip for now.") —
+**PASSED**, see Verification.
+
+**What was built:**
+- **`packages/db`**: new `custom_field_definitions` (project_id, module
+  reusing the existing `permission_module` enum, label, field_type enum
+  [text/number/date/boolean/select], options jsonb, required, sort_order)
+  and `custom_field_values` (definition_id fk cascade-delete, entity_id
+  polymorphic, value jsonb, unique on (definition_id, entity_id)) tables
+  — migration 0038. RLS: `custom_field_definitions` added to the direct
+  `project_id` policy loop; `custom_field_values` added to the
+  child-via-parent loop. `projects` gained `default_currency` varchar(3)
+  default `USD`.
+- **`packages/shared`**: `formatMoney(value, currency, locale)` (new
+  `business-rules/format-money.ts`, 7 tests) using `Intl.NumberFormat`'s
+  `currency` style — the one place a monetary amount becomes display
+  text, replacing 12 separate ad-hoc `money()` helpers across web pages
+  that did plain `.toLocaleString()` with **no currency symbol at all**,
+  silently discarding the `currency` column three financial tables
+  (`budget_line_items`, `prime_contracts`, `commitments`) already stored
+  from earlier phases. `schemas/custom-field.schema.ts` — zod schemas for
+  definition CRUD + value set, plus `validateCustomFieldValue()` (shared
+  between the API write path and any future client-side validation).
+  `schemas/project.schema.ts` gained `updateProjectSettingsSchema`
+  (defaultCurrency/changeOrderThreshold/timezone) — there was previously
+  **no update path at all** for these fields past project creation.
+- **`apps/api`**: `custom-field.service.ts` + `routes/custom-fields.routes.ts`
+  — definition CRUD (`directory:admin` gated, same convention as
+  permission templates) at `/custom-field-definitions`, value get/set at
+  `/custom-field-values` (`standard` on the definition's module gates a
+  write — whoever can edit the record can edit its custom fields).
+  `entity-history.service.ts` (new) — `getEntityHistory()` backing `GET
+  /projects/:id/history?entityType=&entityId=`: `audit_log` has no
+  `project_id` (it's polymorphic, RLS is intentionally permissive there
+  per the existing comment in `001_rls_and_functions.sql`), so real
+  authorization comes from reading the entity through its own
+  RLS-protected table first — a 0-row result (wrong project, or RLS hides
+  it) is a 404 before `audit_log` is ever touched, the same
+  "resolve-via-the-owning-table" pattern `search.service.ts` already uses
+  for polymorphic project-scoping. Wired for `rfi` and `punch_item`
+  (`HISTORY_ENTITY_TYPES` is a plain array — extend it per module as
+  each one gets a History panel). `project.service.ts` gained
+  `updateProjectSettings()` behind a new `PATCH /projects/:id/settings`
+  route, and `projects.routes.ts` gained a plain `GET /projects/:id` (it
+  genuinely didn't exist — every other project read was a sub-resource
+  under `/projects/:id/...`).
+- **`apps/web`**: new `/projects/:id/settings` page (General: currency/
+  threshold/timezone form; Custom Fields: per-module definition list +
+  add-field form) linked from the People nav group. New
+  `RecordHistory` component (`components/ui/RecordHistory.tsx`) — an
+  expandable "History" toggle, wired into the RFI and Punch Item detail
+  pages. `lib/use-project-currency.ts` — a small hook fetching a
+  project's `defaultCurrency` once, defaulting to "USD" until it loads,
+  used by the 6 financial pages with no per-row currency (Direct Costs,
+  Prequalification, Bidding detail, Estimating detail, Billing detail,
+  Change Orders); the 3 pages with per-row currency (Budget, Prime
+  Contract, Commitments detail) format using the record's own `currency`
+  field instead. `company-dashboard.service.ts`'s per-project rollup rows
+  gained `defaultCurrency` so the company-level dashboard renders each
+  project's own currency rather than a company-wide guess — it already
+  didn't sum figures numerically across projects (a list of per-project
+  dashboards, not an aggregate), so no fabricated FX conversion was ever
+  at risk here.
+- **Explicitly not built, on record**: SSO/SAML (user: "skip for now" —
+  revisit when a real enterprise customer needs it, since it can't
+  actually be verified without a live IdP). A project-wide "Activity Log"
+  browsing page was considered and rejected: building it safely would
+  mean either denormalizing `project_id` onto `audit_log` and touching
+  the ~100 existing `writeAuditLog` call sites, or an unscoped/insecure
+  query — both out of proportion to this phase. The scoped
+  per-record History panel (built) covers the actually-useful case
+  ("what happened to this RFI") without either cost.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 178 tests across 21 files,
+  including the new 7-test `format-money.test.ts`; `apps/api`: 134 tests
+  across 28 files, including the new 8-test
+  `custom-fields-history.test.ts` covering definition CRUD, the
+  directory:admin gate, select-option validation, cascade delete on
+  definition removal, scoped history's create-audit-entry return and its
+  wrong-project 404, and project-settings update + its admin gate;
+  `apps/web`: 28 tests unaffected; i18n key parity confirmed
+  identical between `en.json`/`ar.json` via a flatten-and-diff script).
+  Full `next build` also confirmed the new `/settings` route compiles
+  and prerenders correctly.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

@@ -158,6 +158,8 @@ export const projects = pgTable("projects", {
   status: varchar("status", { length: 50 }).notNull().default("active"),
   /** A change order at or above this amount requires a second approver from a different company (packages/shared's requiresSecondApprover). Configurable per project; docs/DATA_MODEL.md §9. */
   changeOrderThreshold: numeric("change_order_threshold", { precision: 14, scale: 2 }).notNull().default("5000"),
+  /** Default ISO 4217 currency for financial records on this project that don't carry their own currency column (direct costs, change orders, payment applications). Prime contracts/budget lines/commitments still carry their own currency for the rarer case a single project mixes currencies. */
+  defaultCurrency: varchar("default_currency", { length: 3 }).notNull().default("USD"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),

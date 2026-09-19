@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { useProjectCurrency } from "@/lib/use-project-currency";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -37,16 +39,13 @@ const ACTION_LABEL_KEYS: Record<ActionRequiredType, string> = {
   change_order_pending_approval: "actionChangeOrderPendingApproval",
 };
 
-function money(value: number): string {
-  return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const currency = useProjectCurrency(params.id);
 
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -128,9 +127,15 @@ export default function DashboardPage() {
                   <div className="rounded-xl border-3 border-ink bg-orange-50 shadow-brutal p-5">
                     <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("budget")}</h3>
                     <div className="flex flex-wrap gap-6">
-                      <MoneyTile label={t("budgetRevised")} value={dashboard.budget.revisedTotal} />
-                      <MoneyTile label={t("budgetProjected")} value={dashboard.budget.projectedTotal} />
-                      <MoneyTile label={t("budgetVariance")} value={dashboard.budget.varianceTotal} accent={dashboard.budget.varianceTotal < 0 ? "maroon" : undefined} />
+                      <MoneyTile label={t("budgetRevised")} value={dashboard.budget.revisedTotal} currency={currency} locale={locale} />
+                      <MoneyTile label={t("budgetProjected")} value={dashboard.budget.projectedTotal} currency={currency} locale={locale} />
+                      <MoneyTile
+                        label={t("budgetVariance")}
+                        value={dashboard.budget.varianceTotal}
+                        currency={currency}
+                        locale={locale}
+                        accent={dashboard.budget.varianceTotal < 0 ? "maroon" : undefined}
+                      />
                     </div>
                   </div>
                 )}
@@ -163,10 +168,10 @@ function Tile({ label, value, accent }: { label: string; value: number; accent?:
   );
 }
 
-function MoneyTile({ label, value, accent }: { label: string; value: number; accent?: "maroon" }) {
+function MoneyTile({ label, value, currency, locale, accent }: { label: string; value: number; currency: string; locale: string; accent?: "maroon" }) {
   return (
     <div>
-      <div className={`text-xl font-extrabold ${accent === "maroon" ? "text-maroon-700" : "text-navy-900"}`}>{money(value)}</div>
+      <div className={`text-xl font-extrabold ${accent === "maroon" ? "text-maroon-700" : "text-navy-900"}`}>{formatMoney(value, currency, locale)}</div>
       <div className="text-xs text-navy-600">{label}</div>
     </div>
   );

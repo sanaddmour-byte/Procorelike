@@ -7,7 +7,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
-import type { DirectCostStatus, DirectCostType } from "@siteops/shared";
+import { useProjectCurrency } from "@/lib/use-project-currency";
+import { formatMoney, type DirectCostStatus, type DirectCostType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
@@ -28,10 +29,6 @@ interface DirectCost {
   status: DirectCostStatus;
 }
 
-function money(value: string): string {
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 const STATUS_TONE: Record<DirectCostStatus, StatusTone> = {
   pending: "warning",
   approved: "success",
@@ -44,6 +41,8 @@ export default function DirectCostsPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string): string => formatMoney(value, currency, locale);
 
   const [directCosts, setDirectCosts] = useState<DirectCost[] | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);

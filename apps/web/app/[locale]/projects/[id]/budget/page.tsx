@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, type FormEvent } from "react";
@@ -29,16 +30,13 @@ interface BudgetLineItem {
   currency: string;
 }
 
-function money(value: string): string {
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 export default function BudgetPage() {
   const t = useTranslations("Budget");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const money = (value: string, currency: string): string => formatMoney(value, currency, locale);
 
   const [lineItems, setLineItems] = useState<BudgetLineItem[] | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
@@ -180,11 +178,11 @@ export default function BudgetPage() {
       header: t("revisedBudget"),
       align: "end",
       width: "130px",
-      render: (li) => (Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount)).toLocaleString(undefined, { minimumFractionDigits: 2 }),
+      render: (li) => money((Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount)).toString(), li.currency),
       sortValue: (li) => Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount),
     },
-    { key: "committed", header: t("committedCosts"), align: "end", width: "130px", render: (li) => money(li.committedCosts), sortValue: (li) => Number(li.committedCosts) },
-    { key: "projected", header: t("projectedAmount"), align: "end", width: "130px", render: (li) => money(li.projectedAmount), sortValue: (li) => Number(li.projectedAmount) },
+    { key: "committed", header: t("committedCosts"), align: "end", width: "130px", render: (li) => money(li.committedCosts, li.currency), sortValue: (li) => Number(li.committedCosts) },
+    { key: "projected", header: t("projectedAmount"), align: "end", width: "130px", render: (li) => money(li.projectedAmount, li.currency), sortValue: (li) => Number(li.projectedAmount) },
     {
       key: "variance",
       header: t("variance"),
@@ -193,7 +191,7 @@ export default function BudgetPage() {
       render: (li) => {
         const revised = Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount);
         const variance = revised - Number(li.projectedAmount);
-        return <span className={variance < 0 ? "font-bold text-maroon-700" : "font-bold text-navy-900"}>{variance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>;
+        return <span className={variance < 0 ? "font-bold text-maroon-700" : "font-bold text-navy-900"}>{money(variance.toString(), li.currency)}</span>;
       },
       sortValue: (li) => Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount) - Number(li.projectedAmount),
     },
@@ -314,27 +312,27 @@ export default function BudgetPage() {
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <div>
               <div className="text-navy-600">{t("modifications")}</div>
-              <div className="font-medium">{editingItem ? money(editingItem.modificationsAmount) : ""}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.modificationsAmount, editingItem.currency) : ""}</div>
             </div>
             <div>
               <div className="text-navy-600">{t("approvedChanges")}</div>
-              <div className="font-medium">{editingItem ? money(editingItem.approvedChangesAmount) : ""}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.approvedChangesAmount, editingItem.currency) : ""}</div>
             </div>
             <div>
               <div className="text-navy-600">{t("pendingCostChanges")}</div>
-              <div className="font-medium">{editingItem ? money(editingItem.pendingCostChanges) : ""}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.pendingCostChanges, editingItem.currency) : ""}</div>
             </div>
             <div>
               <div className="text-navy-600">{t("committedCosts")}</div>
-              <div className="font-medium">{editingItem ? money(editingItem.committedCosts) : ""}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.committedCosts, editingItem.currency) : ""}</div>
             </div>
             <div>
               <div className="text-navy-600">{t("directCosts")}</div>
-              <div className="font-medium">{editingItem ? money(editingItem.directCosts) : ""}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.directCosts, editingItem.currency) : ""}</div>
             </div>
             <div>
               <div className="text-navy-600">{t("projectedAmount")}</div>
-              <div className="font-medium">{editingItem ? money(editingItem.projectedAmount) : ""}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.projectedAmount, editingItem.currency) : ""}</div>
             </div>
           </div>
           <label className="flex flex-col gap-1 text-sm">
