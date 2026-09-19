@@ -1,14 +1,18 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import type { CorrespondenceDirection, CorrespondenceStatus, CorrespondenceType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 interface CorrespondenceItem {
   id: string;
@@ -34,6 +38,13 @@ function typeLabel(type: CorrespondenceType, t: (key: string) => string): string
   return { letter: t("typeLetter"), notice: t("typeNotice"), transmittal: t("typeTransmittal"), memo: t("typeMemo") }[type];
 }
 
+const STATUS_TONE: Record<CorrespondenceStatus, StatusTone> = {
+  draft: "neutral",
+  sent: "info",
+  acknowledged: "success",
+  closed: "neutral",
+};
+
 export default function CorrespondencePage() {
   const t = useTranslations("Correspondence");
   const tc = useTranslations("Common");
@@ -44,6 +55,8 @@ export default function CorrespondencePage() {
   const [items, setItems] = useState<CorrespondenceItem[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [direction, setDirection] = useState<CorrespondenceDirection>("outgoing");
   const [type, setType] = useState<CorrespondenceType>("letter");
@@ -109,26 +122,52 @@ export default function CorrespondencePage() {
     }
   }
 
+  const filteredItems = useMemo(() => {
+    if (!items) return null;
+    const q = search.trim().toLowerCase();
+    return items.filter((item) => {
+      if (statusFilter && item.status !== statusFilter) return false;
+      if (q && !item.correspondenceNumber.toLowerCase().includes(q) && !item.subject.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [items, search, statusFilter]);
+
+  const columns: DataTableColumn<CorrespondenceItem>[] = [
+    { key: "number", header: t("number"), render: (item) => item.correspondenceNumber, sortValue: (item) => item.correspondenceNumber, width: "110px" },
+    { key: "subject", header: t("subject"), render: (item) => item.subject, sortValue: (item) => item.subject },
+    { key: "type", header: t("type"), render: (item) => typeLabel(item.type, t), sortValue: (item) => item.type, width: "130px" },
+    {
+      key: "status",
+      header: t("status"),
+      render: (item) => <StatusBadge tone={STATUS_TONE[item.status]} label={statusLabel(item.status, t)} />,
+      sortValue: (item) => item.status,
+      width: "140px",
+    },
+    { key: "fromTo", header: t("fromTo"), render: (item) => `${companyName(item.fromCompanyId)} → ${companyName(item.toCompanyId)}`, width: "260px" },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => void pdfViewer.openPdf(`/correspondence/summary-report?projectId=${params.id}`, t("title"), "correspondence-register.pdf")}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
-            >
-              {tc("exportAllPdf")}
-            </button>
-            <button
-              onClick={() => setShowForm((s) => !s)}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-            >
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button
+                onClick={() => void pdfViewer.openPdf(`/correspondence/summary-report?projectId=${params.id}`, t("title"), "correspondence-register.pdf")}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
+              >
+                {tc("exportAllPdf")}
+              </button>
+              <button
+                onClick={() => setShowForm((s) => !s)}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+              >
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showForm && (
           <form
@@ -207,30 +246,33 @@ export default function CorrespondencePage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!items && !error && <p>{tc("loading")}</p>}
-        {items && items.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {items?.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/correspondence/${item.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {item.correspondenceNumber} — {item.subject}
-                  </span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                    {statusLabel(item.status, t)}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">
-                  {typeLabel(item.type, t)} · {companyName(item.fromCompanyId)} → {companyName(item.toCompanyId)}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["draft", "sent", "acknowledged", "closed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+            },
+          ]}
+          activeFilters={{ status: statusFilter }}
+          onFilterChange={(_key, value) => setStatusFilter(value)}
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter("");
+          }}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<CorrespondenceItem>
+          columns={columns}
+          rows={filteredItems}
+          onRowClick={(item) => router.push(`/${locale}/projects/${params.id}/correspondence/${item.id}`)}
+          emptyTitle={items && items.length > 0 ? t("noResults") : t("empty")}
+        />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>

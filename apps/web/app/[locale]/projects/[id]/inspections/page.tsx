@@ -1,13 +1,18 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 interface ChecklistTemplate {
   id: string;
@@ -25,6 +30,12 @@ function statusLabel(status: Inspection["status"], t: (key: string) => string): 
   return { scheduled: t("statusScheduled"), in_progress: t("statusInProgress"), completed: t("statusCompleted") }[status];
 }
 
+const STATUS_TONE: Record<Inspection["status"], StatusTone> = {
+  scheduled: "neutral",
+  in_progress: "info",
+  completed: "success",
+};
+
 export default function InspectionsPage() {
   const t = useTranslations("Inspections");
   const tc = useTranslations("Common");
@@ -35,6 +46,8 @@ export default function InspectionsPage() {
   const [inspections, setInspections] = useState<Inspection[] | null>(null);
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [templateId, setTemplateId] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
@@ -88,26 +101,50 @@ export default function InspectionsPage() {
     }
   }
 
+  const filteredInspections = useMemo(() => {
+    if (!inspections) return null;
+    const q = search.trim().toLowerCase();
+    return inspections.filter((i) => {
+      if (statusFilter && i.status !== statusFilter) return false;
+      if (q && !templateTitle(i.templateId).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [inspections, search, statusFilter, templates]);
+
+  const columns: DataTableColumn<Inspection>[] = [
+    { key: "template", header: t("template"), render: (i) => templateTitle(i.templateId), sortValue: (i) => templateTitle(i.templateId) },
+    {
+      key: "status",
+      header: t("status"),
+      render: (i) => <StatusBadge tone={STATUS_TONE[i.status]} label={statusLabel(i.status, t)} />,
+      sortValue: (i) => i.status,
+      width: "150px",
+    },
+    { key: "scheduledAt", header: t("scheduledDateColumn"), render: (i) => (i.scheduledAt ? i.scheduledAt.slice(0, 10) : ""), sortValue: (i) => i.scheduledAt ?? "", width: "150px" },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/${locale}/projects/${params.id}/inspections/templates`} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
-              {t("manageTemplates")}
-            </Link>
-            <button
-              onClick={() => void pdfViewer.openPdf(`/inspections/summary-report?projectId=${params.id}`, t("title"), "inspection-register.pdf")}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
-            >
-              {tc("exportAllPdf")}
-            </button>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <Link href={`/${locale}/projects/${params.id}/inspections/templates`} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
+                {t("manageTemplates")}
+              </Link>
+              <button
+                onClick={() => void pdfViewer.openPdf(`/inspections/summary-report?projectId=${params.id}`, t("title"), "inspection-register.pdf")}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
+              >
+                {tc("exportAllPdf")}
+              </button>
+              <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -138,26 +175,33 @@ export default function InspectionsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!inspections && !error && <p>{tc("loading")}</p>}
-        {inspections && inspections.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {inspections?.map((inspection) => (
-            <li key={inspection.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/inspections/${inspection.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{templateTitle(inspection.templateId)}</span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                    {statusLabel(inspection.status, t)}
-                  </span>
-                </div>
-                {inspection.scheduledAt && <p className="mt-1 text-sm text-navy-600">{inspection.scheduledAt.slice(0, 10)}</p>}
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["scheduled", "in_progress", "completed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+            },
+          ]}
+          activeFilters={{ status: statusFilter }}
+          onFilterChange={(_key, value) => setStatusFilter(value)}
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter("");
+          }}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<Inspection>
+          columns={columns}
+          rows={filteredInspections}
+          onRowClick={(inspection) => router.push(`/${locale}/projects/${params.id}/inspections/${inspection.id}`)}
+          emptyTitle={inspections && inspections.length > 0 ? t("noResults") : t("empty")}
+        />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>
