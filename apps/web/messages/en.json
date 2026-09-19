@@ -36,7 +36,9 @@
     "colorBlack": "Black",
     "dismiss": "Dismiss",
     "delete": "Delete",
-    "exportAllCsv": "Export All (CSV)"
+    "exportAllCsv": "Export All (CSV)",
+    "copy": "Copy",
+    "copied": "Copied!"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -955,6 +957,8 @@
     "timezone": "Timezone",
     "save": "Save",
     "saved": "Saved.",
+    "inboundEmailHeading": "Email-to-project logging",
+    "inboundEmailIntro": "CC or forward mail to this address and it's logged automatically as incoming Correspondence, attributed to whichever registered project member sent it.",
     "customFieldsHeading": "Custom fields",
     "customFieldsIntro": "Add extra fields to a module's records. Fields appear on that module's detail page for anyone who can view it, and are editable by anyone who can edit the record.",
     "module": "Module",

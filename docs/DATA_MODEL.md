@@ -409,6 +409,61 @@ actions, not a new kind of tracked item. Full detail in
   (the `inspection` source type is schema/service-supported but has no
   UI entry point yet, predating this phase).
 
+## 9l. Email-to-project logging (user-directed, Phase 19)
+
+`projects` gained `inbound_email_token` (uuid, unique, server-generated via
+`defaultRandom()` like every id column) -- the local part of the address
+`<token>@INBOUND_EMAIL_DOMAIN` a registered project member CCs or forwards
+mail to. `POST /internal/inbound-email` (machine-to-machine, gated by the
+`x-inbound-email-secret` shared secret like `/internal/rfi-overdue-check`,
+not a session) accepts a provider-agnostic payload (`to`/`from`/`subject`/
+`text`/`attachments[]` -- see `inboundEmailWebhookSchema`), resolves the
+token to a project and the `from` address to a registered `users.email`,
+and -- only if that person is an actual member of that project with
+`correspondence:standard` -- logs the message as an ordinary "incoming"
+Correspondence row (9-era `correspondence` table), with any attachments
+stored through the existing `attachments` table under `ownerType:
+"correspondence"`. No new correspondence subtype and no parallel inbox
+table; email is just another way to create the same row the manual
+"New Correspondence" form does.
+
+**Sender/company resolution** (both looked up inside the same
+`withRequestContext` as the write, once the sender is confirmed a real
+project member):
+- `fromCompanyId` = the sender's own company on this project
+  (`project_users.company_id`), the same source `resolveAuthorCompanyBranding`
+  already uses for report branding.
+- `toCompanyId` = the project's `gc`-type company (`project_companies` join
+  `companies` where `type = 'gc'`) -- a deterministic stand-in for "the
+  project" as an addressee, since the correspondence schema requires two
+  distinct companies and email-to-project logging has no explicit
+  recipient the way the manual form does.
+
+**Why the pre-auth split matters**: this webhook has no JWT/session to
+derive an RLS context from, so the *project*-by-token and *user*-by-email
+lookups run against `authDb` (bypassing RLS) -- a fourth "genuinely
+pre-authentication" case alongside login-by-email/invite-token/
+refresh-token (§5 of `CLAUDE.md`). Everything after the sender is
+identified -- the membership/permission check and the actual write --
+runs through `appDb` under that sender's own RLS context, exactly as if
+they'd made the request with a real session.
+
+**Scope cuts, documented rather than silently incomplete:**
+- Only a registered, current project member's own email address is
+  accepted as sender -- there is no concept of logging mail from an
+  external party who isn't a platform user (real Procore ties inbound
+  email to a project user's account the same way).
+- The generic webhook payload shape (`inboundEmailWebhookSchema`) is
+  provider-agnostic on purpose: translating a real inbound-email
+  provider's native webhook format (SendGrid Inbound Parse, Mailgun
+  Routes, SES receipt rules) into this shape is a deployment-time
+  webhook-config concern, not application code -- this app has no
+  production inbound-email account configured. `INBOUND_EMAIL_DOMAIN`
+  is not, by itself, a deliverable mailbox.
+- No reply-by-email or threading -- each inbound message becomes one new
+  Correspondence row; there's no concept of an email thread mapping to a
+  single, growing record.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

@@ -1,0 +1,2 @@
+ALTER TABLE "projects" ADD COLUMN "inbound_email_token" uuid DEFAULT gen_random_uuid() NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "projects_inbound_email_token_unique" ON "projects" USING btree ("inbound_email_token");

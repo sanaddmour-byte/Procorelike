@@ -15,6 +15,7 @@ export * from "./business-rules/billing";
 export * from "./business-rules/esignature";
 export * from "./business-rules/format-money";
 export * from "./business-rules/trends";
+export * from "./business-rules/inbound-email";
 
 export * from "./schemas/auth.schema";
 export * from "./schemas/company.schema";
@@ -52,6 +53,7 @@ export * from "./schemas/admin.schema";
 export * from "./schemas/custom-field.schema";
 export * from "./schemas/notification.schema";
 export * from "./schemas/workflow-rule.schema";
+export * from "./schemas/inbound-email.schema";
 
 export * from "./schedule/types";
 export * from "./schedule/validate";

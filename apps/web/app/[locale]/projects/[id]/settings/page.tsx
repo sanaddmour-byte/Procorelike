@@ -15,6 +15,7 @@ interface Project {
   defaultCurrency: string;
   changeOrderThreshold: string;
   timezone: string;
+  inboundEmailAddress: string;
 }
 
 interface CustomFieldDefinition {
@@ -41,8 +42,10 @@ export default function ProjectSettingsPage() {
   const [defaultCurrency, setDefaultCurrency] = useState("");
   const [changeOrderThreshold, setChangeOrderThreshold] = useState("");
   const [timezone, setTimezone] = useState("");
+  const [inboundEmailAddress, setInboundEmailAddress] = useState("");
   const [savingGeneral, setSavingGeneral] = useState(false);
   const [generalSaved, setGeneralSaved] = useState(false);
+  const [addressCopied, setAddressCopied] = useState(false);
 
   const [selectedModule, setSelectedModule] = useState<Module>("rfis");
   const [definitions, setDefinitions] = useState<CustomFieldDefinition[] | null>(null);
@@ -59,6 +62,7 @@ export default function ProjectSettingsPage() {
         setDefaultCurrency(project.defaultCurrency);
         setChangeOrderThreshold(project.changeOrderThreshold);
         setTimezone(project.timezone);
+        setInboundEmailAddress(project.inboundEmailAddress);
       })
       .catch((err) => {
         if (err instanceof ApiClientError && err.status === 403) setForbidden(true);
@@ -107,6 +111,16 @@ export default function ProjectSettingsPage() {
       setError(tc("errorGeneric"));
     } finally {
       setSavingGeneral(false);
+    }
+  }
+
+  async function handleCopyInboundAddress(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(inboundEmailAddress);
+      setAddressCopied(true);
+      setTimeout(() => setAddressCopied(false), 4000);
+    } catch {
+      setError(tc("errorGeneric"));
     }
   }
 
@@ -199,6 +213,21 @@ export default function ProjectSettingsPage() {
           </button>
           {generalSaved && <p className="text-sm text-navy-600">{t("saved")}</p>}
         </form>
+
+        <div className="mt-4 border-t-2 border-orange-100 pt-3">
+          <p className="text-sm font-semibold text-navy-800">{t("inboundEmailHeading")}</p>
+          <p className="mb-2 text-xs text-navy-600">{t("inboundEmailIntro")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="rounded-lg border-2 border-ink bg-white px-3 py-2 text-sm">{inboundEmailAddress}</code>
+            <button
+              type="button"
+              onClick={() => void handleCopyInboundAddress()}
+              className="rounded-lg border-2 border-ink bg-white px-2 py-1 text-xs font-semibold text-navy-800"
+            >
+              {addressCopied ? tc("copied") : tc("copy")}
+            </button>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

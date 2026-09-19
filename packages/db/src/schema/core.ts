@@ -147,24 +147,37 @@ export const userCompanies = pgTable("user_companies", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const projects = pgTable("projects", {
-  id: idColumn(),
-  name: varchar("name", { length: 200 }).notNull(),
-  address: text("address"),
-  lat: numeric("lat", { precision: 9, scale: 6 }),
-  lng: numeric("lng", { precision: 9, scale: 6 }),
-  localeDefault: varchar("locale_default", { length: 5 }).notNull().default("en"),
-  timezone: varchar("timezone", { length: 100 }).notNull().default("Asia/Amman"),
-  status: varchar("status", { length: 50 }).notNull().default("active"),
-  /** A change order at or above this amount requires a second approver from a different company (packages/shared's requiresSecondApprover). Configurable per project; docs/DATA_MODEL.md §9. */
-  changeOrderThreshold: numeric("change_order_threshold", { precision: 14, scale: 2 }).notNull().default("5000"),
-  /** Default ISO 4217 currency for financial records on this project that don't carry their own currency column (direct costs, change orders, payment applications). Prime contracts/budget lines/commitments still carry their own currency for the rarer case a single project mixes currencies. */
-  defaultCurrency: varchar("default_currency", { length: 3 }).notNull().default("USD"),
-  createdBy: uuid("created_by")
-    .notNull()
-    .references(() => users.id),
-  ...auditColumns(),
-});
+export const projects = pgTable(
+  "projects",
+  {
+    id: idColumn(),
+    name: varchar("name", { length: 200 }).notNull(),
+    address: text("address"),
+    lat: numeric("lat", { precision: 9, scale: 6 }),
+    lng: numeric("lng", { precision: 9, scale: 6 }),
+    localeDefault: varchar("locale_default", { length: 5 }).notNull().default("en"),
+    timezone: varchar("timezone", { length: 100 }).notNull().default("Asia/Amman"),
+    status: varchar("status", { length: 50 }).notNull().default("active"),
+    /** A change order at or above this amount requires a second approver from a different company (packages/shared's requiresSecondApprover). Configurable per project; docs/DATA_MODEL.md §9. */
+    changeOrderThreshold: numeric("change_order_threshold", { precision: 14, scale: 2 }).notNull().default("5000"),
+    /** Default ISO 4217 currency for financial records on this project that don't carry their own currency column (direct costs, change orders, payment applications). Prime contracts/budget lines/commitments still carry their own currency for the rarer case a single project mixes currencies. */
+    defaultCurrency: varchar("default_currency", { length: 3 }).notNull().default("USD"),
+    /**
+     * Server-generated, immutable alias for Phase 19's email-to-project
+     * logging: `<token>@INBOUND_EMAIL_DOMAIN` is the address a registered
+     * project member CCs or forwards mail to, so it gets auto-logged as
+     * incoming Correspondence (inbound-email.service.ts). A plain uuid --
+     * same generation mechanism as every id column -- rather than a
+     * shorter human-typed code, since nobody types this, they paste/CC it.
+     */
+    inboundEmailToken: uuid("inbound_email_token").notNull().defaultRandom(),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...auditColumns(),
+  },
+  (table) => [uniqueIndex("projects_inbound_email_token_unique").on(table.inboundEmailToken)],
+);
 
 export const projectCompanies = pgTable(
   "project_companies",

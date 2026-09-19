@@ -52,7 +52,8 @@ export function projectsRouter(appDb: Database, env: Env): Router {
       if (!projectId) throw new Error("missing :id param");
       const project = await permissionService.findProjectById(appDb, authUser.id, projectId);
       if (!project) throw new NotFoundError("Project not found");
-      res.json(project);
+      // Phase 19: the address a project member CCs/forwards mail to for email-to-project logging (inbound-email.service.ts) -- computed here rather than stored, since the domain half is an env var, not project data.
+      res.json({ ...project, inboundEmailAddress: `${project.inboundEmailToken}@${env.INBOUND_EMAIL_DOMAIN}` });
     } catch (err) {
       next(err);
     }

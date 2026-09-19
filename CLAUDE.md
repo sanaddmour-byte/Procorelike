@@ -80,11 +80,11 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 18 (Action Plans) is
-complete and gate-verified.** This is the fourth of 7 planned phases
-addressing a Procore competitive-gap analysis (see Phase 15's gate report
-for the full 7-phase plan); SSO/SAML was explicitly descoped by the user
-pending a real enterprise customer. Phase 16 added notifications
+mid-build corrections). As of this writing: **Phase 19 (Email-to-project
+logging) is complete and gate-verified.** This is the fifth of 7 planned
+phases addressing a Procore competitive-gap analysis (see Phase 15's gate
+report for the full 7-phase plan); SSO/SAML was explicitly descoped by
+the user pending a real enterprise customer. Phase 16 added notifications
 (`notification.service.ts`, wired into RFI/Submittal/Punch Item/Change
 Order key events, surfaced via a header bell) and workflow transition
 rules (`workflow-rule.service.ts`, letting a `directory:admin` narrow —
@@ -102,7 +102,20 @@ one step into ordinary `corrective_actions` rows (each stamped with an
 `action_plan_id`) rather than a parallel tracking system, so a plan's
 status is always derived from those rows' own statuses, never stored
 separately. Applied from the existing `CorrectiveActionsPanel` on Safety
-Incident/Observation pages.
+Incident/Observation pages. Phase 19 added email-to-project logging
+(`inbound-email.service.ts`, `POST /internal/inbound-email` — a
+shared-secret-gated webhook, not a session route): every project now has
+a unique `<inbound_email_token>@INBOUND_EMAIL_DOMAIN` alias (shown with a
+copy button on the project Settings page); mail CC'd or forwarded there
+by a registered, current project member with `correspondence:standard`
+is logged as an ordinary incoming `correspondence` row, attachments and
+all, through the same permission gate and the same `attachments` table
+manual creation already uses — no parallel inbox, no new correspondence
+subtype. Wiring a real inbound-email provider (SendGrid Inbound Parse /
+Mailgun Routes / SES) is a deployment-time config step outside this
+repo, since translating a provider's native webhook format into this
+app's generic payload contract varies per provider and no production
+inbound-email account exists yet.
 
 Two things worth knowing before touching
 `packages/db/src/sql/001_rls_and_functions.sql`: a table's RLS policy must

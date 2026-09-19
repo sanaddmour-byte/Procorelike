@@ -120,7 +120,7 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/bids", bidsRouter(clients.appDb.db, env));
   app.use("/estimates", estimatesRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
-  app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
+  app.use("/internal", internalRouter(clients.authDb.db, clients.appDb.db, s3, mailer, env));
   app.use("/admin", adminRouter(clients.appDb.db, env));
   app.use("/external", externalRouter(clients.appDb.db, clients.authDb.db));
   app.use("/search", searchRouter(clients.appDb.db, env));

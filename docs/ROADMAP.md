@@ -2916,6 +2916,80 @@ half of item 11) was explicitly descoped by the user to "skip for now.") —
   confirmed the `/settings` route (now with the Action Plan Templates
   section) still compiles and prerenders correctly.
 
+## Phase 19 gate report
+
+**Gate** (Phase 5 of the same 7-phase, user-directed follow-up as Phase
+15: "Email-to-project logging," gap item #9) -- **PASSED**, see
+Verification.
+
+**What was built:**
+- **`packages/db`**: `projects` gained `inbound_email_token` (uuid, unique,
+  `defaultRandom()` -- same generation mechanism as every id column) --
+  migration 0041. The unique index lets a single `WHERE` clause resolve a
+  webhook's "to" address straight to its project.
+- **`packages/shared`**: `business-rules/inbound-email.ts` --
+  `parseEmailAddresses`/`extractInboundToken`/`extractSenderAddress`, pure
+  functions parsing raw "To"/"From" header text (comma-separated, optional
+  `Display Name <addr>` wrapping) the way a real inbound-email provider's
+  webhook hands it over (12 tests). `schemas/inbound-email.schema.ts` --
+  `inboundEmailWebhookSchema`, the provider-agnostic payload contract this
+  app's webhook accepts (`to`/`from`/`subject`/`text`/`attachments[]`,
+  capped at 5 attachments / ~10MB decoded each).
+- **`apps/api`**: `inbound-email.service.ts` -- `logInboundEmail()`,
+  called from a new `POST /internal/inbound-email` route (shared-secret
+  gated via `x-inbound-email-secret`/`INBOUND_EMAIL_WEBHOOK_SECRET`,
+  alongside the existing cron routes in `internal.routes.ts`). Resolves
+  the token to a project and the sender's email to a `users` row via
+  `authDb` (bypassing RLS -- a fourth "genuinely pre-authentication"
+  lookup alongside login-by-email/invite-token/refresh-token, since this
+  webhook has no session), then requires that person be an actual member
+  of that project with `correspondence:standard` before writing anything
+  -- exactly the gate manual correspondence creation already uses, so
+  email is not a side door around it. On success it inserts one ordinary
+  "incoming" `correspondence` row (`fromCompanyId` = the sender's own
+  project company, `toCompanyId` = the project's `gc`-type company) plus
+  an `attachments` row per attachment, all under the sender's own RLS
+  context via `appDb`, and audit-logs both. `GET /projects/:id` now also
+  returns a computed `inboundEmailAddress` (`<token>@INBOUND_EMAIL_DOMAIN`)
+  alongside the raw project row.
+- **`apps/web`**: the project Settings page's General section now shows
+  the project's inbound-email address with a one-click copy button, so a
+  project member knows what to CC or forward mail to.
+- **Explicitly not built, on record**: a real inbound-email provider
+  account (SendGrid Inbound Parse / Mailgun Routes / SES receipt rules) --
+  `INBOUND_EMAIL_DOMAIN` is a placeholder domain and wiring an actual
+  provider's webhook (which posts in its own native format) to translate
+  into this app's generic `inboundEmailWebhookSchema` payload is a
+  deployment-time config step, not application code, since this project
+  has no production inbound-email account. Logging mail from a sender who
+  isn't a registered project member was also considered and rejected: the
+  correspondence schema has no "external sender name/email" field at all
+  (incoming correspondence has always been logged by a project user who
+  received it, not authored by the external party), so accepting
+  unregistered senders would need a schema change out of proportion to
+  this phase; a stranger's mail addressed to the alias is acknowledged
+  but not logged (`{matched:false, reason:"unknown_sender"}`). No
+  reply-by-email or thread mapping -- every inbound message becomes one
+  new Correspondence row.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 200 tests across 24 files,
+  including the new 12-test `inbound-email.test.ts`; `apps/api`: 157
+  tests across 33 files, including the new 6-test
+  `inbound-email.test.ts` -- wrong shared secret rejected, an
+  unrecognized "to" token, an unregistered sender, a real registered
+  user who isn't a member of *this* project (seed.ts's
+  mahmoud.tarawneh, a member only of the infra project), a full happy
+  path with a display-name-wrapped From header verified end-to-end
+  through `GET /correspondence`, and an empty subject defaulting to
+  "(no subject)"; `apps/web`: 28 tests unaffected; i18n key parity
+  confirmed identical between `en.json`/`ar.json`, new `Common.copy`/
+  `Common.copied` and `ProjectSettings.inboundEmailHeading`/
+  `inboundEmailIntro` keys added to both). Full `next build` also
+  confirmed the `/settings` route still compiles and prerenders
+  correctly with the new inbound-email display.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the
