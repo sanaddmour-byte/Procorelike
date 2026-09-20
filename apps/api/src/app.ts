@@ -60,7 +60,13 @@ import { createMailer } from "./lib/mailer";
 
 export function createApp(env: Env, clients: ApiDbClients): Express {
   const app = express();
-  app.use(helmet());
+  // helmet ships a dual ESM/CJS package.json ("exports" map with no per-condition
+  // "types" entry) that some TypeScript resolution modes -- notably Vercel's
+  // serverless-function type-check, which disagrees with this repo's own tsc
+  // run -- type as a non-callable namespace instead of the default export
+  // function. The cast changes nothing at runtime (helmet is still the same
+  // CJS function either way), it only satisfies the stricter checker.
+  app.use((helmet as unknown as () => express.RequestHandler)());
   // exposedHeaders: browsers hide every response header from fetch()'s Headers
   // object except a small built-in safelist unless the server explicitly opts a
   // header in here -- X-Total-Count (Phase 21's server-pagination contract) is
