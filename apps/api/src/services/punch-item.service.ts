@@ -9,6 +9,7 @@ import {
   PUNCH_ITEM_STATUS_TRANSITIONS,
   requirePermission,
   resolveEffectiveLevel,
+  type BulkTransitionPunchItemStatusInput,
   type CreatePunchItemInput,
   type FieldConflict,
   type ListPunchItemsQuery,
@@ -18,11 +19,12 @@ import {
   type TransitionPunchItemStatusInput,
   type UpdatePunchItemInput,
 } from "@siteops/shared";
-import { and, asc, count, desc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import type { SyncApplyResult } from "./daily-log.service";
 import { notifyUsers } from "./notification.service";
+import { loadPermissionContext, withUserContext } from "./permission.service";
 import { enforceWorkflowTransitionRule } from "./workflow-rule.service";
 
 type PunchItemRow = typeof schema.punchItems.$inferSelect;
@@ -285,6 +287,64 @@ export async function transitionPunchItemStatus(
     );
     return updated;
   });
+}
+
+export interface BulkTransitionResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Phase 31: bulk status transition for Punch Items, same recipe as
+ * rfi.service.ts's bulkTransitionRfiStatus (Phase 28) -- a thin loop over
+ * the exact same transitionPunchItemStatus a single-item PATCH already
+ * uses, so PUNCH_ITEM_STATUS_TRANSITIONS, the Final Approver check,
+ * workflow rules, and the audit log write all apply per row here too.
+ *
+ * Every id must belong to the same project: a bulk action only ever
+ * targets rows a user selected on one list page (one project's worth),
+ * and loading a single PermissionContext for a mix of projects would
+ * apply the wrong project's role to some rows. A missing id or a rule
+ * violation on one row (e.g. that item can't move to the requested
+ * status, or the caller isn't its Final Approver) is reported per-row
+ * instead of failing the batch.
+ */
+export async function bulkTransitionPunchItemStatus(
+  appDb: Database,
+  userId: string,
+  input: BulkTransitionPunchItemStatusInput,
+): Promise<BulkTransitionResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => {
+    return tx
+      .select({ id: schema.punchItems.id, projectId: schema.punchItems.projectId })
+      .from(schema.punchItems)
+      .where(inArray(schema.punchItems.id, input.ids));
+  });
+  if (rows.length === 0) throw new NotFoundError("No punch items found for the given ids");
+
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) {
+    throw new ApiError(400, "mixed_projects", "All selected punch items must belong to the same project");
+  }
+  const [projectId] = projectIds;
+  const ctx = await loadPermissionContext(appDb, userId, projectId!);
+  const foundIds = new Set(rows.map((r) => r.id));
+
+  const results: BulkTransitionResult[] = [];
+  for (const id of input.ids) {
+    if (!foundIds.has(id)) {
+      results.push({ id, ok: false, error: "Punch item not found" });
+      continue;
+    }
+    try {
+      await transitionPunchItemStatus(appDb, userId, ctx, id, { toStatus: input.toStatus });
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to transition this punch item" });
+    }
+  }
+  return results;
 }
 
 // ---------------------------------------------------------------------------

@@ -206,7 +206,10 @@
     "photos": "الصور",
     "noPhotos": "لم يتم إرفاق صور بعد.",
     "uploadPhoto": "رفع صورة",
-    "uploadingPhoto": "جارٍ الرفع…"
+    "uploadingPhoto": "جارٍ الرفع…",
+    "bulkSendForReviewAction": "إرسال للمراجعة",
+    "bulkSendForReviewConfirmTitle": "إرسال العناصر المحددة للمراجعة؟",
+    "bulkSendForReviewConfirmMessage": "نقل {count} ملاحظة (ملاحظات) إلى جاهزة للمراجعة."
   },
   "SavedViews": {
     "saveView": "حفظ العرض",

@@ -206,7 +206,10 @@
     "photos": "Photos",
     "noPhotos": "No photos attached yet.",
     "uploadPhoto": "Upload photo",
-    "uploadingPhoto": "Uploading…"
+    "uploadingPhoto": "Uploading…",
+    "bulkSendForReviewAction": "Send for review",
+    "bulkSendForReviewConfirmTitle": "Send selected items for review?",
+    "bulkSendForReviewConfirmMessage": "Move {count} punch item(s) to Ready for review."
   },
   "SavedViews": {
     "saveView": "Save view",

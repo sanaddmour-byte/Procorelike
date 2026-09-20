@@ -52,6 +52,15 @@ export const transitionPunchItemStatusSchema = z
   .strict();
 export type TransitionPunchItemStatusInput = z.infer<typeof transitionPunchItemStatusSchema>;
 
+/** Phase 31: bulk-transition contract, same shape as rfi.schema.ts's bulkTransitionRfiStatusSchema (Phase 28). No `note` field -- a bulk action applying one note to N distinct items reads as generic filler rather than a real per-item note, so it's left out rather than force-fit. */
+export const bulkTransitionPunchItemStatusSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+    toStatus: punchItemStatusSchema,
+  })
+  .strict();
+export type BulkTransitionPunchItemStatusInput = z.infer<typeof bulkTransitionPunchItemStatusSchema>;
+
 /**
  * Valid forward transitions — enforced server-side, not just in the UI.
  * Mirrors Procore's Punch List Workflow: a reviewer can send an item back

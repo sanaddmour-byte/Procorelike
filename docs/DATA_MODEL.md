@@ -973,6 +973,71 @@ Arabic subject/question text, return `200` with a well-formed
 `%PDF-`-signed PDF instead of throwing) all pass, alongside the full
 existing 237-test API suite.
 
+## 9s. Bulk actions rollout, module 2: Punch List (Phase 31)
+
+The first mechanical repeat of §9p's "extending this pattern to more
+modules is now a mechanical repeat of this recipe" note -- same shape,
+a second module, no redesign.
+
+**`packages/shared/src/schemas/punch-item.schema.ts`**:
+`bulkTransitionPunchItemStatusSchema` (`{ ids: string[] (1-100, uuid),
+toStatus: PunchItemStatus }`), the same shape as `rfi.schema.ts`'s
+`bulkTransitionRfiStatusSchema` minus a `note` field -- one note applied
+to N distinct punch items would read as generic filler rather than a
+real per-item note, so it's left out rather than force-fit onto the bulk
+shape.
+
+**`apps/api/src/services/punch-item.service.ts`**:
+`bulkTransitionPunchItemStatus` loads every requested punch item, rejects
+the whole batch with 400 `mixed_projects` if the ids span more than one
+project (same reasoning as the RFI version: one `PermissionContext` can't
+correctly apply to rows from different projects), then loops the exact
+same `transitionPunchItemStatus` a single-item PATCH already uses -- so
+`PUNCH_ITEM_STATUS_TRANSITIONS`, the Final Approver check (only the
+assigned final approver or an admin-level `punch_list` permission may
+approve), workflow-transition rules, and the audit log write all apply
+per row here too. Returns `{ id, ok, error? }[]`, same as the RFI
+version, so a rule violation on one row doesn't fail the rest of the
+batch. `POST /punch-items/bulk-transition` is registered before the
+`/:id` dynamic routes, matching `rfis.routes.ts`'s convention.
+
+**The bulk action itself is "Send for review"** (`toStatus:
+"ready_for_review"`), not "Close selected" like the RFI pilot --
+`PUNCH_ITEM_STATUS_TRANSITIONS` only allows `approved -> closed`, a
+narrow precondition unlikely to hold for a freshly-selected batch, while
+`open`, `not_accepted`, and `in_dispute` all transition to
+`ready_for_review`. That's the actual common case this bulk action
+serves: a contractor fixes a batch of flagged items in the field, then
+submits all of them for review at once, mirroring Procore's own punch
+list workflow.
+
+**Web**: the Punch List page reuses `DataTable`'s `selection` prop and
+`BulkActionsBar` unchanged from Phase 28 -- no component changes needed,
+only page-level wiring identical in shape to the RFIs page (selection
+state, a `ConfirmDialog`-gated action button, `Common.bulkPartialFailure`
+on partial failure, selection cleared on `search`/`filters`/`sort`/`page`
+change).
+
+**Verified**: `apps/api/src/routes/phase31-punch-bulk-actions.test.ts`
+(4 tests, mirroring `phase28-bulk-actions.test.ts`'s cases: full-batch
+success with a re-fetch confirming the status change, a partial failure
+where one item is already `approved` and can't reach `ready_for_review`,
+a missing id reported per-row rather than 404ing the batch, and the
+empty-`ids` 400). Playwright against the running dev servers confirmed
+the checkbox selection, `BulkActionsBar`, and `ConfirmDialog` render and
+behave correctly on the Punch List page (selecting a row surfaces "Send
+for review," the confirm dialog shows the expected copy, cancel closes it
+cleanly) with zero console errors, and that the Arabic (`/ar/...`) page
+still renders `dir="rtl"` -- confirming the reused components carried
+over without regression.
+
+**Explicitly not built this phase, on record**: bulk actions on any
+module besides RFIs and Punch List, column resize, density modes, and
+client-side permission-aware UI hiding all remain deferred, as recorded
+in §9p. Document-viewer unification, annotation generalization, and the
+HarfBuzz-level Arabic letter-shaping follow-up (§9r) also remain
+untouched by this phase.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

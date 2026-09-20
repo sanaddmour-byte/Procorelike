@@ -1,5 +1,11 @@
 import type { Database } from "@siteops/db";
-import { createPunchItemSchema, listPunchItemsQuerySchema, transitionPunchItemStatusSchema, updatePunchItemSchema } from "@siteops/shared";
+import {
+  bulkTransitionPunchItemStatusSchema,
+  createPunchItemSchema,
+  listPunchItemsQuerySchema,
+  transitionPunchItemStatusSchema,
+  updatePunchItemSchema,
+} from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -50,6 +56,22 @@ export function punchItemsRouter(appDb: Database, env: Env): Router {
       next(err);
     }
   });
+
+  // Registered before /:id (matches rfis.routes.ts's convention) so "bulk-transition" isn't parsed as an id.
+  router.post(
+    "/bulk-transition",
+    validateBody(bulkTransitionPunchItemStatusSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const authUser = req.authUser;
+        if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+        const results = await punchItemService.bulkTransitionPunchItemStatus(appDb, authUser.id, req.body);
+        res.json(results);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
     try {

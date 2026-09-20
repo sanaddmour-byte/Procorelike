@@ -3922,6 +3922,80 @@ report.
   sessions again, the same recurring sandbox note as every prior phase's
   gate report).
 
+## Phase 31 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- per the user's "proceed"; Phase 28's
+gate report explicitly left "bulk actions on modules besides RFIs" on
+record as deferred, and flagged extending the pattern as "a mechanical
+repeat of this recipe, not a redesign" -- this phase is that first
+repeat) -- **PASSED**, see Verification.
+
+**What was built:**
+
+- **`packages/shared/src/schemas/punch-item.schema.ts`**:
+  `bulkTransitionPunchItemStatusSchema` (`{ ids: string[] (1-100, uuid),
+  toStatus: PunchItemStatus }`), same shape as the RFI bulk schema minus
+  a `note` field (a single note applied across N distinct items reads as
+  filler, not a real note).
+- **`apps/api/src/services/punch-item.service.ts`**:
+  `bulkTransitionPunchItemStatus` -- loads every requested punch item,
+  rejects the whole batch with 400 `mixed_projects` if the ids span more
+  than one project, loads one `PermissionContext`, then loops the exact
+  same `transitionPunchItemStatus` a single-item PATCH already uses, so
+  `PUNCH_ITEM_STATUS_TRANSITIONS`, the Final Approver check, workflow
+  rules, and the audit log write all apply per row. Returns `{ id, ok,
+  error? }[]` so a rule violation on one row doesn't fail the batch.
+- **`apps/api/src/routes/punch-items.routes.ts`**: `POST
+  /punch-items/bulk-transition`, registered before the `/:id` dynamic
+  routes (matching `rfis.routes.ts`'s convention).
+- **Punch List page**: reused `DataTable`'s `selection` prop and
+  `BulkActionsBar` unchanged from Phase 28 -- zero component changes,
+  only page-level wiring (selection state, a "Send for review" action
+  gated behind `ConfirmDialog`, `Common.bulkPartialFailure` messaging,
+  selection cleared on `search`/`filters`/`sort`/`page` change), the same
+  shape as the RFIs page.
+- **The bulk action chosen -- "Send for review," not "Close selected"**:
+  `PUNCH_ITEM_STATUS_TRANSITIONS.approved` is the only status that can
+  reach `closed`, a narrow precondition for a freshly-selected batch;
+  `open`, `not_accepted`, and `in_dispute` all transition to
+  `ready_for_review`, matching the actual field workflow (fix a batch of
+  flagged items, submit them all for review at once).
+- **`apps/api/src/routes/phase31-punch-bulk-actions.test.ts`** (new): 4
+  tests mirroring `phase28-bulk-actions.test.ts` -- full-batch success
+  with a re-fetch confirming the status change, a partial failure (one
+  item already `approved`, which can't reach `ready_for_review`), a
+  missing id reported per-row rather than 404ing the batch, and the
+  empty-`ids` 400 from schema validation.
+- **Manual browser verification** (Playwright against the dev servers):
+  selecting a row on the Punch List page surfaced the `BulkActionsBar`
+  with "Send for review"; clicking it opened the `ConfirmDialog` with the
+  expected title; cancel closed it cleanly; zero console errors observed
+  throughout. Confirmed the Arabic (`/ar/...`) page still renders
+  `dir="rtl"` -- the reused components carried over without regression.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9s
+documenting this rollout and why "Send for review" was chosen over
+mirroring the RFI pilot's "Close selected" verbatim.
+
+**Explicitly not built this phase, on record**: bulk actions on any
+module besides RFIs and Punch List (Submittals, Change Orders, ...),
+column resize, density modes, and client-side permission-aware UI hiding
+all remain deferred, as recorded in Phase 28's gate report. Document-
+viewer unification, annotation generalization, and the HarfBuzz-level
+Arabic letter-shaping follow-up (Phase 30) also remain untouched.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 241 tests across 44 files (237 pre-existing plus 4 new
+  `phase31-punch-bulk-actions.test.ts` tests; every pre-existing
+  punch-item-touching suite re-verified unaffected), `apps/web`: 28,
+  unaffected. Full `next build` succeeded across all routes. Confirmed
+  the sandbox's Postgres 16 cluster before the API test suite (it had
+  stopped between sessions again, the same recurring sandbox note as
+  every prior phase's gate report).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

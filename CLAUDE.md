@@ -81,8 +81,31 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 30 (Arabic-safe PDF
-exports) is complete and gate-verified** -- closing the crash-severity
+mid-build corrections). As of this writing: **Phase 31 (bulk actions
+rollout to Punch List) is complete and gate-verified** -- the first
+mechanical repeat of Phase 28's bulk-actions recipe on a second module,
+per that phase's own "extending this pattern to more modules is now a
+mechanical repeat of this recipe, not a redesign" note. Added
+`bulkTransitionPunchItemStatusSchema` (shared) and
+`bulkTransitionPunchItemStatus` (API service + `POST
+/punch-items/bulk-transition` route) mirroring the RFI version exactly --
+same mixed-project rejection, same per-row `{ id, ok, error? }` result
+shape, same loop over the existing single-item `transitionPunchItemStatus`
+so every rule it enforces (status transitions, the Final Approver check,
+workflow rules, audit logging) applies per row. The Punch List page
+reused `DataTable`'s `selection` prop and `BulkActionsBar` completely
+unchanged from Phase 28 -- only page-level wiring was new. The bulk
+action itself is "Send for review" rather than "Close selected" like the
+RFI pilot, since `PUNCH_ITEM_STATUS_TRANSITIONS` only allows
+`approved -> closed` (a narrow precondition for a freshly-selected batch)
+while `open`/`not_accepted`/`in_dispute` all reach `ready_for_review`,
+matching the real field workflow of submitting a batch of fixed items for
+review at once. See `docs/DATA_MODEL.md` §9s for the full writeup and
+`docs/ROADMAP.md`'s Phase 31 gate report for verification (4 new API
+tests plus Playwright confirming the reused components render and behave
+correctly with no regression).
+
+Phase 30 (Arabic-safe PDF exports) preceded this -- closing the crash-severity
 half of the PDF architecture overhaul the Phase 28 architectural-audit
 check-in flagged as unaddressed. Every PDF report generator drew text
 with pdf-lib's built-in `StandardFonts.Helvetica`, a WinAnsi (Latin-1)
