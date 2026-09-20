@@ -123,6 +123,50 @@ Node 22 host (Railway, Render, Fly.io, a VM, etc), and point
    browser console means `apps/api`'s `CORS_ORIGIN` doesn't yet include
    the Vercel deployment's origin -- update it there and restart the API.
 
+### 4b. Deploying apps/api to Vercel too (both on one platform)
+
+`apps/api` is an Express server, and Vercel's Node.js runtime hosts
+serverless functions rather than a long-running server -- but an Express
+app is itself a valid `(req, res)` request handler, so
+`apps/api/api/index.ts` wraps `createApp(...)`'s result directly for
+that runtime with no changes to any route or service code.
+`apps/api/vercel.json` rewrites every incoming path to that one
+function, so Express's own routing still sees the original path (e.g.
+`/auth/login`) exactly as it does on any other host.
+
+This is a separate Vercel project from `apps/web` (two projects, one
+account):
+
+1. **Import the repo a second time** in Vercel, or add a new project
+   from the same GitHub repo.
+2. **Set this project's Root Directory to `apps/api`.**
+3. **Add environment variables** -- everything in `.env.example` that
+   has no safe default for production: `DATABASE_URL`,
+   `DATABASE_URL_APP`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`,
+   `INVITE_TOKEN_SECRET` at minimum (generate each with
+   `openssl rand -hex 32`, three different values), plus `CORS_ORIGIN`
+   set to the `apps/web` Vercel deployment's origin once you know it.
+   `S3_*`/`SMTP_*`/`INTERNAL_JOB_SECRET`/`INBOUND_EMAIL_*` all have
+   working defaults and can be added later, once file uploads or email
+   are actually needed.
+4. **Provision Postgres.** Vercel's own Storage tab offers a Postgres
+   integration (Neon-backed); its connection string becomes
+   `DATABASE_URL`. Either way, step 1-2 above (running the migration,
+   which creates `DATABASE_URL_APP`'s role) still has to happen from a
+   machine with network access to that database -- there is no
+   dashboard button for it.
+5. **Deploy.** Vercel gives this project its own URL
+   (e.g. `https://your-api.vercel.app`) -- use that as `apps/web`'s
+   `NEXT_PUBLIC_API_URL`.
+6. **Scheduled jobs**: Vercel's own Cron Jobs feature (Project Settings
+   → Cron Jobs, or a `crons` array in `vercel.json`) can call the same
+   two `/internal/*` endpoints step 5 above describes, on the same
+   schedule, instead of an external cron service.
+7. Cold starts and per-invocation Postgres connections are real
+   tradeoffs of this path that a persistent Node host (4a's alternative)
+   doesn't have -- fine for light/personal use, worth reconsidering
+   under sustained load.
+
 ## 5. Wire up the scheduled jobs
 
 There is deliberately no in-process scheduler (see
