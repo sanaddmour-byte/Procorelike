@@ -21,10 +21,14 @@ export function workflowTransitionRulesRouter(appDb: Database, env: Env): Router
       const moduleParam = typeof req.query.module === "string" ? req.query.module : undefined;
       if (!projectId) throw new NotFoundError("projectId query param required");
       if (moduleParam !== undefined && !isModule(moduleParam)) throw new NotFoundError("module query param is not a recognized module");
+      // Recomputed as a single expression rather than relying on the guard above to
+      // narrow `moduleParam` across the following statements -- some TypeScript
+      // resolution setups don't carry a type predicate's narrowing that far.
+      const module = moduleParam !== undefined && isModule(moduleParam) ? moduleParam : undefined;
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const rules = await workflowRuleService.listWorkflowTransitionRules(appDb, authUser.id, ctx, {
         projectId,
-        module: moduleParam,
+        module,
       });
       res.json(rules);
     } catch (err) {
