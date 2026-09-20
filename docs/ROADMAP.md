@@ -3768,6 +3768,65 @@ spec's own 10-phase order.
   again, the same recurring sandbox note as every prior phase's gate
   report).
 
+## Phase 29 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- the architectural-audit check-in that
+opened Phase 28 also confirmed a second concrete, unaddressed gap: the
+spec's Section 10 explicitly asks to "replace [the collapsed sidebar's
+first-letter rendering] with a more understandable icon-rail approach,"
+and `ProjectSidebar.tsx`'s collapsed mode was still doing exactly that --
+`{t(item.labelKey).slice(0, 1)}`; per the user's "proceed") -- **PASSED**,
+see Verification.
+
+**What was built:**
+
+- Added `lucide-react` to `apps/web` -- this repo's first icon library
+  dependency (confirmed zero pre-existing icon packages before adding
+  one).
+- `apps/web/components/shell/ProjectSidebar.tsx`: every one of the 31
+  `NavItem` entries across the 6 `NAV_GROUPS` (Project, Field, Documents,
+  Financial, Schedule, People) got a distinct, semantically-chosen
+  `LucideIcon` (e.g. `HelpCircle` for RFIs, `Gavel` for Bidding,
+  `ScrollText` for Prime Contract, `ShieldAlert` for Safety). Collapsed
+  mode now renders that icon instead of a bare letter; the `sr-only` full
+  label and `title` hover tooltip that were already correct are
+  untouched. Expanded mode also gained the same icon next to its text
+  label, for recognition continuity across the collapse/expand toggle --
+  a natural extension of the same icon set, not required by the spec's
+  letter but zero additional risk.
+- **Manual browser verification** (Playwright against the dev servers):
+  confirmed expanded mode shows one icon plus the visible label per nav
+  item; collapsing swaps to icon-only with the `sr-only` label and
+  `title` tooltip both intact and no visible letter/text remaining; and
+  the Arabic (`/ar/...`) page renders `dir="rtl"` with the same icon and
+  correctly-translated Arabic label, confirming no RTL or i18n
+  regression from the icon swap.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9q
+documenting this fix and why icon choices were made semantically rather
+than arbitrarily, consistent with the repo's "structure is information"
+convention.
+
+**Explicitly not built this phase, on record**: this closes the sidebar
+icon-rail item specifically; the rest of the parent spec's remaining
+work -- bulk actions on modules besides RFIs, column resize, density
+modes, client-side permission-aware UI hiding, and above all the PDF
+architecture overhaul (Arabic font embedding, document-viewer
+unification, annotation generalization) -- remains as recorded in Phase
+28's gate report.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package, unaffected by this phase's scope (`packages/
+  shared`: 200 tests, `packages/db`: 1, `apps/api`: 230 across 41 files,
+  `apps/web`: 28 -- no new automated test file, since this phase is a
+  client-only rendering change with no new service, route, or pure
+  function to unit-test; coverage comes from the manual Playwright
+  verification above). Full `next build` succeeded across all routes.
+  Confirmed the sandbox's Postgres 16 cluster was already running before
+  the API test suite.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

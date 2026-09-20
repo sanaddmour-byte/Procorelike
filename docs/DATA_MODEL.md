@@ -863,6 +863,44 @@ regardless (`requirePermission` inside `transitionRfiStatus` itself), so
 this is a UX polish gap, not a security one; flagged here rather than
 silently carried forward.
 
+## 9q. Sidebar icon-rail (Phase 29)
+
+No new tables or endpoints -- a pure web UI fix for a gap the parent
+"Enterprise UX, Data Architecture & PDF System Upgrade" spec names
+explicitly (its Section 10): the collapsed `ProjectSidebar` rendered
+`{t(item.labelKey).slice(0, 1)}` for every nav item -- a bare first
+letter, so a collapsed sidebar full of "D"s (Dashboard, Documents,
+Drawings, Daily Log...) and "C"s (Commitments, Change Orders,
+Correspondence...) gave no real way to tell items apart at a glance.
+
+**Fix**: added `lucide-react` (this repo's first icon library --
+previously zero icon dependencies existed, confirmed before adding one)
+and gave every one of the 31 `NavItem` entries across all 6 `NAV_GROUPS`
+a distinct `LucideIcon`. Collapsed mode now renders the icon plus the
+existing `sr-only` full label (screen readers) and the existing `title`
+attribute (hover tooltip) -- both of those were already correct and
+untouched; only the visible glyph changed. Expanded mode also gained the
+same icon next to its text label, for recognition continuity when a user
+toggles collapse/expand -- not required by the spec's letter (which only
+calls out the collapsed state) but a natural, zero-risk use of the same
+icon set already being introduced, and it directly serves the spec's own
+"Find" step in "Find → Understand → Act → Record" (Section 2).
+
+**Icon choices are semantic, not decorative**: e.g. `HelpCircle` for
+RFIs (a question being asked), `Gavel` for Bidding, `ScrollText` for
+Prime Contract, `GanttChart` for the Gantt view, `ShieldAlert` for
+Safety -- picked so the icon itself hints at the module's purpose,
+consistent with docs/DATA_MODEL.md's broader "structure is information"
+principle rather than arbitrary glyphs.
+
+**Verified**: Playwright against the running dev server confirmed (a)
+expanded mode shows one `<svg>` plus the visible text label per link,
+(b) collapsing the sidebar swaps to icon-only with the `sr-only` label
+and `title` tooltip both intact and zero visible letter/text content,
+and (c) the Arabic (`/ar/...`) page renders `dir="rtl"` with the same
+icon and the correctly-translated Arabic label -- confirming the icon
+swap didn't regress RTL layout or i18n.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

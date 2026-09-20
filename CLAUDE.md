@@ -81,11 +81,28 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 28 (DataTable row
-selection + a bulk-actions pilot on RFIs) is complete and
-gate-verified** -- built after an architectural-audit check-in against
-the full 42-section "Enterprise UX, Data Architecture & PDF System
-Upgrade" spec turned up two concrete open items: `DataTable.tsx`'s own
+mid-build corrections). As of this writing: **Phase 29 (sidebar
+icon-rail) is complete and gate-verified** -- the second concrete gap
+the Phase 28 architectural-audit check-in surfaced against the full
+42-section "Enterprise UX, Data Architecture & PDF System Upgrade" spec:
+its Section 10 explicitly asks to replace the collapsed sidebar's
+first-letter rendering with "a more understandable icon-rail approach,"
+and `ProjectSidebar.tsx`'s collapsed mode was still doing exactly
+`{t(item.labelKey).slice(0, 1)}`. Added `lucide-react` (this repo's
+first icon dependency) and gave all 31 `NavItem` entries across the 6
+`NAV_GROUPS` a distinct, semantically-chosen icon (e.g. `HelpCircle` for
+RFIs, `Gavel` for Bidding, `ShieldAlert` for Safety); collapsed mode now
+shows the icon instead of a letter, with the pre-existing `sr-only`
+label and `title` tooltip left untouched, and expanded mode picked up
+the same icon next to its label for continuity across the toggle.
+Verified with Playwright against the dev servers, including that Arabic
+(`/ar/...`) still renders `dir="rtl"` with the correct translated label
+-- no RTL/i18n regression from the icon swap. See `docs/DATA_MODEL.md`
+§9q for the full writeup.
+
+Phase 28 (DataTable row selection + a bulk-actions pilot on RFIs)
+preceded this -- built after the same architectural-audit check-in
+turned up two concrete open items: `DataTable.tsx`'s own
 doc comment has flagged bulk row selection as deferred since its first
 build, and the spec's Section 17 requires the API to independently
 enforce permissions regardless of UI state (already true here --
