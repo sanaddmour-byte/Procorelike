@@ -15,6 +15,7 @@ export default tseslint.config(
       "**/babel.config.js",
       "**/postcss.config.js",
       "**/public/**",
+      "**/next-env.d.ts",
     ],
   },
   js.configs.recommended,
