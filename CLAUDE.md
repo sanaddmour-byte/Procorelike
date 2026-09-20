@@ -81,44 +81,48 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 25 (server-driven list
-query contract rolled out to Direct Costs, Payment Applications/Billing,
-Prequalification, and Safety Observations) is complete and
-gate-verified** -- the fifth installment of the user-directed "Enterprise
-UX, Data Architecture & PDF System Upgrade" initiative, continuing
-Phase 21/22/23/24's rollout with no changes to the shared contract
+mid-build corrections). As of this writing: **Phase 26 (server-driven
+list query contract rolled out to Schedule, Bidding, and Estimating) is
+complete and gate-verified, closing out the user-directed "Enterprise
+UX, Data Architecture & PDF System Upgrade" list-query initiative --
+every real list module in the app now has server-side
+search/filter/sort/pagination.** No changes to the shared contract
 (`packages/shared/schemas/list-query.schema.ts`, `PaginatedResult<T>`)
-itself. Two modules here (Payment Applications, Prequalification) have no
-plain text column at all, so their `listPaymentApplications`/
-`listPrequalifications` join to `commitments`/`companies` respectively to
-get something to search and sort on -- the same join-for-search-and-sort
-treatment Inspections gave `checklist_templates` in Phase 24, as opposed
-to the "drop `sortValue`" fix used when a module already has its own
-plain field (Direct Costs' `description`, following Commitments'/T&M
-Tickets'/Safety Incidents' precedent for their joined "company" columns).
-Prequalification and Safety Observations also aren't `DataTable`
-consumers -- they render expandable card lists -- so their migrations
-wire `useServerTable` for search/filter/pagination plus a plain `<select>`
-sort control (calling `onServerSortChange` directly, since there's no
-column header to click) and a hand-rolled pagination footer matching
-`DataTable`'s markup. Safety Observations deliberately has no
-`SavedViewsBar`: it shares the `"safety"` permission `Module` with Safety
-Incidents (which already got a `SavedViewsBar` in Phase 24), and
-`SavedViewsBar`'s saved views are scoped by that same `Module`, so a
-second one here would leak incompatible views between the two pages --
-same reasoning as Transmittals' skipped `SavedViewsBar` in Phase 24. This
-phase also corrected a documentation error carried since Phase 23: Prime
-Contract was listed as a pending list-module migration, but it's a
-one-per-project singleton with a detail/edit page, not a list, and has no
-`list*` service function at all. 3 list modules (Schedule, Bidding,
-Estimating) remain on client-side filtering; migrating each is now a
-mechanical repeat of this pattern, not a redesign -- see
-`docs/DATA_MODEL.md` §9n for the full pattern and the "migrated so far"
-list. Phase 24 (Inspections, T&M Tickets, Transmittals, Safety Incidents)
-preceded this, Phase 23 (Documents, Drawings, Meetings, Correspondence)
-before that, Phase 22 (Submittals, Change Orders, Punch List, Commitments)
-before that, and Phase 21 (RFIs, the original proof of concept) before
-that. Before Phase 21, Phase 20
+itself this phase. Schedule's pre-migration default order was an in-JS
+sort on `sortOrder, startDate` (a manual drag-order), not one column like
+every other module, so its query schema deliberately preserves that exact
+ordering when `sort` is omitted rather than falling back to a single
+default column -- the one exception to every other module's convention,
+called out in both the shared schema and the service. Bidding's Cost Code
+column got the same "drop `sortValue`" treatment as Direct Costs' in
+Phase 25 (a joined lookup by `costCodeId`, with `number`/`title` already
+giving the module a real search/sort surface); Estimating needed no
+column-bug fixes at all, every column already being a plain field. This
+phase also corrected `docs/DATA_MODEL.md` §9n's "migrated so far" list to
+state plainly that the initiative is complete -- any new list module
+added going forward should follow this pattern from the start rather than
+shipping client-side filtering to migrate later. Phase 25 (Direct Costs,
+Payment Applications/Billing, Prequalification, Safety Observations)
+preceded this -- two of its modules (Payment Applications,
+Prequalification) had no plain text column at all, so their
+`listPaymentApplications`/`listPrequalifications` join to
+`commitments`/`companies` respectively to get something to search and
+sort on, the same join-for-search-and-sort treatment Inspections gave
+`checklist_templates` in Phase 24; Prequalification and Safety
+Observations also aren't `DataTable` consumers (they render expandable
+card lists), so their migrations wire `useServerTable` for
+search/filter/pagination plus a plain `<select>` sort control and a
+hand-rolled pagination footer matching `DataTable`'s markup, a recipe
+Phase 26 had no need to reuse since Schedule/Bidding/Estimating are all
+`DataTable` pages. Phase 25 also corrected a documentation error carried
+since Phase 23: Prime Contract was listed as a pending list-module
+migration, but it's a one-per-project singleton with a detail/edit page,
+not a list, and has no `list*` service function at all -- it remains
+correctly excluded. Phase 24 (Inspections, T&M Tickets, Transmittals,
+Safety Incidents) preceded that, Phase 23 (Documents, Drawings, Meetings,
+Correspondence) before that, Phase 22 (Submittals, Change Orders, Punch
+List, Commitments) before that, and Phase 21 (RFIs, the original proof of
+concept) before that. Before Phase 21, Phase 20
 (Mobile push notifications) completed the sixth of 7 planned phases
 addressing a Procore competitive-gap analysis (see Phase 15's gate report
 for the full 7-phase plan); SSO/SAML was explicitly descoped by the user

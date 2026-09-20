@@ -3,14 +3,16 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { EstimateStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface Estimate {
   id: string;
@@ -32,27 +34,17 @@ export default function EstimatingPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [estimates, setEstimates] = useState<Estimate[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<Estimate[]>(`/estimates?projectId=${params.id}`)
-      .then(setEstimates)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Estimate>({ basePath: "/estimates", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
-      return;
     }
-    load();
-  }, [router, locale, params.id]);
+  }, [router, locale]);
 
   function statusLabel(status: EstimateStatus): string {
     return { draft: t("statusDraft"), final: t("statusFinal") }[status];
@@ -66,7 +58,7 @@ export default function EstimatingPage() {
       await apiJson("/estimates", { method: "POST", body: JSON.stringify({ projectId: params.id, title: title.trim() }) });
       setTitle("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -74,15 +66,7 @@ export default function EstimatingPage() {
     }
   }
 
-  const filteredEstimates = useMemo(() => {
-    if (!estimates) return null;
-    const q = search.trim().toLowerCase();
-    return estimates.filter((est) => {
-      if (statusFilter && est.status !== statusFilter) return false;
-      if (q && !est.number.toLowerCase().includes(q) && !est.title.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [estimates, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<Estimate>[] = [
     { key: "number", header: t("number"), render: (est) => est.number, sortValue: (est) => est.number, width: "110px" },
@@ -131,9 +115,16 @@ export default function EstimatingPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="estimating"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -142,20 +133,22 @@ export default function EstimatingPage() {
               options: (["draft", "final"] as const).map((s) => ({ value: s, label: statusLabel(s) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<Estimate>
           columns={columns}
-          rows={filteredEstimates}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(est) => router.push(`/${locale}/projects/${params.id}/estimating/${est.id}`)}
-          emptyTitle={estimates && estimates.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

@@ -589,21 +589,34 @@ library, and adopting one now would touch every existing page's dependency
 footprint for no problem it uniquely solves. Revisit only if a real
 caching/dedup need surfaces once more modules migrate.
 
-**Migrated so far** (Phase 21 + 22 + 23 + 24 + 25): RFIs, Submittals,
-Change Orders, Punch List, Commitments, Documents, Drawings, Meetings,
-Correspondence, Inspections, T&M Tickets, Transmittals, Safety Incidents,
-Direct Costs, Payment Applications (Billing), Prequalification, Safety
-Observations. Still on the old "fetch everything, filter client-side"
-path: Schedule, Bidding, Estimating. **Prime Contract is not a list
-module at all** -- `prime-contract.service.ts` has no `list*` function,
-only `getPrimeContractByProject` (one row per project, enforced by a
-unique index), and its page is a detail/edit form, not a table; earlier
-phase notes that filed it under "still on client-side filtering" were
-imprecise and are corrected here. Migrating each remaining real list
-module is a matter of repeating this pattern (extend the shared query
-schema, move the service's filter/sort/pagination into SQL, wire the
-page onto `useServerTable` + `DataTable`'s server props), not
-re-designing it.
+**Migrated so far, and initiative complete as of Phase 26** (Phase 21 +
+22 + 23 + 24 + 25 + 26): RFIs, Submittals, Change Orders, Punch List,
+Commitments, Documents, Drawings, Meetings, Correspondence, Inspections,
+T&M Tickets, Transmittals, Safety Incidents, Direct Costs, Payment
+Applications (Billing), Prequalification, Safety Observations, Schedule
+(manual task list), Bidding (bid packages), Estimating. **Every real list
+module in the app now has server-side search/filter/sort/pagination.**
+**Prime Contract is not a list module at all** -- `prime-contract.service.ts`
+has no `list*` function, only `getPrimeContractByProject` (one row per
+project, enforced by a unique index), and its page is a detail/edit
+form, not a table; earlier phase notes that filed it under "still on
+client-side filtering" were imprecise and are corrected here. Phase 26
+also produced two closing wrinkles worth keeping as reference: Schedule's
+pre-migration default order was `sortOrder, startDate` (a manual
+drag-order), not one column like every other module, so
+`listScheduleTasksQuerySchema` documents that omitting `sort` preserves
+that exact ordering rather than falling back to a single default column
+-- the one deliberate exception to every other module's "default sort
+key" convention; and Bidding's "Cost Code" column got the same
+drop-`sortValue` treatment as Direct Costs' (Phase 25) since it's a
+joined lookup by `costCodeId` with `number`/`title` already giving the
+module a real search/sort surface, so a join wasn't judged worth it
+there (contrast with Payment Applications/Prequalification below, which
+had no plain column at all and so *did* get a join). Any new list module
+added after this point should follow this same pattern from the start
+(extend the shared query schema, do search/filter/sort/pagination in
+SQL, wire the page onto `useServerTable` + `DataTable`'s server props)
+rather than shipping a client-side-filtered list to migrate later.
 
 **When a module has no plain text column at all to search or sort by,
 join to the table that does, the same way Inspections joined

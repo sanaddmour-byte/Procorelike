@@ -3512,6 +3512,80 @@ not been started.
   sessions again, same recurring sandbox note as Phase 23/24's gate
   reports.
 
+## Phase 26 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21/22/23/24/25's server-query
+contract out to Schedule, Bidding, and Estimating, the last three real
+list modules in the app, per the user's "Proceed" after Phase 25's gate
+report was delivered) -- **PASSED**, see Verification. **This phase
+closes out the server-driven list-query-contract initiative: every real
+list module in the app now has server-side search/filter/sort/pagination.**
+
+**What was built:**
+
+- **Schedule**: `listScheduleTasksQuerySchema` (search on name, `status`
+  filter, sort by name/status/percentComplete/startDate). No `company`
+  sort key -- the list page's Assigned Company column is a joined lookup
+  by `assignedCompanyId`, same "drop `sortValue`" shape as prior phases'
+  joined-lookup columns. The one wrinkle: Schedule's pre-migration
+  default order was an in-JS sort on `sortOrder, startDate` (a manual
+  drag-order), not one column like every other migrated module, so
+  omitting `sort` deliberately preserves that exact ordering server-side
+  (`ORDER BY sort_order, start_date`) instead of falling back to a single
+  default column -- documented inline in both the shared schema and the
+  service, and covered by a dedicated ordering-invariant test in
+  `phase26-list-query.test.ts`.
+- **Bidding**: `listBidPackagesQuerySchema` (search on number/title,
+  `status` filter, sort by number/title/dueDate/status). No `costCode`
+  sort key -- same joined-lookup "drop `sortValue`" treatment as Direct
+  Costs (Phase 25), since `number`/`title` already give the module a real
+  search/sort surface and a join wasn't judged worth it for one column.
+- **Estimating**: `listEstimatesQuerySchema` (search on number/title,
+  `status` filter, sort by number/title/status). No joined or dropped
+  columns -- every column on this list page is already a plain field, so
+  this migration needed no column-bug fixes at all.
+- All three web pages migrated onto `useServerTable` + `DataTable`'s
+  server-mode props + `SavedViewsBar` (`module="schedule"`,
+  `module="bidding"`, `module="estimating"` respectively -- each is its
+  own dedicated permission module, so none of Transmittals'/Safety
+  Observations' module-sharing SavedViewsBar caveat applies here).
+- **`apps/api/src/routes/phase26-list-query.test.ts`** (new): 11 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module, including a `sort=costCode` 400-rejection regression test for
+  Bidding and an ordering-invariant test confirming Schedule's
+  no-`sort`-param response stays ordered by `sortOrder, startDate`.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` §9n's "migrated so
+far" list now reads as complete -- Schedule/Bidding/Estimating moved out
+of "still on client-side filtering" and into the migrated list, and the
+section states outright that every real list module is now covered.
+Prime Contract remains correctly excluded (per Phase 25's correction) as
+not being a list module at all.
+
+**Explicitly not built this phase, on record**: no further list modules
+remain to migrate under this initiative. The rest of the parent spec's
+phases (global search, navigation/icon-rail shell, the PDF architecture
+overhaul, bulk actions, column customization, etc.) have not been
+started and remain future work.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 226 tests across 40 files (215 pre-existing plus the 11 new
+  Phase 26 tests; all pre-existing suites re-verified unaffected,
+  including `preconstruction.test.ts`'s Bidding/Estimating coverage and
+  `schedule-safety.test.ts`'s Schedule coverage), `apps/web`: 28,
+  unaffected. The expected stderr blocks in the API test run
+  (mailer/Expo-push network calls failing in this sandbox) are
+  pre-existing and unrelated. Full `next build` succeeded across all
+  routes including the three migrated pages. Also restarted the
+  sandbox's Postgres 16 cluster (`pg_ctlcluster 16 main start`) before
+  the API test suite would run -- it had stopped between sessions again,
+  same recurring sandbox note as Phase 23/24/25's gate reports (it was
+  in fact already running this time, so the start command was a no-op
+  confirmation rather than an actual restart).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

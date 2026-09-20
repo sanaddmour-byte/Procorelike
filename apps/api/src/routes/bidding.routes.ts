@@ -1,5 +1,12 @@
 import type { Database } from "@siteops/db";
-import { awardBidSchema, createBidPackageSchema, inviteBidderSchema, logBidSchema, transitionBidPackageStatusSchema } from "@siteops/shared";
+import {
+  awardBidSchema,
+  createBidPackageSchema,
+  inviteBidderSchema,
+  listBidPackagesQuerySchema,
+  logBidSchema,
+  transitionBidPackageStatusSchema,
+} from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -38,7 +45,18 @@ export function bidPackagesRouter(appDb: Database, env: Env): Router {
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const rows = await biddingService.listBidPackages(appDb, authUser.id, ctx, projectId);
+      const listQuery = listBidPackagesQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await biddingService.listBidPackages(appDb, authUser.id, ctx, projectId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
       res.json(rows);
     } catch (err) {
       next(err);

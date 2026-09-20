@@ -3,14 +3,16 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { BidPackageStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface CostCode {
   id: string;
@@ -46,29 +48,20 @@ export default function BiddingPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [packages, setPackages] = useState<BidPackage[] | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [costCodeId, setCostCodeId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<BidPackage[]>(`/bid-packages?projectId=${params.id}`)
-      .then(setPackages)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<BidPackage>({ basePath: "/bid-packages", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<CostCode[]>(`/projects/${params.id}/cost-codes`).then(setCostCodes).catch(() => undefined);
   }, [router, locale, params.id]);
 
@@ -91,7 +84,7 @@ export default function BiddingPage() {
       setCostCodeId("");
       setDueDate("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -99,20 +92,12 @@ export default function BiddingPage() {
     }
   }
 
-  const filteredPackages = useMemo(() => {
-    if (!packages) return null;
-    const q = search.trim().toLowerCase();
-    return packages.filter((bp) => {
-      if (statusFilter && bp.status !== statusFilter) return false;
-      if (q && !bp.number.toLowerCase().includes(q) && !bp.title.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [packages, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<BidPackage>[] = [
     { key: "number", header: t("number"), render: (bp) => bp.number, sortValue: (bp) => bp.number, width: "110px" },
     { key: "title", header: t("packageTitle"), render: (bp) => bp.title, sortValue: (bp) => bp.title },
-    { key: "costCode", header: t("costCode"), render: (bp) => costCodeLabel(bp.costCodeId), sortValue: (bp) => costCodeLabel(bp.costCodeId) },
+    { key: "costCode", header: t("costCode"), render: (bp) => costCodeLabel(bp.costCodeId) },
     {
       key: "dueDate",
       header: t("dueDate"),
@@ -173,9 +158,16 @@ export default function BiddingPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="bidding"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -184,20 +176,22 @@ export default function BiddingPage() {
               options: (["draft", "open", "closed", "awarded", "canceled"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<BidPackage>
           columns={columns}
-          rows={filteredPackages}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(bp) => router.push(`/${locale}/projects/${params.id}/bidding/${bp.id}`)}
-          emptyTitle={packages && packages.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

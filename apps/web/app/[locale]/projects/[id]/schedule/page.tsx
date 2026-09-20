@@ -3,14 +3,16 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { ScheduleTaskStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface ScheduleTask {
   id: string;
@@ -50,11 +52,8 @@ export default function SchedulePage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [tasks, setTasks] = useState<ScheduleTask[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -62,19 +61,15 @@ export default function SchedulePage() {
   const [endDate, setEndDate] = useState("");
   const [assignedCompanyId, setAssignedCompanyId] = useState("");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<ScheduleTask[]>(`/schedule-tasks?projectId=${params.id}`)
-      .then(setTasks)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  // No defaultSort: this list's original order (manual sortOrder, then startDate) is preserved
+  // server-side when no explicit sort is chosen, rather than defaulting to one column.
+  const serverTable = useServerTable<ScheduleTask>({ basePath: "/schedule-tasks", projectId: params.id });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`).then(setCompanies).catch(() => undefined);
   }, [router, locale, params.id]);
 
@@ -104,7 +99,7 @@ export default function SchedulePage() {
       setEndDate("");
       setAssignedCompanyId("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -112,15 +107,7 @@ export default function SchedulePage() {
     }
   }
 
-  const filteredTasks = useMemo(() => {
-    if (!tasks) return null;
-    const q = search.trim().toLowerCase();
-    return tasks.filter((task) => {
-      if (statusFilter && task.status !== statusFilter) return false;
-      if (q && !task.name.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [tasks, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<ScheduleTask>[] = [
     { key: "name", header: t("name"), render: (task) => task.name, sortValue: (task) => task.name },
@@ -132,14 +119,15 @@ export default function SchedulePage() {
       width: "130px",
     },
     {
-      key: "dates",
+      key: "startDate",
       header: t("dates"),
       render: (task) => `${task.startDate.slice(0, 10)} – ${task.endDate.slice(0, 10)}`,
+      sortValue: (task) => task.startDate,
       width: "220px",
     },
     { key: "company", header: t("assignedCompany"), render: (task) => companyName(task.assignedCompanyId), width: "160px" },
     {
-      key: "progress",
+      key: "percentComplete",
       header: t("percentComplete"),
       width: "140px",
       render: (task) => (
@@ -236,9 +224,16 @@ export default function SchedulePage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="schedule"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -247,20 +242,22 @@ export default function SchedulePage() {
               options: (["not_started", "in_progress", "complete", "delayed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<ScheduleTask>
           columns={columns}
-          rows={filteredTasks}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(task) => router.push(`/${locale}/projects/${params.id}/schedule/${task.id}`)}
-          emptyTitle={tasks && tasks.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

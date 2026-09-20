@@ -1,13 +1,17 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   requirePermission,
   SCHEDULE_TASK_STATUS_TRANSITIONS,
   type CreateScheduleTaskInput,
+  type ListScheduleTasksQuery,
+  type PaginatedResult,
   type PermissionContext,
+  type ScheduleTaskSortKey,
   type TransitionScheduleTaskStatusInput,
   type UpdateScheduleTaskInput,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -45,16 +49,54 @@ export async function findScheduleTaskById(
   });
 }
 
+const SCHEDULE_TASK_SORT_COLUMNS: Record<
+  ScheduleTaskSortKey,
+  | typeof schema.scheduleTasks.name
+  | typeof schema.scheduleTasks.status
+  | typeof schema.scheduleTasks.percentComplete
+  | typeof schema.scheduleTasks.startDate
+> = {
+  name: schema.scheduleTasks.name,
+  status: schema.scheduleTasks.status,
+  percentComplete: schema.scheduleTasks.percentComplete,
+  startDate: schema.scheduleTasks.startDate,
+};
+
 export async function listScheduleTasks(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<ScheduleTaskRow[]> {
+  query: ListScheduleTasksQuery = {},
+): Promise<PaginatedResult<ScheduleTaskRow>> {
   requirePermission(ctx, "schedule", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    const rows = await tx.select().from(schema.scheduleTasks).where(eq(schema.scheduleTasks.projectId, projectId));
-    return rows.sort((a, b) => (a.sortOrder - b.sortOrder) || a.startDate.localeCompare(b.startDate));
+    const conditions = [eq(schema.scheduleTasks.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.scheduleTasks.status, query.status));
+    if (query.search) conditions.push(ilike(schema.scheduleTasks.name, `%${query.search}%`));
+    const where = and(...conditions)!;
+
+    // No explicit sort: keep this list's original ordering (manual sortOrder,
+    // then startDate) rather than falling back to a single-column default --
+    // the only migrated module whose pre-migration order wasn't one column.
+    const orderFn = query.direction === "desc" ? desc : asc;
+    const orderByClauses = query.sort ? [orderFn(SCHEDULE_TASK_SORT_COLUMNS[query.sort])] : [asc(schema.scheduleTasks.sortOrder), asc(schema.scheduleTasks.startDate)];
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.scheduleTasks).where(where).orderBy(...orderByClauses);
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.scheduleTasks).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 
