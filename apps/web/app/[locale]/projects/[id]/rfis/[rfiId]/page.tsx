@@ -3,6 +3,7 @@
 import { AttachmentList } from "@/components/AttachmentList";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { RecordLinks, type RecordLinkTargetConfig } from "@/components/RecordLinks";
+import { RecordHistory } from "@/components/ui/RecordHistory";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
@@ -416,6 +417,8 @@ export default function RfiDetailScreen() {
             </button>
           </form>
         )}
+
+        <RecordHistory projectId={params.id} entityType="rfi" entityId={rfi.id} />
       </main>
       <PdfViewerModal
         open={pdfViewer.open}

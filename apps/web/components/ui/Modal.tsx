@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
@@ -23,6 +24,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [ta
  * overlay + focus handling.
  */
 export function Modal({ open, onClose, title, children, wide = false }: Props) {
+  const t = useTranslations("Common");
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
@@ -75,7 +77,7 @@ export function Modal({ open, onClose, title, children, wide = false }: Props) {
           <h2 id="modal-title" className="text-sm font-bold text-navy-900">
             {title}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded p-1 text-navy-500 hover:bg-navy-50 hover:text-navy-800">
+          <button type="button" onClick={onClose} aria-label={t("close")} className="rounded p-1 text-navy-500 hover:bg-navy-50 hover:text-navy-800">
             ✕
           </button>
         </div>

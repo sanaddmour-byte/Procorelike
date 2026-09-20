@@ -1,8 +1,16 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
-import type { DirectCostStatus, DirectCostType } from "@siteops/shared";
+import type { StatusTone } from "@/lib/design/status";
+import { useProjectCurrency } from "@/lib/use-project-currency";
+import { useServerTable } from "@/lib/use-server-table";
+import { formatMoney, type DirectCostStatus, type DirectCostType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -23,9 +31,11 @@ interface DirectCost {
   status: DirectCostStatus;
 }
 
-function money(value: string): string {
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+const STATUS_TONE: Record<DirectCostStatus, StatusTone> = {
+  pending: "warning",
+  approved: "success",
+  rejected: "danger",
+};
 
 export default function DirectCostsPage() {
   const t = useTranslations("DirectCosts");
@@ -33,8 +43,9 @@ export default function DirectCostsPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string): string => formatMoney(value, currency, locale);
 
-  const [directCosts, setDirectCosts] = useState<DirectCost[] | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -45,19 +56,13 @@ export default function DirectCostsPage() {
   const [incurredDate, setIncurredDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [transitioningId, setTransitioningId] = useState<string | null>(null);
-
-  function load(): void {
-    apiJson<DirectCost[]>(`/direct-costs?projectId=${params.id}`)
-      .then(setDirectCosts)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<DirectCost>({ basePath: "/direct-costs", projectId: params.id, defaultSort: { key: "incurredDate", direction: "desc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<CostCode[]>(`/projects/${params.id}/cost-codes`)
       .then((codes) => {
         setCostCodes(codes);
@@ -91,7 +96,7 @@ export default function DirectCostsPage() {
       setAmount("");
       setIncurredDate("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -103,7 +108,7 @@ export default function DirectCostsPage() {
     setTransitioningId(id);
     try {
       await apiJson(`/direct-costs/${id}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -119,18 +124,61 @@ export default function DirectCostsPage() {
     return { invoice: t("typeInvoice"), expense: t("typeExpense"), payroll: t("typePayroll"), other: t("typeOther") }[value];
   }
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const columns: DataTableColumn<DirectCost>[] = [
+    { key: "costCode", header: t("costCode"), render: (dc) => costCodeLabel(dc.costCodeId) },
+    { key: "description", header: t("description"), render: (dc) => dc.description, sortValue: (dc) => dc.description },
+    { key: "type", header: t("type"), render: (dc) => typeLabel(dc.type), sortValue: (dc) => dc.type, width: "120px" },
+    { key: "amount", header: t("amount"), align: "end", width: "130px", render: (dc) => money(dc.amount), sortValue: (dc) => Number(dc.amount) },
+    { key: "incurredDate", header: t("incurredDate"), render: (dc) => dc.incurredDate.slice(0, 10), sortValue: (dc) => dc.incurredDate, width: "130px" },
+    {
+      key: "status",
+      header: t("status"),
+      render: (dc) => <StatusBadge tone={STATUS_TONE[dc.status]} label={statusLabel(dc.status)} />,
+      sortValue: (dc) => dc.status,
+      width: "120px",
+    },
+    {
+      key: "actions",
+      header: t("actions"),
+      width: "160px",
+      render: (dc) =>
+        dc.status === "pending" ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => void handleTransition(dc.id, "approved")}
+              disabled={transitioningId === dc.id}
+              className="rounded border-2 border-ink bg-navy-700 px-2 py-0.5 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {t("approve")}
+            </button>
+            <button
+              onClick={() => void handleTransition(dc.id, "rejected")}
+              disabled={transitioningId === dc.id}
+              className="rounded border-2 border-ink px-2 py-0.5 text-xs font-semibold text-navy-800 disabled:opacity-50"
+            >
+              {t("reject")}
+            </button>
+          </div>
+        ) : null,
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-          >
-            {t("newButton")}
-          </button>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <button
+              onClick={() => setShowForm((s) => !s)}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+            >
+              {t("newButton")}
+            </button>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -172,41 +220,42 @@ export default function DirectCostsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!directCosts && !error && <p>{tc("loading")}</p>}
-        {directCosts && directCosts.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
 
-        <div className="flex flex-col gap-3">
-          {directCosts?.map((dc) => (
-            <div key={dc.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="font-bold text-navy-900">{costCodeLabel(dc.costCodeId)}</span>
-                <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(dc.status)}</span>
-              </div>
-              <p className="text-sm text-navy-800">{dc.description}</p>
-              <p className="mt-1 text-xs text-navy-600">
-                {typeLabel(dc.type)} · {money(dc.amount)} · {dc.incurredDate.slice(0, 10)}
-              </p>
-              {dc.status === "pending" && (
-                <div className="mt-2 flex gap-2">
-                  <button
-                    onClick={() => void handleTransition(dc.id, "approved")}
-                    disabled={transitioningId === dc.id}
-                    className="rounded border-2 border-ink bg-navy-700 px-2 py-0.5 text-xs font-semibold text-white disabled:opacity-50"
-                  >
-                    {t("approve")}
-                  </button>
-                  <button
-                    onClick={() => void handleTransition(dc.id, "rejected")}
-                    disabled={transitioningId === dc.id}
-                    className="rounded border-2 border-ink px-2 py-0.5 text-xs font-semibold text-navy-800 disabled:opacity-50"
-                  >
-                    {t("reject")}
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <SavedViewsBar
+          projectId={params.id}
+          module="direct_costs"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["pending", "approved", "rejected"] as const).map((s) => ({ value: s, label: statusLabel(s) })),
+            },
+          ]}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<DirectCost>
+          storageKey="direct-costs"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
     </>
   );

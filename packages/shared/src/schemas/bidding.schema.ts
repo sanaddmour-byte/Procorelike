@@ -1,7 +1,20 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const bidPackageStatusSchema = z.enum(["draft", "open", "closed", "awarded", "canceled"]);
 export type BidPackageStatus = z.infer<typeof bidPackageStatusSchema>;
+
+export const BID_PACKAGE_SORT_KEYS = ["number", "title", "dueDate", "status"] as const;
+export type BidPackageSortKey = (typeof BID_PACKAGE_SORT_KEYS)[number];
+
+/** GET /bid-packages's query contract (Phase 26, closing out the server-driven list-query initiative -- see docs/DATA_MODEL.md §9n). No `costCode` sort key -- the list page's Cost Code column is a joined lookup by `costCodeId`, not a plain column, same shape as Direct Costs'/Commitments' joined columns; `number`/`title` already give this module a real search/sort surface, so this wasn't judged worth a join. */
+export const listBidPackagesQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(BID_PACKAGE_SORT_KEYS).optional(),
+    status: bidPackageStatusSchema.optional(),
+  })
+  .strict();
+export type ListBidPackagesQuery = z.infer<typeof listBidPackagesQuerySchema>;
 
 export const BID_PACKAGE_STATUS_TRANSITIONS: Record<BidPackageStatus, readonly BidPackageStatus[]> = {
   draft: ["open"],

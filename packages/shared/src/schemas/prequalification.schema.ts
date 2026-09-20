@@ -1,7 +1,20 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const prequalificationStatusSchema = z.enum(["invited", "submitted", "under_review", "qualified", "disqualified"]);
 export type PrequalificationStatus = z.infer<typeof prequalificationStatusSchema>;
+
+export const PREQUALIFICATION_SORT_KEYS = ["company", "status", "overallScore"] as const;
+export type PrequalificationSortKey = (typeof PREQUALIFICATION_SORT_KEYS)[number];
+
+/** GET /prequalifications's query contract (Phase 25). A prequalification record carries no title of its own -- both search and the `company` sort key operate on the joined companies.name, the same join-for-search-and-sort treatment Inspections gave checklist_templates.title in Phase 24 and Payment Applications gives commitments.number/title, since there is no other plain text column on this table to search instead. */
+export const listPrequalificationsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(PREQUALIFICATION_SORT_KEYS).optional(),
+    status: prequalificationStatusSchema.optional(),
+  })
+  .strict();
+export type ListPrequalificationsQuery = z.infer<typeof listPrequalificationsQuerySchema>;
 
 /** A disqualified company can be sent back to review (e.g. to reconsider on updated financials); qualified is otherwise terminal for this pass. */
 export const PREQUALIFICATION_STATUS_TRANSITIONS: Record<PrequalificationStatus, readonly PrequalificationStatus[]> = {

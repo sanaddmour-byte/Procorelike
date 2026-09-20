@@ -1,7 +1,13 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -42,6 +48,11 @@ interface DirectoryCompany {
 
 const PURPOSES = ["for_review", "for_approval", "for_information", "as_requested", "for_construction", "for_bid"] as const;
 
+const STATUS_TONE: Record<Transmittal["status"], StatusTone> = {
+  draft: "neutral",
+  sent: "info",
+};
+
 export default function TransmittalsPage() {
   const t = useTranslations("Transmittals");
   const tc = useTranslations("Common");
@@ -49,12 +60,12 @@ export default function TransmittalsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [transmittals, setTransmittals] = useState<Transmittal[] | null>(null);
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [companies, setCompanies] = useState<DirectoryCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const serverTable = useServerTable<Transmittal>({ basePath: "/transmittals", projectId: params.id, defaultSort: { key: "transmittalNumber", direction: "asc" } });
 
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState("");
@@ -66,18 +77,11 @@ export default function TransmittalsPage() {
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  function reload(): void {
-    apiJson<Transmittal[]>(`/transmittals?projectId=${params.id}`)
-      .then(setTransmittals)
-      .catch(() => setError(tc("errorGeneric")));
-  }
-
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    reload();
     apiJson<DocumentRecord[]>(`/documents?projectId=${params.id}`).then(setDocuments).catch(() => undefined);
     apiJson<Drawing[]>(`/drawings?projectId=${params.id}`).then(setDrawings).catch(() => undefined);
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
@@ -123,7 +127,7 @@ export default function TransmittalsPage() {
       setSelectedDrawingIds([]);
       setSelectedUserIds([]);
       setSelectedCompanyIds([]);
-      reload();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -133,22 +137,39 @@ export default function TransmittalsPage() {
 
   const canSubmit = subject.trim().length > 0 && (selectedDocumentIds.length > 0 || selectedDrawingIds.length > 0) && (selectedUserIds.length > 0 || selectedCompanyIds.length > 0);
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const columns: DataTableColumn<Transmittal>[] = [
+    { key: "transmittalNumber", header: t("number"), render: (tr) => tr.transmittalNumber, sortValue: (tr) => tr.transmittalNumber, width: "110px" },
+    { key: "subject", header: t("subject"), render: (tr) => tr.subject, sortValue: (tr) => tr.subject },
+    { key: "purpose", header: t("purpose"), render: (tr) => t(`purpose_${tr.purpose}`), sortValue: (tr) => tr.purpose, width: "150px" },
+    {
+      key: "status",
+      header: t("status"),
+      render: (tr) => <StatusBadge tone={STATUS_TONE[tr.status]} label={tr.status === "sent" ? t("statusSent") : t("statusDraft")} />,
+      sortValue: (tr) => tr.status,
+      width: "120px",
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8">
         <Link href={`/${locale}/projects`} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button
-            type="button"
-            onClick={() => setShowForm((v) => !v)}
-            className="rounded-lg border-3 border-ink bg-maroon-600 px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_0_#1a1a1a]"
-          >
-            {t("newTransmittal")}
-          </button>
-        </div>
+        <PageHeader
+          title={t("title")}
+          actions={
+            <button
+              type="button"
+              onClick={() => setShowForm((v) => !v)}
+              className="rounded-lg border-3 border-ink bg-maroon-600 px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_0_#1a1a1a]"
+            >
+              {t("newTransmittal")}
+            </button>
+          }
+        />
         {error && <p className="text-maroon-700">{error}</p>}
 
         {showForm && (
@@ -218,22 +239,46 @@ export default function TransmittalsPage() {
           </form>
         )}
 
-        {!transmittals && !error && <p>{tc("loading")}</p>}
-        {transmittals && transmittals.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        {transmittals && transmittals.length > 0 && (
-          <ul className="flex flex-col gap-3">
-            {transmittals.map((tr) => (
-              <li key={tr.id} className="rounded-xl border-3 border-ink bg-white p-4 shadow-brutal">
-                <Link href={`/${locale}/projects/${params.id}/transmittals/${tr.id}`} className="font-bold text-navy-900 underline">
-                  {tr.transmittalNumber} — {tr.subject}
-                </Link>
-                <div className="mt-1 text-xs text-navy-600">
-                  {t(`purpose_${tr.purpose}`)} · {tr.status === "sent" ? t("statusSent") : t("statusDraft")}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* No SavedViewsBar here: transmittals has no module of its own in packages/shared/src/constants/modules.ts
+            (its create/read permission checks ride on "documents"), and that Module type is also what
+            SavedViewsBar's saved-view rows are scoped by. Reusing "documents" would leak saved views between
+            this page and the Documents list -- their filter/sort shapes don't match, which is exactly the
+            column-key/sort-key contract bug class documented in docs/DATA_MODEL.md's Phase 24 gotcha. Giving
+            transmittals its own module means wiring default permission levels for every role too, which is
+            out of scope for this list-query migration -- deferred, same as Safety Observations this phase. */}
+
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: [
+                { value: "draft", label: t("statusDraft") },
+                { value: "sent", label: t("statusSent") },
+              ],
+            },
+          ]}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<Transmittal>
+          storageKey="transmittals"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          onRowClick={(tr) => router.push(`/${locale}/projects/${params.id}/transmittals/${tr.id}`)}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
     </>
   );

@@ -79,6 +79,23 @@ body {
   textarea::placeholder {
     color: #6f88b8;
   }
+
+  /* One visible keyboard-focus ring, applied app-wide, so it doesn't
+     depend on each page/component remembering to style :focus itself.
+     `:focus-visible` (not `:focus`) keeps it keyboard-only, matching
+     native browser behavior -- a mouse click doesn't show a ring. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [role="option"]:focus-visible,
+  [role="menuitem"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid rgba(140, 35, 50, 0.55);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {

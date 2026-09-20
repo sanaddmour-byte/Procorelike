@@ -1,8 +1,14 @@
 "use client";
 
 import { CorrectiveActionsPanel } from "@/components/CorrectiveActionsPanel";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { SafetyObservationCategory, SafetyObservationStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -35,6 +41,11 @@ function statusLabel(status: SafetyObservationStatus, t: (key: string) => string
   return { open: t("statusOpen"), resolved: t("statusResolved") }[status];
 }
 
+const STATUS_TONE: Record<SafetyObservationStatus, StatusTone> = {
+  open: "warning",
+  resolved: "success",
+};
+
 export default function SafetyObservationsPage() {
   const t = useTranslations("Safety");
   const tc = useTranslations("Common");
@@ -42,7 +53,6 @@ export default function SafetyObservationsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [observations, setObservations] = useState<SafetyObservation[] | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -52,19 +62,13 @@ export default function SafetyObservationsPage() {
   const [creating, setCreating] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  function load(): void {
-    apiJson<SafetyObservation[]>(`/safety-observations?projectId=${params.id}`)
-      .then(setObservations)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<SafetyObservation>({ basePath: "/safety-observations", projectId: params.id, defaultSort: { key: "observedAt", direction: "desc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
   }, [router, locale, params.id]);
 
@@ -85,7 +89,7 @@ export default function SafetyObservationsPage() {
       setCategory("unsafe_condition");
       setDescription("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -97,7 +101,7 @@ export default function SafetyObservationsPage() {
     setTogglingId(id);
     try {
       await apiJson(`/safety-observations/${id}/toggle-resolved`, { method: "POST" });
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -105,18 +109,23 @@ export default function SafetyObservationsPage() {
     }
   }
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+  const pageCount = Math.max(1, Math.ceil(serverTable.total / serverTable.pageSize));
+
   return (
     <>
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <Link
-            href={`/${locale}/projects/${params.id}/safety`}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800"
-          >
-            {t("incidentsTab")}
-          </Link>
-        </div>
+        <PageHeader
+          title={t("title")}
+          actions={
+            <Link
+              href={`/${locale}/projects/${params.id}/safety`}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800"
+            >
+              {t("incidentsTab")}
+            </Link>
+          }
+        />
 
         <div className="mb-4 flex gap-2 border-b-3 border-ink">
           <span className="border-b-4 border-maroon-600 px-3 py-2 text-sm font-semibold text-maroon-700">{t("observationsTab")}</span>
@@ -180,19 +189,62 @@ export default function SafetyObservationsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!observations && !error && <p>{tc("loading")}</p>}
-        {observations && observations.length === 0 && <p className="text-navy-600">{t("emptyObservations")}</p>}
+
+        {/* No SavedViewsBar here: Safety Observations shares the "safety" permission Module
+            with Safety Incidents (see safety.service.ts's requirePermission calls), and that
+            same Module is what SavedViewsBar's saved-view rows are scoped by -- adding a second
+            SavedViewsBar on this page with module="safety" would let a view saved here be
+            offered on the Incidents page (and vice versa), even though their sort-key enums
+            differ (this page has no "severity" key; Incidents has no "category" key). Deferred,
+            same reasoning as Transmittals in Phase 24. */}
+
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <FilterBar
+            searchValue={serverTable.search}
+            onSearchChange={serverTable.onSearchChange}
+            searchPlaceholder={t("searchPlaceholder")}
+            filters={[
+              {
+                key: "status",
+                label: t("status"),
+                options: (["open", "resolved"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+              },
+            ]}
+            activeFilters={serverTable.filters}
+            onFilterChange={serverTable.onFilterChange}
+            onClearAll={serverTable.clearAll}
+            clearAllLabel={tc("clearAll")}
+          />
+          {/* No table header to click here (this page renders a card list, not DataTable) --
+              a plain sort control drives useServerTable's onServerSortChange the same way a
+              column header would elsewhere. */}
+          <select
+            value={serverTable.sort?.key ?? ""}
+            onChange={(e) => e.target.value && serverTable.onServerSortChange(e.target.value)}
+            className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
+            aria-label={t("sortBy")}
+          >
+            <option value="observedAt">{t("sortByObservedAt")}</option>
+            <option value="description">{t("sortByDescription")}</option>
+            <option value="category">{t("sortByCategory")}</option>
+            <option value="status">{t("sortByStatus")}</option>
+          </select>
+        </div>
+
+        {serverTable.error && <ErrorState message={tc("errorGeneric")} onRetry={serverTable.reload} retryLabel={tc("retry")} />}
+        {!serverTable.rows && !serverTable.error && <p>{tc("loading")}</p>}
+        {serverTable.rows && serverTable.rows.length === 0 && (
+          <p className="text-navy-600">{hasActiveQuery ? t("noResultsObservations") : t("emptyObservations")}</p>
+        )}
         <ul className="flex flex-col gap-3">
-          {observations?.map((obs) => (
+          {serverTable.rows?.map((obs) => (
             <li
               key={obs.id}
               className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium">{categoryLabel(obs.category, t)}</span>
-                <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                  {statusLabel(obs.status, t)}
-                </span>
+                <StatusBadge tone={STATUS_TONE[obs.status]} label={statusLabel(obs.status, t)} />
               </div>
               <p className="mt-1 text-sm text-navy-700">{obs.description}</p>
               <p className="mt-1 text-xs text-navy-600">{obs.observedAt.slice(0, 16).replace("T", " ")}</p>
@@ -219,6 +271,30 @@ export default function SafetyObservationsPage() {
             </li>
           ))}
         </ul>
+
+        {serverTable.rows && serverTable.rows.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border-3 border-ink bg-cream px-3 py-2">
+            <button
+              type="button"
+              onClick={() => serverTable.onPageChange(serverTable.page - 1)}
+              disabled={serverTable.page <= 1}
+              aria-label={tc("previousPage")}
+              className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            >
+              &#8249;
+            </button>
+            <span className="whitespace-nowrap text-xs font-semibold text-navy-700">{tc("pageIndicator", { current: serverTable.page, total: pageCount })}</span>
+            <button
+              type="button"
+              onClick={() => serverTable.onPageChange(serverTable.page + 1)}
+              disabled={serverTable.page >= pageCount}
+              aria-label={tc("nextPage")}
+              className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            >
+              &#8250;
+            </button>
+          </div>
+        )}
       </main>
     </>
   );

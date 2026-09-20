@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 const money = z.number().finite();
 const currencyCode = z.string().length(3).default("USD");
@@ -49,6 +50,19 @@ export type CreateBudgetModificationInput = z.infer<typeof createBudgetModificat
 
 export const commitmentTypeSchema = z.enum(["subcontract", "po"]);
 export type CommitmentType = z.infer<typeof commitmentTypeSchema>;
+
+export const COMMITMENT_SORT_KEYS = ["number", "title", "type"] as const;
+export type CommitmentSortKey = (typeof COMMITMENT_SORT_KEYS)[number];
+
+/** GET /commitments's query contract (Phase 22, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). Commitments have no status field, so `type` (subcontract/po) is the closest analog filter; search matches number/title only -- unlike the page's prior client-side search, it does not match the joined company name. */
+export const listCommitmentsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(COMMITMENT_SORT_KEYS).optional(),
+    type: commitmentTypeSchema.optional(),
+    companyId: z.string().uuid().optional(),
+  })
+  .strict();
+export type ListCommitmentsQuery = z.infer<typeof listCommitmentsQuerySchema>;
 
 export const createCommitmentSchema = z
   .object({
@@ -138,6 +152,18 @@ export type UpdatePotentialChangeOrderStatusInput = z.infer<typeof updatePotenti
 export const changeOrderTargetTypeSchema = z.enum(["prime", "commitment"]);
 export type ChangeOrderTargetType = z.infer<typeof changeOrderTargetTypeSchema>;
 
+export const CHANGE_ORDER_SORT_KEYS = ["number", "title", "status", "costImpact"] as const;
+export type ChangeOrderSortKey = (typeof CHANGE_ORDER_SORT_KEYS)[number];
+
+/** GET /change-orders's query contract (Phase 22, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). */
+export const listChangeOrdersQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(CHANGE_ORDER_SORT_KEYS).optional(),
+    status: changeStatusSchema.optional(),
+  })
+  .strict();
+export type ListChangeOrdersQuery = z.infer<typeof listChangeOrdersQuerySchema>;
+
 /**
  * `targetId` is polymorphic on `targetType` (docs/DATA_MODEL.md §9): for
  * `prime` it's a `budget_line_items.id` (this change flows straight into
@@ -160,6 +186,21 @@ export const createChangeOrderSchema = z
   .strict();
 export type CreateChangeOrderInput = z.infer<typeof createChangeOrderSchema>;
 
+/**
+ * Phase 33: bulk-submit contract, the third mechanical repeat of the
+ * Phase 28 bulk-actions recipe (after Phase 31's Punch List and Phase
+ * 32's Submittals). No extra field beyond `ids` -- submitChangeOrder is
+ * a single fixed action (draft -> pending_approval), the same shape as
+ * Submittal's bulkCloseSubmittalsSchema, not a generic transition with a
+ * caller-chosen target.
+ */
+export const bulkSubmitChangeOrdersSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+  })
+  .strict();
+export type BulkSubmitChangeOrdersInput = z.infer<typeof bulkSubmitChangeOrdersSchema>;
+
 export interface ChangeOrderApprovalEntry {
   userId: string;
   companyId: string;
@@ -173,6 +214,18 @@ export interface ChangeOrderApprovalEntry {
 
 export const paymentApplicationStatusSchema = z.enum(["draft", "submitted", "certified", "paid"]);
 export type PaymentApplicationStatus = z.infer<typeof paymentApplicationStatusSchema>;
+
+export const PAYMENT_APPLICATION_SORT_KEYS = ["commitment", "periodStart", "status"] as const;
+export type PaymentApplicationSortKey = (typeof PAYMENT_APPLICATION_SORT_KEYS)[number];
+
+/** GET /payment-applications's query contract (Phase 25). Payment applications carry no title/subject of their own -- both search and the `commitment` sort key operate on the joined commitments.number/title (falling back to a fixed "prime application" label when commitmentId is null), the same join-for-search-and-sort treatment Inspections gave checklist_templates.title in Phase 24, since unlike Direct Costs there is no other plain text column on this table to search instead. */
+export const listPaymentApplicationsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(PAYMENT_APPLICATION_SORT_KEYS).optional(),
+    status: paymentApplicationStatusSchema.optional(),
+  })
+  .strict();
+export type ListPaymentApplicationsQuery = z.infer<typeof listPaymentApplicationsQuerySchema>;
 
 export const createPaymentApplicationSchema = z
   .object({
@@ -275,6 +328,18 @@ export type DirectCostType = z.infer<typeof directCostTypeSchema>;
 
 export const directCostStatusSchema = z.enum(["pending", "approved", "rejected"]);
 export type DirectCostStatus = z.infer<typeof directCostStatusSchema>;
+
+export const DIRECT_COST_SORT_KEYS = ["description", "type", "amount", "incurredDate", "status"] as const;
+export type DirectCostSortKey = (typeof DIRECT_COST_SORT_KEYS)[number];
+
+/** GET /direct-costs's query contract (Phase 25, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). No `costCode` sort key -- the list page's Cost Code column is a joined lookup by costCodeId (see docs/DATA_MODEL.md §9n's note on Commitments/T&M Tickets/Safety Incidents), not a plain column, and search only matches `description` (a plain field already exists here, so unlike Inspections/Prequalification/Billing there's no need to join just to get a searchable field). */
+export const listDirectCostsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(DIRECT_COST_SORT_KEYS).optional(),
+    status: directCostStatusSchema.optional(),
+  })
+  .strict();
+export type ListDirectCostsQuery = z.infer<typeof listDirectCostsQuerySchema>;
 
 /** A cost that hits a budget cost code without going through a commitment (subcontract/PO) -- a permit fee, owner-purchased material, payroll allocation, etc. */
 export const createDirectCostSchema = z

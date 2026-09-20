@@ -19,8 +19,8 @@ export function PersonnelPicker({ label, members, selectedUserIds, onChange }: P
   }
 
   return (
-    <div className="flex flex-col gap-1 text-sm">
-      <span>{label}</span>
+    <fieldset className="flex flex-col gap-1 text-sm">
+      <legend className="px-0">{label}</legend>
       <div className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-lg border-3 border-ink px-3 py-2">
         {members.map((m) => (
           <label key={m.userId} className="flex items-center gap-2 text-sm">
@@ -29,6 +29,6 @@ export function PersonnelPicker({ label, members, selectedUserIds, onChange }: P
           </label>
         ))}
       </div>
-    </div>
+    </fieldset>
   );
 }

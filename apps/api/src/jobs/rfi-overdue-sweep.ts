@@ -44,6 +44,20 @@ export async function runRfiOverdueSweep(authDb: Database, mailer: Transporter, 
       projectName: row.projectName,
       dueDate: row.rfi.dueDate,
     });
+    if (row.rfi.ballInCourtUserId) {
+      // A system sweep has no acting user to run this under, so it inserts
+      // directly rather than through notifyUser's actor-aware helper.
+      await authDb.insert(schema.notifications).values({
+        userId: row.rfi.ballInCourtUserId,
+        type: "rfi_overdue",
+        payload: {
+          projectId: row.rfi.projectId,
+          entityType: "rfi",
+          entityId: row.rfi.id,
+          summary: `RFI ${row.rfi.number}: ${row.rfi.subject}`,
+        },
+      });
+    }
     await authDb.update(schema.rfis).set({ escalatedAt: new Date() }).where(eq(schema.rfis.id, row.rfi.id));
     escalated++;
   }

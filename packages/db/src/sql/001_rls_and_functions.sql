@@ -320,7 +320,50 @@ CREATE POLICY trades_authenticated_read ON trades FOR ALL USING (
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS notifications_self ON notifications;
-CREATE POLICY notifications_self ON notifications FOR ALL USING (
+-- A notification's user_id is its *recipient*, almost always someone other
+-- than the actor whose action triggered it (e.g. an RFI's ball-in-court
+-- user, notified by the responder). INSERT is therefore gated only on
+-- "authenticated session" -- the API layer picks the recipient -- while
+-- SELECT/UPDATE (marking read) stay restricted to the recipient themself.
+-- No DELETE policy: deletes are refused outright, same as audit_log.
+DROP POLICY IF EXISTS notifications_insert ON notifications;
+CREATE POLICY notifications_insert ON notifications FOR INSERT WITH CHECK (
+  current_setting('app.user_id', true) IS NOT NULL
+);
+DROP POLICY IF EXISTS notifications_select ON notifications;
+CREATE POLICY notifications_select ON notifications FOR SELECT USING (
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+);
+DROP POLICY IF EXISTS notifications_update ON notifications;
+CREATE POLICY notifications_update ON notifications FOR UPDATE USING (
+  user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
+);
+
+ALTER TABLE push_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE push_tokens FORCE ROW LEVEL SECURITY;
+-- Two operations need to cross the "owns this row" boundary a strict
+-- self-only policy can't express in one statement: (1) dispatching a push
+-- runs under the *actor* whose action triggered a notification, not the
+-- *recipient*, and needs to read the recipient's tokens (the same "any
+-- authenticated session" reasoning notifications_insert already documents
+-- above); (2) Expo issues the same push token to whoever is logged into
+-- the same app install, so re-registering a device that changed hands is
+-- an UPDATE (via ON CONFLICT upsert) of a row the *previous* owner, not
+-- the caller, still holds. So this table trusts the API layer the same
+-- way notifications already does for INSERT: any authenticated session
+-- may read, insert, update, or delete a row; WITH CHECK only pins the
+-- *written* row's user_id to the caller's own, so nobody can make a row
+-- belong to someone else, but reassigning their own device onto an
+-- existing row is always possible. DELETE has no WITH CHECK to pin
+-- (Postgres doesn't apply one to a deleted row), so it relies on the
+-- service layer's own `WHERE user_id = caller` scoping
+-- (push-token.service.ts's unregisterPushToken) -- acceptable since a
+-- push token is an opaque device identifier with no access value of its
+-- own, the same trade notifications_insert already makes.
+DROP POLICY IF EXISTS push_tokens_all ON push_tokens;
+CREATE POLICY push_tokens_all ON push_tokens FOR ALL USING (
+  current_setting('app.user_id', true) IS NOT NULL
+) WITH CHECK (
   user_id = NULLIF(current_setting('app.user_id', true), '')::uuid
 );
 
@@ -362,7 +405,9 @@ DECLARE
     'schedules', 'calendars', 'lookahead_plans',
     'transmittals', 'drawing_sets', 'corrective_actions',
     'prime_contracts', 'direct_costs', 'esignatures',
-    'prequalifications', 'bid_packages', 'estimates'
+    'prequalifications', 'bid_packages', 'estimates',
+    'custom_field_definitions', 'workflow_transition_rules',
+    'action_plan_templates', 'action_plans'
   ];
 BEGIN
   FOREACH t IN ARRAY direct_project_tables LOOP
@@ -529,7 +574,9 @@ DECLARE
     ARRAY['bid_invitations', 'bid_package_id', 'bid_packages'],
     ARRAY['bids', 'bid_package_id', 'bid_packages'],
     ARRAY['estimate_line_items', 'estimate_id', 'estimates'],
-    ARRAY['webhook_deliveries', 'subscription_id', 'webhook_subscriptions']
+    ARRAY['webhook_deliveries', 'subscription_id', 'webhook_subscriptions'],
+    ARRAY['custom_field_values', 'definition_id', 'custom_field_definitions'],
+    ARRAY['action_plan_template_items', 'template_id', 'action_plan_templates']
   ];
   row_ text[];
 BEGIN

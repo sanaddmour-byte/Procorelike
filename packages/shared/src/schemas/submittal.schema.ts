@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 /**
  * Industry-standard (AIA G810 / CSI) submittal states. "approved_as_noted",
@@ -18,6 +19,19 @@ export const submittalStatusSchema = z.enum([
   "closed",
 ]);
 export type SubmittalStatus = z.infer<typeof submittalStatusSchema>;
+
+export const SUBMITTAL_SORT_KEYS = ["number", "title", "status", "dueDate"] as const;
+export type SubmittalSortKey = (typeof SUBMITTAL_SORT_KEYS)[number];
+
+/** GET /submittals's query contract (Phase 22, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). */
+export const listSubmittalsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(SUBMITTAL_SORT_KEYS).optional(),
+    status: submittalStatusSchema.optional(),
+    assigneeUserId: z.string().uuid().optional(),
+  })
+  .strict();
+export type ListSubmittalsQuery = z.infer<typeof listSubmittalsQuerySchema>;
 
 export const submittalResponseCodeSchema = z.enum([
   "approved",
@@ -105,3 +119,18 @@ export const submitSubmittalReviewSchema = z
   })
   .strict();
 export type SubmitSubmittalReviewInput = z.infer<typeof submitSubmittalReviewSchema>;
+
+/**
+ * Phase 32: bulk-close contract, rolling out the Phase 28/31 bulk-actions
+ * recipe to a third module. No `toStatus` field (unlike
+ * bulkTransitionRfiStatusSchema / bulkTransitionPunchItemStatusSchema) --
+ * closeSubmittal is a single fixed action (approved/approved_as_noted ->
+ * closed), not a generic transition, so there's only one target status
+ * to name.
+ */
+export const bulkCloseSubmittalsSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+  })
+  .strict();
+export type BulkCloseSubmittalsInput = z.infer<typeof bulkCloseSubmittalsSchema>;

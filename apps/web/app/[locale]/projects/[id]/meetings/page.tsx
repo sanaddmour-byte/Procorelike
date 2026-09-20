@@ -1,9 +1,12 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -20,26 +23,19 @@ export default function MeetingsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [meetings, setMeetings] = useState<Meeting[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [occurredAt, setOccurredAt] = useState("");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<Meeting[]>(`/meetings?projectId=${params.id}`)
-      .then((rows) => setMeetings(rows.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))))
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Meeting>({ basePath: "/meetings", projectId: params.id, defaultSort: { key: "occurredAt", direction: "desc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
-  }, [router, locale, params.id]);
+  }, [router, locale]);
 
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
@@ -53,7 +49,7 @@ export default function MeetingsPage() {
       setTitle("");
       setOccurredAt("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -61,15 +57,24 @@ export default function MeetingsPage() {
     }
   }
 
+  const hasActiveQuery = Boolean(serverTable.search);
+
+  const columns: DataTableColumn<Meeting>[] = [
+    { key: "title", header: t("titleField"), render: (m) => m.title, sortValue: (m) => m.title },
+    { key: "occurredAt", header: t("occurredAt"), render: (m) => new Date(m.occurredAt).toLocaleString(), sortValue: (m) => m.occurredAt, width: "220px" },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-            {t("newButton")}
-          </button>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+              {t("newButton")}
+            </button>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -88,19 +93,29 @@ export default function MeetingsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!meetings && !error && <p>{tc("loading")}</p>}
-        {meetings && meetings.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
 
-        <ul className="flex flex-col gap-3">
-          {meetings?.map((m) => (
-            <li key={m.id}>
-              <Link href={`/${locale}/projects/${params.id}/meetings/${m.id}`} className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive">
-                <div className="font-bold text-navy-900">{m.title}</div>
-                <p className="mt-1 text-sm text-navy-600">{new Date(m.occurredAt).toLocaleString()}</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          activeFilters={{}}
+          onFilterChange={() => undefined}
+          onClearAll={() => serverTable.onSearchChange("")}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<Meeting>
+          storageKey="meetings"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          onRowClick={(m) => router.push(`/${locale}/projects/${params.id}/meetings/${m.id}`)}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
     </>
   );

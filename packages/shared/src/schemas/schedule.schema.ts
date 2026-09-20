@@ -1,7 +1,20 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const scheduleTaskStatusSchema = z.enum(["not_started", "in_progress", "complete", "delayed"]);
 export type ScheduleTaskStatus = z.infer<typeof scheduleTaskStatusSchema>;
+
+export const SCHEDULE_TASK_SORT_KEYS = ["name", "status", "percentComplete", "startDate"] as const;
+export type ScheduleTaskSortKey = (typeof SCHEDULE_TASK_SORT_KEYS)[number];
+
+/** GET /schedule-tasks's query contract (Phase 26, closing out the server-driven list-query initiative -- see docs/DATA_MODEL.md §9n). No `company` sort key -- the list page's Assigned Company column is a joined lookup by `assignedCompanyId`, not a plain column. Unlike every other migrated module, omitting `sort` does NOT fall back to a single-column default: it preserves the pre-migration ordering (`sortOrder` then `startDate`, the manual drag-order this list has always used), since that's the "no query params changes nothing" backward-compatibility rule applied to a module whose original default order was never a single column to begin with. */
+export const listScheduleTasksQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(SCHEDULE_TASK_SORT_KEYS).optional(),
+    status: scheduleTaskStatusSchema.optional(),
+  })
+  .strict();
+export type ListScheduleTasksQuery = z.infer<typeof listScheduleTasksQuerySchema>;
 
 export const createScheduleTaskSchema = z
   .object({

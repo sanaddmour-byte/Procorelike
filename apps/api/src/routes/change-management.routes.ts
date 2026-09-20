@@ -1,8 +1,10 @@
 import type { Database } from "@siteops/db";
 import {
+  bulkSubmitChangeOrdersSchema,
   createChangeEventSchema,
   createChangeOrderSchema,
   createPotentialChangeOrderSchema,
+  listChangeOrdersQuerySchema,
   transitionChangeEventStatusSchema,
   updatePotentialChangeOrderStatusSchema,
 } from "@siteops/shared";
@@ -15,6 +17,7 @@ import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import * as changeManagementService from "../services/change-management.service";
+import { toChangeOrderRegisterCsv } from "../services/export.service";
 import { loadPermissionContext } from "../services/permission.service";
 import { dispatchProjectEvent } from "../services/webhook.service";
 
@@ -154,7 +157,18 @@ export function changeOrdersRouter(appDb: Database, authDb: Database, env: Env):
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const rows = await changeManagementService.listChangeOrders(appDb, authUser.id, ctx, projectId);
+      const listQuery = listChangeOrdersQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await changeManagementService.listChangeOrders(appDb, authUser.id, ctx, projectId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
       res.json(rows);
     } catch (err) {
       next(err);
@@ -169,6 +183,12 @@ export function changeOrdersRouter(appDb: Database, authDb: Database, env: Env):
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await changeManagementService.getChangeOrderListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="change-order-register.csv"`);
+        res.send(toChangeOrderRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateChangeOrderListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="change-order-register.pdf"`);
@@ -177,6 +197,22 @@ export function changeOrdersRouter(appDb: Database, authDb: Database, env: Env):
       next(err);
     }
   });
+
+  // Registered before /:id (matches rfis.routes.ts's convention) so "bulk-submit" isn't parsed as an id.
+  router.post(
+    "/bulk-submit",
+    validateBody(bulkSubmitChangeOrdersSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const authUser = req.authUser;
+        if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+        const results = await changeManagementService.bulkSubmitChangeOrders(appDb, authUser.id, req.body);
+        res.json(results);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
     try {

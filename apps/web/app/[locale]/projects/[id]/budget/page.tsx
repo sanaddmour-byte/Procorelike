@@ -1,10 +1,14 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { Modal } from "@/components/ui/Modal";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 
 interface CostCode {
   id: string;
@@ -26,16 +30,13 @@ interface BudgetLineItem {
   currency: string;
 }
 
-function money(value: string): string {
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 export default function BudgetPage() {
   const t = useTranslations("Budget");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const money = (value: string, currency: string): string => formatMoney(value, currency, locale);
 
   const [lineItems, setLineItems] = useState<BudgetLineItem[] | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
@@ -45,7 +46,7 @@ export default function BudgetPage() {
   const [originalAmount, setOriginalAmount] = useState("");
   const [forecastToComplete, setForecastToComplete] = useState("");
   const [saving, setSaving] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<BudgetLineItem | null>(null);
   const [editOriginal, setEditOriginal] = useState("");
   const [editForecast, setEditForecast] = useState("");
   const [showModForm, setShowModForm] = useState(false);
@@ -105,19 +106,20 @@ export default function BudgetPage() {
   }
 
   function startEdit(li: BudgetLineItem): void {
-    setEditingId(li.id);
+    setEditingItem(li);
     setEditOriginal(li.originalAmount);
     setEditForecast(li.forecastToComplete);
   }
 
-  async function handleSaveEdit(id: string): Promise<void> {
+  async function handleSaveEdit(): Promise<void> {
+    if (!editingItem) return;
     setSaving(true);
     try {
-      await apiJson(`/budget-line-items/${id}?projectId=${params.id}`, {
+      await apiJson(`/budget-line-items/${editingItem.id}?projectId=${params.id}`, {
         method: "PATCH",
         body: JSON.stringify({ originalAmount: Number(editOriginal || 0), forecastToComplete: Number(editForecast || 0) }),
       });
-      setEditingId(null);
+      setEditingItem(null);
       load();
     } catch {
       setError(tc("errorGeneric"));
@@ -169,29 +171,68 @@ export default function BudgetPage() {
     }
   }
 
+  const columns: DataTableColumn<BudgetLineItem>[] = [
+    { key: "costCode", header: t("costCode"), render: (li) => costCodeLabel(li.costCodeId), sortValue: (li) => costCodeLabel(li.costCodeId) },
+    {
+      key: "revised",
+      header: t("revisedBudget"),
+      align: "end",
+      width: "130px",
+      render: (li) => money((Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount)).toString(), li.currency),
+      sortValue: (li) => Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount),
+    },
+    { key: "committed", header: t("committedCosts"), align: "end", width: "130px", render: (li) => money(li.committedCosts, li.currency), sortValue: (li) => Number(li.committedCosts) },
+    { key: "projected", header: t("projectedAmount"), align: "end", width: "130px", render: (li) => money(li.projectedAmount, li.currency), sortValue: (li) => Number(li.projectedAmount) },
+    {
+      key: "variance",
+      header: t("variance"),
+      align: "end",
+      width: "120px",
+      render: (li) => {
+        const revised = Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount);
+        const variance = revised - Number(li.projectedAmount);
+        return <span className={variance < 0 ? "font-bold text-maroon-700" : "font-bold text-navy-900"}>{money(variance.toString(), li.currency)}</span>;
+      },
+      sortValue: (li) => Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount) - Number(li.projectedAmount),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "end",
+      width: "90px",
+      render: (li) => (
+        <button onClick={() => startEdit(li)} className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800">
+          {t("edit")}
+        </button>
+      ),
+    },
+  ];
+
   return (
     <>
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => void handleExportCsv()} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
-              {t("exportCsv")}
-            </button>
-            <button
-              onClick={() => setShowModForm((s) => !s)}
-              className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800"
-            >
-              {t("newModification")}
-            </button>
-            <button
-              onClick={() => setShowForm((s) => !s)}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-            >
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button onClick={() => void handleExportCsv()} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
+                {t("exportCsv")}
+              </button>
+              <button
+                onClick={() => setShowModForm((s) => !s)}
+                className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800"
+              >
+                {t("newModification")}
+              </button>
+              <button
+                onClick={() => setShowForm((s) => !s)}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+              >
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showModForm && (
           <form onSubmit={(e) => void handleCreateModification(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -262,94 +303,56 @@ export default function BudgetPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!lineItems && !error && <p>{tc("loading")}</p>}
-        {lineItems && lineItems.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
 
-        <div className="flex flex-col gap-3">
-          {lineItems?.map((li) => {
-            const revised = Number(li.originalAmount) + Number(li.modificationsAmount) + Number(li.approvedChangesAmount);
-            const variance = revised - Number(li.projectedAmount);
-            const editing = editingId === li.id;
-            return (
-              <div key={li.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="font-bold text-navy-900">{costCodeLabel(li.costCodeId)}</span>
-                  {!editing && (
-                    <button onClick={() => startEdit(li)} className="rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800">
-                      {t("edit")}
-                    </button>
-                  )}
-                </div>
-                {editing ? (
-                  <div className="flex flex-col gap-2">
-                    <label className="flex flex-col gap-1 text-sm">
-                      {t("originalAmount")}
-                      <input type="number" step="0.01" value={editOriginal} onChange={(e) => setEditOriginal(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
-                    </label>
-                    <label className="flex flex-col gap-1 text-sm">
-                      {t("forecastToComplete")}
-                      <input type="number" step="0.01" value={editForecast} onChange={(e) => setEditForecast(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={() => void handleSaveEdit(li.id)} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white disabled:opacity-50">
-                        {t("save")}
-                      </button>
-                      <button onClick={() => setEditingId(null)} className="rounded-lg border-3 border-ink px-3 py-1.5 text-sm text-navy-800">
-                        {t("cancel")}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
-                    <div>
-                      <div className="text-navy-600">{t("originalAmount")}</div>
-                      <div className="font-medium">{money(li.originalAmount)}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("modifications")}</div>
-                      <div className="font-medium">{money(li.modificationsAmount)}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("approvedChanges")}</div>
-                      <div className="font-medium">{money(li.approvedChangesAmount)}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("revisedBudget")}</div>
-                      <div className="font-medium">{revised.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("pendingCostChanges")}</div>
-                      <div className="font-medium">{money(li.pendingCostChanges)}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("committedCosts")}</div>
-                      <div className="font-medium">{money(li.committedCosts)}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("directCosts")}</div>
-                      <div className="font-medium">{money(li.directCosts)}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("forecastToComplete")}</div>
-                      <div className="font-medium">{money(li.forecastToComplete)}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("projectedAmount")}</div>
-                      <div className="font-medium">{money(li.projectedAmount)}</div>
-                    </div>
-                    <div>
-                      <div className="text-navy-600">{t("variance")}</div>
-                      <div className={`font-bold ${variance < 0 ? "text-maroon-700" : "text-navy-900"}`}>
-                        {variance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <DataTable<BudgetLineItem> storageKey="budget" columns={columns} rows={lineItems} emptyTitle={t("empty")} />
       </main>
+
+      <Modal open={editingItem !== null} onClose={() => setEditingItem(null)} title={editingItem ? costCodeLabel(editingItem.costCodeId) : ""}>
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <div>
+              <div className="text-navy-600">{t("modifications")}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.modificationsAmount, editingItem.currency) : ""}</div>
+            </div>
+            <div>
+              <div className="text-navy-600">{t("approvedChanges")}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.approvedChangesAmount, editingItem.currency) : ""}</div>
+            </div>
+            <div>
+              <div className="text-navy-600">{t("pendingCostChanges")}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.pendingCostChanges, editingItem.currency) : ""}</div>
+            </div>
+            <div>
+              <div className="text-navy-600">{t("committedCosts")}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.committedCosts, editingItem.currency) : ""}</div>
+            </div>
+            <div>
+              <div className="text-navy-600">{t("directCosts")}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.directCosts, editingItem.currency) : ""}</div>
+            </div>
+            <div>
+              <div className="text-navy-600">{t("projectedAmount")}</div>
+              <div className="font-medium">{editingItem ? money(editingItem.projectedAmount, editingItem.currency) : ""}</div>
+            </div>
+          </div>
+          <label className="flex flex-col gap-1 text-sm">
+            {t("originalAmount")}
+            <input type="number" step="0.01" value={editOriginal} onChange={(e) => setEditOriginal(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            {t("forecastToComplete")}
+            <input type="number" step="0.01" value={editForecast} onChange={(e) => setEditForecast(e.target.value)} className="rounded-lg border-3 border-ink px-3 py-2" />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => void handleSaveEdit()} disabled={saving} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white disabled:opacity-50">
+              {t("save")}
+            </button>
+            <button onClick={() => setEditingItem(null)} className="rounded-lg border-3 border-ink px-3 py-1.5 text-sm text-navy-800">
+              {t("cancel")}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

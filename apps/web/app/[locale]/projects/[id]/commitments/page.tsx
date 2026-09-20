@@ -1,9 +1,14 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -29,7 +34,6 @@ export default function CommitmentsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [commitments, setCommitments] = useState<Commitment[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -38,19 +42,13 @@ export default function CommitmentsPage() {
   const [type, setType] = useState<"subcontract" | "po">("subcontract");
   const [retentionPct, setRetentionPct] = useState("0");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<Commitment[]>(`/commitments?projectId=${params.id}`)
-      .then(setCommitments)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Commitment>({ basePath: "/commitments", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`)
       .then((cos) => {
         setCompanies(cos);
@@ -89,7 +87,7 @@ export default function CommitmentsPage() {
       });
       setTitle("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -97,20 +95,37 @@ export default function CommitmentsPage() {
     }
   }
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const columns: DataTableColumn<Commitment>[] = [
+    { key: "number", header: t("number"), render: (c) => c.number, sortValue: (c) => c.number, width: "110px" },
+    { key: "title", header: t("titleField"), render: (c) => c.title, sortValue: (c) => c.title },
+    { key: "company", header: t("company"), render: (c) => companyName(c.companyId), width: "200px" },
+    {
+      key: "type",
+      header: t("type"),
+      render: (c) => <StatusBadge tone="neutral" label={c.type === "po" ? t("typePo") : t("typeSubcontract")} />,
+      sortValue: (c) => c.type,
+      width: "150px",
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => void handleExportIif()} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
-              {t("exportIif")}
-            </button>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button onClick={() => void handleExportIif()} className="rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800">
+                {t("exportIif")}
+              </button>
+              <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -146,29 +161,51 @@ export default function CommitmentsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!commitments && !error && <p>{tc("loading")}</p>}
-        {commitments && commitments.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
 
-        <ul className="flex flex-col gap-3">
-          {commitments?.map((c) => (
-            <li key={c.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/commitments/${c.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-navy-900">
-                    {c.number} — {c.title}
-                  </span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                    {c.type === "po" ? t("typePo") : t("typeSubcontract")}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">{companyName(c.companyId)}</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <SavedViewsBar
+          projectId={params.id}
+          module="commitments"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "type",
+              label: t("type"),
+              options: [
+                { value: "subcontract", label: t("typeSubcontract") },
+                { value: "po", label: t("typePo") },
+              ],
+            },
+            {
+              key: "companyId",
+              label: t("company"),
+              options: companies.map((c) => ({ value: c.companyId, label: c.name })),
+            },
+          ]}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<Commitment>
+          storageKey="commitments"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          onRowClick={(c) => router.push(`/${locale}/projects/${params.id}/commitments/${c.id}`)}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
     </>
   );

@@ -3,7 +3,9 @@
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import { useProjectCurrency } from "@/lib/use-project-currency";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -63,6 +65,8 @@ export default function ChangeOrderDetailPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; changeOrderId: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string | number): string => formatMoney(value, currency, locale);
 
   const [co, setCo] = useState<ChangeOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -163,7 +167,7 @@ export default function ChangeOrderDetailPage() {
                 </div>
                 <div>
                   <div className="text-navy-600">{t("costImpact")}</div>
-                  <div className="font-bold text-navy-900">{Number(co.costImpact).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                  <div className="font-bold text-navy-900">{money(Number(co.costImpact))}</div>
                 </div>
                 <div>
                   <div className="text-navy-600">{t("timeImpactDays")}</div>

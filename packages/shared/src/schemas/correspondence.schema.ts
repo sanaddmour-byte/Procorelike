@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { signatureImageBase64Schema } from "./esignature.schema";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const correspondenceDirectionSchema = z.enum(["incoming", "outgoing"]);
 export type CorrespondenceDirection = z.infer<typeof correspondenceDirectionSchema>;
@@ -9,6 +10,18 @@ export type CorrespondenceType = z.infer<typeof correspondenceTypeSchema>;
 
 export const correspondenceStatusSchema = z.enum(["draft", "sent", "acknowledged", "closed"]);
 export type CorrespondenceStatus = z.infer<typeof correspondenceStatusSchema>;
+
+export const CORRESPONDENCE_SORT_KEYS = ["correspondenceNumber", "subject", "type", "status"] as const;
+export type CorrespondenceSortKey = (typeof CORRESPONDENCE_SORT_KEYS)[number];
+
+/** GET /correspondence's query contract (Phase 23, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). */
+export const listCorrespondenceQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(CORRESPONDENCE_SORT_KEYS).optional(),
+    status: correspondenceStatusSchema.optional(),
+  })
+  .strict();
+export type ListCorrespondenceQuery = z.infer<typeof listCorrespondenceQuerySchema>;
 
 export const createCorrespondenceSchema = z
   .object({

@@ -1,10 +1,14 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { detectSheetInfoFromPdf } from "@/lib/ocr";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -30,7 +34,6 @@ export default function DrawingsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [drawings, setDrawings] = useState<Drawing[] | null>(null);
   const [drawingSets, setDrawingSets] = useState<DrawingSet[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -46,11 +49,14 @@ export default function DrawingsPage() {
   const [setDate, setSetDate] = useState("");
   const [setDrawingIds, setSetDrawingIds] = useState<string[]>([]);
   const [publishingSet, setPublishingSet] = useState(false);
+  const serverTable = useServerTable<Drawing>({ basePath: "/drawings", projectId: params.id, defaultSort: { key: "sheetNumber", direction: "asc" } });
+  /** Every drawing with a current revision, unpaginated -- the "publish set" picker below needs the full set to choose from, not just the DataTable's current page. */
+  const [revisionedDrawings, setRevisionedDrawings] = useState<Drawing[]>([]);
 
-  function load(): void {
+  function loadAux(): void {
     apiJson<Drawing[]>(`/drawings?projectId=${params.id}`)
-      .then(setDrawings)
-      .catch(() => setError(tc("errorGeneric")));
+      .then((all) => setRevisionedDrawings(all.filter((d) => d.currentRevisionId)))
+      .catch(() => undefined);
     apiJson<DrawingSet[]>(`/drawing-sets?projectId=${params.id}`)
       .then(setDrawingSets)
       .catch(() => undefined);
@@ -61,7 +67,7 @@ export default function DrawingsPage() {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
+    loadAux();
   }, [router, locale, params.id]);
 
   function toggleSetDrawing(id: string): void {
@@ -73,7 +79,7 @@ export default function DrawingsPage() {
     setPublishingSet(true);
     try {
       const drawingRevisionIds = setDrawingIds
-        .map((id) => drawings?.find((d) => d.id === id)?.currentRevisionId)
+        .map((id) => revisionedDrawings.find((d) => d.id === id)?.currentRevisionId)
         .filter((id): id is string => Boolean(id));
       await apiJson("/drawing-sets", {
         method: "POST",
@@ -83,7 +89,7 @@ export default function DrawingsPage() {
       setSetDate("");
       setSetDrawingIds([]);
       setShowSetForm(false);
-      load();
+      loadAux();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -118,7 +124,8 @@ export default function DrawingsPage() {
       setDiscipline("");
       setTitle("");
       setShowForm(false);
-      load();
+      serverTable.reload();
+      loadAux();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -126,20 +133,36 @@ export default function DrawingsPage() {
     }
   }
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const columns: DataTableColumn<Drawing>[] = [
+    { key: "sheetNumber", header: t("sheetNumber"), render: (d) => d.sheetNumber, sortValue: (d) => d.sheetNumber, width: "140px" },
+    { key: "title", header: t("drawingTitle"), render: (d) => d.title, sortValue: (d) => d.title },
+    { key: "discipline", header: t("discipline"), render: (d) => d.discipline, sortValue: (d) => d.discipline, width: "160px" },
+    {
+      key: "revisions",
+      header: "",
+      render: (d) => (!d.currentRevisionId ? <span className="text-xs text-orange-800">{t("noRevisions")}</span> : null),
+      width: "180px",
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex gap-2">
-            <button onClick={() => setShowSetForm((s) => !s)} className="rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm font-semibold text-navy-800 brutal-interactive">
-              {t("publishSet")}
-            </button>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button onClick={() => setShowSetForm((s) => !s)} className="rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm font-semibold text-navy-800 brutal-interactive">
+                {t("publishSet")}
+              </button>
+              <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showSetForm && (
           <form onSubmit={(e) => void handlePublishSet(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-cream shadow-brutal-sm p-4">
@@ -153,14 +176,12 @@ export default function DrawingsPage() {
             </label>
             <p className="text-sm font-semibold text-navy-800">{t("setSheets")}</p>
             <div className="grid gap-1 sm:grid-cols-2">
-              {drawings
-                ?.filter((d) => d.currentRevisionId)
-                .map((d) => (
-                  <label key={d.id} className="flex items-center gap-2 text-xs">
-                    <input type="checkbox" checked={setDrawingIds.includes(d.id)} onChange={() => toggleSetDrawing(d.id)} />
-                    {d.sheetNumber} — {d.title}
-                  </label>
-                ))}
+              {revisionedDrawings.map((d) => (
+                <label key={d.id} className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={setDrawingIds.includes(d.id)} onChange={() => toggleSetDrawing(d.id)} />
+                  {d.sheetNumber} — {d.title}
+                </label>
+              ))}
             </div>
             <button
               type="submit"
@@ -228,28 +249,36 @@ export default function DrawingsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!drawings && !error && <p>{tc("loading")}</p>}
-        {drawings && drawings.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {drawings?.map((drawing) => (
-            <li key={drawing.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/drawings/${drawing.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {drawing.sheetNumber} — {drawing.title}
-                  </span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                    {drawing.discipline}
-                  </span>
-                </div>
-                {!drawing.currentRevisionId && <p className="mt-1 text-xs text-orange-800">{t("noRevisions")}</p>}
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <SavedViewsBar
+          projectId={params.id}
+          module="drawings"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<Drawing>
+          storageKey="drawings"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          onRowClick={(drawing) => router.push(`/${locale}/projects/${params.id}/drawings/${drawing.id}`)}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
     </>
   );

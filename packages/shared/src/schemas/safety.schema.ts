@@ -1,10 +1,23 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
 
 export const safetyIncidentSeveritySchema = z.enum(["near_miss", "minor", "serious", "critical"]);
 export type SafetyIncidentSeverity = z.infer<typeof safetyIncidentSeveritySchema>;
 
 export const safetyIncidentStatusSchema = z.enum(["open", "investigating", "closed"]);
 export type SafetyIncidentStatus = z.infer<typeof safetyIncidentStatusSchema>;
+
+export const SAFETY_INCIDENT_SORT_KEYS = ["description", "occurredAt", "severity", "status"] as const;
+export type SafetyIncidentSortKey = (typeof SAFETY_INCIDENT_SORT_KEYS)[number];
+
+/** GET /safety-incidents's query contract (Phase 24, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). No `company` sort key -- the list page's Involved Company column is rendered from a joined lookup (see docs/DATA_MODEL.md §9n's note on Commitments/T&M Tickets), not a plain column, and sorting/searching by it isn't supported here either. Safety Observations are explicitly out of scope this phase (same documented scope cut as Change Events in Phase 22). */
+export const listSafetyIncidentsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(SAFETY_INCIDENT_SORT_KEYS).optional(),
+    status: safetyIncidentStatusSchema.optional(),
+  })
+  .strict();
+export type ListSafetyIncidentsQuery = z.infer<typeof listSafetyIncidentsQuerySchema>;
 
 export const oshaClassificationSchema = z.enum([
   "not_recordable",
@@ -68,6 +81,19 @@ export type SafetyObservationCategory = z.infer<typeof safetyObservationCategory
 
 export const safetyObservationStatusSchema = z.enum(["open", "resolved"]);
 export type SafetyObservationStatus = z.infer<typeof safetyObservationStatusSchema>;
+
+export const SAFETY_OBSERVATION_SORT_KEYS = ["description", "observedAt", "category", "status"] as const;
+export type SafetyObservationSortKey = (typeof SAFETY_OBSERVATION_SORT_KEYS)[number];
+
+/** GET /safety-observations's query contract (Phase 25, same shape as Safety Incidents' listSafetyIncidentsQuerySchema from Phase 24 -- no joined columns on this module's list page at all, so no sort-key exclusion is needed here). */
+export const listSafetyObservationsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(SAFETY_OBSERVATION_SORT_KEYS).optional(),
+    category: safetyObservationCategorySchema.optional(),
+    status: safetyObservationStatusSchema.optional(),
+  })
+  .strict();
+export type ListSafetyObservationsQuery = z.infer<typeof listSafetyObservationsQuerySchema>;
 
 export const createSafetyObservationSchema = z
   .object({

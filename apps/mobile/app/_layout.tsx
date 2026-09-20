@@ -6,12 +6,31 @@ import {
   Poppins_800ExtraBold,
   useFonts,
 } from "@expo-google-fonts/poppins";
-import { Stack } from "expo-router";
+import * as Notifications from "expo-notifications";
+import { Stack, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Text, TextInput } from "react-native";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/lib/auth-context";
+import { entityPath, type NotificationEntityData } from "@/lib/push-notifications";
 import { colors, fonts } from "@/lib/theme";
+
+/** Tapping a push notification (from background or a cold start) navigates straight to the RFI/Submittal/Punch Item/Change Order it's about, the same entity a tap on the web NotificationBell's matching row would open. */
+function NotificationTapHandler(): null {
+  const router = useRouter();
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as Partial<NotificationEntityData>;
+      if (!data.projectId || !data.entityType || !data.entityId || !data.summary) return;
+      const path = entityPath(data as NotificationEntityData);
+      if (path) router.push(path);
+    });
+    return () => subscription.remove();
+  }, [router]);
+
+  return null;
+}
 
 /**
  * Applies Poppins as the default font for every <Text>/<TextInput> in the
@@ -50,6 +69,7 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <AuthProvider>
+        <NotificationTapHandler />
         <Stack
           screenOptions={{
             headerStyle: { backgroundColor: colors.navy900 },

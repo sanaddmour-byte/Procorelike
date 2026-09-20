@@ -1,17 +1,21 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
   BID_PACKAGE_STATUS_TRANSITIONS,
+  DEFAULT_PAGE_SIZE,
   formatBidPackageNumber,
   formatCommitmentNumber,
   requirePermission,
   type AwardBidInput,
+  type BidPackageSortKey,
   type CreateBidPackageInput,
   type InviteBidderInput,
+  type ListBidPackagesQuery,
   type LogBidInput,
+  type PaginatedResult,
   type PermissionContext,
   type TransitionBidPackageStatusInput,
 } from "@siteops/shared";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, ne, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -77,15 +81,50 @@ export async function findBidWithPackage(
   });
 }
 
+const BID_PACKAGE_SORT_COLUMNS: Record<
+  BidPackageSortKey,
+  typeof schema.bidPackages.number | typeof schema.bidPackages.title | typeof schema.bidPackages.dueDate | typeof schema.bidPackages.status
+> = {
+  number: schema.bidPackages.number,
+  title: schema.bidPackages.title,
+  dueDate: schema.bidPackages.dueDate,
+  status: schema.bidPackages.status,
+};
+
 export async function listBidPackages(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<BidPackageRow[]> {
+  query: ListBidPackagesQuery = {},
+): Promise<PaginatedResult<BidPackageRow>> {
   requirePermission(ctx, "bidding", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.bidPackages).where(eq(schema.bidPackages.projectId, projectId));
+    const conditions = [eq(schema.bidPackages.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.bidPackages.status, query.status));
+    if (query.search) {
+      conditions.push(or(ilike(schema.bidPackages.number, `%${query.search}%`), ilike(schema.bidPackages.title, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = BID_PACKAGE_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.bidPackages).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.bidPackages).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

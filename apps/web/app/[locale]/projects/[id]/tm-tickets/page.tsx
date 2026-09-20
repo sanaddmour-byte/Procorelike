@@ -1,10 +1,16 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { TmTicketStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -49,6 +55,13 @@ function statusLabel(status: TmTicketStatus, t: (key: string) => string): string
   }[status];
 }
 
+const STATUS_TONE: Record<TmTicketStatus, StatusTone> = {
+  draft: "neutral",
+  submitted: "warning",
+  approved: "success",
+  rejected: "danger",
+};
+
 export default function TmTicketsPage() {
   const t = useTranslations("TmTickets");
   const tc = useTranslations("Common");
@@ -56,7 +69,6 @@ export default function TmTicketsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [tickets, setTickets] = useState<TmTicket[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -67,19 +79,13 @@ export default function TmTicketsPage() {
   const [equipmentEntries, setEquipmentEntries] = useState<EquipmentEntry[]>([]);
   const [materialEntries, setMaterialEntries] = useState<MaterialEntry[]>([]);
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<TmTicket[]>(`/tm-tickets?projectId=${params.id}`)
-      .then(setTickets)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<TmTicket>({ basePath: "/tm-tickets", projectId: params.id, defaultSort: { key: "ticketNumber", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`)
       .then((cos) => {
         setCompanies(cos);
@@ -124,7 +130,7 @@ export default function TmTicketsPage() {
         }),
       });
       resetForm();
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -132,18 +138,36 @@ export default function TmTicketsPage() {
     }
   }
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const columns: DataTableColumn<TmTicket>[] = [
+    { key: "ticketNumber", header: t("number"), render: (ticket) => ticket.ticketNumber, sortValue: (ticket) => ticket.ticketNumber, width: "110px" },
+    { key: "company", header: t("company"), render: (ticket) => companyName(ticket.companyId), width: "180px" },
+    { key: "workDate", header: t("workDate"), render: (ticket) => ticket.workDate.slice(0, 10), sortValue: (ticket) => ticket.workDate, width: "130px" },
+    { key: "description", header: t("description"), render: (ticket) => ticket.description, sortValue: (ticket) => ticket.description },
+    {
+      key: "status",
+      header: t("status"),
+      render: (ticket) => <StatusBadge tone={STATUS_TONE[ticket.status]} label={statusLabel(ticket.status, t)} />,
+      sortValue: (ticket) => ticket.status,
+      width: "130px",
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-          >
-            {t("newButton")}
-          </button>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <button
+              onClick={() => setShowForm((s) => !s)}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+            >
+              {t("newButton")}
+            </button>
+          }
+        />
 
         {showForm && (
           <form
@@ -317,30 +341,43 @@ export default function TmTicketsPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!tickets && !error && <p>{tc("loading")}</p>}
-        {tickets && tickets.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {tickets?.map((ticket) => (
-            <li key={ticket.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/tm-tickets/${ticket.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {ticket.ticketNumber} — {companyName(ticket.companyId)}
-                  </span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                    {statusLabel(ticket.status, t)}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">
-                  {ticket.workDate.slice(0, 10)} · {ticket.description.slice(0, 80)}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <SavedViewsBar
+          projectId={params.id}
+          module="tm_tickets"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["draft", "submitted", "approved", "rejected"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+            },
+          ]}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<TmTicket>
+          storageKey="tm-tickets"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          onRowClick={(ticket) => router.push(`/${locale}/projects/${params.id}/tm-tickets/${ticket.id}`)}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
     </>
   );

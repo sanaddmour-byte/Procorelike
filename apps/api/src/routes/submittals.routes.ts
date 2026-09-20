@@ -1,5 +1,12 @@
 import type { Database } from "@siteops/db";
-import { createSubmittalRevisionSchema, createSubmittalSchema, submitSubmittalReviewSchema, updateSubmittalSchema } from "@siteops/shared";
+import {
+  bulkCloseSubmittalsSchema,
+  createSubmittalRevisionSchema,
+  createSubmittalSchema,
+  listSubmittalsQuerySchema,
+  submitSubmittalReviewSchema,
+  updateSubmittalSchema,
+} from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -8,6 +15,7 @@ import { generateSubmittalListPdf } from "../lib/submittal-list-report";
 import { generateSubmittalPdf } from "../lib/submittal-report";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
+import { toSubmittalRegisterCsv } from "../services/export.service";
 import { loadPermissionContext } from "../services/permission.service";
 import * as submittalService from "../services/submittal.service";
 
@@ -65,8 +73,20 @@ export function submittalsRouter(appDb: Database, env: Env): Router {
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const submittals = await submittalService.listSubmittals(appDb, authUser.id, ctx, projectId);
-      res.json(submittals);
+      const listQuery = listSubmittalsQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        assigneeUserId: req.query.assigneeUserId,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await submittalService.listSubmittals(appDb, authUser.id, ctx, projectId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
+      res.json(rows);
     } catch (err) {
       next(err);
     }
@@ -80,10 +100,28 @@ export function submittalsRouter(appDb: Database, env: Env): Router {
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await submittalService.getSubmittalListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="submittal-register.csv"`);
+        res.send(toSubmittalRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateSubmittalListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="submittal-register.pdf"`);
       res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Registered before /:id (matches rfis.routes.ts's convention) so "bulk-close" isn't parsed as an id.
+  router.post("/bulk-close", validateBody(bulkCloseSubmittalsSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const results = await submittalService.bulkCloseSubmittals(appDb, authUser.id, req.body);
+      res.json(results);
     } catch (err) {
       next(err);
     }

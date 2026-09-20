@@ -3,7 +3,7 @@
 import { apiJson } from "@/lib/api-client";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 interface Project {
   id: string;
@@ -23,6 +23,8 @@ export function ProjectSelector({ projectId }: { projectId: string }) {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     apiJson<Project[]>("/projects")
@@ -36,6 +38,8 @@ export function ProjectSelector({ projectId }: { projectId: string }) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
+    const selected = listRef.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    (selected ?? listRef.current?.querySelector<HTMLElement>('[role="option"]'))?.focus();
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
@@ -43,14 +47,31 @@ export function ProjectSelector({ projectId }: { projectId: string }) {
 
   function switchTo(nextId: string): void {
     setOpen(false);
+    triggerRef.current?.focus();
     if (nextId === projectId) return;
     const currentSegment = window.location.pathname.split(`/projects/${projectId}/`)[1]?.split("/")[0];
     router.push(`/${locale}/projects/${nextId}/${currentSegment || "dashboard"}`);
   }
 
+  function handleListKeyDown(e: KeyboardEvent<HTMLUListElement>): void {
+    if (e.key === "Escape") {
+      setOpen(false);
+      triggerRef.current?.focus();
+      return;
+    }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const options = Array.from(listRef.current?.querySelectorAll<HTMLElement>('[role="option"]') ?? []);
+    if (options.length === 0) return;
+    const currentIndex = options.indexOf(document.activeElement as HTMLElement);
+    const nextIndex = e.key === "ArrowDown" ? (currentIndex + 1) % options.length : (currentIndex - 1 + options.length) % options.length;
+    options[nextIndex]?.focus();
+  }
+
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
@@ -63,7 +84,12 @@ export function ProjectSelector({ projectId }: { projectId: string }) {
         </span>
       </button>
       {open && (
-        <ul role="listbox" className="absolute start-0 top-full z-40 mt-1 max-h-80 w-64 overflow-y-auto rounded-lg border-3 border-ink bg-white py-1 text-sm shadow-brutal-lg">
+        <ul
+          ref={listRef}
+          role="listbox"
+          onKeyDown={handleListKeyDown}
+          className="absolute start-0 top-full z-40 mt-1 max-h-80 w-64 overflow-y-auto rounded-lg border-3 border-ink bg-white py-1 text-sm shadow-brutal-lg"
+        >
           {!projects && <li className="px-3 py-2 text-navy-500">{t("loading")}</li>}
           {projects?.length === 0 && <li className="px-3 py-2 text-navy-500">{t("noProjects")}</li>}
           {projects?.map((p) => (

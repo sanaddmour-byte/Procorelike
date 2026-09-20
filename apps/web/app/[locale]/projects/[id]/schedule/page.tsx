@@ -1,10 +1,16 @@
 "use client";
 
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { ScheduleTaskStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -32,6 +38,13 @@ function statusLabel(status: ScheduleTaskStatus, t: (key: string) => string): st
   }[status];
 }
 
+const STATUS_TONE: Record<ScheduleTaskStatus, StatusTone> = {
+  not_started: "neutral",
+  in_progress: "info",
+  complete: "success",
+  delayed: "danger",
+};
+
 export default function SchedulePage() {
   const t = useTranslations("Schedule");
   const tc = useTranslations("Common");
@@ -39,7 +52,6 @@ export default function SchedulePage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [tasks, setTasks] = useState<ScheduleTask[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -49,19 +61,15 @@ export default function SchedulePage() {
   const [endDate, setEndDate] = useState("");
   const [assignedCompanyId, setAssignedCompanyId] = useState("");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<ScheduleTask[]>(`/schedule-tasks?projectId=${params.id}`)
-      .then(setTasks)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  // No defaultSort: this list's original order (manual sortOrder, then startDate) is preserved
+  // server-side when no explicit sort is chosen, rather than defaulting to one column.
+  const serverTable = useServerTable<ScheduleTask>({ basePath: "/schedule-tasks", projectId: params.id });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`).then(setCompanies).catch(() => undefined);
   }, [router, locale, params.id]);
 
@@ -91,7 +99,7 @@ export default function SchedulePage() {
       setEndDate("");
       setAssignedCompanyId("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -99,18 +107,55 @@ export default function SchedulePage() {
     }
   }
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const columns: DataTableColumn<ScheduleTask>[] = [
+    { key: "name", header: t("name"), render: (task) => task.name, sortValue: (task) => task.name },
+    {
+      key: "status",
+      header: t("status"),
+      render: (task) => <StatusBadge tone={STATUS_TONE[task.status]} label={statusLabel(task.status, t)} />,
+      sortValue: (task) => task.status,
+      width: "130px",
+    },
+    {
+      key: "startDate",
+      header: t("dates"),
+      render: (task) => `${task.startDate.slice(0, 10)} – ${task.endDate.slice(0, 10)}`,
+      sortValue: (task) => task.startDate,
+      width: "220px",
+    },
+    { key: "company", header: t("assignedCompany"), render: (task) => companyName(task.assignedCompanyId), width: "160px" },
+    {
+      key: "percentComplete",
+      header: t("percentComplete"),
+      width: "140px",
+      render: (task) => (
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-full overflow-hidden rounded-full border border-ink/30 bg-cream shadow-brutal-inset">
+            <div className="h-full bg-gradient-to-r from-navy-500 to-navy-700" style={{ width: `${task.percentComplete}%` }} />
+          </div>
+          <span className="shrink-0 text-xs text-navy-600">{task.percentComplete}%</span>
+        </div>
+      ),
+      sortValue: (task) => task.percentComplete,
+    },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-          >
-            {t("newButton")}
-          </button>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <button
+              onClick={() => setShowForm((s) => !s)}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+            >
+              {t("newButton")}
+            </button>
+          }
+        />
 
         {showForm && (
           <form
@@ -178,31 +223,43 @@ export default function SchedulePage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!tasks && !error && <p>{tc("loading")}</p>}
-        {tasks && tasks.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {tasks?.map((task) => (
-            <li key={task.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/schedule/${task.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{task.name}</span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                    {statusLabel(task.status, t)}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">
-                  {task.startDate.slice(0, 10)} – {task.endDate.slice(0, 10)} · {companyName(task.assignedCompanyId)}
-                </p>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full border border-ink/30 bg-cream shadow-brutal-inset">
-                  <div className="h-full bg-gradient-to-r from-navy-500 to-navy-700" style={{ width: `${task.percentComplete}%` }} />
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <SavedViewsBar
+          projectId={params.id}
+          module="schedule"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["not_started", "in_progress", "complete", "delayed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+            },
+          ]}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<ScheduleTask>
+          storageKey="schedule"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          onRowClick={(task) => router.push(`/${locale}/projects/${params.id}/schedule/${task.id}`)}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
     </>
   );

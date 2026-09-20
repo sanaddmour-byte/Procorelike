@@ -1,13 +1,17 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   PREQUALIFICATION_STATUS_TRANSITIONS,
   requirePermission,
   type InvitePrequalificationInput,
+  type ListPrequalificationsQuery,
+  type PaginatedResult,
   type PermissionContext,
+  type PrequalificationSortKey,
   type SubmitPrequalificationInput,
   type TransitionPrequalificationStatusInput,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, ilike } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -57,10 +61,48 @@ export async function listPrequalifications(
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<PrequalificationRow[]> {
+  query: ListPrequalificationsQuery = {},
+): Promise<PaginatedResult<PrequalificationRow>> {
   requirePermission(ctx, "prequalification", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.prequalifications).where(eq(schema.prequalifications.projectId, projectId));
+    const conditions = [eq(schema.prequalifications.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.prequalifications.status, query.status));
+    if (query.search) conditions.push(ilike(schema.companies.name, `%${query.search}%`));
+    const where = and(...conditions)!;
+
+    const sortKey: PrequalificationSortKey = query.sort ?? "company";
+    const sortColumn =
+      sortKey === "status"
+        ? schema.prequalifications.status
+        : sortKey === "overallScore"
+          ? schema.prequalifications.overallScore
+          : schema.companies.name;
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx
+      .select(getTableColumns(schema.prequalifications))
+      .from(schema.prequalifications)
+      .innerJoin(schema.companies, eq(schema.prequalifications.companyId, schema.companies.id))
+      .where(where)
+      .orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx
+        .select({ value: count() })
+        .from(schema.prequalifications)
+        .innerJoin(schema.companies, eq(schema.prequalifications.companyId, schema.companies.id))
+        .where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

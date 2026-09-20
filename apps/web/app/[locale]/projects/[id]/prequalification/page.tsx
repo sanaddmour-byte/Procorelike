@@ -1,8 +1,16 @@
 "use client";
 
+import { ErrorState } from "@/components/ui/ErrorState";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
-import type { PrequalificationStatus } from "@siteops/shared";
+import type { StatusTone } from "@/lib/design/status";
+import { useProjectCurrency } from "@/lib/use-project-currency";
+import { useServerTable } from "@/lib/use-server-table";
+import { formatMoney, type PrequalificationStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -33,10 +41,13 @@ const NEXT_STATUS: Record<PrequalificationStatus, PrequalificationStatus[]> = {
   disqualified: ["under_review"],
 };
 
-function money(value: string | null): string {
-  if (value === null) return "—";
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+const STATUS_TONE: Record<PrequalificationStatus, StatusTone> = {
+  invited: "neutral",
+  submitted: "info",
+  under_review: "warning",
+  qualified: "success",
+  disqualified: "danger",
+};
 
 export default function PrequalificationPage() {
   const t = useTranslations("Prequalification");
@@ -44,32 +55,27 @@ export default function PrequalificationPage() {
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string | null): string => formatMoney(value, currency, locale);
 
-  const [items, setItems] = useState<Prequalification[] | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [companyId, setCompanyId] = useState("");
   const [inviting, setInviting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const serverTable = useServerTable<Prequalification>({ basePath: "/prequalifications", projectId: params.id, defaultSort: { key: "company", direction: "asc" } });
 
   const [submitDrafts, setSubmitDrafts] = useState<
     Record<string, { bondingCapacity: string; experienceModRate: string; annualRevenue: string; yearsInBusiness: string; referencesText: string }>
   >({});
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, { overallScore: string; reviewNotes: string }>>({});
 
-  function load(): void {
-    apiJson<Prequalification[]>(`/prequalifications?projectId=${params.id}`)
-      .then(setItems)
-      .catch(() => setError(tc("errorGeneric")));
-  }
-
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<Company[]>(`/companies`)
       .then((rows) => {
         setCompanies(rows);
@@ -99,7 +105,7 @@ export default function PrequalificationPage() {
     try {
       await apiJson("/prequalifications", { method: "POST", body: JSON.stringify({ projectId: params.id, companyId }) });
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -121,7 +127,7 @@ export default function PrequalificationPage() {
           referencesText: draft.referencesText || undefined,
         }),
       });
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -141,7 +147,7 @@ export default function PrequalificationPage() {
           reviewNotes: toStatus === "qualified" || toStatus === "disqualified" ? review.reviewNotes || undefined : undefined,
         }),
       });
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -149,18 +155,23 @@ export default function PrequalificationPage() {
     }
   }
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+  const pageCount = Math.max(1, Math.ceil(serverTable.total / serverTable.pageSize));
+
   return (
     <>
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-          >
-            {t("newButton")}
-          </button>
-        </div>
+        <PageHeader
+          title={t("title")}
+          actions={
+            <button
+              onClick={() => setShowForm((s) => !s)}
+              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+            >
+              {t("newButton")}
+            </button>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleInvite(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -181,18 +192,59 @@ export default function PrequalificationPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!items && !error && <p>{tc("loading")}</p>}
-        {items && items.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
+
+        <SavedViewsBar
+          projectId={params.id}
+          module="prequalification"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <FilterBar
+            searchValue={serverTable.search}
+            onSearchChange={serverTable.onSearchChange}
+            searchPlaceholder={t("searchPlaceholder")}
+            filters={[
+              {
+                key: "status",
+                label: t("status"),
+                options: (["invited", "submitted", "under_review", "qualified", "disqualified"] as const).map((s) => ({ value: s, label: statusLabel(s) })),
+              },
+            ]}
+            activeFilters={serverTable.filters}
+            onFilterChange={serverTable.onFilterChange}
+            onClearAll={serverTable.clearAll}
+            clearAllLabel={tc("clearAll")}
+          />
+          {/* No table header to click here (this page renders expandable cards, not DataTable) --
+              a plain sort control drives useServerTable's onServerSortChange the same way a
+              column header would elsewhere. */}
+          <select
+            value={serverTable.sort?.key ?? ""}
+            onChange={(e) => e.target.value && serverTable.onServerSortChange(e.target.value)}
+            className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
+            aria-label={t("sortBy")}
+          >
+            <option value="company">{t("sortByCompany")}</option>
+            <option value="status">{t("sortByStatus")}</option>
+            <option value="overallScore">{t("sortByScore")}</option>
+          </select>
+        </div>
+
+        {serverTable.error && <ErrorState message={tc("errorGeneric")} onRetry={serverTable.reload} retryLabel={tc("retry")} />}
+        {!serverTable.rows && !serverTable.error && <p>{tc("loading")}</p>}
+        {serverTable.rows && serverTable.rows.length === 0 && <p className="text-navy-600">{hasActiveQuery ? t("noResults") : t("empty")}</p>}
 
         <div className="flex flex-col gap-3">
-          {items?.map((item) => {
+          {serverTable.rows?.map((item) => {
             const draft = submitDrafts[item.id] ?? { bondingCapacity: "", experienceModRate: "", annualRevenue: "", yearsInBusiness: "", referencesText: "" };
             const review = reviewDrafts[item.id] ?? { overallScore: "", reviewNotes: "" };
             return (
               <div key={item.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="font-bold text-navy-900">{companyName(item.companyId)}</span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(item.status)}</span>
+                  <StatusBadge tone={STATUS_TONE[item.status]} label={statusLabel(item.status)} />
                 </div>
 
                 {item.status !== "invited" && (
@@ -329,6 +381,30 @@ export default function PrequalificationPage() {
             );
           })}
         </div>
+
+        {serverTable.rows && serverTable.rows.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border-3 border-ink bg-cream px-3 py-2">
+            <button
+              type="button"
+              onClick={() => serverTable.onPageChange(serverTable.page - 1)}
+              disabled={serverTable.page <= 1}
+              aria-label={tc("previousPage")}
+              className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            >
+              &#8249;
+            </button>
+            <span className="whitespace-nowrap text-xs font-semibold text-navy-700">{tc("pageIndicator", { current: serverTable.page, total: pageCount })}</span>
+            <button
+              type="button"
+              onClick={() => serverTable.onPageChange(serverTable.page + 1)}
+              disabled={serverTable.page >= pageCount}
+              aria-label={tc("nextPage")}
+              className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            >
+              &#8250;
+            </button>
+          </div>
+        )}
       </main>
     </>
   );

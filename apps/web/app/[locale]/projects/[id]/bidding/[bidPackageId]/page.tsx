@@ -2,7 +2,8 @@
 
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
-import type { BidInvitationStatus, BidPackageStatus, BidStatus } from "@siteops/shared";
+import { useProjectCurrency } from "@/lib/use-project-currency";
+import { formatMoney, type BidInvitationStatus, type BidPackageStatus, type BidStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -46,16 +47,14 @@ const NEXT_STATUS: Record<BidPackageStatus, BidPackageStatus[]> = {
   canceled: [],
 };
 
-function money(value: string): string {
-  return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 export default function BidPackageDetailPage() {
   const t = useTranslations("Bidding");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; bidPackageId: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string): string => formatMoney(value, currency, locale);
 
   const [detail, setDetail] = useState<BidPackageDetail | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);

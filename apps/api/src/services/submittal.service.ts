@@ -1,22 +1,28 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   formatSubmittalNumber,
   requirePermission,
   resolveEffectiveLevel,
+  type BulkCloseSubmittalsInput,
   type CreateSubmittalInput,
   type CreateSubmittalRevisionInput,
+  type ListSubmittalsQuery,
+  type PaginatedResult,
   type PermissionContext,
   type SubmittalResponseCode,
+  type SubmittalSortKey,
   type SubmittalStatus,
   type SubmittalType,
   type SubmitSubmittalReviewInput,
   type UpdateSubmittalInput,
 } from "@siteops/shared";
-import { and, asc, eq, inArray, max, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, max, or, sql } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { notifyUsers } from "./notification.service";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
-import { withUserContext } from "./permission.service";
+import { loadPermissionContext, withUserContext } from "./permission.service";
 
 type SubmittalRow = typeof schema.submittals.$inferSelect;
 type SubmittalPackageRow = typeof schema.submittalPackages.$inferSelect;
@@ -56,6 +62,16 @@ function canViewPrivateSubmittal(userId: string, ctx: PermissionContext, submitt
   if (submittal.createdBy === userId || submittal.ballInCourtUserId === userId) return true;
   return distribution.some((d) => d.userId === userId);
 }
+
+const SUBMITTAL_SORT_COLUMNS: Record<
+  SubmittalSortKey,
+  typeof schema.submittals.number | typeof schema.submittals.title | typeof schema.submittals.status | typeof schema.submittals.dueDate
+> = {
+  number: schema.submittals.number,
+  title: schema.submittals.title,
+  status: schema.submittals.status,
+  dueDate: schema.submittals.dueDate,
+};
 
 export async function listSpecSections(
   appDb: Database,
@@ -171,6 +187,12 @@ export async function createSubmittal(
     }
 
     await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittal.id, action: "create", after: submittal });
+    await notifyUsers(tx, [submittal.ballInCourtUserId, ...input.distributionUserIds], userId, "submittal_assigned", {
+      projectId: submittal.projectId,
+      entityType: "submittal",
+      entityId: submittal.id,
+      summary: `Submittal ${submittal.number}: ${submittal.title}`,
+    });
     return withOverdue(submittal);
   });
 }
@@ -207,6 +229,14 @@ export async function updateSubmittal(
     if (!updated) throw new Error("Failed to update submittal");
 
     await writeAuditLog(tx, { actorId: userId, entityType: "submittal", entityId: submittalId, action: "update", before: existing, after: updated });
+    if (input.ballInCourtUserId && input.ballInCourtUserId !== existing.ballInCourtUserId) {
+      await notifyUsers(tx, [updated.ballInCourtUserId], userId, "submittal_assigned", {
+        projectId: updated.projectId,
+        entityType: "submittal",
+        entityId: updated.id,
+        summary: `Submittal ${updated.number}: ${updated.title}`,
+      });
+    }
     return withOverdue(updated);
   });
 }
@@ -259,17 +289,46 @@ export async function listSubmittals(
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<SubmittalWithOverdue[]> {
+  query: ListSubmittalsQuery = {},
+): Promise<PaginatedResult<SubmittalWithOverdue>> {
   requirePermission(ctx, "submittals", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    const rows = await tx.select().from(schema.submittals).where(eq(schema.submittals.projectId, projectId));
-    const privateIds = rows.filter((s) => s.isPrivate).map((s) => s.id);
-    const distribution =
-      privateIds.length > 0 ? await tx.select().from(schema.submittalDistribution).where(inArray(schema.submittalDistribution.submittalId, privateIds)) : [];
-    const distributionBySubmittalId = new Map<string, SubmittalDistributionRow[]>();
-    for (const d of distribution) distributionBySubmittalId.set(d.submittalId, [...(distributionBySubmittalId.get(d.submittalId) ?? []), d]);
+    const conditions = [eq(schema.submittals.projectId, projectId)];
 
-    return rows.filter((s) => canViewPrivateSubmittal(userId, ctx, s, distributionBySubmittalId.get(s.id) ?? [])).map(withOverdue);
+    if (resolveEffectiveLevel(ctx, "submittals") !== "admin") {
+      conditions.push(
+        or(
+          eq(schema.submittals.isPrivate, false),
+          eq(schema.submittals.createdBy, userId),
+          eq(schema.submittals.ballInCourtUserId, userId),
+          sql`exists (select 1 from ${schema.submittalDistribution} where ${schema.submittalDistribution.submittalId} = ${schema.submittals.id} and ${schema.submittalDistribution.userId} = ${userId})`,
+        )!,
+      );
+    }
+    if (query.status) conditions.push(eq(schema.submittals.status, query.status));
+    if (query.assigneeUserId) conditions.push(eq(schema.submittals.ballInCourtUserId, query.assigneeUserId));
+    if (query.search) {
+      conditions.push(or(ilike(schema.submittals.title, `%${query.search}%`), ilike(schema.submittals.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = SUBMITTAL_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.submittals).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.submittals).where(where),
+    ]);
+
+    return { rows: rows.map(withOverdue), total: totalRow?.value ?? 0 };
   });
 }
 
@@ -501,26 +560,40 @@ export async function submitSubmittalReview(
 
     const allReviewed = refreshedReviews.every((r) => r.reviewedAt !== null);
     if (allReviewed) {
+      const newStatus = aggregateSubmittalStatus(refreshedReviews);
       await tx
         .update(schema.submittals)
         .set({
-          status: aggregateSubmittalStatus(refreshedReviews),
+          status: newStatus,
           ballInCourtUserId: submittal.createdBy,
           updatedBy: userId,
           updatedAt: new Date(),
           serverRevision: submittal.serverRevision + 1,
         })
         .where(eq(schema.submittals.id, submittal.id));
+      await notifyUsers(tx, [submittal.createdBy], userId, "submittal_status_changed", {
+        projectId: submittal.projectId,
+        entityType: "submittal",
+        entityId: submittal.id,
+        summary: `Submittal ${submittal.number}: ${submittal.title} — ${newStatus}`,
+      });
     } else {
+      const nextReviewer = nextBallInCourt(refreshedReviews);
       await tx
         .update(schema.submittals)
         .set({
-          ballInCourtUserId: nextBallInCourt(refreshedReviews),
+          ballInCourtUserId: nextReviewer,
           updatedBy: userId,
           updatedAt: new Date(),
           serverRevision: submittal.serverRevision + 1,
         })
         .where(eq(schema.submittals.id, submittal.id));
+      await notifyUsers(tx, [nextReviewer], userId, "submittal_assigned", {
+        projectId: submittal.projectId,
+        entityType: "submittal",
+        entityId: submittal.id,
+        summary: `Submittal ${submittal.number}: ${submittal.title}`,
+      });
     }
 
     await writeAuditLog(tx, {
@@ -556,6 +629,61 @@ export async function closeSubmittal(
     if (!updated) throw new Error("Failed to close submittal");
     return updated;
   });
+}
+
+export interface BulkCloseSubmittalsResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Phase 32: bulk-close, rolling out the Phase 28/31 bulk-actions recipe
+ * to a third module -- a thin loop over the exact same closeSubmittal a
+ * single-item POST already uses, so the approved/approved_as_noted-only
+ * precondition and the audit log write both apply per row here too.
+ *
+ * Every id must belong to the same project, same reasoning as
+ * rfi.service.ts's bulkTransitionRfiStatus: one PermissionContext can't
+ * correctly apply to rows from different projects. A missing id or a
+ * rule violation on one row (a submittal that isn't approved yet) is
+ * reported per-row instead of failing the batch.
+ */
+export async function bulkCloseSubmittals(
+  appDb: Database,
+  userId: string,
+  input: BulkCloseSubmittalsInput,
+): Promise<BulkCloseSubmittalsResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => {
+    return tx
+      .select({ id: schema.submittals.id, projectId: schema.submittals.projectId })
+      .from(schema.submittals)
+      .where(inArray(schema.submittals.id, input.ids));
+  });
+  if (rows.length === 0) throw new NotFoundError("No submittals found for the given ids");
+
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) {
+    throw new ApiError(400, "mixed_projects", "All selected submittals must belong to the same project");
+  }
+  const [projectId] = projectIds;
+  const ctx = await loadPermissionContext(appDb, userId, projectId!);
+  const foundIds = new Set(rows.map((r) => r.id));
+
+  const results: BulkCloseSubmittalsResult[] = [];
+  for (const id of input.ids) {
+    if (!foundIds.has(id)) {
+      results.push({ id, ok: false, error: "Submittal not found" });
+      continue;
+    }
+    try {
+      await closeSubmittal(appDb, userId, ctx, id);
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to close this submittal" });
+    }
+  }
+  return results;
 }
 
 export interface SubmittalReportReview {

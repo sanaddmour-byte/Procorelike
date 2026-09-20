@@ -1,13 +1,17 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   requirePermission,
   type CreateDrawingInput,
   type CreateDrawingRevisionInput,
   type CreateMarkupInput,
+  type DrawingSortKey,
+  type ListDrawingsQuery,
+  type PaginatedResult,
   type PermissionContext,
   type UpdateDrawingInput,
 } from "@siteops/shared";
-import { desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or } from "drizzle-orm";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
 
@@ -30,15 +34,49 @@ export async function createDrawing(
   });
 }
 
+const DRAWING_SORT_COLUMNS: Record<
+  DrawingSortKey,
+  typeof schema.drawings.sheetNumber | typeof schema.drawings.title | typeof schema.drawings.discipline
+> = {
+  sheetNumber: schema.drawings.sheetNumber,
+  title: schema.drawings.title,
+  discipline: schema.drawings.discipline,
+};
+
 export async function listDrawings(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<DrawingRow[]> {
+  query: ListDrawingsQuery = {},
+): Promise<PaginatedResult<DrawingRow>> {
   requirePermission(ctx, "drawings", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.drawings).where(eq(schema.drawings.projectId, projectId));
+    const conditions = [eq(schema.drawings.projectId, projectId)];
+
+    if (query.discipline) conditions.push(eq(schema.drawings.discipline, query.discipline));
+    if (query.search) {
+      conditions.push(or(ilike(schema.drawings.title, `%${query.search}%`), ilike(schema.drawings.sheetNumber, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = DRAWING_SORT_COLUMNS[query.sort ?? "sheetNumber"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.drawings).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.drawings).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

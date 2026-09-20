@@ -1,17 +1,21 @@
 import { schema, withRequestContext, type Database, type Tx } from "@siteops/db";
 import {
   computeLineAmounts,
+  DEFAULT_PAGE_SIZE,
   PAYMENT_APPLICATION_STATUS_TRANSITIONS,
   requirePermission,
   sumNetThisPeriod,
   type CreatePaymentApplicationInput,
+  type ListPaymentApplicationsQuery,
+  type PaginatedResult,
   type PaymentApplicationLineAmounts,
+  type PaymentApplicationSortKey,
   type PaymentApplicationStatus,
   type PermissionContext,
   type SetPaymentApplicationLinesInput,
   type TransitionPaymentApplicationStatusInput,
 } from "@siteops/shared";
-import { and, desc, eq, lt, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, ilike, lt, ne, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -82,10 +86,52 @@ export async function listPaymentApplications(
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<PaymentApplicationRow[]> {
+  query: ListPaymentApplicationsQuery = {},
+): Promise<PaginatedResult<PaymentApplicationRow>> {
   requirePermission(ctx, "progress_billing", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.paymentApplications).where(eq(schema.paymentApplications.projectId, projectId));
+    const conditions = [eq(schema.paymentApplications.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.paymentApplications.status, query.status));
+    if (query.search) {
+      conditions.push(
+        or(ilike(schema.commitments.number, `%${query.search}%`), ilike(schema.commitments.title, `%${query.search}%`))!,
+      );
+    }
+    const where = and(...conditions)!;
+
+    const sortKey: PaymentApplicationSortKey = query.sort ?? "periodStart";
+    const sortColumn =
+      sortKey === "commitment"
+        ? schema.commitments.number
+        : sortKey === "status"
+          ? schema.paymentApplications.status
+          : schema.paymentApplications.periodStart;
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx
+      .select(getTableColumns(schema.paymentApplications))
+      .from(schema.paymentApplications)
+      .leftJoin(schema.commitments, eq(schema.paymentApplications.commitmentId, schema.commitments.id))
+      .where(where)
+      .orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx
+        .select({ value: count() })
+        .from(schema.paymentApplications)
+        .leftJoin(schema.commitments, eq(schema.paymentApplications.commitmentId, schema.commitments.id))
+        .where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

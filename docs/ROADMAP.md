@@ -2496,6 +2496,1646 @@ assertions) before this phase could be called done:**
   rejected (403) from toggling the flag and that a cycle-creating
   dependency add is rejected (409) without mutating anything.
 
+## Phase 15 gate report
+
+**Gate** (user-directed follow-up: a competitive-gap analysis against
+Procore identified 10 candidate gaps; user selected items 1, 5, 6, 7, 8, 9,
+10, 11, 12, 13 to build, sequenced into 7 dependency-ordered phases with a
+gate after each. This is Phase 15, the first: "Enterprise/Admin
+foundations" — custom fields + a scoped record-history viewer (the
+audit-log-viewer half of item 11) + multi-currency depth (item 12,
+descoped per user decision to "deepen en/ar only, no new language" — the
+currency work is the tractable slice of that decision). SSO (the other
+half of item 11) was explicitly descoped by the user to "skip for now.") —
+**PASSED**, see Verification.
+
+**What was built:**
+- **`packages/db`**: new `custom_field_definitions` (project_id, module
+  reusing the existing `permission_module` enum, label, field_type enum
+  [text/number/date/boolean/select], options jsonb, required, sort_order)
+  and `custom_field_values` (definition_id fk cascade-delete, entity_id
+  polymorphic, value jsonb, unique on (definition_id, entity_id)) tables
+  — migration 0038. RLS: `custom_field_definitions` added to the direct
+  `project_id` policy loop; `custom_field_values` added to the
+  child-via-parent loop. `projects` gained `default_currency` varchar(3)
+  default `USD`.
+- **`packages/shared`**: `formatMoney(value, currency, locale)` (new
+  `business-rules/format-money.ts`, 7 tests) using `Intl.NumberFormat`'s
+  `currency` style — the one place a monetary amount becomes display
+  text, replacing 12 separate ad-hoc `money()` helpers across web pages
+  that did plain `.toLocaleString()` with **no currency symbol at all**,
+  silently discarding the `currency` column three financial tables
+  (`budget_line_items`, `prime_contracts`, `commitments`) already stored
+  from earlier phases. `schemas/custom-field.schema.ts` — zod schemas for
+  definition CRUD + value set, plus `validateCustomFieldValue()` (shared
+  between the API write path and any future client-side validation).
+  `schemas/project.schema.ts` gained `updateProjectSettingsSchema`
+  (defaultCurrency/changeOrderThreshold/timezone) — there was previously
+  **no update path at all** for these fields past project creation.
+- **`apps/api`**: `custom-field.service.ts` + `routes/custom-fields.routes.ts`
+  — definition CRUD (`directory:admin` gated, same convention as
+  permission templates) at `/custom-field-definitions`, value get/set at
+  `/custom-field-values` (`standard` on the definition's module gates a
+  write — whoever can edit the record can edit its custom fields).
+  `entity-history.service.ts` (new) — `getEntityHistory()` backing `GET
+  /projects/:id/history?entityType=&entityId=`: `audit_log` has no
+  `project_id` (it's polymorphic, RLS is intentionally permissive there
+  per the existing comment in `001_rls_and_functions.sql`), so real
+  authorization comes from reading the entity through its own
+  RLS-protected table first — a 0-row result (wrong project, or RLS hides
+  it) is a 404 before `audit_log` is ever touched, the same
+  "resolve-via-the-owning-table" pattern `search.service.ts` already uses
+  for polymorphic project-scoping. Wired for `rfi` and `punch_item`
+  (`HISTORY_ENTITY_TYPES` is a plain array — extend it per module as
+  each one gets a History panel). `project.service.ts` gained
+  `updateProjectSettings()` behind a new `PATCH /projects/:id/settings`
+  route, and `projects.routes.ts` gained a plain `GET /projects/:id` (it
+  genuinely didn't exist — every other project read was a sub-resource
+  under `/projects/:id/...`).
+- **`apps/web`**: new `/projects/:id/settings` page (General: currency/
+  threshold/timezone form; Custom Fields: per-module definition list +
+  add-field form) linked from the People nav group. New
+  `RecordHistory` component (`components/ui/RecordHistory.tsx`) — an
+  expandable "History" toggle, wired into the RFI and Punch Item detail
+  pages. `lib/use-project-currency.ts` — a small hook fetching a
+  project's `defaultCurrency` once, defaulting to "USD" until it loads,
+  used by the 6 financial pages with no per-row currency (Direct Costs,
+  Prequalification, Bidding detail, Estimating detail, Billing detail,
+  Change Orders); the 3 pages with per-row currency (Budget, Prime
+  Contract, Commitments detail) format using the record's own `currency`
+  field instead. `company-dashboard.service.ts`'s per-project rollup rows
+  gained `defaultCurrency` so the company-level dashboard renders each
+  project's own currency rather than a company-wide guess — it already
+  didn't sum figures numerically across projects (a list of per-project
+  dashboards, not an aggregate), so no fabricated FX conversion was ever
+  at risk here.
+- **Explicitly not built, on record**: SSO/SAML (user: "skip for now" —
+  revisit when a real enterprise customer needs it, since it can't
+  actually be verified without a live IdP). A project-wide "Activity Log"
+  browsing page was considered and rejected: building it safely would
+  mean either denormalizing `project_id` onto `audit_log` and touching
+  the ~100 existing `writeAuditLog` call sites, or an unscoped/insecure
+  query — both out of proportion to this phase. The scoped
+  per-record History panel (built) covers the actually-useful case
+  ("what happened to this RFI") without either cost.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 178 tests across 21 files,
+  including the new 7-test `format-money.test.ts`; `apps/api`: 134 tests
+  across 28 files, including the new 8-test
+  `custom-fields-history.test.ts` covering definition CRUD, the
+  directory:admin gate, select-option validation, cascade delete on
+  definition removal, scoped history's create-audit-entry return and its
+  wrong-project 404, and project-settings update + its admin gate;
+  `apps/web`: 28 tests unaffected; i18n key parity confirmed
+  identical between `en.json`/`ar.json` via a flatten-and-diff script).
+  Full `next build` also confirmed the new `/settings` route compiles
+  and prerenders correctly.
+
+## Phase 16 gate report
+
+**Gate** (Phase 2 of the same 7-phase, user-directed follow-up as Phase 15
+— gap items #5 "Notifications" and #6 "Workflow configurability") —
+**PASSED**, see Verification.
+
+**What was built:**
+- **`packages/db`**: the `notifications` table already existed
+  (user_id, type, payload jsonb, read_at, created_at) but was unused —
+  its RLS policy was `FOR ALL` scoped to `user_id = current user`, which
+  would have blocked every insert, since a notification's `user_id` is
+  its *recipient*, almost always someone other than the actor whose
+  action creates it. Split into three policies: `notifications_insert`
+  (any authenticated session — the API picks the recipient), and
+  `notifications_select`/`notifications_update` scoped to the recipient;
+  no DELETE policy, deletes refused outright, same as `audit_log`. New
+  `workflow_transition_rules` table (project_id, module reusing
+  `permission_module`, from_status/to_status varchar since status
+  vocabularies vary per module, enabled boolean default true,
+  required_level reusing `permission_level` default "standard", unique on
+  (project_id, module, from_status, to_status)) — migration 0039, added
+  to the direct `project_id` RLS loop.
+- **`packages/shared`**: `schemas/notification.schema.ts` —
+  `NOTIFICATION_TYPES` (rfi_assigned/rfi_answered/rfi_overdue/
+  submittal_assigned/submittal_status_changed/punch_item_assigned/
+  punch_item_status_changed/change_order_status_changed),
+  `notificationPayloadSchema` (projectId/entityType/entityId/summary,
+  passthrough), `listNotificationsQuerySchema`.
+  `schemas/workflow-rule.schema.ts` — `upsertWorkflowTransitionRuleSchema`/
+  `listWorkflowTransitionRulesQuerySchema`/`deleteWorkflowTransitionRuleSchema`.
+- **`apps/api`**: `notification.service.ts` — `notifyUser`/`notifyUsers`
+  (insert, skipping the actor and duplicate recipients — called from
+  inside the caller's own `withRequestContext` transaction, valid under
+  the new insert policy) plus `listNotifications`/
+  `countUnreadNotifications`/`markNotificationRead`/
+  `markAllNotificationsRead`, routed at `/notifications`. Wired into
+  `rfi.service.ts` (create → assignee + distribution list;
+  ball-in-court reassignment via update; an official response →
+  notifies the original asker), `submittal.service.ts` (create →
+  ball-in-court + distribution; reassignment; each review event →
+  either the next reviewer or, once all reviews are in, the creator),
+  `punch-item.service.ts` (create → assignee + final approver +
+  distribution; reassignment; every status transition → assignee, final
+  approver, and creator), and `change-management.service.ts` (a change
+  order's approve/reject/execute → its creator). The RFI overdue-sweep
+  job (`jobs/rfi-overdue-sweep.ts`, a system sweep with no per-user
+  request context) now also inserts an `rfi_overdue` notification
+  directly via `authDb` alongside its existing escalation email.
+  `workflow-rule.service.ts` — CRUD at `/workflow-transition-rules`
+  (`directory:admin` gated, same convention as custom fields and
+  permission templates) plus `enforceWorkflowTransitionRule()`, called
+  from inside `rfi.service.ts`'s and `punch-item.service.ts`'s own
+  `transitionXStatus` after their hardcoded transition table has already
+  accepted the move. A rule can only make an already-legal transition
+  *stricter* — disable it outright (`transition_disabled`, 403), or
+  raise the permission level required for it above the module's own base
+  check (`PermissionDeniedError`) — never widen the state machine: an
+  admin creating a rule for a `(module, fromStatus, toStatus)` tuple the
+  module's own transition table doesn't contain gets a 400
+  (`unsupported_transition`), and rules are only accepted for the two
+  pilot modules (`rfis`, `punch_list`) rather than all 24, since
+  validating a tuple requires that module's own transition table and
+  wiring enforcement into every module's own service was out of
+  proportion to this phase. A `(module, fromStatus, toStatus)` with no
+  saved rule behaves exactly as the module's hardcoded default
+  (enabled, no elevated level) — this table starts empty and only ever
+  holds explicit admin overrides.
+- **`apps/web`**: `components/shell/NotificationBell.tsx` — a bell icon
+  in `Header.tsx` (next to `UserMenu`, same dropdown/focus-management
+  pattern), unread-count badge polled every 30s (no websocket/push
+  infra exists), a panel listing notifications that marks one read and
+  navigates to its entity on click, and a "mark all read" action.
+  `components/WorkflowRulesSection.tsx` — a new section on the existing
+  Settings page (`projects/[id]/settings`) letting a `directory:admin`
+  narrow the RFI/Punch List modules' transitions: every transition the
+  module's hardcoded table allows is always listed (not just ones an
+  admin has touched), each with an enabled checkbox and a required-level
+  select that upserts on change.
+- **`docs`**: this gate report; `DATA_MODEL.md` updated for
+  `notifications` (now in active use) and `workflow_transition_rules`.
+
+**Explicitly not built, on record:**
+- **Mobile push / websocket delivery**: the notification bell polls;
+  there's no push channel or live socket in this stack (per
+  Assumption 8, mobile push was already out of scope for v1). A 30s lag
+  on the unread badge was accepted as proportionate rather than adding
+  that infrastructure for this phase.
+- **Workflow rules beyond the two pilot modules**: narrowing-only
+  enforcement is wired for `rfis` and `punch_list` only. Widening to
+  every module needing its own `enforceWorkflowTransitionRule()` call
+  and its own hardcoded transition table read is straightforward
+  per-module follow-up, not a design gap — deferred to keep this phase's
+  blast radius bounded to two well-understood state machines.
+- **A generic "workflow builder"** (arbitrary custom statuses, branching
+  approval chains): out of scope per the user's own framing of gap #6 as
+  "workflow *configurability*", not a full BPM engine — Procore itself
+  only exposes narrowing/require-approval controls on its built-in
+  workflows, not arbitrary new ones.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 178 tests across 21 files,
+  unaffected; `apps/api`: 143 tests across 30 files, including the new
+  3-test `notifications.test.ts` — an RFI's ball-in-court user gets
+  notified on assignment while the creator/actor does not, a user
+  cannot mark another user's notification read (RLS), and read-all
+  clears every unread notification for the caller — and the new 6-test
+  `workflow-rules.test.ts` — non-admin rejected, an unsupported
+  transition rejected (`closed→open` isn't in `RFI_STATUS_TRANSITIONS`),
+  an unsupported module rejected (`submittals`), disabling
+  `open→closed` blocks even an admin caller and is restored afterward,
+  raising a punch item transition's required level to `admin` blocks a
+  `standard`-level foreman but not an admin caller, and rules list
+  scoped by module; `apps/web`: 28 tests unaffected; i18n key parity
+  confirmed identical between `en.json`/`ar.json`, `Notifications` and
+  `WorkflowRules` namespaces added to both). Full `next build` also
+  confirmed the `/settings` route (now with the workflow-rules section)
+  still compiles and prerenders correctly.
+
+## Phase 17 gate report
+
+**Gate** (Phase 3 of the same 7-phase, user-directed follow-up as Phases
+15-16 — gap item #7 "Analytics/BI") — **PASSED**, see Verification.
+
+**What was built:**
+- **The `reports` permission module's first real use.** It was defined
+  in `packages/shared`'s permission engine and seeded into every role's
+  default template from Phase 1 onward, but nothing ever checked it —
+  granting or revoking "Reports" access changed nothing observable. The
+  new analytics endpoint requires `reports:read`, closing that gap;
+  every other module's own read permission still separately gates its
+  own section within the response (see below), so a `reports:read`
+  caller only sees the sections their other permissions already allow.
+- **`packages/shared`**: `business-rules/trends.ts` (new, 10 tests) —
+  `bucketByWeek`/`bucketSumByMonth` (fixed-width time buckets, oldest
+  first, every bucket present even at zero so a quiet week/month isn't
+  silently dropped from a chart) and `averageDurationDays` (null for an
+  empty set, not `NaN` — "no data yet" and "zero days" are different
+  facts). Pure functions, no I/O, following the same convention as
+  `schedule/calendar.ts`.
+- **`apps/api`**: `analytics.service.ts` — `getProjectAnalytics()`
+  mirrors `dashboard.service.ts`'s per-section permission-gated
+  aggregation, but adds real trend/cycle-time math instead of a
+  snapshot count: RFIs (created-vs-officially-answered weekly, average
+  response time from the official response's `createdAt` minus the
+  RFI's own), Punch List (created-vs-closed weekly using
+  `punch_item_history` rows where `to_status = 'closed'`, average cycle
+  time), Submittals (created-vs-resolved weekly, where "resolved" means
+  reaching any status besides draft/in_review, using `updatedAt` as the
+  resolution timestamp), Safety (incidents-per-week from `occurred_at`,
+  by-severity, average time-to-close from `occurred_at` to `closed_at`),
+  Change Orders (approved cost impact summed by month, using the
+  `approval_chain`'s last entry's timestamp, by-status). Every number
+  comes from a timestamp the app already stored for some other reason —
+  no periodic snapshot job was added, so there is deliberately no trend
+  data before a record's own creation date. Routed at `GET
+  /projects/:id/analytics` in `projects.routes.ts`, next to the
+  existing dashboard route.
+- **`apps/api`**: CSV register-export twins of the five existing PDF
+  "export all" registers from Phase 13 (RFI/Submittal/Change
+  Order/Correspondence/Inspection) — `export.service.ts` gained
+  `toRfiRegisterCsv`/`toSubmittalRegisterCsv`/`toChangeOrderRegisterCsv`/
+  `toCorrespondenceRegisterCsv`/`toInspectionRegisterCsv`, reusing the
+  same `getXListReportData()` each PDF generator already calls, so the
+  two formats can never drift on what rows they include. Each module's
+  existing `GET /summary-report` route now branches on `?format=csv` —
+  no new route, no new permission gate (same `read`-level check the PDF
+  already used, since it's the same data a list page already shows a
+  `read`-level caller).
+- **`apps/web`**: new `projects/[id]/analytics` page (nav link added
+  next to Dashboard), gated on `reports:read` with the same
+  forbidden-state pattern as the Settings page. Three small hand-rolled
+  inline-SVG chart components (`components/charts/TrendBarChart.tsx`,
+  `MonthlyBarChart.tsx`, `StatusBreakdown.tsx`) — no charting library
+  dependency, following the Gantt module's own precedent (Phase 11b) of
+  hand-rolling visualization rather than adding one for a handful of
+  chart types. `lib/api-client.ts` gained `downloadFile()` (fetch
+  through the authenticated client, save via a synthetic anchor click)
+  — the CSV-download equivalent of the existing `usePdfViewer` hook's
+  fetch-then-render, wired into a new "Export All (CSV)" button next to
+  each of the five existing "Export All (PDF)" buttons.
+
+**Explicitly not built, on record:**
+- **Company-level (cross-project) analytics.** `company-dashboard.
+  service.ts`'s existing per-project rollup list was left as-is; a
+  portfolio-wide trend view is a reasonable next step but was out of
+  scope here to keep this phase to the per-project case, matching how
+  Phase 15's custom fields and Phase 16's workflow rules were also
+  scoped to specific tables/modules rather than every surface at once.
+- **A custom report builder** (arbitrary metric/dimension selection).
+  Out of scope per the user's own framing of gap #7 as "Analytics/BI
+  foundations" — five fixed, real trend views plus raw-data CSV export
+  covers the two things a small GC's "BI" actually means in practice
+  (a few key charts, and a spreadsheet to build their own charts from),
+  not an ad-hoc query builder.
+- **A periodic metrics-snapshot job.** Every trend above is derived
+  from timestamps already stored for another reason (creation dates,
+  status-history rows, `occurred_at`/`closed_at`). No cron/snapshot
+  infrastructure was added to pre-aggregate history, consistent with
+  this codebase's standing note (Phase 4's gate report) that there is
+  no in-process scheduler this sandbox can verify.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 188 tests across 22 files,
+  including the new 10-test `trends.test.ts`; `apps/api`: 147 tests
+  across 31 files, including the new 3-test `analytics.test.ts` — a
+  caller with no `reports` permission is rejected, a caller with
+  `reports:read` and read-or-above on every module gets every section
+  populated with real trend/status data from freshly-seeded records,
+  and a caller whose own module permission excludes one section (`qa_qc`:
+  `change_management:none`) gets that section omitted while others
+  still appear — and 2 new cases added to `summary-report.test.ts`
+  confirming `?format=csv` returns `text/csv` with the expected header
+  row and the same rows as the PDF version; `apps/web`: 28 tests
+  unaffected; i18n key parity confirmed identical between `en.json`/
+  `ar.json`, `Analytics` namespace and `ProjectNav.analytics`/
+  `Common.exportAllCsv` keys added to both). Full `next build` also
+  confirmed the new `/analytics` route compiles and prerenders
+  correctly.
+
+## Phase 18 gate report
+
+**Gate** (Phase 4 of the same 7-phase, user-directed follow-up as Phases
+15-17 — gap item #8 "Action Plans") — **PASSED**, see Verification.
+
+**What was built:**
+- **`packages/db`**: three new tables, deliberately a thin layer on top
+  of the existing `corrective_actions` table rather than a parallel
+  item-tracking system. `action_plan_templates` (project_id, name,
+  description) and `action_plan_template_items` (template_id fk cascade,
+  description, `default_due_days` — a UI hint only, never enforced
+  server-side — sort_order) hold the reusable, admin-authored template.
+  `action_plans` (project_id, template_id fk set-null, name, source_type
+  reusing the existing `corrective_action_source_type` enum, source_id)
+  is one instantiation of a template (or an ad-hoc plan with no
+  template) against a source record. `corrective_actions` gained a
+  nullable `action_plan_id` fk (set null on delete) — instantiating a
+  plan bulk-creates one ordinary `corrective_actions` row per item,
+  each stamped with the new plan's id, so every existing corrective-
+  action list/transition/permission code path keeps working completely
+  unchanged. An Action Plan has no `status` column of its own: it's
+  derived at read time from its linked corrective actions' own statuses
+  (`completed` only once every linked row reaches `completed`/`verified`,
+  otherwise `in_progress`), so the two can never drift the way a
+  separately-stored status would. RLS: templates/plans in the direct
+  `project_id` loop, template items in the child-via-parent loop.
+- **`packages/shared`**: `schemas/action-plan.schema.ts` — template
+  CRUD schemas, and `instantiateActionPlanSchema`, which takes the
+  final, concrete item list directly (description/assignedToUserId/
+  dueDate per item — the same required fields `createCorrectiveActionSchema`
+  already has for a single one-off action) rather than re-deriving
+  defaults server-side; the web client resolves a template's items into
+  pre-filled suggestions, but the server only ever accepts the caller's
+  confirmed values.
+- **`apps/api`**: `action-plan-template.service.ts` — template/item CRUD
+  gated `directory:admin` for writes (same "an admin manages structure
+  from one place" convention as custom field definitions and workflow
+  transition rules) but `safety:read` for listing, since any project
+  member who can already see corrective actions needs to be able to
+  pick a template when applying one. Routed at `/action-plan-templates`.
+  `action-plan.service.ts` — `instantiateActionPlan()` (gated
+  `safety:standard`, the same level `createCorrectiveAction` already
+  uses) inserts the plan row and every item's corrective-action row in
+  one transaction; `listActionPlans()` (`safety:read`) joins in each
+  plan's linked corrective actions to compute the derived status/
+  item-count/completed-count in application code, mirroring how
+  `dashboard.service.ts` already aggregates in JS rather than SQL for
+  small per-project result sets. Routed at `/action-plans`.
+- **`apps/web`**: `ActionPlanTemplatesSection.tsx` — a new section on
+  the project Settings page (alongside Custom Fields and Workflow
+  Rules) where a `directory:admin` defines templates and their ordered
+  items. `CorrectiveActionsPanel.tsx` (already shared across the Safety
+  Incident detail and Safety Observations list pages) gained an "Apply
+  action plan" flow: pick a template, confirm a plan name, then fill in
+  an assignee and due date per item (each pre-filled from
+  `defaultDueDays` where the template item set one) and submit --
+  instantiation refreshes the same corrective-actions list the panel
+  already renders, so the new items simply appear as ordinary,
+  independently-transitionable corrective actions, each carrying a
+  small "from action plan" badge.
+
+**Explicitly not built, on record:**
+- **Company-level (cross-project) action plan templates.** Templates
+  are project-scoped only, matching how Phase 15's custom fields and
+  Phase 16's workflow rules were also scoped per-project rather than
+  company-wide, to keep this phase's blast radius bounded.
+- **Automatic triggering** (e.g. "always apply this template when a
+  `critical`-severity incident is logged"). Every instantiation is an
+  explicit action from the Corrective Actions panel; there is no rule
+  engine deciding to apply a plan on the caller's behalf, which would
+  be a materially larger and riskier feature (silently creating
+  due-dated, assigned work items without a human choosing to).
+- **Inspection-sourced Action Plans.** `correctiveActionSourceTypeEnum`
+  already includes `inspection`, and the schema/service layer accepts
+  it, but `CorrectiveActionsPanel` (and therefore the new "Apply
+  action plan" entry point) is only actually rendered on the Safety
+  Incident and Safety Observation pages today -- the same gap Phase 9's
+  own corrective-actions work already had, not something this phase
+  introduced or was asked to close.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 188 tests across 22 files,
+  unaffected; `apps/api`: 151 tests across 32 files, including the new
+  4-test `action-plans.test.ts` — a non-admin is rejected from creating
+  a template, an admin creates a template with two ordered items and
+  fetches its detail, instantiating a plan creates linked corrective
+  actions whose derived plan status starts `in_progress` and flips to
+  `completed` only once *both* linked actions reach `completed`, and a
+  non-`safety:standard` caller is rejected from instantiating; a
+  pre-existing, unrelated test-fragility bug was also fixed in
+  `submittal.test.ts`, whose number-format assertion assumed exactly 3
+  digits when `formatSubmittalNumber`'s zero-padding is actually a
+  *minimum* of 3 -- this project's spec-section sequence had run past
+  999 after many session test runs, so the regex was widened from
+  `\d{3}$` to `\d{3,}$` to match the real invariant; `apps/web`: 28
+  tests unaffected; i18n key parity confirmed identical between
+  `en.json`/`ar.json`, `ActionPlans` namespace and 4 new
+  `CorrectiveActions` keys added to both). Full `next build` also
+  confirmed the `/settings` route (now with the Action Plan Templates
+  section) still compiles and prerenders correctly.
+
+## Phase 19 gate report
+
+**Gate** (Phase 5 of the same 7-phase, user-directed follow-up as Phase
+15: "Email-to-project logging," gap item #9) -- **PASSED**, see
+Verification.
+
+**What was built:**
+- **`packages/db`**: `projects` gained `inbound_email_token` (uuid, unique,
+  `defaultRandom()` -- same generation mechanism as every id column) --
+  migration 0041. The unique index lets a single `WHERE` clause resolve a
+  webhook's "to" address straight to its project.
+- **`packages/shared`**: `business-rules/inbound-email.ts` --
+  `parseEmailAddresses`/`extractInboundToken`/`extractSenderAddress`, pure
+  functions parsing raw "To"/"From" header text (comma-separated, optional
+  `Display Name <addr>` wrapping) the way a real inbound-email provider's
+  webhook hands it over (12 tests). `schemas/inbound-email.schema.ts` --
+  `inboundEmailWebhookSchema`, the provider-agnostic payload contract this
+  app's webhook accepts (`to`/`from`/`subject`/`text`/`attachments[]`,
+  capped at 5 attachments / ~10MB decoded each).
+- **`apps/api`**: `inbound-email.service.ts` -- `logInboundEmail()`,
+  called from a new `POST /internal/inbound-email` route (shared-secret
+  gated via `x-inbound-email-secret`/`INBOUND_EMAIL_WEBHOOK_SECRET`,
+  alongside the existing cron routes in `internal.routes.ts`). Resolves
+  the token to a project and the sender's email to a `users` row via
+  `authDb` (bypassing RLS -- a fourth "genuinely pre-authentication"
+  lookup alongside login-by-email/invite-token/refresh-token, since this
+  webhook has no session), then requires that person be an actual member
+  of that project with `correspondence:standard` before writing anything
+  -- exactly the gate manual correspondence creation already uses, so
+  email is not a side door around it. On success it inserts one ordinary
+  "incoming" `correspondence` row (`fromCompanyId` = the sender's own
+  project company, `toCompanyId` = the project's `gc`-type company) plus
+  an `attachments` row per attachment, all under the sender's own RLS
+  context via `appDb`, and audit-logs both. `GET /projects/:id` now also
+  returns a computed `inboundEmailAddress` (`<token>@INBOUND_EMAIL_DOMAIN`)
+  alongside the raw project row.
+- **`apps/web`**: the project Settings page's General section now shows
+  the project's inbound-email address with a one-click copy button, so a
+  project member knows what to CC or forward mail to.
+- **Explicitly not built, on record**: a real inbound-email provider
+  account (SendGrid Inbound Parse / Mailgun Routes / SES receipt rules) --
+  `INBOUND_EMAIL_DOMAIN` is a placeholder domain and wiring an actual
+  provider's webhook (which posts in its own native format) to translate
+  into this app's generic `inboundEmailWebhookSchema` payload is a
+  deployment-time config step, not application code, since this project
+  has no production inbound-email account. Logging mail from a sender who
+  isn't a registered project member was also considered and rejected: the
+  correspondence schema has no "external sender name/email" field at all
+  (incoming correspondence has always been logged by a project user who
+  received it, not authored by the external party), so accepting
+  unregistered senders would need a schema change out of proportion to
+  this phase; a stranger's mail addressed to the alias is acknowledged
+  but not logged (`{matched:false, reason:"unknown_sender"}`). No
+  reply-by-email or thread mapping -- every inbound message becomes one
+  new Correspondence row.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/shared`: 200 tests across 24 files,
+  including the new 12-test `inbound-email.test.ts`; `apps/api`: 157
+  tests across 33 files, including the new 6-test
+  `inbound-email.test.ts` -- wrong shared secret rejected, an
+  unrecognized "to" token, an unregistered sender, a real registered
+  user who isn't a member of *this* project (seed.ts's
+  mahmoud.tarawneh, a member only of the infra project), a full happy
+  path with a display-name-wrapped From header verified end-to-end
+  through `GET /correspondence`, and an empty subject defaulting to
+  "(no subject)"; `apps/web`: 28 tests unaffected; i18n key parity
+  confirmed identical between `en.json`/`ar.json`, new `Common.copy`/
+  `Common.copied` and `ProjectSettings.inboundEmailHeading`/
+  `inboundEmailIntro` keys added to both). Full `next build` also
+  confirmed the `/settings` route still compiles and prerenders
+  correctly with the new inbound-email display.
+
+## Phase 20 gate report
+
+**Gate** (Phase 6 of the same 7-phase, user-directed follow-up as Phase
+15 -- items #1, #10, #13 of the original 10-candidate gap list were never
+recorded verbatim anywhere in this repo, only items #5-#9/#11/#12 got
+named in earlier gate reports, so with the user unavailable to re-supply
+them, this phase instead closes Assumption #8 on record since Phase 1:
+"mobile push notifications," a genuine Procore-parity gap and a direct
+extension of Phase 16's already-built notification pipeline) -- **PASSED**,
+see Verification.
+
+**What was built:**
+- **`packages/db`**: new `push_tokens` table (`user_id`, `token` unique,
+  `platform` enum `ios`/`android`, `created_at`) -- migration 0042. RLS:
+  a single `push_tokens_all` policy trusting the API layer (any
+  authenticated session may read/insert/update/delete, `WITH CHECK` pins
+  only the *written* row's `user_id` to the caller) rather than a strict
+  self-only policy, since two legitimate operations need to cross the
+  ownership boundary in one statement -- dispatching a push (the actor
+  reads the recipient's tokens) and a device changing hands (the same
+  Expo token gets re-registered under a different logged-in user). Full
+  reasoning is in the policy's own comment in
+  `001_rls_and_functions.sql`; discovered mid-build when a naive
+  self-only policy (mirroring `refresh_tokens_self`) correctly rejected
+  the reassignment case in a test, which is what surfaced the design gap
+  before it shipped.
+- **`packages/shared`**: `schemas/push-token.schema.ts` --
+  `registerPushTokenSchema`/`unregisterPushTokenSchema`.
+- **`apps/api`**: `lib/push.ts` -- `sendExpoPushMessages()`, a
+  fire-and-forget POST to Expo's push API (`https://exp.host/--/api/v2/push/send`)
+  with a 5s timeout, no new dependency (Node 20+'s global `fetch`).
+  `push-token.service.ts` -- register (upsert on the token's own
+  uniqueness) / unregister. `POST /push-tokens` and `DELETE /push-tokens`,
+  both `requireAuth`-gated, no per-project permission (a device isn't
+  project-scoped). `notification.service.ts`'s `notifyUser()` --
+  the single choke point every existing notification call site
+  (RFI/Submittal/Punch Item/Change Order, 13 call sites across 4
+  service files) already goes through, unchanged -- now also reads the
+  recipient's registered tokens and fires the push, never awaited and
+  every failure swallowed, exactly mirroring `auth.service.ts`'s
+  existing `sendInviteEmail(...).catch(...)` precedent for invite
+  emails. Since no seeded test user has a push token registered, none of
+  the pre-existing 157 API tests changed behavior or slowed down.
+- **`apps/mobile`**: added `expo-notifications` (`~0.29.14`, the SDK
+  52-bundled version -- flagged per CLAUDE.md rule 10, though it's a
+  first-party Expo package extending the already-locked stack, not an
+  outside-the-stack swap) and the `expo-notifications` config plugin.
+  `lib/push-notifications.ts` -- `registerForPushNotifications()`
+  (permission request + token fetch + register, called whenever
+  `AuthProvider`'s `auth` becomes non-null, covering both a fresh login
+  and a restored session on relaunch) and
+  `unregisterForPushNotifications()` (called from `logout()` while the
+  session is still valid to authenticate the call). `app/_layout.tsx`'s
+  new `NotificationTapHandler` deep-links a tapped notification straight
+  to its RFI/Submittal/Punch Item/Change Order screen via `entityPath()`,
+  a byte-for-byte port of `NotificationBell.entityPath` on web (same
+  payload shape, same four modules with a detail screen today). Every
+  step is wrapped in try/catch with the failure swallowed and logged --
+  a denied permission, an emulator with no push credentials, or (the
+  common case in this sandbox) no EAS project configured must never
+  block using the rest of the app.
+- **Explicitly not built, on record**: a real EAS project id (so
+  `getExpoPushTokenAsync()` will typically no-op in this dev sandbox --
+  wiring one is a deployment-time step); notification categories/actions
+  (an inline "Mark read" from the OS tray); OS app-icon badge count sync
+  with the in-app unread count (`shouldSetBadge: false` is deliberate).
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package (`packages/db`: unaffected, RLS policy verified
+  manually via `psql \d push_tokens` showing both new policies applied;
+  `apps/api`: 162 tests across 34 files, including the new 5-test
+  `push-tokens.test.ts` -- rejects registration without a session,
+  registers a token, re-registering the same token under a different
+  user reassigns it (the case that caught the RLS design gap above),
+  unregistering another user's token is a no-op rather than an error,
+  and a notification to a recipient with a registered (deliberately
+  fake) token doesn't fail the underlying RFI-creation write it
+  accompanies; every pre-existing notification-triggering test file
+  re-verified unaffected; `apps/web`: 28 tests unaffected, no web
+  changes this phase; `apps/mobile`: `tsc`/`eslint` both clean, no test
+  files exist for mobile in this repo, consistent with every earlier
+  phase). Full `next build` also confirmed unaffected (no web routes
+  touched).
+
+## Phase 21 gate report
+
+**Gate** (first slice of the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- a 42-section spec covering server-driven
+data tables, saved views, global search, navigation, a centralized status
+system, and a PDF architecture overhaul, to be delivered incrementally
+rather than as one rebuild; the user authorized starting with a single
+word, "Proceed," after this phase's audit and sequencing were proposed) --
+**PASSED**, see Verification. This phase covers the audit plus the first
+two of the spec's ten implementation phases (shared data infrastructure +
+DataTable server mode), proven end-to-end on one module (RFIs) before
+rolling out further.
+
+**Audit finding that shaped this phase**: every existing list endpoint ran
+an unfiltered, unpaginated `SELECT * WHERE project_id = ?`, with all
+search/filter/sort happening client-side via `useMemo` after fetching every
+row. This works at today's seed scale but doesn't scale to a real project's
+record volume, and is the reason the spec asks for a server query contract
+before any further DataTable/UX work. Separately, CLAUDE.md's stack table
+names TanStack Query + Zustand for web state management, but neither is
+actually installed or used anywhere in `apps/web` -- every page uses plain
+`useState`/`useEffect`. That gap is flagged here rather than silently
+carried forward.
+
+**What was built:**
+- **`packages/shared`**: `schemas/list-query.schema.ts` -- a generic
+  `paginationQuerySchema` (`search`/`sort`/`direction`/`page`/`pageSize`,
+  all optional, `MAX_PAGE_SIZE=200`), `DEFAULT_PAGE_SIZE=50`, and a
+  `PaginatedResult<T> = { rows: T[]; total: number }` type -- the reusable
+  contract every future module migration extends. `schemas/rfi.schema.ts`
+  gained `listRfisQuerySchema` (extends the generic schema with a narrowed
+  `sort` enum and RFI-specific `status`/`assigneeUserId` filters), `.strict()`.
+- **`apps/api`**: `rfi.service.ts`'s `listRfis` now accepts an optional
+  query object and returns `PaginatedResult<RfiWithOverdue>`. Search/status/
+  assignee filters and sort became SQL `WHERE`/`ORDER BY` clauses;
+  pagination (`LIMIT`/`OFFSET` plus a parallel `count()` query) only
+  activates when the caller sends `page`/`pageSize` explicitly, so every
+  caller that doesn't (mobile, any not-yet-migrated code) gets the exact
+  same "return everything" response it always did. The private-RFI
+  visibility rule (`canViewPrivateRfi`) was re-expressed as a SQL
+  `OR`/`EXISTS` predicate rather than a post-fetch JS filter -- required
+  once `LIMIT`/`OFFSET` entered the picture, since filtering after the
+  database page would produce wrong `total` counts and short pages.
+  `rfis.routes.ts`'s `GET /` responds with the same plain array body as
+  before (never an envelope) plus a new `X-Total-Count` header --
+  fully additive and backward compatible. `app.ts`'s CORS config gained
+  `exposedHeaders: ["X-Total-Count"]`; without it the header is invisible
+  to `apps/web`'s cross-origin `fetch()` calls in dev, a bug class
+  supertest-based API tests cannot catch since supertest doesn't enforce
+  browser header-visibility rules.
+- **`apps/web`**: `DataTable.tsx` gained optional `serverSort`/
+  `onServerSortChange`/`pagination` props -- a caller that doesn't pass
+  them keeps its existing fully-client-side sort with zero behavior
+  change (verified against every one of the ~20 other list pages already
+  on `DataTable`). `lib/use-server-table.ts` -- a small local
+  `useServerTable<T>` hook (debounced search, immediate filter/sort/page
+  refetch, request-id guarding against out-of-order responses, reads
+  `X-Total-Count`) standardizing the fetch glue every migrated module
+  needs, deliberately not built on TanStack Query (see the hook's own doc
+  comment: adopting a caching library to solve one hook's fetch/debounce
+  logic would touch every one of the ~100 existing pages' dependency
+  footprint for no problem it uniquely solves -- revisit if a real
+  caching/dedup need shows up once more modules migrate).
+  `components/ui/SavedViewsBar.tsx` -- a reusable saved-views bar
+  generalized from Punch List's earlier bespoke single-filter version,
+  backed by the pre-existing generic `/saved-views` API with no schema
+  change (its `filters` column is already schemaless `jsonb`; this phase
+  just flattens `search`/`sortKey`/`sortDirection` into that same blob
+  alongside a module's own filter keys). The RFIs list page
+  (`app/[locale]/projects/[id]/rfis/page.tsx`) was migrated end-to-end onto
+  this stack: `useServerTable` replaced its local `useState`/`useEffect`
+  fetch logic, `SavedViewsBar` sits above its `FilterBar` (which gained a
+  new ball-in-court/assignee filter it didn't have before), and `DataTable`
+  is wired to the hook's server-sort and pagination state.
+- **Explicitly not built this phase, on record**: the other ~19 list
+  modules (including Punch List's own data-fetching -- only its
+  saved-views *UI pattern* was extracted/generalized, its page.tsx is
+  untouched) were deliberately left on client-side filtering; migrating
+  them is now comparatively cheap given the pattern above, and is future
+  work rather than a defect. The remaining eight phases of the parent
+  spec (global search, navigation/icon-rail shell, the PDF architecture
+  overhaul, bulk actions, column customization, etc.) have not been
+  started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green across
+  every package. 397 tests total (`packages/shared`: 200, `packages/db`: 1,
+  `apps/api`: 168 across 35 files including the new 6-test
+  `rfi-list-query.test.ts` -- backward compatibility with no query params,
+  search, status+assignee filters, sort direction, pagination with correct
+  `total`, and private-RFI exclusion from both results and count;
+  `apps/web`: 28, unaffected). Two expected stderr blocks in the API test
+  run (mailer/Expo-push network calls failing in this sandbox) are
+  pre-existing and unrelated to this phase. Full `next build` succeeded
+  with the RFIs route unaffected in size/behavior beyond the new filter.
+
+## Phase 22 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21's server-query contract out from
+its RFIs proof-of-concept to the next tier of high-traffic list modules,
+per the user's "Proceed" after Phase 21's gate report was delivered) --
+**PASSED**, see Verification.
+
+**What was built:** the exact Phase 21 pattern (extend the shared
+`paginationQuerySchema`, move the service's filter/sort/pagination into
+SQL, wire the page onto `useServerTable` + `DataTable`'s server props),
+repeated for four modules with zero changes to the shared contract
+itself:
+
+- **Submittals**: `listSubmittalsQuerySchema` (`status`/`assigneeUserId`
+  filters, sort by number/title/status/dueDate). `submittal.service.ts`'s
+  `listSubmittals` gained the same treatment `rfi.service.ts` got in
+  Phase 21 -- including re-expressing `canViewPrivateSubmittal`'s
+  distribution-list check as a SQL `EXISTS` predicate (submittals have
+  their own `submittalDistribution` join table, structurally identical to
+  RFIs' `rfiDistribution`), required for the same reason: a post-fetch JS
+  filter after `LIMIT`/`OFFSET` produces wrong totals and short pages.
+  `submittals/page.tsx` migrated onto `useServerTable` + `SavedViewsBar`
+  exactly like the RFIs page, gaining a ball-in-court/assignee filter it
+  didn't have before.
+- **Change Orders**: `listChangeOrdersQuerySchema` (`status` filter, sort
+  by number/title/status/costImpact). No privacy/distribution concept on
+  this module, so `change-management.service.ts`'s `listChangeOrders`
+  needed only the search/filter/sort/pagination SQL, no visibility
+  predicate. The page has two independent sections (Change Events, Change
+  Orders); only the Change Orders `DataTable` was migrated -- Change
+  Events' own simple unpaginated list was deliberately left alone as
+  out of scope, consistent with Phase 21's "narrow the migration, don't
+  redesign the whole page" discipline.
+- **Punch List**: `listPunchItemsQuerySchema` (`status`/`assigneeUserId`
+  filters, sort by number/status/priority/dueDate; search matches
+  `description` since punch items have no separate title field).
+  `punch-item.service.ts`'s `listPunchItems` gained the standard
+  treatment. This page's migration also retired its own older, bespoke
+  single-filter saved-views UI (a plain button row storing only a status
+  value) in favor of the shared `SavedViewsBar` component Phase 21 built
+  for RFIs -- the first consumer of that generalization, confirming it
+  was built broadly enough to fit a second, independently-evolved
+  saved-views implementation without changes.
+- **Commitments**: `listCommitmentsQuerySchema` -- notably different from
+  every other migrated module: commitments have no `status` and no
+  `dueDate` column at all (`packages/db/src/schema/financial.ts`'s
+  `commitments` table), so the query schema filters on `type`
+  (subcontract/po) and `companyId` instead, and sorts by
+  number/title/type. This is the contract adapting to what a module's
+  schema actually has rather than forcing every module into an identical
+  filter shape. One deliberate behavior change, called out in the
+  schema's own doc comment: the page's prior client-side search also
+  matched the *joined* company name, which the SQL-side search does not
+  (matching only `number`/`title`, like every other migrated module) --
+  matching a joined field would require a join in the query, judged not
+  worth adding for this one page's search box.
+- **`apps/api/src/routes/phase22-list-query.test.ts`** (new): 13 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module, plus Submittals' private/distribution-exclusion case mirroring
+  `rfi-list-query.test.ts`'s.
+
+**Explicitly not built this phase, on record**: 16 of the ~20 total list
+modules (Documents, Drawings, Meetings, Inspections, Correspondence, T&M
+Tickets, Transmittals, and others) remain on client-side filtering --
+migrating each is now a mechanical repeat of this pattern per
+`docs/DATA_MODEL.md` §9n, not a redesign, and is future work rather than a
+defect. The rest of the parent spec's phases (global search,
+navigation/icon-rail shell, the PDF architecture overhaul, bulk actions,
+column customization, etc.) have not been started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. 410 tests total (`packages/shared`: 200,
+  `packages/db`: 1, `apps/api`: 181 across 36 files -- 168 pre-existing
+  plus the 13 new Phase 22 tests, all pre-existing suites re-verified
+  unaffected including `rfi-list-query.test.ts`, `submittal.test.ts`, and
+  `financial.test.ts`; `apps/web`: 28, unaffected). The two expected
+  stderr blocks in the API test run (mailer/Expo-push network calls
+  failing in this sandbox) are pre-existing and unrelated. Full
+  `next build` succeeded; the four migrated routes' bundle sizes shrank
+  slightly (client-side filtering/`useMemo` logic removed), consistent
+  with the RFIs page's Phase 21 build output.
+
+## Phase 23 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21/22's server-query contract out to
+Documents, Drawings, Meetings, and Correspondence, per the user's
+"Proceed" after Phase 22's gate report was delivered) -- **PASSED**, see
+Verification.
+
+**What was built:** the same Phase 21 pattern once more, on four modules
+with meaningfully different shapes than the financial/workflow modules
+Phase 22 covered:
+
+- **Documents**: `listDocumentsQuerySchema` -- search + sort by `title`
+  only (documents have no status/assignee/type to filter by). The one
+  real wrinkle: `document.service.ts`'s `listDocuments` is scoped by
+  `folderId`, an essential parameter the folder-browser sidebar UI always
+  sends, not an optional FilterBar-style filter -- it stays a separate
+  function parameter outside the query-schema bag, documented in the
+  schema's own comment so a future module with a similar "always-present
+  scoping param" copies this precedent rather than forcing it into the
+  optional-filters shape. `documents/page.tsx` migrated onto
+  `useServerTable`, with folder selection now driving the hook's filter
+  state via `onFilterChange("folderId", ...)` (a filter the FilterBar UI
+  itself never renders -- selecting a folder in the sidebar is what sets
+  it) rather than a fresh network call shaped by hand.
+- **Drawings**: `listDrawingsQuerySchema` (`discipline` filter, sort by
+  sheetNumber/title/discipline). The page's "publish a drawing set"
+  picker needs the complete list of every drawing with a current
+  revision to choose from, not one page of the migrated DataTable --
+  so this migration keeps a second, separately-fetched unpaginated
+  `revisionedDrawings` list alongside the paginated `serverTable`,
+  refreshed on the same create/publish events. This is a pattern worth
+  reusing verbatim on any future module where one page also drives a
+  full-set picker from the same data (Change Orders' target-company
+  dropdowns took the same approach in Phase 22, fetched from a different,
+  already-unpaginated endpoint rather than a second call to the same
+  one).
+- **Meetings**: `listMeetingsQuerySchema` -- search + sort by
+  title/occurredAt only; meetings have no status or assignee field at
+  all, so the filter bag is empty (search/sort/pagination only). The
+  list's only pre-existing caller (mobile, explicitly view-only per the
+  Phase 7 gate report) already re-sorts the full result client-side
+  itself, so there was no default-order behavior to preserve, and the
+  contract uses the same ascending-by-default convention as every other
+  module for consistency rather than inventing a per-module default.
+- **Correspondence**: `listCorrespondenceQuerySchema` (`status` filter,
+  sort by correspondenceNumber/subject/type/status) -- the closest to
+  Phase 21/22's RFI-shaped modules of this batch, migrated with no
+  surprises.
+- **`apps/api/src/routes/phase23-list-query.test.ts`** (new): 10 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module.
+
+**Explicitly not built this phase, on record**: 12 of the ~20 total list
+modules (Inspections, T&M Tickets, Transmittals, Schedule, Safety, Direct
+Costs, Prime Contract, Billing, Prequalification, Bidding, Estimating,
+and others) remain on client-side filtering -- migrating each is now a
+mechanical repeat of this pattern per `docs/DATA_MODEL.md` §9n, not a
+redesign, and is future work rather than a defect. The rest of the parent
+spec's phases (global search, navigation/icon-rail shell, the PDF
+architecture overhaul, bulk actions, column customization, etc.) have not
+been started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. 420 tests total (`packages/shared`: 200,
+  `packages/db`: 1, `apps/api`: 191 across 37 files -- 181 pre-existing
+  plus the 10 new Phase 23 tests, all pre-existing suites re-verified
+  unaffected including `document-control.test.ts`, `meeting.test.ts`, and
+  `tm-correspondence.test.ts`; `apps/web`: 28, unaffected). The two
+  expected stderr blocks in the API test run (mailer/Expo-push network
+  calls failing in this sandbox) are pre-existing and unrelated. Full
+  `next build` succeeded; the four migrated routes' bundle sizes shrank
+  slightly (client-side filtering/`useMemo` logic removed), consistent
+  with every earlier phase's migrated pages. Also discovered and fixed
+  mid-phase: the sandbox's Postgres 16 cluster (`pg_ctlcluster`, not
+  Docker -- this environment has no Docker daemon) had stopped between
+  sessions; restarted via `pg_ctlcluster 16 main start` before the API
+  test suite would run at all. Not a code issue, but worth recording here
+  since it will recur in any fresh session of this sandbox.
+
+## Phase 24 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21/22/23's server-query contract out
+to Inspections, T&M Tickets, Transmittals, and Safety Incidents, per the
+user's "Proceed" after Phase 23's gate report was delivered) --
+**PASSED**, see Verification.
+
+**What was built:** the same Phase 21 pattern once more, on four modules:
+
+- **Inspections**: `listInspectionsQuerySchema` -- `status` filter, sort
+  by `templateTitle`/`status`/`scheduledAt`. Inspections carry no
+  title/subject of their own, so both search and the `templateTitle` sort
+  key operate on the joined `checklist_templates.title` (the only
+  human-readable label the list page has ever shown) -- `listInspections`
+  in `inspection.service.ts` was rewritten with an `innerJoin` against
+  `checklistTemplates`, using drizzle's `getTableColumns()` to keep the
+  return type a flat `InspectionRow[]` rather than the nested per-table
+  shape a join produces by default.
+- **T&M Tickets**: `listTmTicketsQuerySchema` (search on
+  description/ticketNumber, `status` filter, sort by
+  ticketNumber/description/workDate/status). No `company` sort key --
+  the list page's Company column is a joined lookup by `companyId`, not
+  a plain column (see the sort-key/column-key gotcha below).
+- **Transmittals**: `listTransmittalsQuerySchema` (search on
+  subject/transmittalNumber, `status` filter, sort by
+  transmittalNumber/subject/purpose/status) -- every list-page column
+  here is a plain `transmittals` column, so no joined-field exclusion was
+  needed. `transmittals/page.tsx` intentionally does **not** get a
+  `SavedViewsBar`: `Module` (the type `SavedViewsBar`'s saved-view rows
+  are scoped by, and the same type `requirePermission` checks) has no
+  `"transmittals"` entry -- transmittals' own create/read permission
+  checks ride on `"documents"` instead. Reusing `"documents"` as the
+  `SavedViewsBar` module would leak saved views between this page and the
+  Documents list (their filter/sort shapes don't match, which is exactly
+  the column-key/sort-key contract bug below), and giving transmittals
+  its own `Module` entry means wiring default permission levels for every
+  role in `default-templates.ts` too -- judged out of scope for a
+  list-query migration and deferred, documented inline in the page.
+- **Safety Incidents**: `listSafetyIncidentsQuerySchema` (search on
+  description, `status` filter, sort by
+  description/occurredAt/severity/status). Safety Observations
+  deliberately excluded from this phase's scope, same documented cut as
+  Change Events in Phase 22. No `company` sort key, same joined-lookup
+  reasoning as T&M Tickets.
+- **`apps/api/src/routes/phase24-list-query.test.ts`** (new): 12 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module, plus a `sort=company` 400-rejection regression test each for
+  T&M Tickets and Safety Incidents.
+
+**Found and fixed mid-phase, not user-reported**: a real bug class
+spanning three already-shipped modules, where a `DataTable` column had a
+`sortValue` prop (making it appear clickable-sortable) but its `key`
+wasn't a member of that module's server-side sort-key enum, so clicking
+that header 400s. Punch List's "description" column (shipped Phase 22)
+was a genuine plain column missing from the enum -- fixed by adding it to
+both the enum and the service's sort-column map, plus a regression test.
+Commitments' "company" column (Phase 22) and, newly found this phase,
+T&M Tickets' and Safety Incidents' "company"/"involved company" columns
+are all joined/derived lookups with no server sort support -- fixed by
+removing `sortValue` from each (display-only, matching Commitments'
+existing precedent for its equivalent search gap). Full writeup and the
+general rule for future migrations is in `docs/DATA_MODEL.md` §9n.
+
+**Explicitly not built this phase, on record**: Schedule, Direct Costs,
+Prime Contract, Billing, Prequalification, Bidding, Estimating, and
+Safety Observations remain on client-side filtering -- migrating each is
+a mechanical repeat of this pattern per `docs/DATA_MODEL.md` §9n, not a
+redesign, and is future work rather than a defect. The rest of the parent
+spec's phases (global search, navigation/icon-rail shell, the PDF
+architecture overhaul, bulk actions, column customization, etc.) have not
+been started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 204 tests across 38 files (192 pre-existing plus the 12 new
+  Phase 24 tests; all pre-existing suites re-verified unaffected,
+  including `inspection.test.ts`, `tm-correspondence.test.ts`,
+  `transmittals.test.ts`, and `schedule-safety.test.ts`), `apps/web`: 28,
+  unaffected. The expected stderr blocks in the API test run
+  (mailer/Expo-push network calls failing in this sandbox) are
+  pre-existing and unrelated. Full `next build` succeeded across all
+  routes including the four migrated pages. Also restarted the sandbox's
+  Postgres 16 cluster (`pg_ctlcluster 16 main start`) before the API test
+  suite would run -- it had stopped between sessions again, same
+  recurring sandbox note as Phase 23's gate report.
+
+## Phase 25 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21/22/23/24's server-query contract
+out to Direct Costs, Payment Applications (Billing), Prequalification,
+and Safety Observations, per the user's "Proceed" after Phase 24's gate
+report was delivered) -- **PASSED**, see Verification.
+
+**What was built:**
+
+- **Direct Costs**: `listDirectCostsQuerySchema` (search on description,
+  `status` filter, sort by description/type/amount/incurredDate/status).
+  No `costCode` sort key -- the list page's Cost Code column is a joined
+  lookup by `costCodeId`, and `description` already gives the page a real
+  plain field to search/sort on, so this follows the "drop `sortValue`"
+  fix shape from Phase 24 rather than adding a join.
+- **Payment Applications (Billing)**: `listPaymentApplicationsQuerySchema`
+  (`status` filter, sort by commitment/periodStart/status). Unlike Direct
+  Costs, `payment_applications` has no plain text column at all --
+  `listPaymentApplications` does a `leftJoin` to `commitments` (left,
+  since `commitmentId` is null for a prime-contract application) and
+  searches/sorts on `commitments.number`/`title`, the same
+  join-for-search-and-sort treatment Inspections gave
+  `checklist_templates` in Phase 24.
+- **Prequalification**: `listPrequalificationsQuerySchema` (`status`
+  filter, sort by company/status/overallScore). Same shape as Payment
+  Applications -- `prequalifications` has no plain text column, so
+  `listPrequalifications` does an `innerJoin` to `companies` and
+  searches/sorts on `companies.name`. This page also isn't built on
+  `DataTable` at all (it renders expandable cards with inline
+  submit/review forms), so its migration wires `useServerTable` for
+  search/filter/pagination and adds a plain `<select>` sort control next
+  to `FilterBar` (calling `serverTable.onServerSortChange` the way a
+  column header would) plus a hand-rolled pagination footer matching
+  `DataTable`'s own markup.
+- **Safety Observations**: `listSafetyObservationsQuerySchema` (search on
+  description, `category`/`status` filters, sort by
+  description/observedAt/category/status) -- no joined columns, the
+  simplest of this phase's four. Also a card-list page, migrated with the
+  same sort-`<select>` + pagination-footer recipe as Prequalification.
+  Deliberately has **no `SavedViewsBar`**: Safety Observations shares the
+  `"safety"` permission `Module` with Safety Incidents (both go through
+  `requirePermission(ctx, "safety", ...)` in `safety.service.ts`), and
+  that's the same type `SavedViewsBar`'s saved-view rows are scoped by --
+  Safety Incidents already got a `SavedViewsBar` with `module="safety"`
+  in Phase 24, so adding a second one here on Observations would let a
+  view saved on one page be offered (and fail to apply cleanly, since the
+  two modules' sort-key enums differ) on the other. Deferred, same
+  reasoning as Transmittals' skipped `SavedViewsBar` in Phase 24 --
+  flagged here as a known gap in Phase 24's Safety Incidents work, not a
+  new one.
+- **`apps/api/src/routes/phase25-list-query.test.ts`** (new): 11 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module, including a `sort=costCode` 400-rejection regression test for
+  Direct Costs.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` §9n's "still on
+client-side filtering" list, carried forward unchanged since Phase 23,
+listed "Prime Contract" as a pending list-module migration. It isn't
+one -- `prime-contract.service.ts` has no `list*` function at all, only
+`getPrimeContractByProject` (one row per project, a unique-indexed
+singleton), and its page is a detail/edit form. Corrected in both
+`docs/DATA_MODEL.md` and this report rather than carried forward again.
+
+**Explicitly not built this phase, on record**: Schedule, Bidding, and
+Estimating remain on client-side filtering -- migrating each is a
+mechanical repeat of this pattern per `docs/DATA_MODEL.md` §9n, not a
+redesign, and is future work rather than a defect. The rest of the
+parent spec's phases (global search, navigation/icon-rail shell, the PDF
+architecture overhaul, bulk actions, column customization, etc.) have
+not been started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 215 tests across 39 files (204 pre-existing plus the 11 new
+  Phase 25 tests; all pre-existing suites re-verified unaffected,
+  including `financial.test.ts`'s Direct Costs/Prime Contract coverage
+  and `preconstruction.test.ts`'s Prequalification/Bidding/Estimating
+  coverage), `apps/web`: 28, unaffected. The expected stderr blocks in
+  the API test run (mailer/Expo-push network calls failing in this
+  sandbox) are pre-existing and unrelated. Full `next build` succeeded
+  across all routes including the four migrated pages. Also restarted
+  the sandbox's Postgres 16 cluster (`pg_ctlcluster 16 main start`)
+  before the API test suite would run -- it had stopped between
+  sessions again, same recurring sandbox note as Phase 23/24's gate
+  reports.
+
+## Phase 26 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21/22/23/24/25's server-query
+contract out to Schedule, Bidding, and Estimating, the last three real
+list modules in the app, per the user's "Proceed" after Phase 25's gate
+report was delivered) -- **PASSED**, see Verification. **This phase
+closes out the server-driven list-query-contract initiative: every real
+list module in the app now has server-side search/filter/sort/pagination.**
+
+**What was built:**
+
+- **Schedule**: `listScheduleTasksQuerySchema` (search on name, `status`
+  filter, sort by name/status/percentComplete/startDate). No `company`
+  sort key -- the list page's Assigned Company column is a joined lookup
+  by `assignedCompanyId`, same "drop `sortValue`" shape as prior phases'
+  joined-lookup columns. The one wrinkle: Schedule's pre-migration
+  default order was an in-JS sort on `sortOrder, startDate` (a manual
+  drag-order), not one column like every other migrated module, so
+  omitting `sort` deliberately preserves that exact ordering server-side
+  (`ORDER BY sort_order, start_date`) instead of falling back to a single
+  default column -- documented inline in both the shared schema and the
+  service, and covered by a dedicated ordering-invariant test in
+  `phase26-list-query.test.ts`.
+- **Bidding**: `listBidPackagesQuerySchema` (search on number/title,
+  `status` filter, sort by number/title/dueDate/status). No `costCode`
+  sort key -- same joined-lookup "drop `sortValue`" treatment as Direct
+  Costs (Phase 25), since `number`/`title` already give the module a real
+  search/sort surface and a join wasn't judged worth it for one column.
+- **Estimating**: `listEstimatesQuerySchema` (search on number/title,
+  `status` filter, sort by number/title/status). No joined or dropped
+  columns -- every column on this list page is already a plain field, so
+  this migration needed no column-bug fixes at all.
+- All three web pages migrated onto `useServerTable` + `DataTable`'s
+  server-mode props + `SavedViewsBar` (`module="schedule"`,
+  `module="bidding"`, `module="estimating"` respectively -- each is its
+  own dedicated permission module, so none of Transmittals'/Safety
+  Observations' module-sharing SavedViewsBar caveat applies here).
+- **`apps/api/src/routes/phase26-list-query.test.ts`** (new): 11 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module, including a `sort=costCode` 400-rejection regression test for
+  Bidding and an ordering-invariant test confirming Schedule's
+  no-`sort`-param response stays ordered by `sortOrder, startDate`.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` §9n's "migrated so
+far" list now reads as complete -- Schedule/Bidding/Estimating moved out
+of "still on client-side filtering" and into the migrated list, and the
+section states outright that every real list module is now covered.
+Prime Contract remains correctly excluded (per Phase 25's correction) as
+not being a list module at all.
+
+**Explicitly not built this phase, on record**: no further list modules
+remain to migrate under this initiative. The rest of the parent spec's
+phases (global search, navigation/icon-rail shell, the PDF architecture
+overhaul, bulk actions, column customization, etc.) have not been
+started and remain future work.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 226 tests across 40 files (215 pre-existing plus the 11 new
+  Phase 26 tests; all pre-existing suites re-verified unaffected,
+  including `preconstruction.test.ts`'s Bidding/Estimating coverage and
+  `schedule-safety.test.ts`'s Schedule coverage), `apps/web`: 28,
+  unaffected. The expected stderr blocks in the API test run
+  (mailer/Expo-push network calls failing in this sandbox) are
+  pre-existing and unrelated. Full `next build` succeeded across all
+  routes including the three migrated pages. Also restarted the
+  sandbox's Postgres 16 cluster (`pg_ctlcluster 16 main start`) before
+  the API test suite would run -- it had stopped between sessions again,
+  same recurring sandbox note as Phase 23/24/25's gate reports (it was
+  in fact already running this time, so the start command was a no-op
+  confirmation rather than an actual restart).
+
+## Phase 27 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- with the server-driven list-query
+contract closed out in Phase 26, this picks up the next deferred item:
+`DataTable.tsx`'s own doc comment has flagged "column resize, visibility
+toggles, and bulk row selection" as deliberately deferred since the
+table's first build, and the parent spec's own remaining-items list
+names "column customization" alongside bulk actions; per the user's
+"proceed" after Phase 26's gate report was delivered) -- **PASSED**, see
+Verification.
+
+**What was built:**
+
+- **`apps/web/components/ui/DataTable.tsx`**: `DataTableColumn<T>` gained
+  an optional `hideable?: boolean` (default `true`); `Props<T>` gained an
+  optional `storageKey?: string`. When `storageKey` is set, a "Columns"
+  button renders above the header row, opening a checklist menu that
+  hides/shows any column not marked `hideable: false`, with a
+  `toggleColumn` guard that refuses to hide the last remaining visible
+  column. Both new fields are additive -- a column/table that doesn't set
+  them renders exactly as it did before this phase, the same shape every
+  earlier DataTable addition (`serverSort`, `pagination`) already used.
+  Hidden-column state persists to `localStorage` under
+  `siteops.dataTableHiddenColumns.<storageKey>`, per-browser only -- the
+  same pattern `GlobalSearch`'s recent-searches list already established,
+  not a database-backed per-user preference (a deliberate scope call: see
+  `docs/DATA_MODEL.md` §9o for the reasoning against reusing
+  `SavedViewsBar`/`/saved-views` for this).
+- **Rollout**: all ~20 pages already on `DataTable` (every module in
+  §9n's "migrated so far" list, plus Budget's line-item table, which was
+  never part of the list-query-contract rollout since it has no list
+  endpoint to paginate) got a unique `storageKey` in this same phase --
+  a one-line, purely-additive prop per call site with no per-module
+  server-side design work, so unlike the list-query contract this needed
+  no staged rollout across phases.
+- **i18n**: `Common.columns`/`Common.columnsMenuLabel` added to
+  `messages/en.json` and `messages/ar.json`.
+- **Manual browser verification** (Playwright against the dev servers,
+  logged in as `omar.nassar@siteops.test`): on the RFIs list page, opened
+  the Columns menu, unchecked "Number," confirmed the column disappeared
+  from the header and grid immediately, reloaded the page, and confirmed
+  it stayed hidden (`localStorage`'s
+  `siteops.dataTableHiddenColumns.rfis` held `["number"]`) -- the
+  persistence path this phase depends on actually round-trips, not just
+  typechecks.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` §9n's own list of
+what the "UX/UI foundation pass" commit deferred is now split accurately
+across two outcomes -- column visibility done (this phase, §9o), column
+resize and bulk row selection still deferred (see below).
+
+**Explicitly not built this phase, on record**: column resize (the
+`react-window`-virtualized grid's column widths are fixed CSS grid
+tracks per render; a resize handle needs its own design pass to avoid
+fighting that) and bulk row selection with a bulk-actions bar (needs a
+bulk-mutation endpoint per module -- a materially larger surface than a
+client-side render filter) both remain deferred, unchanged from every
+prior phase's note. Global search and the navigation/icon-rail shell
+named in the parent spec's remaining-items list were found, during this
+phase's scoping, to already exist (`search.service.ts` +
+`GlobalSearch.tsx`, `components/shell/`) from the pre-Phase-21 "UX/UI
+foundation pass" -- they were never phase-tracked under this initiative's
+numbering, so this report records the correction rather than re-building
+already-shipped functionality. The rest of the parent spec (a centralized
+status system beyond the existing `StatusBadge`/`lib/design/status.ts`
+tokens, the PDF architecture overhaul) remains unstarted.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package, unaffected by this phase's scope
+  (`packages/shared`: 200 tests, `packages/db`: 1, `apps/api`: 226 across
+  40 files, `apps/web`: 28 -- no new automated test file, since this
+  phase is a client-only rendering feature with no new service, route,
+  or pure function to unit-test; coverage instead comes from the manual
+  Playwright verification above, per this repo's "test UI changes in a
+  browser" convention). Full `next build` succeeded across all routes.
+  Confirmed the sandbox's Postgres 16 cluster was already running before
+  the API test suite.
+
+## Phase 28 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- following an architectural-audit
+check-in against the full 42-section spec, which turned up two concrete,
+still-open items on the DataTable side: `DataTable.tsx`'s own doc comment
+has flagged "bulk row selection" as deferred since its first build, and
+the spec's Section 9 names bulk actions explicitly, with Section 17
+requiring the API to independently enforce permissions regardless of
+what the UI does; per the user's "proceed with the remaining work") --
+**PASSED**, see Verification. Bulk actions are piloted on one module
+(RFIs) before any wider rollout, the same staging discipline Phase 21
+used for the list-query contract.
+
+**What was built:**
+
+- **`apps/web/components/ui/DataTable.tsx`**: a new `selection?:
+  DataTableSelection<T>` prop (`selectedIds`, `getRowId`,
+  `onSelectionChange`) renders a checkbox column -- per-row checkboxes
+  plus a header "select all" checkbox scoped to whatever rows are
+  currently rendered (one page, in server mode). Additive: a table that
+  omits `selection` renders exactly as before, the same shape
+  `storageKey` (Phase 27) and `serverSort`/`pagination` (Phase 21)
+  already established.
+- **`apps/web/components/ui/BulkActionsBar.tsx`** (new): a small generic
+  toolbar -- selected count, a clear-selection button, and whatever
+  action buttons the page passes as children. Renders nothing when
+  nothing is selected. Which bulk actions exist for a module and how
+  each calls that module's API is left to the page, not this component.
+- **`packages/shared/src/schemas/rfi.schema.ts`**: `bulkTransitionRfiStatusSchema`
+  (`{ ids: string[] (1-100, uuid), toStatus: RfiStatus }`).
+- **`apps/api/src/services/rfi.service.ts`**: `bulkTransitionRfiStatus`
+  -- loads every requested RFI, rejects the whole batch with 400
+  `mixed_projects` if the ids span more than one project (a bulk action
+  only ever targets one project's worth of selected rows, and loading one
+  `PermissionContext` for a mix of projects would apply the wrong
+  project's role to some rows), then loops the exact same
+  `transitionRfiStatus` a single-item PATCH already uses -- so
+  `RFI_STATUS_TRANSITIONS`, workflow-transition rules, and the audit log
+  write all apply per row here too, not a parallel copy of that logic. A
+  rule violation or missing id on one row is reported as `{ id, ok:
+  false, error }` in the response array rather than failing the whole
+  batch, so 9 valid transitions still go through when the 10th is stale.
+- **`apps/api/src/routes/rfis.routes.ts`**: `POST /rfis/bulk-transition`,
+  registered as a literal route before the `/:id` dynamic routes
+  (matching this file's existing convention for `/summary-report`).
+- **RFIs list page**: wired `selection` into `DataTable`, added a "Close
+  selected" button in a `BulkActionsBar`, gated behind a `ConfirmDialog`.
+  Partial failures surface as `Common.bulkPartialFailure` ("N of M could
+  not be updated") rather than a generic error. Selection clears
+  whenever `serverTable.search`/`filters`/`sort`/`page` changes, so a
+  checked id never lingers into a different filtered view or a page it
+  isn't even rendered on.
+- **`apps/api/src/routes/phase28-bulk-actions.test.ts`** (new): 4 tests
+  -- full-batch success (with a re-fetch confirming the status actually
+  changed), a partial failure (one already-closed RFI alongside a valid
+  one), a missing id reported as a per-row failure rather than 404ing the
+  batch, and the empty-`ids`-array 400 from schema validation.
+- **Manual browser verification** (Playwright against the dev servers):
+  created two fresh RFIs, selected both via the new checkboxes, opened
+  the bulk-actions bar, confirmed the "Close selected" dialog, and
+  observed the exact partial-failure path in the running app -- draft
+  RFIs can't jump straight to closed (`RFI_STATUS_TRANSITIONS.draft =
+  ["open"]` only), so the UI correctly showed "2 of 2 could not be
+  updated" rather than silently doing nothing or crashing. This exercises
+  the same code path the success-case API test covers, from the actual
+  UI rather than a raw HTTP call.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` §9o's "bulk row
+selection remain[s] deferred" note is superseded by this phase for RFIs
+specifically; §9p records the pilot and what's still deferred for every
+other module.
+
+**Explicitly not built this phase, on record**: bulk actions on any
+module besides RFIs, column resize, and density modes all remain
+deferred -- extending this pattern to more modules is now a mechanical
+repeat of this recipe, not a redesign. Client-side hiding of actions a
+user lacks permission for (spec Section 17) is not implemented here or
+anywhere else in the app -- the API independently enforces every
+permission check regardless, so this is a UX-polish gap, not a security
+one, flagged rather than silently carried forward. The much larger
+remaining body of the parent spec -- the PDF architecture overhaul
+(Arabic font embedding in particular, confirmed still using only
+`StandardFonts.Helvetica`), document-viewer unification, and annotation
+generalization -- has not been started; see the architectural-audit
+findings that opened this phase for the full breakdown against the
+spec's own 10-phase order.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 230 tests across 41 files (226 pre-existing plus the 4 new
+  Phase 28 tests; every pre-existing RFI-touching suite, including
+  `rfi.test.ts` and `rfi-list-query.test.ts`, re-verified unaffected),
+  `apps/web`: 28, unaffected. The expected stderr blocks in the API test
+  run (mailer/Expo-push network calls failing in this sandbox) are
+  pre-existing and unrelated. Full `next build` succeeded across all
+  routes including the RFIs page. Confirmed the sandbox's Postgres 16
+  cluster before the API test suite (it had stopped between sessions
+  again, the same recurring sandbox note as every prior phase's gate
+  report).
+
+## Phase 29 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- the architectural-audit check-in that
+opened Phase 28 also confirmed a second concrete, unaddressed gap: the
+spec's Section 10 explicitly asks to "replace [the collapsed sidebar's
+first-letter rendering] with a more understandable icon-rail approach,"
+and `ProjectSidebar.tsx`'s collapsed mode was still doing exactly that --
+`{t(item.labelKey).slice(0, 1)}`; per the user's "proceed") -- **PASSED**,
+see Verification.
+
+**What was built:**
+
+- Added `lucide-react` to `apps/web` -- this repo's first icon library
+  dependency (confirmed zero pre-existing icon packages before adding
+  one).
+- `apps/web/components/shell/ProjectSidebar.tsx`: every one of the 31
+  `NavItem` entries across the 6 `NAV_GROUPS` (Project, Field, Documents,
+  Financial, Schedule, People) got a distinct, semantically-chosen
+  `LucideIcon` (e.g. `HelpCircle` for RFIs, `Gavel` for Bidding,
+  `ScrollText` for Prime Contract, `ShieldAlert` for Safety). Collapsed
+  mode now renders that icon instead of a bare letter; the `sr-only` full
+  label and `title` hover tooltip that were already correct are
+  untouched. Expanded mode also gained the same icon next to its text
+  label, for recognition continuity across the collapse/expand toggle --
+  a natural extension of the same icon set, not required by the spec's
+  letter but zero additional risk.
+- **Manual browser verification** (Playwright against the dev servers):
+  confirmed expanded mode shows one icon plus the visible label per nav
+  item; collapsing swaps to icon-only with the `sr-only` label and
+  `title` tooltip both intact and no visible letter/text remaining; and
+  the Arabic (`/ar/...`) page renders `dir="rtl"` with the same icon and
+  correctly-translated Arabic label, confirming no RTL or i18n
+  regression from the icon swap.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9q
+documenting this fix and why icon choices were made semantically rather
+than arbitrarily, consistent with the repo's "structure is information"
+convention.
+
+**Explicitly not built this phase, on record**: this closes the sidebar
+icon-rail item specifically; the rest of the parent spec's remaining
+work -- bulk actions on modules besides RFIs, column resize, density
+modes, client-side permission-aware UI hiding, and above all the PDF
+architecture overhaul (Arabic font embedding, document-viewer
+unification, annotation generalization) -- remains as recorded in Phase
+28's gate report.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package, unaffected by this phase's scope (`packages/
+  shared`: 200 tests, `packages/db`: 1, `apps/api`: 230 across 41 files,
+  `apps/web`: 28 -- no new automated test file, since this phase is a
+  client-only rendering change with no new service, route, or pure
+  function to unit-test; coverage comes from the manual Playwright
+  verification above). Full `next build` succeeded across all routes.
+  Confirmed the sandbox's Postgres 16 cluster was already running before
+  the API test suite.
+
+## Phase 30 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- per the user's "proceeed"; the
+architectural-audit check-in that opened Phase 28 had already flagged
+the PDF architecture overhaul, and Arabic font embedding specifically,
+as still using only `StandardFonts.Helvetica` and unaddressed) --
+**PASSED**, see Verification. This closes the crash-severity half of the
+PDF architecture overhaul the parent spec calls for; document-viewer
+unification and annotation generalization remain out of scope for this
+phase.
+
+**The bug this phase fixes**: pdf-lib's `StandardFonts.Helvetica` is a
+WinAnsi (Latin-1) font whose `drawText`/`widthOfTextAtSize` **throw**
+(`WinAnsi cannot encode "..."`) on any character outside that encoding
+-- confirmed empirically with a throwaway script before writing any fix
+code. Since this app is bilingual EN/AR by design, every PDF export
+(RFI/Submittal/Change Order/Correspondence/Inspection, single-item and
+register alike) crashed with a 500 the moment any exported field
+contained Arabic text. This was a correctness bug affecting every export
+in the product, not a cosmetic gap.
+
+**What was built:**
+
+- **`apps/api/assets/fonts/`** (new): `NotoSansArabic-Regular.ttf`,
+  `NotoSansArabic-Bold.ttf` (SIL OFL 1.1 -- permits embedding in
+  generated documents), plus `LICENSE-NotoSansArabic.txt`. Extracted from
+  `npm pack @expo-google-fonts/noto-sans-arabic` -- a legitimate npm
+  registry package -- rather than fetched from a guessed/unverified URL.
+  Verified via `@pdf-lib/fontkit`'s glyph-coverage API that this single
+  font file covers full Latin, digits, and the punctuation the report
+  generators actually use, *and* Arabic, before adopting it as a
+  wholesale replacement rather than building per-line font-switching.
+- **`apps/api/src/lib/pdf-builder.ts`**: registers `@pdf-lib/fontkit`
+  (new dependency) and embeds the two Noto Sans Arabic files (`{ subset:
+  true }`, so each generated PDF only carries the glyphs it actually
+  uses) as `font`/`boldFont`, replacing `StandardFonts.Helvetica`/
+  `HelveticaBold` everywhere in the class -- every report generator built
+  on `PdfBuilder` (all five modules, single-item and register) gets the
+  fix automatically, with no changes needed in any of them.
+- **`apps/api/src/lib/bidi-text.ts`** (new): `prepareBidiLine(text)`, a
+  pure helper fixing reading direction -- pdf-lib's `drawText` has no
+  bidi support and places characters left-to-right in string order
+  regardless of script. Picks a line's base direction from its first
+  strong (letter) character (digits/punctuation are direction-neutral,
+  so `"RFI-102"` stays LTR), and for an RTL-dominant line reverses word
+  order plus each RTL word's own characters while leaving embedded LTR
+  tokens (a code, a date) untouched. This is a **pragmatic word-level
+  reorder, not the full Unicode Bidirectional Algorithm** and does not
+  perform Arabic contextual letter-joining/shaping -- see the gap noted
+  below. `drawLine`, `drawTable`, and `drawLetterheadCompanyName` all run
+  their text through it and right-align when `rtl` is true; word-wrap
+  still runs on the original logical text so wrapping decisions don't
+  depend on the reordering.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9r
+documenting the bug, the fix, and the shaping gap below in detail.
+
+**Explicitly not built this phase, on record -- a deliberate scope
+cut**: full Arabic contextual letter-shaping (initial/medial/final/
+isolated glyph forms) is not implemented -- each Arabic letter still
+renders in its isolated form, since correct shaping needs a real
+engine. `arabic-reshaper` was evaluated and rejected as GPL-3.0-licensed
+(a copyleft risk for a server-side dependency); `harfbuzzjs` (MIT, the
+real shaping engine) was judged too large/complex to integrate in this
+phase and is left as follow-up work. The `initials` placeholder-box text
+(drawn when a company has no logo) was left as-is -- it derives from the
+first character of each word in the company name, which is
+direction-neutral for a one-to-two-character initials snippet and
+carries no crash risk (`.toUpperCase()` on an Arabic character is a
+no-op, not an error). The rest of the parent spec's remaining work --
+bulk actions on modules besides RFIs, column resize, density modes,
+client-side permission-aware UI hiding, document-viewer unification, and
+annotation generalization -- remains as recorded in Phase 28's gate
+report.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 237 tests across 43 files (230 pre-existing plus 5 new
+  `bidi-text.test.ts` unit tests and 2 new `phase30-pdf-arabic.test.ts`
+  integration tests; every pre-existing PDF-touching suite --
+  `branded-pdf.test.ts`, `summary-report.test.ts`, `pdf-comments.test.ts`,
+  `pdf-sketches.test.ts` -- re-verified unaffected by the wholesale font
+  swap), `apps/web`: 28, unaffected. The new integration tests create an
+  RFI with Arabic subject/question text and confirm both the single-item
+  report and the register (summary) PDF return `200` with a well-formed
+  `%PDF-`-signed PDF -- the exact path that threw before this phase. The
+  expected stderr blocks in the API test run (mailer/Expo-push network
+  calls failing in this sandbox) are pre-existing and unrelated. Full
+  `next build` succeeded across all routes. Confirmed the sandbox's
+  Postgres 16 cluster before the API test suite (it had stopped between
+  sessions again, the same recurring sandbox note as every prior phase's
+  gate report).
+
+## Phase 31 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- per the user's "proceed"; Phase 28's
+gate report explicitly left "bulk actions on modules besides RFIs" on
+record as deferred, and flagged extending the pattern as "a mechanical
+repeat of this recipe, not a redesign" -- this phase is that first
+repeat) -- **PASSED**, see Verification.
+
+**What was built:**
+
+- **`packages/shared/src/schemas/punch-item.schema.ts`**:
+  `bulkTransitionPunchItemStatusSchema` (`{ ids: string[] (1-100, uuid),
+  toStatus: PunchItemStatus }`), same shape as the RFI bulk schema minus
+  a `note` field (a single note applied across N distinct items reads as
+  filler, not a real note).
+- **`apps/api/src/services/punch-item.service.ts`**:
+  `bulkTransitionPunchItemStatus` -- loads every requested punch item,
+  rejects the whole batch with 400 `mixed_projects` if the ids span more
+  than one project, loads one `PermissionContext`, then loops the exact
+  same `transitionPunchItemStatus` a single-item PATCH already uses, so
+  `PUNCH_ITEM_STATUS_TRANSITIONS`, the Final Approver check, workflow
+  rules, and the audit log write all apply per row. Returns `{ id, ok,
+  error? }[]` so a rule violation on one row doesn't fail the batch.
+- **`apps/api/src/routes/punch-items.routes.ts`**: `POST
+  /punch-items/bulk-transition`, registered before the `/:id` dynamic
+  routes (matching `rfis.routes.ts`'s convention).
+- **Punch List page**: reused `DataTable`'s `selection` prop and
+  `BulkActionsBar` unchanged from Phase 28 -- zero component changes,
+  only page-level wiring (selection state, a "Send for review" action
+  gated behind `ConfirmDialog`, `Common.bulkPartialFailure` messaging,
+  selection cleared on `search`/`filters`/`sort`/`page` change), the same
+  shape as the RFIs page.
+- **The bulk action chosen -- "Send for review," not "Close selected"**:
+  `PUNCH_ITEM_STATUS_TRANSITIONS.approved` is the only status that can
+  reach `closed`, a narrow precondition for a freshly-selected batch;
+  `open`, `not_accepted`, and `in_dispute` all transition to
+  `ready_for_review`, matching the actual field workflow (fix a batch of
+  flagged items, submit them all for review at once).
+- **`apps/api/src/routes/phase31-punch-bulk-actions.test.ts`** (new): 4
+  tests mirroring `phase28-bulk-actions.test.ts` -- full-batch success
+  with a re-fetch confirming the status change, a partial failure (one
+  item already `approved`, which can't reach `ready_for_review`), a
+  missing id reported per-row rather than 404ing the batch, and the
+  empty-`ids` 400 from schema validation.
+- **Manual browser verification** (Playwright against the dev servers):
+  selecting a row on the Punch List page surfaced the `BulkActionsBar`
+  with "Send for review"; clicking it opened the `ConfirmDialog` with the
+  expected title; cancel closed it cleanly; zero console errors observed
+  throughout. Confirmed the Arabic (`/ar/...`) page still renders
+  `dir="rtl"` -- the reused components carried over without regression.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9s
+documenting this rollout and why "Send for review" was chosen over
+mirroring the RFI pilot's "Close selected" verbatim.
+
+**Explicitly not built this phase, on record**: bulk actions on any
+module besides RFIs and Punch List (Submittals, Change Orders, ...),
+column resize, density modes, and client-side permission-aware UI hiding
+all remain deferred, as recorded in Phase 28's gate report. Document-
+viewer unification, annotation generalization, and the HarfBuzz-level
+Arabic letter-shaping follow-up (Phase 30) also remain untouched.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 241 tests across 44 files (237 pre-existing plus 4 new
+  `phase31-punch-bulk-actions.test.ts` tests; every pre-existing
+  punch-item-touching suite re-verified unaffected), `apps/web`: 28,
+  unaffected. Full `next build` succeeded across all routes. Confirmed
+  the sandbox's Postgres 16 cluster before the API test suite (it had
+  stopped between sessions again, the same recurring sandbox note as
+  every prior phase's gate report).
+
+## Phase 32 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- per the user's "proceed"; Phase 31's
+gate report explicitly listed Submittals as one of the modules still
+missing bulk actions, and this is the second mechanical repeat of Phase
+28's recipe) -- **PASSED**, see Verification.
+
+**What was built:**
+
+- **`packages/shared/src/schemas/submittal.schema.ts`**:
+  `bulkCloseSubmittalsSchema` (`{ ids: string[] (1-100, uuid) }`) -- no
+  `toStatus` field, unlike the RFI/Punch Item bulk schemas, since
+  `closeSubmittal` is a single fixed action (approved/approved_as_noted
+  -> closed), not a generic transition with a caller-chosen target.
+- **`apps/api/src/services/submittal.service.ts`**:
+  `bulkCloseSubmittals` -- loads every requested submittal, rejects the
+  whole batch with 400 `mixed_projects` if the ids span more than one
+  project, loads one `PermissionContext`, then loops the exact same
+  `closeSubmittal` a single-item POST already uses, so the
+  approved-only precondition and the audit log write both apply per
+  row. Returns `{ id, ok, error? }[]` so one bad row doesn't fail the
+  batch.
+- **`apps/api/src/routes/submittals.routes.ts`**: `POST
+  /submittals/bulk-close`, registered before the `/:id` dynamic routes.
+- **Submittals page**: reused `DataTable`'s `selection` prop and
+  `BulkActionsBar` unchanged since Phase 28 -- zero component changes,
+  only page-level wiring (selection state, a "Close selected" action
+  gated behind `ConfirmDialog`, `Common.bulkPartialFailure` messaging,
+  selection cleared on `search`/`filters`/`sort`/`page` change), the
+  same shape as the RFIs and Punch List pages.
+- **`apps/api/src/routes/phase32-submittal-bulk-actions.test.ts`** (new):
+  4 tests mirroring the Phase 28/31 bulk-action suites -- full-batch
+  success with a re-fetch confirming the status change, a partial
+  failure (one submittal still `draft`, which can't close), a missing
+  id reported per-row rather than 404ing the batch, and the empty-`ids`
+  400. Driving a submittal to `approved` for the success cases exercises
+  its real package/revision/review flow (one reviewer, a passing
+  `responseCode`) -- the bulk-close logic itself doesn't care how a
+  submittal got to `approved`, only that it did.
+- **Manual browser verification** (Playwright against the dev servers):
+  selecting a row on the Submittals page surfaced the `BulkActionsBar`
+  with "Close selected"; clicking it opened the `ConfirmDialog` with the
+  expected title; cancel closed it cleanly; zero console errors observed
+  throughout. Confirmed the Arabic (`/ar/...`) page still renders
+  `dir="rtl"`.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9t
+documenting this rollout and why the bulk schema omits a `toStatus`
+field.
+
+**Explicitly not built this phase, on record**: bulk actions on Change
+Orders (the next candidate module) and any others, column resize,
+density modes, and client-side permission-aware UI hiding all remain
+deferred, as recorded in Phase 28's gate report. Document-viewer
+unification, annotation generalization, and the HarfBuzz-level Arabic
+letter-shaping follow-up (Phase 30) also remain untouched.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 245 tests across 45 files (241 pre-existing plus 4 new
+  `phase32-submittal-bulk-actions.test.ts` tests; every pre-existing
+  submittal-touching suite, including `submittal.test.ts`, re-verified
+  unaffected), `apps/web`: 28, unaffected. Full `next build` succeeded
+  across all routes. Confirmed the sandbox's Postgres 16 cluster before
+  the API test suite (it had stopped between sessions again, the same
+  recurring sandbox note as every prior phase's gate report).
+
+## Phase 33 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- per the user's "proceed"; Phase 32's
+gate report explicitly listed Change Orders as the next candidate module
+missing bulk actions, and this is the third mechanical repeat of Phase
+28's recipe) -- **PASSED**, see Verification.
+
+**What was built:**
+
+- **`packages/shared/src/schemas/financial.schema.ts`**:
+  `bulkSubmitChangeOrdersSchema` (`{ ids: string[] (1-100, uuid) }`) -- no
+  `toStatus` field, like Submittal's `bulkCloseSubmittalsSchema`, since
+  `submitChangeOrder` is a single fixed action (draft ->
+  pending_approval), not a generic transition with a caller-chosen
+  target. The wider Change Order workflow (submit/approve/execute/
+  reject) has more steps than RFI/Punch Item/Submittal, but only the
+  first step fits this bulk-action recipe -- bulk approve/execute/reject
+  are explicitly not built this phase.
+- **`apps/api/src/services/change-management.service.ts`**:
+  `bulkSubmitChangeOrders` -- loads every requested change order, rejects
+  the whole batch with 400 `mixed_projects` if the ids span more than one
+  project, loads one `PermissionContext`, then loops the exact same
+  `submitChangeOrder` a single-item POST already uses, so the draft-only
+  precondition applies per row. Returns `{ id, ok, error? }[]` so one bad
+  row doesn't fail the batch.
+- **`apps/api/src/routes/change-management.routes.ts`**: `POST
+  /change-orders/bulk-submit`, registered before the `/:id` dynamic
+  routes.
+- **Change Orders page**: reused `DataTable`'s `selection` prop and
+  `BulkActionsBar` unchanged since Phase 28 -- zero component changes,
+  only page-level wiring (selection state, a "Submit selected" action
+  gated behind `ConfirmDialog`, `Common.bulkPartialFailure` messaging,
+  selection cleared on `search`/`filters`/`sort`/`page` change), the same
+  shape as the RFIs/Punch List/Submittals pages.
+- **`apps/api/src/routes/phase33-change-order-bulk-actions.test.ts`**
+  (new): 4 tests mirroring the Phase 28/31/32 bulk-action suites --
+  full-batch success with a re-fetch confirming the status change to
+  `pending_approval`, a partial failure (one change order already
+  `pending_approval`, which can't be resubmitted), a missing id reported
+  per-row rather than 404ing the batch, and the empty-`ids` 400.
+- **Manual browser verification** (Playwright against the dev servers):
+  seeded a fresh draft change order via the API, selected it on the
+  Change Orders page, confirmed the `BulkActionsBar` showed "1 selected"
+  with "Submit selected"/"Clear selection", clicking it opened the
+  `ConfirmDialog` with the expected title and message, cancel closed it
+  cleanly, zero console errors observed throughout. Confirmed the Arabic
+  (`/ar/...`) page still renders `dir="rtl"`.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9u
+documenting this rollout and why the bulk schema omits a `toStatus`
+field.
+
+**Explicitly not built this phase, on record**: bulk `approve`/
+`execute`/`reject` on Change Orders, bulk actions on any further module,
+column resize, density modes, and client-side permission-aware UI hiding
+all remain deferred, as recorded in Phase 28's gate report. Document-
+viewer unification, annotation generalization, and the HarfBuzz-level
+Arabic letter-shaping follow-up (Phase 30) also remain untouched.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 251 tests across 46 files (247 pre-existing plus 4 new
+  `phase33-change-order-bulk-actions.test.ts` tests; every pre-existing
+  change-order-touching suite, including `financial.test.ts`, re-verified
+  unaffected), `apps/web`: 28, unaffected. Full `next build` succeeded
+  across all routes. Confirmed the sandbox's Postgres 16 cluster before
+  the API test suite (it had stopped between sessions again, the same
+  recurring sandbox note as every prior phase's gate report).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the
@@ -2525,10 +4165,10 @@ assertions) before this phase could be called done:**
    fully defined (docker-compose). Production topology (managed Postgres,
    container hosting, CDN, mobile app store distribution) is deferred to a
    decision point before Phase 8, once real infra constraints are known.
-8. **Mobile push notifications**: not called out in the functional spec
-   (only in-app notifications and email digests are). Treated as out of
-   scope for v1; the mobile sync-status indicator covers the "did my
-   stuff sync" need without push infra.
+8. **Mobile push notifications**: not called out in the original
+   functional spec (only in-app notifications and email digests were).
+   Superseded by Phase 20 (user-directed follow-up), which built push
+   delivery via Expo -- see Phase 20's gate report.
 9. **Structured safety incidents in T1**: the brief lists "safety
    incidents" as a Daily Log field (T1 #5) but a full structured
    `safety_incidents` table only appears with the T3 Safety module (#15).

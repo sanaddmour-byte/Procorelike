@@ -2,6 +2,7 @@ import type { Database } from "@siteops/db";
 import {
   completeInspectionSchema,
   createInspectionSchema,
+  listInspectionsQuerySchema,
   transitionInspectionStatusSchema,
   updateInspectionResponsesSchema,
 } from "@siteops/shared";
@@ -13,6 +14,7 @@ import { generateInspectionReportPdf } from "../lib/inspection-report";
 import { paramAsString } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
+import { toInspectionRegisterCsv } from "../services/export.service";
 import * as inspectionService from "../services/inspection.service";
 import { loadPermissionContext } from "../services/permission.service";
 
@@ -39,8 +41,19 @@ export function inspectionsRouter(appDb: Database, env: Env): Router {
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const inspections = await inspectionService.listInspections(appDb, authUser.id, ctx, projectId);
-      res.json(inspections);
+      const listQuery = listInspectionsQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await inspectionService.listInspections(appDb, authUser.id, ctx, projectId, listQuery);
+      // Backward compatible: the body is always a plain array (see rfis.routes.ts's
+      // GET / for the full rationale), `X-Total-Count` is purely additive.
+      res.setHeader("X-Total-Count", String(total));
+      res.json(rows);
     } catch (err) {
       next(err);
     }
@@ -54,6 +67,12 @@ export function inspectionsRouter(appDb: Database, env: Env): Router {
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await inspectionService.getInspectionListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="inspection-register.csv"`);
+        res.send(toInspectionRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateInspectionListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="inspection-register.pdf"`);

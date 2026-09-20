@@ -1,27 +1,33 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database, type Tx } from "@siteops/db";
 import {
   CHANGE_EVENT_STATUS_TRANSITIONS,
+  DEFAULT_PAGE_SIZE,
   formatChangeOrderNumber,
   isValidSecondApprover,
   requiresSecondApprover,
   requirePermission,
   type Approver,
+  type BulkSubmitChangeOrdersInput,
+  type ChangeOrderSortKey,
   type ChangeOrderTargetType,
   type ChangeReason,
   type ChangeStatus,
   type CreateChangeEventInput,
   type CreateChangeOrderInput,
   type CreatePotentialChangeOrderInput,
+  type ListChangeOrdersQuery,
+  type PaginatedResult,
   type PermissionContext,
   type TransitionChangeEventStatusInput,
   type UpdatePotentialChangeOrderStatusInput,
 } from "@siteops/shared";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { applyApprovedPrimeChangeToLineItem } from "./budget.service";
-import { withUserContext } from "./permission.service";
+import { notifyUsers } from "./notification.service";
+import { loadPermissionContext, withUserContext } from "./permission.service";
 
 type ChangeEventRow = typeof schema.changeEvents.$inferSelect;
 type PotentialChangeOrderRow = typeof schema.potentialChangeOrders.$inferSelect;
@@ -241,15 +247,50 @@ export async function findChangeOrderById(appDb: Database, userId: string, chang
   });
 }
 
+const CHANGE_ORDER_SORT_COLUMNS: Record<
+  ChangeOrderSortKey,
+  typeof schema.changeOrders.number | typeof schema.changeOrders.title | typeof schema.changeOrders.status | typeof schema.changeOrders.costImpact
+> = {
+  number: schema.changeOrders.number,
+  title: schema.changeOrders.title,
+  status: schema.changeOrders.status,
+  costImpact: schema.changeOrders.costImpact,
+};
+
 export async function listChangeOrders(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<ChangeOrderRow[]> {
+  query: ListChangeOrdersQuery = {},
+): Promise<PaginatedResult<ChangeOrderRow>> {
   requirePermission(ctx, "change_management", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.changeOrders).where(eq(schema.changeOrders.projectId, projectId));
+    const conditions = [eq(schema.changeOrders.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.changeOrders.status, query.status));
+    if (query.search) {
+      conditions.push(or(ilike(schema.changeOrders.title, `%${query.search}%`), ilike(schema.changeOrders.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = CHANGE_ORDER_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.changeOrders).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.changeOrders).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 
@@ -286,6 +327,61 @@ export async function submitChangeOrder(
     if (!updated) throw new Error("Failed to submit change order");
     return updated;
   });
+}
+
+export interface BulkSubmitChangeOrdersResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Phase 33: bulk-submit, the third mechanical repeat of the Phase 28/31/32
+ * bulk-actions recipe -- a thin loop over the exact same submitChangeOrder
+ * a single-item POST already uses, so the draft-only precondition and the
+ * audit log write both apply per row here too.
+ *
+ * Every id must belong to the same project, same reasoning as the RFI/
+ * Punch Item/Submittal versions: one PermissionContext can't correctly
+ * apply to rows from different projects. A missing id or a rule violation
+ * on one row (a change order that isn't a draft) is reported per-row
+ * instead of failing the batch.
+ */
+export async function bulkSubmitChangeOrders(
+  appDb: Database,
+  userId: string,
+  input: BulkSubmitChangeOrdersInput,
+): Promise<BulkSubmitChangeOrdersResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => {
+    return tx
+      .select({ id: schema.changeOrders.id, projectId: schema.changeOrders.projectId })
+      .from(schema.changeOrders)
+      .where(inArray(schema.changeOrders.id, input.ids));
+  });
+  if (rows.length === 0) throw new NotFoundError("No change orders found for the given ids");
+
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) {
+    throw new ApiError(400, "mixed_projects", "All selected change orders must belong to the same project");
+  }
+  const [projectId] = projectIds;
+  const ctx = await loadPermissionContext(appDb, userId, projectId!);
+  const foundIds = new Set(rows.map((r) => r.id));
+
+  const results: BulkSubmitChangeOrdersResult[] = [];
+  for (const id of input.ids) {
+    if (!foundIds.has(id)) {
+      results.push({ id, ok: false, error: "Change order not found" });
+      continue;
+    }
+    try {
+      await submitChangeOrder(appDb, userId, ctx, id);
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to submit this change order" });
+    }
+  }
+  return results;
 }
 
 async function currentApprover(tx: Tx, projectId: string, userId: string): Promise<Approver> {
@@ -372,6 +468,14 @@ export async function approveChangeOrder(
       before: { status: co.status },
       after: { status: updated.status },
     });
+    if (finalize) {
+      await notifyUsers(tx, [co.createdBy], userId, "change_order_status_changed", {
+        projectId: co.projectId,
+        entityType: "change_order",
+        entityId: co.id,
+        summary: `Change Order ${co.number} — ${updated.status}`,
+      });
+    }
     return updated;
   });
 }
@@ -408,6 +512,12 @@ export async function executeChangeOrder(
     if (!updated) throw new Error("Failed to execute change order");
 
     await writeAuditLog(tx, { actorId: userId, entityType: "change_order", entityId: changeOrderId, action: "execute", before: { executed: false }, after: { executed: true } });
+    await notifyUsers(tx, [co.createdBy], userId, "change_order_status_changed", {
+      projectId: co.projectId,
+      entityType: "change_order",
+      entityId: co.id,
+      summary: `Change Order ${co.number} — executed`,
+    });
     return updated;
   });
 }
@@ -440,6 +550,12 @@ export async function rejectChangeOrder(
       action: "reject",
       before: { status: co.status },
       after: { status: updated.status },
+    });
+    await notifyUsers(tx, [co.createdBy], userId, "change_order_status_changed", {
+      projectId: co.projectId,
+      entityType: "change_order",
+      entityId: co.id,
+      summary: `Change Order ${co.number} — rejected`,
     });
     return updated;
   });

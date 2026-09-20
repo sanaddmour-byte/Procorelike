@@ -1,11 +1,20 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
-import { apiJson } from "@/lib/api-client";
+import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
+import { useProjectCurrency } from "@/lib/use-project-currency";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { useServerTable } from "@/lib/use-server-table";
+import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -106,19 +115,29 @@ function statusKey(status: ChangeOrder["status"]): string {
   return { draft: "statusDraft", pending_approval: "statusPendingApproval", approved: "statusApproved", rejected: "statusRejected", void: "statusVoid" }[status];
 }
 
+const CHANGE_ORDER_STATUS_TONE: Record<ChangeOrder["status"], StatusTone> = {
+  draft: "neutral",
+  pending_approval: "warning",
+  approved: "success",
+  rejected: "danger",
+  void: "neutral",
+};
+
 export default function ChangeOrdersPage() {
   const t = useTranslations("ChangeManagement");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const currency = useProjectCurrency(params.id);
+  const money = (value: string | number): string => formatMoney(value, currency, locale);
 
   const [events, setEvents] = useState<ChangeEventDetail[] | null>(null);
-  const [changeOrders, setChangeOrders] = useState<ChangeOrder[] | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
   const [budgetLineItems, setBudgetLineItems] = useState<BudgetLineItem[]>([]);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const serverTable = useServerTable<ChangeOrder>({ basePath: "/change-orders", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   const [showEventForm, setShowEventForm] = useState(false);
   const [eventTitle, setEventTitle] = useState("");
@@ -138,6 +157,9 @@ export default function ChangeOrdersPage() {
   const [coCostImpact, setCoCostImpact] = useState("");
   const [coTimeImpact, setCoTimeImpact] = useState("0");
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkSubmit, setConfirmBulkSubmit] = useState(false);
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const pdfViewer = usePdfViewer();
 
   async function loadEvents(): Promise<void> {
@@ -146,21 +168,41 @@ export default function ChangeOrdersPage() {
     setEvents(details);
   }
 
-  function loadChangeOrders(): void {
-    apiJson<ChangeOrder[]>(`/change-orders?projectId=${params.id}`).then(setChangeOrders).catch(() => setError(tc("errorGeneric")));
-  }
-
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
     loadEvents().catch(() => setError(tc("errorGeneric")));
-    loadChangeOrders();
     apiJson<CostCode[]>(`/projects/${params.id}/cost-codes`).then(setCostCodes).catch(() => undefined);
     apiJson<BudgetLineItem[]>(`/budget-line-items?projectId=${params.id}`).then(setBudgetLineItems).catch(() => undefined);
     apiJson<Commitment[]>(`/commitments?projectId=${params.id}`).then(setCommitments).catch(() => undefined);
   }, [router, locale, params.id]);
+
+  // Selection is scoped to the currently rendered page/view -- clear it whenever
+  // the underlying result set changes so a stale id never lingers into a new view.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [serverTable.search, serverTable.filters, serverTable.sort, serverTable.page]);
+
+  async function handleBulkSubmit(): Promise<void> {
+    setConfirmBulkSubmit(false);
+    setBulkSubmitting(true);
+    try {
+      const results = await apiJson<{ id: string; ok: boolean; error?: string }[]>("/change-orders/bulk-submit", {
+        method: "POST",
+        body: JSON.stringify({ ids: [...selectedIds] }),
+      });
+      const failed = results.filter((r) => !r.ok).length;
+      setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
+      setSelectedIds(new Set());
+      serverTable.reload();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setBulkSubmitting(false);
+    }
+  }
 
   function budgetLineItemLabel(li: BudgetLineItem): string {
     const cc = costCodes.find((c) => c.id === li.costCodeId);
@@ -250,7 +292,7 @@ export default function ChangeOrdersPage() {
       setCoCostImpact("");
       setCoTimeImpact("0");
       setShowCoForm(false);
-      loadChangeOrders();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -259,6 +301,27 @@ export default function ChangeOrdersPage() {
   }
 
   const targetOptions = coTargetType === "prime" ? budgetLineItems.map((li) => ({ id: li.id, label: budgetLineItemLabel(li) })) : commitments.map((c) => ({ id: c.id, label: `${c.number} — ${c.title}` }));
+
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const changeOrderColumns: DataTableColumn<ChangeOrder>[] = [
+    { key: "number", header: t("number"), render: (co) => co.number, sortValue: (co) => co.number, width: "110px" },
+    { key: "title", header: t("coTitle"), render: (co) => co.title ?? "" },
+    {
+      key: "status",
+      header: t("status"),
+      render: (co) => <StatusBadge tone={CHANGE_ORDER_STATUS_TONE[co.status]} label={t(statusKey(co.status))} />,
+      sortValue: (co) => co.status,
+      width: "150px",
+    },
+    { key: "costImpact", header: t("costImpact"), align: "end", width: "140px", render: (co) => money(Number(co.costImpact)), sortValue: (co) => Number(co.costImpact) },
+    {
+      key: "executed",
+      header: "",
+      width: "110px",
+      render: (co) => (co.executed ? <StatusBadge tone="neutral" label={t("executed")} /> : null),
+    },
+  ];
 
   return (
     <>
@@ -324,7 +387,7 @@ export default function ChangeOrdersPage() {
                 <div className="mb-2 flex flex-wrap gap-2">
                   {ev.potentialChangeOrders.map((pco) => (
                     <span key={pco.id} className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                      {pco.costImpact ? Number(pco.costImpact).toLocaleString() : "—"} / {pco.timeImpactDays ?? 0}d
+                      {pco.costImpact ? money(Number(pco.costImpact)) : "—"} / {pco.timeImpactDays ?? 0}d
                     </span>
                   ))}
                 </div>
@@ -375,6 +438,12 @@ export default function ChangeOrdersPage() {
                 className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white"
               >
                 {tc("exportAllPdf")}
+              </button>
+              <button
+                onClick={() => void downloadFile(`/change-orders/summary-report?projectId=${params.id}&format=csv`, "change-order-register.csv")}
+                className="rounded-lg border-3 border-ink bg-white brutal-interactive px-3 py-1.5 text-sm font-semibold text-navy-800"
+              >
+                {tc("exportAllCsv")}
               </button>
               <button onClick={() => setShowCoForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white">
                 {t("newChangeOrder")}
@@ -439,40 +508,66 @@ export default function ChangeOrdersPage() {
             </form>
           )}
 
-          {!changeOrders && <p>{tc("loading")}</p>}
-          {changeOrders && changeOrders.length === 0 && <p className="text-navy-600">{t("noChangeOrders")}</p>}
-          <ul className="flex flex-col gap-3">
-            {changeOrders?.map((co) => (
-              <li key={co.id}>
-                <Link href={`/${locale}/projects/${params.id}/change-orders/${co.id}`} className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-navy-900">
-                      {co.number}
-                      {co.title ? ` — ${co.title}` : ""}
-                    </span>
-                    <div className="flex shrink-0 gap-2">
-                      {co.executed && <span className="whitespace-nowrap rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("executed")}</span>}
-                      <span
-                        className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${
-                          co.status === "approved"
-                            ? "bg-orange-100 text-navy-800"
-                            : co.status === "rejected" || co.status === "void"
-                              ? "bg-maroon-100 text-maroon-800"
-                              : "bg-navy-100 text-navy-800"
-                        }`}
-                      >
-                        {t(statusKey(co.status))}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="mt-1 text-sm text-navy-600">{Number(co.costImpact).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <SavedViewsBar
+            projectId={params.id}
+            module="change_management"
+            currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+            onApply={(state) => serverTable.applyView(state)}
+          />
+
+          <FilterBar
+            searchValue={serverTable.search}
+            onSearchChange={serverTable.onSearchChange}
+            searchPlaceholder={t("searchPlaceholder")}
+            filters={[
+              {
+                key: "status",
+                label: t("status"),
+                options: (["draft", "pending_approval", "approved", "rejected", "void"] as const).map((s) => ({ value: s, label: t(statusKey(s)) })),
+              },
+            ]}
+            activeFilters={serverTable.filters}
+            onFilterChange={serverTable.onFilterChange}
+            onClearAll={serverTable.clearAll}
+            clearAllLabel={tc("clearAll")}
+          />
+
+          <BulkActionsBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+            <button
+              type="button"
+              disabled={bulkSubmitting}
+              onClick={() => setConfirmBulkSubmit(true)}
+              className="rounded-lg border-2 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {t("bulkSubmitAction")}
+            </button>
+          </BulkActionsBar>
+
+          <DataTable<ChangeOrder>
+            storageKey="change-orders"
+            columns={changeOrderColumns}
+            rows={serverTable.rows}
+            error={serverTable.error ? tc("errorGeneric") : null}
+            onRetry={serverTable.reload}
+            onRowClick={(co) => router.push(`/${locale}/projects/${params.id}/change-orders/${co.id}`)}
+            emptyTitle={hasActiveQuery ? t("noChangeOrderResults") : t("noChangeOrders")}
+            serverSort={serverTable.sort}
+            onServerSortChange={serverTable.onServerSortChange}
+            pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+            selection={{ selectedIds, getRowId: (co) => co.id, onSelectionChange: setSelectedIds }}
+          />
         </section>
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <ConfirmDialog
+        open={confirmBulkSubmit}
+        title={t("bulkSubmitConfirmTitle")}
+        message={t("bulkSubmitConfirmMessage", { count: selectedIds.size })}
+        confirmLabel={t("bulkSubmitAction")}
+        cancelLabel={tc("cancel")}
+        onConfirm={() => void handleBulkSubmit()}
+        onCancel={() => setConfirmBulkSubmit(false)}
+      />
     </>
   );
 }

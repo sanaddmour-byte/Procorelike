@@ -1,6 +1,16 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
-import { formatEstimateNumber, requirePermission, type CreateEstimateInput, type CreateEstimateLineItemInput, type PermissionContext } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import {
+  DEFAULT_PAGE_SIZE,
+  formatEstimateNumber,
+  requirePermission,
+  type CreateEstimateInput,
+  type CreateEstimateLineItemInput,
+  type EstimateSortKey,
+  type ListEstimatesQuery,
+  type PaginatedResult,
+  type PermissionContext,
+} from "@siteops/shared";
+import { and, asc, count, desc, eq, ilike, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -52,15 +62,46 @@ export async function findEstimateById(appDb: Database, userId: string, estimate
   });
 }
 
+const ESTIMATE_SORT_COLUMNS: Record<EstimateSortKey, typeof schema.estimates.number | typeof schema.estimates.title | typeof schema.estimates.status> = {
+  number: schema.estimates.number,
+  title: schema.estimates.title,
+  status: schema.estimates.status,
+};
+
 export async function listEstimates(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<EstimateRow[]> {
+  query: ListEstimatesQuery = {},
+): Promise<PaginatedResult<EstimateRow>> {
   requirePermission(ctx, "estimating", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.estimates).where(eq(schema.estimates.projectId, projectId));
+    const conditions = [eq(schema.estimates.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.estimates.status, query.status));
+    if (query.search) {
+      conditions.push(or(ilike(schema.estimates.number, `%${query.search}%`), ilike(schema.estimates.title, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = ESTIMATE_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.estimates).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.estimates).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

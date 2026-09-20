@@ -1,6 +1,15 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
-import { requirePermission, type CreateDocumentFolderInput, type CreateDocumentInput, type PermissionContext, type UpdateDocumentInput } from "@siteops/shared";
-import { and, eq, isNull } from "drizzle-orm";
+import {
+  DEFAULT_PAGE_SIZE,
+  requirePermission,
+  type CreateDocumentFolderInput,
+  type CreateDocumentInput,
+  type ListDocumentsQuery,
+  type PaginatedResult,
+  type PermissionContext,
+  type UpdateDocumentInput,
+} from "@siteops/shared";
+import { and, asc, count, desc, eq, ilike, isNull } from "drizzle-orm";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
 
@@ -72,18 +81,33 @@ export async function listDocuments(
   ctx: PermissionContext,
   projectId: string,
   folderId: string | null,
-): Promise<DocumentRow[]> {
+  query: ListDocumentsQuery = {},
+): Promise<PaginatedResult<DocumentRow>> {
   requirePermission(ctx, "documents", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx
-      .select()
-      .from(schema.documents)
-      .where(
-        and(
-          eq(schema.documents.projectId, projectId),
-          folderId ? eq(schema.documents.folderId, folderId) : isNull(schema.documents.folderId),
-        ),
-      );
+    const conditions = [
+      eq(schema.documents.projectId, projectId),
+      folderId ? eq(schema.documents.folderId, folderId) : isNull(schema.documents.folderId),
+    ];
+    if (query.search) conditions.push(ilike(schema.documents.title, `%${query.search}%`));
+    const where = and(...conditions)!;
+
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.documents).where(where).orderBy(orderFn(schema.documents.title));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.documents).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

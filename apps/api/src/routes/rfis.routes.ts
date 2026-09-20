@@ -1,5 +1,12 @@
 import type { Database } from "@siteops/db";
-import { createRfiResponseSchema, createRfiSchema, transitionRfiStatusSchema, updateRfiSchema } from "@siteops/shared";
+import {
+  bulkTransitionRfiStatusSchema,
+  createRfiResponseSchema,
+  createRfiSchema,
+  listRfisQuerySchema,
+  transitionRfiStatusSchema,
+  updateRfiSchema,
+} from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -8,6 +15,7 @@ import { generateRfiListPdf } from "../lib/rfi-list-report";
 import { generateRfiPdf } from "../lib/rfi-report";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
+import { toRfiRegisterCsv } from "../services/export.service";
 import { loadPermissionContext } from "../services/permission.service";
 import * as rfiService from "../services/rfi.service";
 import { dispatchProjectEvent } from "../services/webhook.service";
@@ -35,8 +43,23 @@ export function rfisRouter(appDb: Database, authDb: Database, env: Env): Router 
       const projectId = req.query.projectId;
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
-      const rfis = await rfiService.listRfis(appDb, authUser.id, ctx, projectId);
-      res.json(rfis);
+      const listQuery = listRfisQuerySchema.parse({
+        search: req.query.search,
+        sort: req.query.sort,
+        direction: req.query.direction,
+        status: req.query.status,
+        assigneeUserId: req.query.assigneeUserId,
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+      });
+      const { rows, total } = await rfiService.listRfis(appDb, authUser.id, ctx, projectId, listQuery);
+      // The body is always a plain array -- a pre-existing caller (e.g. the mobile
+      // app's read-only RFI list, which sends none of the query params above) sees
+      // no shape change at all. `X-Total-Count` is purely additive: a client that
+      // wants server-side pagination reads it, everyone else ignores an unfamiliar
+      // header exactly as they always have.
+      res.setHeader("X-Total-Count", String(total));
+      res.json(rows);
     } catch (err) {
       next(err);
     }
@@ -50,10 +73,27 @@ export function rfisRouter(appDb: Database, authDb: Database, env: Env): Router 
       if (typeof projectId !== "string") throw new NotFoundError("projectId query param required");
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const reportData = await rfiService.getRfiListReportData(appDb, authUser.id, ctx, projectId);
+      if (req.query.format === "csv") {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="rfi-register.csv"`);
+        res.send(toRfiRegisterCsv(reportData));
+        return;
+      }
       const pdfBytes = await generateRfiListPdf(reportData);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="rfi-register.pdf"`);
       res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/bulk-transition", validateBody(bulkTransitionRfiStatusSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const results = await rfiService.bulkTransitionRfiStatus(appDb, authUser.id, req.body);
+      res.json(results);
     } catch (err) {
       next(err);
     }

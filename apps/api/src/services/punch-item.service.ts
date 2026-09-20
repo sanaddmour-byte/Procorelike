@@ -1,6 +1,7 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
   canEditOwnedRecord,
+  DEFAULT_PAGE_SIZE,
   formatPunchItemNumber,
   hasPermission,
   mergeFields,
@@ -8,16 +9,23 @@ import {
   PUNCH_ITEM_STATUS_TRANSITIONS,
   requirePermission,
   resolveEffectiveLevel,
+  type BulkTransitionPunchItemStatusInput,
   type CreatePunchItemInput,
   type FieldConflict,
+  type ListPunchItemsQuery,
+  type PaginatedResult,
   type PermissionContext,
+  type PunchItemSortKey,
   type TransitionPunchItemStatusInput,
   type UpdatePunchItemInput,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import type { SyncApplyResult } from "./daily-log.service";
+import { notifyUsers } from "./notification.service";
+import { loadPermissionContext, withUserContext } from "./permission.service";
+import { enforceWorkflowTransitionRule } from "./workflow-rule.service";
 
 type PunchItemRow = typeof schema.punchItems.$inferSelect;
 type PunchItemDistributionRow = typeof schema.punchItemDistribution.$inferSelect;
@@ -65,6 +73,12 @@ export async function createPunchItem(
     });
 
     await writeAuditLog(tx, { actorId: userId, entityType: "punch_item", entityId: item.id, action: "create", after: item });
+    await notifyUsers(tx, [item.assigneeUserId, item.finalApproverUserId, ...distributionUserIds], userId, "punch_item_assigned", {
+      projectId: item.projectId,
+      entityType: "punch_item",
+      entityId: item.id,
+      summary: `Punch item ${item.number}: ${item.description}`,
+    });
     return item;
   });
 }
@@ -81,15 +95,52 @@ export async function findPunchItemById(
   });
 }
 
+const PUNCH_ITEM_SORT_COLUMNS: Record<
+  PunchItemSortKey,
+  typeof schema.punchItems.number | typeof schema.punchItems.description | typeof schema.punchItems.status | typeof schema.punchItems.priority | typeof schema.punchItems.dueDate
+> = {
+  number: schema.punchItems.number,
+  description: schema.punchItems.description,
+  status: schema.punchItems.status,
+  priority: schema.punchItems.priority,
+  dueDate: schema.punchItems.dueDate,
+};
+
 export async function listPunchItems(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<PunchItemRow[]> {
+  query: ListPunchItemsQuery = {},
+): Promise<PaginatedResult<PunchItemRow>> {
   requirePermission(ctx, "punch_list", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.punchItems).where(eq(schema.punchItems.projectId, projectId));
+    const conditions = [eq(schema.punchItems.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.punchItems.status, query.status));
+    if (query.assigneeUserId) conditions.push(eq(schema.punchItems.assigneeUserId, query.assigneeUserId));
+    if (query.search) {
+      conditions.push(or(ilike(schema.punchItems.description, `%${query.search}%`), ilike(schema.punchItems.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = PUNCH_ITEM_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.punchItems).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.punchItems).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 
@@ -152,6 +203,14 @@ export async function updatePunchItem(
       before: existing,
       after: updated,
     });
+    if (input.assigneeUserId && input.assigneeUserId !== existing.assigneeUserId) {
+      await notifyUsers(tx, [updated.assigneeUserId], userId, "punch_item_assigned", {
+        projectId: updated.projectId,
+        entityType: "punch_item",
+        entityId: updated.id,
+        summary: `Punch item ${updated.number}: ${updated.description}`,
+      });
+    }
     return updated;
   });
 }
@@ -177,6 +236,7 @@ export async function transitionPunchItemStatus(
         `Cannot move a punch item from '${existing.status}' to '${input.toStatus}'`,
       );
     }
+    await enforceWorkflowTransitionRule(tx, ctx, "punch_list", existing.projectId, existing.status, input.toStatus);
 
     // Procore's Final Approver role: once one is assigned, only that person
     // (or someone with admin-level punch_list permission) may sign off the
@@ -213,8 +273,78 @@ export async function transitionPunchItemStatus(
       before: { status: existing.status },
       after: { status: updated.status },
     });
+    await notifyUsers(
+      tx,
+      [updated.assigneeUserId, updated.finalApproverUserId, updated.createdBy],
+      userId,
+      "punch_item_status_changed",
+      {
+        projectId: updated.projectId,
+        entityType: "punch_item",
+        entityId: updated.id,
+        summary: `Punch item ${updated.number}: ${updated.description} — ${updated.status}`,
+      },
+    );
     return updated;
   });
+}
+
+export interface BulkTransitionResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Phase 31: bulk status transition for Punch Items, same recipe as
+ * rfi.service.ts's bulkTransitionRfiStatus (Phase 28) -- a thin loop over
+ * the exact same transitionPunchItemStatus a single-item PATCH already
+ * uses, so PUNCH_ITEM_STATUS_TRANSITIONS, the Final Approver check,
+ * workflow rules, and the audit log write all apply per row here too.
+ *
+ * Every id must belong to the same project: a bulk action only ever
+ * targets rows a user selected on one list page (one project's worth),
+ * and loading a single PermissionContext for a mix of projects would
+ * apply the wrong project's role to some rows. A missing id or a rule
+ * violation on one row (e.g. that item can't move to the requested
+ * status, or the caller isn't its Final Approver) is reported per-row
+ * instead of failing the batch.
+ */
+export async function bulkTransitionPunchItemStatus(
+  appDb: Database,
+  userId: string,
+  input: BulkTransitionPunchItemStatusInput,
+): Promise<BulkTransitionResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => {
+    return tx
+      .select({ id: schema.punchItems.id, projectId: schema.punchItems.projectId })
+      .from(schema.punchItems)
+      .where(inArray(schema.punchItems.id, input.ids));
+  });
+  if (rows.length === 0) throw new NotFoundError("No punch items found for the given ids");
+
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) {
+    throw new ApiError(400, "mixed_projects", "All selected punch items must belong to the same project");
+  }
+  const [projectId] = projectIds;
+  const ctx = await loadPermissionContext(appDb, userId, projectId!);
+  const foundIds = new Set(rows.map((r) => r.id));
+
+  const results: BulkTransitionResult[] = [];
+  for (const id of input.ids) {
+    if (!foundIds.has(id)) {
+      results.push({ id, ok: false, error: "Punch item not found" });
+      continue;
+    }
+    try {
+      await transitionPunchItemStatus(appDb, userId, ctx, id, { toStatus: input.toStatus });
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to transition this punch item" });
+    }
+  }
+  return results;
 }
 
 // ---------------------------------------------------------------------------

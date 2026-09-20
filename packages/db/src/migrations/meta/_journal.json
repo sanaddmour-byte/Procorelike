@@ -267,6 +267,41 @@
       "when": 1789456532923,
       "tag": "0037_slow_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1789804256421,
+      "tag": "0038_black_selene",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1789806854491,
+      "tag": "0039_stormy_human_cannonball",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1789817676079,
+      "tag": "0040_ancient_gravity",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1789820177313,
+      "tag": "0041_hard_eternals",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1789826367958,
+      "tag": "0042_amused_korvac",
+      "breakpoints": true
     }
   ]
 }

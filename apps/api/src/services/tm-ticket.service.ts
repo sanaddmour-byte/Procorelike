@@ -1,13 +1,17 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   formatTmTicketNumber,
   requirePermission,
   TM_TICKET_STATUS_TRANSITIONS,
   type CreateTmTicketInput,
+  type ListTmTicketsQuery,
+  type PaginatedResult,
   type PermissionContext,
+  type TmTicketSortKey,
   type TransitionTmTicketStatusInput,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -120,15 +124,50 @@ export async function getTmTicket(
   });
 }
 
+const TM_TICKET_SORT_COLUMNS: Record<
+  TmTicketSortKey,
+  typeof schema.tmTickets.ticketNumber | typeof schema.tmTickets.description | typeof schema.tmTickets.workDate | typeof schema.tmTickets.status
+> = {
+  ticketNumber: schema.tmTickets.ticketNumber,
+  description: schema.tmTickets.description,
+  workDate: schema.tmTickets.workDate,
+  status: schema.tmTickets.status,
+};
+
 export async function listTmTickets(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<TmTicketRow[]> {
+  query: ListTmTicketsQuery = {},
+): Promise<PaginatedResult<TmTicketRow>> {
   requirePermission(ctx, "tm_tickets", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.tmTickets).where(eq(schema.tmTickets.projectId, projectId));
+    const conditions = [eq(schema.tmTickets.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.tmTickets.status, query.status));
+    if (query.search) {
+      conditions.push(or(ilike(schema.tmTickets.description, `%${query.search}%`), ilike(schema.tmTickets.ticketNumber, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = TM_TICKET_SORT_COLUMNS[query.sort ?? "ticketNumber"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.tmTickets).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.tmTickets).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

@@ -5,6 +5,8 @@ import type { ApiDbClients } from "./db";
 import type { Env } from "./env";
 import { correlationMiddleware } from "./lib/correlation";
 import { errorHandler } from "./lib/errors";
+import { actionPlanTemplatesRouter } from "./routes/action-plan-templates.routes";
+import { actionPlansRouter } from "./routes/action-plans.routes";
 import { adminRouter } from "./routes/admin.routes";
 import { attachmentsRouter } from "./routes/attachments.routes";
 import { authRouter } from "./routes/auth.routes";
@@ -18,6 +20,7 @@ import { companiesRouter } from "./routes/companies.routes";
 import { correctiveActionsRouter } from "./routes/corrective-actions.routes";
 import { correspondenceRouter } from "./routes/correspondence.routes";
 import { cpmScheduleRouter } from "./routes/cpm-schedule.routes";
+import { customFieldDefinitionsRouter, customFieldValuesRouter } from "./routes/custom-fields.routes";
 import { dailyLogsRouter } from "./routes/daily-logs.routes";
 import { directCostRouter } from "./routes/direct-cost.routes";
 import { documentsRouter } from "./routes/documents.routes";
@@ -30,11 +33,13 @@ import { inspectionsRouter } from "./routes/inspections.routes";
 import { internalRouter } from "./routes/internal.routes";
 import { lookaheadRouter } from "./routes/lookahead.routes";
 import { meetingItemsRouter, meetingsRouter } from "./routes/meetings.routes";
+import { notificationsRouter } from "./routes/notifications.routes";
 import { savedViewsRouter } from "./routes/saved-views.routes";
 import { pdfCommentsRouter } from "./routes/pdf-comments.routes";
 import { pdfSketchesRouter } from "./routes/pdf-sketches.routes";
 import { permissionOverridesRouter, permissionTemplatesRouter } from "./routes/permissions.routes";
 import { photosRouter } from "./routes/photos.routes";
+import { pushTokensRouter } from "./routes/push-tokens.routes";
 import { prequalificationRouter } from "./routes/prequalification.routes";
 import { primeContractRouter } from "./routes/prime-contract.routes";
 import { projectsRouter } from "./routes/projects.routes";
@@ -49,13 +54,18 @@ import { safetyIncidentsRouter, safetyObservationsRouter } from "./routes/safety
 import { submittalsRouter } from "./routes/submittals.routes";
 import { syncRouter } from "./routes/sync.routes";
 import { tmTicketsRouter } from "./routes/tm-ticket.routes";
+import { workflowTransitionRulesRouter } from "./routes/workflow-rules.routes";
 import { createS3Client } from "./lib/s3";
 import { createMailer } from "./lib/mailer";
 
 export function createApp(env: Env, clients: ApiDbClients): Express {
   const app = express();
   app.use(helmet());
-  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  // exposedHeaders: browsers hide every response header from fetch()'s Headers
+  // object except a small built-in safelist unless the server explicitly opts a
+  // header in here -- X-Total-Count (Phase 21's server-pagination contract) is
+  // invisible to apps/web's lib/use-server-table.ts without this.
+  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true, exposedHeaders: ["X-Total-Count"] }));
   // Default 100kb is fine for every other endpoint, but a schedule import
   // (docs/SCHEDULING.md A2: "handle a 5,000-task file") sends the whole
   // source file as JSON text -- a few MB for a large P6 XER/MSP XML export.
@@ -106,6 +116,8 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/transmittals", transmittalsRouter(clients.appDb.db, env));
   app.use("/drawing-sets", drawingSetsRouter(clients.appDb.db, env));
   app.use("/corrective-actions", correctiveActionsRouter(clients.appDb.db, env));
+  app.use("/action-plan-templates", actionPlanTemplatesRouter(clients.appDb.db, env));
+  app.use("/action-plans", actionPlansRouter(clients.appDb.db, env));
   app.use("/prime-contracts", primeContractRouter(clients.appDb.db, env));
   app.use("/direct-costs", directCostRouter(clients.appDb.db, env));
   app.use("/prequalifications", prequalificationRouter(clients.appDb.db, env));
@@ -113,10 +125,15 @@ export function createApp(env: Env, clients: ApiDbClients): Express {
   app.use("/bids", bidsRouter(clients.appDb.db, env));
   app.use("/estimates", estimatesRouter(clients.appDb.db, env));
   app.use("/sync", syncRouter(clients.appDb.db, env));
-  app.use("/internal", internalRouter(clients.authDb.db, mailer, env));
+  app.use("/internal", internalRouter(clients.authDb.db, clients.appDb.db, s3, mailer, env));
   app.use("/admin", adminRouter(clients.appDb.db, env));
   app.use("/external", externalRouter(clients.appDb.db, clients.authDb.db));
   app.use("/search", searchRouter(clients.appDb.db, env));
+  app.use("/custom-field-definitions", customFieldDefinitionsRouter(clients.appDb.db, env));
+  app.use("/custom-field-values", customFieldValuesRouter(clients.appDb.db, env));
+  app.use("/notifications", notificationsRouter(clients.appDb.db, env));
+  app.use("/push-tokens", pushTokensRouter(clients.appDb.db, env));
+  app.use("/workflow-transition-rules", workflowTransitionRulesRouter(clients.appDb.db, env));
 
   app.use(errorHandler);
   return app;

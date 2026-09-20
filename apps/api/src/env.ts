@@ -21,6 +21,10 @@ const envSchema = z.object({
   SMTP_FROM: z.string().default("no-reply@siteops.local"),
   /** Shared secret an external cron presents to trigger the overdue-RFI sweep — there's no per-project permission context for a system-wide job, and no in-process scheduler (see jobs/rfi-overdue-sweep.ts). */
   INTERNAL_JOB_SECRET: z.string().min(16).default("dev-internal-job-secret-change-me"),
+  /** Domain half of every project's inbound-email alias (`<projects.inbound_email_token>@INBOUND_EMAIL_DOMAIN`) — see inbound-email.service.ts. Not a real deliverable mailbox by itself; a production deployment points an actual inbound-email provider's MX/webhook at this domain. */
+  INBOUND_EMAIL_DOMAIN: z.string().default("inbound.siteops.local"),
+  /** Shared secret the inbound-email webhook requires, separate from INTERNAL_JOB_SECRET since this endpoint is reachable by an external mail provider rather than only our own cron. */
+  INBOUND_EMAIL_WEBHOOK_SECRET: z.string().min(16).default("dev-inbound-email-secret-change-me"),
 });
 
 export type Env = z.infer<typeof envSchema>;

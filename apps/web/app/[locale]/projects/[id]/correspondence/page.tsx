@@ -1,12 +1,18 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
-import { apiJson } from "@/lib/api-client";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
+import type { StatusTone } from "@/lib/design/status";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { useServerTable } from "@/lib/use-server-table";
 import type { CorrespondenceDirection, CorrespondenceStatus, CorrespondenceType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -34,6 +40,13 @@ function typeLabel(type: CorrespondenceType, t: (key: string) => string): string
   return { letter: t("typeLetter"), notice: t("typeNotice"), transmittal: t("typeTransmittal"), memo: t("typeMemo") }[type];
 }
 
+const STATUS_TONE: Record<CorrespondenceStatus, StatusTone> = {
+  draft: "neutral",
+  sent: "info",
+  acknowledged: "success",
+  closed: "neutral",
+};
+
 export default function CorrespondencePage() {
   const t = useTranslations("Correspondence");
   const tc = useTranslations("Common");
@@ -41,7 +54,6 @@ export default function CorrespondencePage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [items, setItems] = useState<CorrespondenceItem[] | null>(null);
   const [companies, setCompanies] = useState<ProjectCompany[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -54,19 +66,13 @@ export default function CorrespondencePage() {
   const [responseRequiredBy, setResponseRequiredBy] = useState("");
   const [creating, setCreating] = useState(false);
   const pdfViewer = usePdfViewer();
-
-  function load(): void {
-    apiJson<CorrespondenceItem[]>(`/correspondence?projectId=${params.id}`)
-      .then(setItems)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<CorrespondenceItem>({ basePath: "/correspondence", projectId: params.id, defaultSort: { key: "correspondenceNumber", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<ProjectCompany[]>(`/projects/${params.id}/companies`)
       .then((cos) => {
         setCompanies(cos);
@@ -101,7 +107,7 @@ export default function CorrespondencePage() {
       setBody("");
       setResponseRequiredBy("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -109,26 +115,50 @@ export default function CorrespondencePage() {
     }
   }
 
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const columns: DataTableColumn<CorrespondenceItem>[] = [
+    { key: "number", header: t("number"), render: (item) => item.correspondenceNumber, sortValue: (item) => item.correspondenceNumber, width: "110px" },
+    { key: "subject", header: t("subject"), render: (item) => item.subject, sortValue: (item) => item.subject },
+    { key: "type", header: t("type"), render: (item) => typeLabel(item.type, t), sortValue: (item) => item.type, width: "130px" },
+    {
+      key: "status",
+      header: t("status"),
+      render: (item) => <StatusBadge tone={STATUS_TONE[item.status]} label={statusLabel(item.status, t)} />,
+      sortValue: (item) => item.status,
+      width: "140px",
+    },
+    { key: "fromTo", header: t("fromTo"), render: (item) => `${companyName(item.fromCompanyId)} → ${companyName(item.toCompanyId)}`, width: "260px" },
+  ];
+
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => void pdfViewer.openPdf(`/correspondence/summary-report?projectId=${params.id}`, t("title"), "correspondence-register.pdf")}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
-            >
-              {tc("exportAllPdf")}
-            </button>
-            <button
-              onClick={() => setShowForm((s) => !s)}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
-            >
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button
+                onClick={() => void pdfViewer.openPdf(`/correspondence/summary-report?projectId=${params.id}`, t("title"), "correspondence-register.pdf")}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
+              >
+                {tc("exportAllPdf")}
+              </button>
+              <button
+                onClick={() => void downloadFile(`/correspondence/summary-report?projectId=${params.id}&format=csv`, "correspondence-register.csv")}
+                className="rounded-lg border-3 border-ink bg-white brutal-interactive px-3 py-2 text-sm font-semibold text-navy-800"
+              >
+                {tc("exportAllCsv")}
+              </button>
+              <button
+                onClick={() => setShowForm((s) => !s)}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
+              >
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showForm && (
           <form
@@ -207,30 +237,43 @@ export default function CorrespondencePage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!items && !error && <p>{tc("loading")}</p>}
-        {items && items.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {items?.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/correspondence/${item.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {item.correspondenceNumber} — {item.subject}
-                  </span>
-                  <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                    {statusLabel(item.status, t)}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">
-                  {typeLabel(item.type, t)} · {companyName(item.fromCompanyId)} → {companyName(item.toCompanyId)}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <SavedViewsBar
+          projectId={params.id}
+          module="correspondence"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["draft", "sent", "acknowledged", "closed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+            },
+          ]}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <DataTable<CorrespondenceItem>
+          storageKey="correspondence"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          onRowClick={(item) => router.push(`/${locale}/projects/${params.id}/correspondence/${item.id}`)}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
     </>

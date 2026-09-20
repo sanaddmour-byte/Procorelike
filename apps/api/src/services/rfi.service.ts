@@ -1,22 +1,29 @@
 import { nextSequenceNumber, schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   formatRfiNumber,
   requirePermission,
   resolveEffectiveLevel,
   RFI_STATUS_TRANSITIONS,
+  type BulkTransitionRfiStatusInput,
   type CreateRfiInput,
   type CreateRfiResponseInput,
+  type ListRfisQuery,
+  type PaginatedResult,
   type PermissionContext,
   type RfiImpact,
+  type RfiSortKey,
   type RfiStatus,
   type TransitionRfiStatusInput,
   type UpdateRfiInput,
 } from "@siteops/shared";
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
+import { notifyUsers } from "./notification.service";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
-import { withUserContext } from "./permission.service";
+import { loadPermissionContext, withUserContext } from "./permission.service";
+import { enforceWorkflowTransitionRule } from "./workflow-rule.service";
 
 type RfiRow = typeof schema.rfis.$inferSelect;
 type RfiResponseRow = typeof schema.rfiResponses.$inferSelect;
@@ -88,6 +95,12 @@ export async function createRfi(
     }
 
     await writeAuditLog(tx, { actorId: userId, entityType: "rfi", entityId: rfi.id, action: "create", after: rfi });
+    await notifyUsers(tx, [rfi.ballInCourtUserId, ...input.distributionUserIds], userId, "rfi_assigned", {
+      projectId: rfi.projectId,
+      entityType: "rfi",
+      entityId: rfi.id,
+      summary: `RFI ${rfi.number}: ${rfi.subject}`,
+    });
     return withOverdue(rfi);
   });
 }
@@ -100,21 +113,75 @@ export async function findRfiById(appDb: Database, userId: string, rfiId: string
   });
 }
 
+const RFI_SORT_COLUMNS: Record<RfiSortKey, typeof schema.rfis.number | typeof schema.rfis.subject | typeof schema.rfis.status | typeof schema.rfis.dueDate> = {
+  number: schema.rfis.number,
+  subject: schema.rfis.subject,
+  status: schema.rfis.status,
+  dueDate: schema.rfis.dueDate,
+};
+
+/**
+ * Phase 21's server-query contract, proven here first: `query` is entirely
+ * optional, and a caller that passes none of it (every pre-existing
+ * caller, including the mobile app's read-only RFI list) gets back every
+ * visible row with no pagination -- the exact behavior this function had
+ * before this phase. Pagination/search/sort/filtering only activate when
+ * a caller actually asks for them, via docs/DATA_MODEL.md's list-query
+ * contract (packages/shared's `paginationQuerySchema` + a module's own
+ * `listXQuerySchema` extension).
+ *
+ * The private-RFI visibility rule (`canViewPrivateRfi`'s old JS-side
+ * logic) is now expressed directly as a SQL predicate rather than a
+ * post-fetch filter -- necessary for `total`/pagination to be correct at
+ * all (filtering after LIMIT/OFFSET would make both wrong), and a
+ * worthwhile simplification even ignoring that: one WHERE clause instead
+ * of a second query plus a JS filter.
+ */
 export async function listRfis(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<RfiWithOverdue[]> {
+  query: ListRfisQuery = {},
+): Promise<PaginatedResult<RfiWithOverdue>> {
   requirePermission(ctx, "rfis", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    const rows = await tx.select().from(schema.rfis).where(eq(schema.rfis.projectId, projectId));
-    const privateIds = rows.filter((r) => r.isPrivate).map((r) => r.id);
-    const distribution = privateIds.length > 0 ? await tx.select().from(schema.rfiDistribution).where(inArray(schema.rfiDistribution.rfiId, privateIds)) : [];
-    const distributionByRfiId = new Map<string, RfiDistributionRow[]>();
-    for (const d of distribution) distributionByRfiId.set(d.rfiId, [...(distributionByRfiId.get(d.rfiId) ?? []), d]);
+    const conditions = [eq(schema.rfis.projectId, projectId)];
 
-    return rows.filter((r) => canViewPrivateRfi(userId, ctx, r, distributionByRfiId.get(r.id) ?? [])).map(withOverdue);
+    if (resolveEffectiveLevel(ctx, "rfis") !== "admin") {
+      conditions.push(
+        or(
+          eq(schema.rfis.isPrivate, false),
+          eq(schema.rfis.createdBy, userId),
+          eq(schema.rfis.ballInCourtUserId, userId),
+          sql`exists (select 1 from ${schema.rfiDistribution} where ${schema.rfiDistribution.rfiId} = ${schema.rfis.id} and ${schema.rfiDistribution.userId} = ${userId})`,
+        )!,
+      );
+    }
+    if (query.status) conditions.push(eq(schema.rfis.status, query.status));
+    if (query.assigneeUserId) conditions.push(eq(schema.rfis.ballInCourtUserId, query.assigneeUserId));
+    if (query.search) {
+      conditions.push(or(ilike(schema.rfis.subject, `%${query.search}%`), ilike(schema.rfis.number, `%${query.search}%`))!);
+    }
+    const where = and(...conditions)!;
+
+    const sortColumn = RFI_SORT_COLUMNS[query.sort ?? "number"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.rfis).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.rfis).where(where),
+    ]);
+
+    return { rows: rows.map(withOverdue), total: totalRow?.value ?? 0 };
   });
 }
 
@@ -164,6 +231,14 @@ export async function updateRfi(
       })
       .where(eq(schema.rfis.id, rfiId))
       .returning();
+    if (updated && input.ballInCourtUserId && input.ballInCourtUserId !== existing.ballInCourtUserId) {
+      await notifyUsers(tx, [updated.ballInCourtUserId], userId, "rfi_assigned", {
+        projectId: updated.projectId,
+        entityType: "rfi",
+        entityId: updated.id,
+        summary: `RFI ${updated.number}: ${updated.subject}`,
+      });
+    }
     return updated ? withOverdue(updated) : undefined;
   });
 }
@@ -217,6 +292,14 @@ export async function addRfiResponse(
     }
 
     await writeAuditLog(tx, { actorId: userId, entityType: "rfi_response", entityId: response.id, action: "create", after: response });
+    if (input.isOfficial) {
+      await notifyUsers(tx, [rfi.createdBy], userId, "rfi_answered", {
+        projectId: rfi.projectId,
+        entityType: "rfi",
+        entityId: rfi.id,
+        summary: `RFI ${rfi.number}: ${rfi.subject}`,
+      });
+    }
     return { ...response, isOfficial: input.isOfficial };
   });
 }
@@ -237,6 +320,7 @@ export async function transitionRfiStatus(
     if (!allowed.includes(input.toStatus)) {
       throw new ApiError(400, "invalid_transition", `Cannot move RFI from '${rfi.status}' to '${input.toStatus}'`);
     }
+    await enforceWorkflowTransitionRule(tx, ctx, "rfis", rfi.projectId, rfi.status, input.toStatus);
 
     const [updated] = await tx
       .update(schema.rfis)
@@ -261,6 +345,62 @@ export async function transitionRfiStatus(
     });
     return withOverdue(updated);
   });
+}
+
+export interface BulkTransitionResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * DataTable row-selection's first bulk action (Phase 28, docs/DATA_MODEL.md
+ * §9p) -- a thin loop over the exact same `transitionRfiStatus` a single-
+ * item PATCH uses, so every rule it enforces (RFI_STATUS_TRANSITIONS,
+ * workflow rules, the audit log write) applies per row here too, not a
+ * parallel copy of that logic.
+ *
+ * Every id must belong to the same project: a bulk action only ever
+ * targets rows a user selected on one list page (one project's worth),
+ * and loading a single `PermissionContext` for a mix of projects would
+ * apply the wrong project's role to some of the rows -- reject the whole
+ * batch rather than risk that. A missing or already-processed id and a
+ * rule violation on one row (e.g. that RFI is already closed) are both
+ * reported per-row instead of failing the batch, so 9 valid transitions
+ * still go through when the 10th one is stale.
+ */
+export async function bulkTransitionRfiStatus(
+  appDb: Database,
+  userId: string,
+  input: BulkTransitionRfiStatusInput,
+): Promise<BulkTransitionResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => {
+    return tx.select({ id: schema.rfis.id, projectId: schema.rfis.projectId }).from(schema.rfis).where(inArray(schema.rfis.id, input.ids));
+  });
+  if (rows.length === 0) throw new NotFoundError("No RFIs found for the given ids");
+
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) {
+    throw new ApiError(400, "mixed_projects", "All selected RFIs must belong to the same project");
+  }
+  const [projectId] = projectIds;
+  const ctx = await loadPermissionContext(appDb, userId, projectId!);
+  const foundIds = new Set(rows.map((r) => r.id));
+
+  const results: BulkTransitionResult[] = [];
+  for (const id of input.ids) {
+    if (!foundIds.has(id)) {
+      results.push({ id, ok: false, error: "RFI not found" });
+      continue;
+    }
+    try {
+      await transitionRfiStatus(appDb, userId, ctx, id, { toStatus: input.toStatus });
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to transition this RFI" });
+    }
+  }
+  return results;
 }
 
 export interface RfiReportResponse {

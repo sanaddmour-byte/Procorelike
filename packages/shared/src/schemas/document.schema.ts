@@ -1,4 +1,16 @@
 import { z } from "zod";
+import { paginationQuerySchema } from "./list-query.schema";
+
+export const DOCUMENT_SORT_KEYS = ["title"] as const;
+export type DocumentSortKey = (typeof DOCUMENT_SORT_KEYS)[number];
+
+/** GET /documents's query contract (Phase 23, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). `folderId` isn't part of this bag -- it's the essential scoping param the folder-browser UI always sends, not an optional filter, so the route keeps parsing it separately (see documents.routes.ts). */
+export const listDocumentsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(DOCUMENT_SORT_KEYS).optional(),
+  })
+  .strict();
+export type ListDocumentsQuery = z.infer<typeof listDocumentsQuerySchema>;
 
 export const createDocumentFolderSchema = z
   .object({

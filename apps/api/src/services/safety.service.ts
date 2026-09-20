@@ -1,14 +1,20 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
 import {
+  DEFAULT_PAGE_SIZE,
   requirePermission,
   SAFETY_INCIDENT_STATUS_TRANSITIONS,
   SAFETY_OBSERVATION_STATUS_TRANSITIONS,
   type CreateSafetyIncidentInput,
   type CreateSafetyObservationInput,
+  type ListSafetyIncidentsQuery,
+  type ListSafetyObservationsQuery,
+  type PaginatedResult,
   type PermissionContext,
+  type SafetyIncidentSortKey,
+  type SafetyObservationSortKey,
   type TransitionSafetyIncidentStatusInput,
 } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -50,15 +56,51 @@ export async function findSafetyIncidentById(
   });
 }
 
+const SAFETY_INCIDENT_SORT_COLUMNS: Record<
+  SafetyIncidentSortKey,
+  | typeof schema.safetyIncidents.description
+  | typeof schema.safetyIncidents.occurredAt
+  | typeof schema.safetyIncidents.severity
+  | typeof schema.safetyIncidents.status
+> = {
+  description: schema.safetyIncidents.description,
+  occurredAt: schema.safetyIncidents.occurredAt,
+  severity: schema.safetyIncidents.severity,
+  status: schema.safetyIncidents.status,
+};
+
 export async function listSafetyIncidents(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<SafetyIncidentRow[]> {
+  query: ListSafetyIncidentsQuery = {},
+): Promise<PaginatedResult<SafetyIncidentRow>> {
   requirePermission(ctx, "safety", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.safetyIncidents).where(eq(schema.safetyIncidents.projectId, projectId));
+    const conditions = [eq(schema.safetyIncidents.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.safetyIncidents.status, query.status));
+    if (query.search) conditions.push(ilike(schema.safetyIncidents.description, `%${query.search}%`));
+    const where = and(...conditions)!;
+
+    const sortColumn = SAFETY_INCIDENT_SORT_COLUMNS[query.sort ?? "occurredAt"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.safetyIncidents).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.safetyIncidents).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 
@@ -238,15 +280,52 @@ export async function findSafetyObservationById(
   });
 }
 
+const SAFETY_OBSERVATION_SORT_COLUMNS: Record<
+  SafetyObservationSortKey,
+  | typeof schema.safetyObservations.description
+  | typeof schema.safetyObservations.observedAt
+  | typeof schema.safetyObservations.category
+  | typeof schema.safetyObservations.status
+> = {
+  description: schema.safetyObservations.description,
+  observedAt: schema.safetyObservations.observedAt,
+  category: schema.safetyObservations.category,
+  status: schema.safetyObservations.status,
+};
+
 export async function listSafetyObservations(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<SafetyObservationRow[]> {
+  query: ListSafetyObservationsQuery = {},
+): Promise<PaginatedResult<SafetyObservationRow>> {
   requirePermission(ctx, "safety", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.safetyObservations).where(eq(schema.safetyObservations.projectId, projectId));
+    const conditions = [eq(schema.safetyObservations.projectId, projectId)];
+
+    if (query.category) conditions.push(eq(schema.safetyObservations.category, query.category));
+    if (query.status) conditions.push(eq(schema.safetyObservations.status, query.status));
+    if (query.search) conditions.push(ilike(schema.safetyObservations.description, `%${query.search}%`));
+    const where = and(...conditions)!;
+
+    const sortColumn = SAFETY_OBSERVATION_SORT_COLUMNS[query.sort ?? "observedAt"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.safetyObservations).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.safetyObservations).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

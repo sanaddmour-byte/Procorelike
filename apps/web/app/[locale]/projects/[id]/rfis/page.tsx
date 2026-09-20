@@ -2,13 +2,20 @@
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { PersonnelPicker } from "@/components/PersonnelPicker";
-import { apiJson } from "@/lib/api-client";
+import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 
 interface Rfi {
   id: string;
@@ -37,7 +44,6 @@ export default function RfisPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [rfis, setRfis] = useState<Rfi[] | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -51,27 +57,75 @@ export default function RfisPage() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkClose, setConfirmBulkClose] = useState(false);
+  const [bulkClosing, setBulkClosing] = useState(false);
   const pdfViewer = usePdfViewer();
-
-  function load(): void {
-    apiJson<Rfi[]>(`/rfis?projectId=${params.id}`)
-      .then(setRfis)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<Rfi>({ basePath: "/rfis", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
   }, [router, locale, params.id]);
+
+  // Selection is scoped to the currently rendered page/view -- clear it whenever
+  // the underlying result set changes so a stale id never lingers into a new view.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [serverTable.search, serverTable.filters, serverTable.sort, serverTable.page]);
+
+  async function handleBulkClose(): Promise<void> {
+    setConfirmBulkClose(false);
+    setBulkClosing(true);
+    try {
+      const results = await apiJson<{ id: string; ok: boolean; error?: string }[]>("/rfis/bulk-transition", {
+        method: "POST",
+        body: JSON.stringify({ ids: [...selectedIds], toStatus: "closed" }),
+      });
+      const failed = results.filter((r) => !r.ok).length;
+      setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
+      setSelectedIds(new Set());
+      serverTable.reload();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setBulkClosing(false);
+    }
+  }
 
   function memberName(userId: string | null): string {
     if (!userId) return t("unassigned");
     return members.find((m) => m.userId === userId)?.name ?? userId;
   }
+
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+
+  const columns: DataTableColumn<Rfi>[] = [
+    { key: "number", header: t("number"), render: (rfi) => rfi.number, sortValue: (rfi) => rfi.number, width: "110px" },
+    { key: "subject", header: t("subject"), render: (rfi) => rfi.subject, sortValue: (rfi) => rfi.subject },
+    {
+      key: "status",
+      header: t("status"),
+      render: (rfi) => <StatusBadge status={rfi.status} label={statusLabel(rfi.status, t)} />,
+      sortValue: (rfi) => rfi.status,
+      width: "130px",
+    },
+    { key: "ballInCourt", header: t("ballInCourt"), render: (rfi) => memberName(rfi.ballInCourtUserId), width: "160px" },
+    {
+      key: "flags",
+      header: t("flags"),
+      render: (rfi) => (
+        <div className="flex gap-1">
+          {rfi.isPrivate && <StatusBadge tone="neutral" label={t("private")} />}
+          {rfi.isOverdue && <StatusBadge tone="danger" label={t("overdue")} />}
+        </div>
+      ),
+      width: "160px",
+    },
+  ];
 
   async function handleCreate(e: FormEvent): Promise<void> {
     e.preventDefault();
@@ -102,7 +156,7 @@ export default function RfisPage() {
       setIsPrivate(false);
       setDistributionUserIds([]);
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -112,21 +166,29 @@ export default function RfisPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => void pdfViewer.openPdf(`/rfis/summary-report?projectId=${params.id}`, t("title"), "rfi-register.pdf")}
-              className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
-            >
-              {tc("exportAllPdf")}
-            </button>
-            <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
-              {t("newButton")}
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <PageHeader
+          title={t("title")}
+          actions={
+            <>
+              <button
+                onClick={() => void pdfViewer.openPdf(`/rfis/summary-report?projectId=${params.id}`, t("title"), "rfi-register.pdf")}
+                className="rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white"
+              >
+                {tc("exportAllPdf")}
+              </button>
+              <button
+                onClick={() => void downloadFile(`/rfis/summary-report?projectId=${params.id}&format=csv`, "rfi-register.csv")}
+                className="rounded-lg border-3 border-ink bg-white brutal-interactive px-3 py-2 text-sm font-semibold text-navy-800"
+              >
+                {tc("exportAllCsv")}
+              </button>
+              <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
+                {t("newButton")}
+              </button>
+            </>
+          }
+        />
 
         {showForm && (
           <form onSubmit={(e) => void handleCreate(e)} className="mb-6 flex flex-col gap-3 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
@@ -197,36 +259,71 @@ export default function RfisPage() {
         )}
 
         {error && <p className="text-maroon-700">{error}</p>}
-        {!rfis && !error && <p>{tc("loading")}</p>}
-        {rfis && rfis.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
-        <ul className="flex flex-col gap-3">
-          {rfis?.map((rfi) => (
-            <li key={rfi.id}>
-              <Link
-                href={`/${locale}/projects/${params.id}/rfis/${rfi.id}`}
-                className="block rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm brutal-interactive"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {rfi.number} — {rfi.subject}
-                  </span>
-                  <div className="flex shrink-0 gap-2">
-                    {rfi.isPrivate && <span className="rounded bg-navy-800 px-2 py-0.5 text-xs text-white">{t("private")}</span>}
-                    {rfi.isOverdue && <span className="rounded bg-maroon-100 px-2 py-0.5 text-xs text-maroon-800">{t("overdue")}</span>}
-                    <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">
-                      {statusLabel(rfi.status, t)}
-                    </span>
-                  </div>
-                </div>
-                <p className="mt-1 text-sm text-navy-600">
-                  {t("ballInCourt")}: {memberName(rfi.ballInCourtUserId)}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        <SavedViewsBar
+          projectId={params.id}
+          module="rfis"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
+        <FilterBar
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
+          searchPlaceholder={t("searchPlaceholder")}
+          filters={[
+            {
+              key: "status",
+              label: t("status"),
+              options: (["draft", "open", "answered", "closed"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+            },
+            {
+              key: "assigneeUserId",
+              label: t("ballInCourt"),
+              options: members.map((m) => ({ value: m.userId, label: m.name })),
+            },
+          ]}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
+          clearAllLabel={tc("clearAll")}
+        />
+
+        <BulkActionsBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+          <button
+            type="button"
+            disabled={bulkClosing}
+            onClick={() => setConfirmBulkClose(true)}
+            className="rounded-lg border-2 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {t("bulkCloseAction")}
+          </button>
+        </BulkActionsBar>
+
+        <DataTable<Rfi>
+          storageKey="rfis"
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          onRowClick={(rfi) => router.push(`/${locale}/projects/${params.id}/rfis/${rfi.id}`)}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+          selection={{ selectedIds, getRowId: (rfi) => rfi.id, onSelectionChange: setSelectedIds }}
+        />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <ConfirmDialog
+        open={confirmBulkClose}
+        title={t("bulkCloseConfirmTitle")}
+        message={t("bulkCloseConfirmMessage", { count: selectedIds.size })}
+        confirmLabel={t("bulkCloseAction")}
+        cancelLabel={tc("cancel")}
+        onConfirm={() => void handleBulkClose()}
+        onCancel={() => setConfirmBulkClose(false)}
+      />
     </>
   );
 }
