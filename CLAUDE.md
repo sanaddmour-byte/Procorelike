@@ -99,8 +99,24 @@ no-logo placeholder branch). Also applied a user-requested doubling of
 `docs/DATA_MODEL.md` §9r's "Post-ship fixes" for the full writeup; new
 regression tests cover both bugs.
 
-As of this writing: **Phase 32 (bulk actions
-rollout to Submittals) is complete and gate-verified** -- the second
+As of this writing: **Phase 33 (bulk actions rollout to Change Orders) is
+complete and gate-verified** -- the third mechanical repeat of Phase 28's
+bulk-actions recipe, this time on Change Orders. Added
+`bulkSubmitChangeOrdersSchema` (shared) and `bulkSubmitChangeOrders` (API
+service + `POST /change-orders/bulk-submit` route), the same
+`{ id, ok, error? }[]`-per-row, mixed-project-rejecting shape as the
+other three bulk endpoints, looping the existing single-item
+`submitChangeOrder`. Like Submittal's bulk-close, no `toStatus` field --
+`submitChangeOrder` is a single fixed action (draft -> pending_approval),
+not a generic transition; bulk approve/execute/reject are explicitly not
+built this phase. The Change Orders page reused `DataTable`'s `selection`
+prop and `BulkActionsBar` unchanged since Phase 28, same as the other
+three pages. See `docs/DATA_MODEL.md` §9u for the full writeup and
+`docs/ROADMAP.md`'s Phase 33 gate report for verification (4 new API
+tests plus Playwright confirming the `BulkActionsBar`/`ConfirmDialog`
+render correctly with zero console errors and RTL intact).
+
+Phase 32 (bulk actions rollout to Submittals) preceded this -- the second
 mechanical repeat of Phase 28's bulk-actions recipe, this time on
 Submittals. Added `bulkCloseSubmittalsSchema` (shared) and
 `bulkCloseSubmittals` (API service + `POST /submittals/bulk-close`

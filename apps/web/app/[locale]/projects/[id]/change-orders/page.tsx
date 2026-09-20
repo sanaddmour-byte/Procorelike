@@ -1,6 +1,8 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
@@ -155,6 +157,9 @@ export default function ChangeOrdersPage() {
   const [coCostImpact, setCoCostImpact] = useState("");
   const [coTimeImpact, setCoTimeImpact] = useState("0");
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkSubmit, setConfirmBulkSubmit] = useState(false);
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const pdfViewer = usePdfViewer();
 
   async function loadEvents(): Promise<void> {
@@ -173,6 +178,31 @@ export default function ChangeOrdersPage() {
     apiJson<BudgetLineItem[]>(`/budget-line-items?projectId=${params.id}`).then(setBudgetLineItems).catch(() => undefined);
     apiJson<Commitment[]>(`/commitments?projectId=${params.id}`).then(setCommitments).catch(() => undefined);
   }, [router, locale, params.id]);
+
+  // Selection is scoped to the currently rendered page/view -- clear it whenever
+  // the underlying result set changes so a stale id never lingers into a new view.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [serverTable.search, serverTable.filters, serverTable.sort, serverTable.page]);
+
+  async function handleBulkSubmit(): Promise<void> {
+    setConfirmBulkSubmit(false);
+    setBulkSubmitting(true);
+    try {
+      const results = await apiJson<{ id: string; ok: boolean; error?: string }[]>("/change-orders/bulk-submit", {
+        method: "POST",
+        body: JSON.stringify({ ids: [...selectedIds] }),
+      });
+      const failed = results.filter((r) => !r.ok).length;
+      setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
+      setSelectedIds(new Set());
+      serverTable.reload();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setBulkSubmitting(false);
+    }
+  }
 
   function budgetLineItemLabel(li: BudgetLineItem): string {
     const cc = costCodes.find((c) => c.id === li.costCodeId);
@@ -502,6 +532,17 @@ export default function ChangeOrdersPage() {
             clearAllLabel={tc("clearAll")}
           />
 
+          <BulkActionsBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+            <button
+              type="button"
+              disabled={bulkSubmitting}
+              onClick={() => setConfirmBulkSubmit(true)}
+              className="rounded-lg border-2 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {t("bulkSubmitAction")}
+            </button>
+          </BulkActionsBar>
+
           <DataTable<ChangeOrder>
             storageKey="change-orders"
             columns={changeOrderColumns}
@@ -513,10 +554,20 @@ export default function ChangeOrdersPage() {
             serverSort={serverTable.sort}
             onServerSortChange={serverTable.onServerSortChange}
             pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+            selection={{ selectedIds, getRowId: (co) => co.id, onSelectionChange: setSelectedIds }}
           />
         </section>
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <ConfirmDialog
+        open={confirmBulkSubmit}
+        title={t("bulkSubmitConfirmTitle")}
+        message={t("bulkSubmitConfirmMessage", { count: selectedIds.size })}
+        confirmLabel={t("bulkSubmitAction")}
+        cancelLabel={tc("cancel")}
+        onConfirm={() => void handleBulkSubmit()}
+        onCancel={() => setConfirmBulkSubmit(false)}
+      />
     </>
   );
 }

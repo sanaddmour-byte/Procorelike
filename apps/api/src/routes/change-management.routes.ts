@@ -1,5 +1,6 @@
 import type { Database } from "@siteops/db";
 import {
+  bulkSubmitChangeOrdersSchema,
   createChangeEventSchema,
   createChangeOrderSchema,
   createPotentialChangeOrderSchema,
@@ -196,6 +197,22 @@ export function changeOrdersRouter(appDb: Database, authDb: Database, env: Env):
       next(err);
     }
   });
+
+  // Registered before /:id (matches rfis.routes.ts's convention) so "bulk-submit" isn't parsed as an id.
+  router.post(
+    "/bulk-submit",
+    validateBody(bulkSubmitChangeOrdersSchema),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const authUser = req.authUser;
+        if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+        const results = await changeManagementService.bulkSubmitChangeOrders(appDb, authUser.id, req.body);
+        res.json(results);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
     try {

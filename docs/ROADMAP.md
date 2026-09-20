@@ -4065,6 +4065,77 @@ letter-shaping follow-up (Phase 30) also remain untouched.
   the API test suite (it had stopped between sessions again, the same
   recurring sandbox note as every prior phase's gate report).
 
+## Phase 33 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- per the user's "proceed"; Phase 32's
+gate report explicitly listed Change Orders as the next candidate module
+missing bulk actions, and this is the third mechanical repeat of Phase
+28's recipe) -- **PASSED**, see Verification.
+
+**What was built:**
+
+- **`packages/shared/src/schemas/financial.schema.ts`**:
+  `bulkSubmitChangeOrdersSchema` (`{ ids: string[] (1-100, uuid) }`) -- no
+  `toStatus` field, like Submittal's `bulkCloseSubmittalsSchema`, since
+  `submitChangeOrder` is a single fixed action (draft ->
+  pending_approval), not a generic transition with a caller-chosen
+  target. The wider Change Order workflow (submit/approve/execute/
+  reject) has more steps than RFI/Punch Item/Submittal, but only the
+  first step fits this bulk-action recipe -- bulk approve/execute/reject
+  are explicitly not built this phase.
+- **`apps/api/src/services/change-management.service.ts`**:
+  `bulkSubmitChangeOrders` -- loads every requested change order, rejects
+  the whole batch with 400 `mixed_projects` if the ids span more than one
+  project, loads one `PermissionContext`, then loops the exact same
+  `submitChangeOrder` a single-item POST already uses, so the draft-only
+  precondition applies per row. Returns `{ id, ok, error? }[]` so one bad
+  row doesn't fail the batch.
+- **`apps/api/src/routes/change-management.routes.ts`**: `POST
+  /change-orders/bulk-submit`, registered before the `/:id` dynamic
+  routes.
+- **Change Orders page**: reused `DataTable`'s `selection` prop and
+  `BulkActionsBar` unchanged since Phase 28 -- zero component changes,
+  only page-level wiring (selection state, a "Submit selected" action
+  gated behind `ConfirmDialog`, `Common.bulkPartialFailure` messaging,
+  selection cleared on `search`/`filters`/`sort`/`page` change), the same
+  shape as the RFIs/Punch List/Submittals pages.
+- **`apps/api/src/routes/phase33-change-order-bulk-actions.test.ts`**
+  (new): 4 tests mirroring the Phase 28/31/32 bulk-action suites --
+  full-batch success with a re-fetch confirming the status change to
+  `pending_approval`, a partial failure (one change order already
+  `pending_approval`, which can't be resubmitted), a missing id reported
+  per-row rather than 404ing the batch, and the empty-`ids` 400.
+- **Manual browser verification** (Playwright against the dev servers):
+  seeded a fresh draft change order via the API, selected it on the
+  Change Orders page, confirmed the `BulkActionsBar` showed "1 selected"
+  with "Submit selected"/"Clear selection", clicking it opened the
+  `ConfirmDialog` with the expected title and message, cancel closed it
+  cleanly, zero console errors observed throughout. Confirmed the Arabic
+  (`/ar/...`) page still renders `dir="rtl"`.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9u
+documenting this rollout and why the bulk schema omits a `toStatus`
+field.
+
+**Explicitly not built this phase, on record**: bulk `approve`/
+`execute`/`reject` on Change Orders, bulk actions on any further module,
+column resize, density modes, and client-side permission-aware UI hiding
+all remain deferred, as recorded in Phase 28's gate report. Document-
+viewer unification, annotation generalization, and the HarfBuzz-level
+Arabic letter-shaping follow-up (Phase 30) also remain untouched.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 251 tests across 46 files (247 pre-existing plus 4 new
+  `phase33-change-order-bulk-actions.test.ts` tests; every pre-existing
+  change-order-touching suite, including `financial.test.ts`, re-verified
+  unaffected), `apps/web`: 28, unaffected. Full `next build` succeeded
+  across all routes. Confirmed the sandbox's Postgres 16 cluster before
+  the API test suite (it had stopped between sessions again, the same
+  recurring sandbox note as every prior phase's gate report).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

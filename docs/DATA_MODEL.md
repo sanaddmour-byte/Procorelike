@@ -1139,6 +1139,55 @@ deferred, as recorded in §9p. Document-viewer unification, annotation
 generalization, and the HarfBuzz-level Arabic letter-shaping follow-up
 (§9r) also remain untouched by this phase.
 
+## 9u. Bulk actions rollout, module 4: Change Orders (Phase 33)
+
+The third mechanical repeat of §9p's recipe -- same shape as §9s (Punch
+List) and §9t (Submittals), a fourth module, no redesign.
+
+**`packages/shared/src/schemas/financial.schema.ts`**:
+`bulkSubmitChangeOrdersSchema` (`{ ids: string[] (1-100, uuid) }`) --
+like Submittal's `bulkCloseSubmittalsSchema`, **no `toStatus` field**.
+`submitChangeOrder` is a single fixed action (moves a `draft` change
+order to `pending_approval`), not a generic transition with a
+caller-chosen target -- the Change Order workflow overall has several
+steps (`submitChangeOrder`, `approveChangeOrder`, `executeChangeOrder`,
+`rejectChangeOrder`), but only the first one is a mechanical,
+precondition-gated single action suited to this recipe. Bulk actions for
+`approve`/`execute`/`reject` are not built this phase.
+
+**`apps/api/src/services/change-management.service.ts`**:
+`bulkSubmitChangeOrders` loads every requested change order, rejects the
+whole batch with 400 `mixed_projects` if the ids span more than one
+project, loads one `PermissionContext`, then loops the exact same
+`submitChangeOrder` a single-item `POST /change-orders/:id/submit`
+already uses -- so the draft-only precondition applies per row. Returns
+`{ id, ok, error? }[]`, same shape as the other three bulk endpoints.
+`POST /change-orders/bulk-submit` is registered before the `/:id`
+dynamic routes.
+
+**Web**: the Change Orders page reuses `DataTable`'s `selection` prop and
+`BulkActionsBar` unchanged since Phase 28 -- only page-level wiring is
+new, identical in shape to the RFIs/Punch List/Submittals pages
+(selection state, a `ConfirmDialog`-gated "Submit selected" button,
+`Common.bulkPartialFailure` on partial failure, selection cleared on
+`search`/`filters`/`sort`/`page` change).
+
+**Verified**: `apps/api/src/routes/phase33-change-order-bulk-actions.test.ts`
+(4 tests, mirroring the Phase 28/31/32 bulk-action suites -- full-batch
+success with a re-fetch confirming the status change to
+`pending_approval`, a partial failure where one change order is already
+`pending_approval` and can't be resubmitted, a missing id reported
+per-row rather than 404ing the batch, and the empty-`ids` 400). Full
+monorepo `typecheck`/`lint`/`test`/`build` all green (251 API tests, 200
+shared, 28 web, 1 db).
+
+**Explicitly not built this phase, on record**: bulk `approve`/
+`execute`/`reject` on Change Orders, bulk actions on any further module,
+column resize, density modes, and client-side permission-aware UI hiding
+all remain deferred, as recorded in §9p. Document-viewer unification,
+annotation generalization, and the HarfBuzz-level Arabic letter-shaping
+follow-up (§9r) also remain untouched by this phase.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

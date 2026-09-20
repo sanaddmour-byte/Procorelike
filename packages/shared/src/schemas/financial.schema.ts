@@ -186,6 +186,21 @@ export const createChangeOrderSchema = z
   .strict();
 export type CreateChangeOrderInput = z.infer<typeof createChangeOrderSchema>;
 
+/**
+ * Phase 33: bulk-submit contract, the third mechanical repeat of the
+ * Phase 28 bulk-actions recipe (after Phase 31's Punch List and Phase
+ * 32's Submittals). No extra field beyond `ids` -- submitChangeOrder is
+ * a single fixed action (draft -> pending_approval), the same shape as
+ * Submittal's bulkCloseSubmittalsSchema, not a generic transition with a
+ * caller-chosen target.
+ */
+export const bulkSubmitChangeOrdersSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+  })
+  .strict();
+export type BulkSubmitChangeOrdersInput = z.infer<typeof bulkSubmitChangeOrdersSchema>;
+
 export interface ChangeOrderApprovalEntry {
   userId: string;
   companyId: string;

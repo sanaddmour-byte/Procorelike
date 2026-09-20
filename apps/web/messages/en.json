@@ -574,7 +574,10 @@
     "approve": "Approve",
     "reject": "Reject",
     "approvalChain": "Approvals recorded",
-    "noApprovalsYet": "No approvals recorded yet."
+    "noApprovalsYet": "No approvals recorded yet.",
+    "bulkSubmitAction": "Submit selected",
+    "bulkSubmitConfirmTitle": "Submit selected change orders?",
+    "bulkSubmitConfirmMessage": "{count} change order(s) will be submitted for approval. Only drafts can be submitted -- others will be skipped."
   },
   "Billing": {
     "title": "Progress Billing",

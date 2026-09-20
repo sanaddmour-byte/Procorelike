@@ -7,6 +7,7 @@ import {
   requiresSecondApprover,
   requirePermission,
   type Approver,
+  type BulkSubmitChangeOrdersInput,
   type ChangeOrderSortKey,
   type ChangeOrderTargetType,
   type ChangeReason,
@@ -26,7 +27,7 @@ import { writeAuditLog } from "../lib/audit";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
 import { applyApprovedPrimeChangeToLineItem } from "./budget.service";
 import { notifyUsers } from "./notification.service";
-import { withUserContext } from "./permission.service";
+import { loadPermissionContext, withUserContext } from "./permission.service";
 
 type ChangeEventRow = typeof schema.changeEvents.$inferSelect;
 type PotentialChangeOrderRow = typeof schema.potentialChangeOrders.$inferSelect;
@@ -326,6 +327,61 @@ export async function submitChangeOrder(
     if (!updated) throw new Error("Failed to submit change order");
     return updated;
   });
+}
+
+export interface BulkSubmitChangeOrdersResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Phase 33: bulk-submit, the third mechanical repeat of the Phase 28/31/32
+ * bulk-actions recipe -- a thin loop over the exact same submitChangeOrder
+ * a single-item POST already uses, so the draft-only precondition and the
+ * audit log write both apply per row here too.
+ *
+ * Every id must belong to the same project, same reasoning as the RFI/
+ * Punch Item/Submittal versions: one PermissionContext can't correctly
+ * apply to rows from different projects. A missing id or a rule violation
+ * on one row (a change order that isn't a draft) is reported per-row
+ * instead of failing the batch.
+ */
+export async function bulkSubmitChangeOrders(
+  appDb: Database,
+  userId: string,
+  input: BulkSubmitChangeOrdersInput,
+): Promise<BulkSubmitChangeOrdersResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => {
+    return tx
+      .select({ id: schema.changeOrders.id, projectId: schema.changeOrders.projectId })
+      .from(schema.changeOrders)
+      .where(inArray(schema.changeOrders.id, input.ids));
+  });
+  if (rows.length === 0) throw new NotFoundError("No change orders found for the given ids");
+
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) {
+    throw new ApiError(400, "mixed_projects", "All selected change orders must belong to the same project");
+  }
+  const [projectId] = projectIds;
+  const ctx = await loadPermissionContext(appDb, userId, projectId!);
+  const foundIds = new Set(rows.map((r) => r.id));
+
+  const results: BulkSubmitChangeOrdersResult[] = [];
+  for (const id of input.ids) {
+    if (!foundIds.has(id)) {
+      results.push({ id, ok: false, error: "Change order not found" });
+      continue;
+    }
+    try {
+      await submitChangeOrder(appDb, userId, ctx, id);
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to submit this change order" });
+    }
+  }
+  return results;
 }
 
 async function currentApprover(tx: Tx, projectId: string, userId: string): Promise<Approver> {

@@ -574,7 +574,10 @@
     "approve": "اعتماد",
     "reject": "رفض",
     "approvalChain": "الموافقات المسجلة",
-    "noApprovalsYet": "لا توجد موافقات مسجلة بعد."
+    "noApprovalsYet": "لا توجد موافقات مسجلة بعد.",
+    "bulkSubmitAction": "إرسال المحدد",
+    "bulkSubmitConfirmTitle": "إرسال أوامر التغيير المحددة للموافقة؟",
+    "bulkSubmitConfirmMessage": "سيتم إرسال {count} من أوامر التغيير للموافقة. سيتم تخطي أي أمر ليس في حالة مسودة."
   },
   "Billing": {
     "title": "الفوترة التدريجية",
