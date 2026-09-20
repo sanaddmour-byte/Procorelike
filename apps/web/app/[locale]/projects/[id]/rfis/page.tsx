@@ -2,6 +2,8 @@
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { PersonnelPicker } from "@/components/PersonnelPicker";
+import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -55,6 +57,9 @@ export default function RfisPage() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [distributionUserIds, setDistributionUserIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkClose, setConfirmBulkClose] = useState(false);
+  const [bulkClosing, setBulkClosing] = useState(false);
   const pdfViewer = usePdfViewer();
   const serverTable = useServerTable<Rfi>({ basePath: "/rfis", projectId: params.id, defaultSort: { key: "number", direction: "asc" } });
 
@@ -65,6 +70,31 @@ export default function RfisPage() {
     }
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
   }, [router, locale, params.id]);
+
+  // Selection is scoped to the currently rendered page/view -- clear it whenever
+  // the underlying result set changes so a stale id never lingers into a new view.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [serverTable.search, serverTable.filters, serverTable.sort, serverTable.page]);
+
+  async function handleBulkClose(): Promise<void> {
+    setConfirmBulkClose(false);
+    setBulkClosing(true);
+    try {
+      const results = await apiJson<{ id: string; ok: boolean; error?: string }[]>("/rfis/bulk-transition", {
+        method: "POST",
+        body: JSON.stringify({ ids: [...selectedIds], toStatus: "closed" }),
+      });
+      const failed = results.filter((r) => !r.ok).length;
+      setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
+      setSelectedIds(new Set());
+      serverTable.reload();
+    } catch {
+      setError(tc("errorGeneric"));
+    } finally {
+      setBulkClosing(false);
+    }
+  }
 
   function memberName(userId: string | null): string {
     if (!userId) return t("unassigned");
@@ -259,6 +289,17 @@ export default function RfisPage() {
           clearAllLabel={tc("clearAll")}
         />
 
+        <BulkActionsBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+          <button
+            type="button"
+            disabled={bulkClosing}
+            onClick={() => setConfirmBulkClose(true)}
+            className="rounded-lg border-2 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {t("bulkCloseAction")}
+          </button>
+        </BulkActionsBar>
+
         <DataTable<Rfi>
           storageKey="rfis"
           columns={columns}
@@ -270,9 +311,19 @@ export default function RfisPage() {
           serverSort={serverTable.sort}
           onServerSortChange={serverTable.onServerSortChange}
           pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+          selection={{ selectedIds, getRowId: (rfi) => rfi.id, onSelectionChange: setSelectedIds }}
         />
       </main>
       <PdfViewerModal open={pdfViewer.open} data={pdfViewer.data} error={pdfViewer.error} title={pdfViewer.title} fileName={pdfViewer.fileName} onClose={pdfViewer.close} />
+      <ConfirmDialog
+        open={confirmBulkClose}
+        title={t("bulkCloseConfirmTitle")}
+        message={t("bulkCloseConfirmMessage", { count: selectedIds.size })}
+        confirmLabel={t("bulkCloseAction")}
+        cancelLabel={tc("cancel")}
+        onConfirm={() => void handleBulkClose()}
+        onCancel={() => setConfirmBulkClose(false)}
+      />
     </>
   );
 }

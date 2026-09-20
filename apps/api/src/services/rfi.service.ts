@@ -5,6 +5,7 @@ import {
   requirePermission,
   resolveEffectiveLevel,
   RFI_STATUS_TRANSITIONS,
+  type BulkTransitionRfiStatusInput,
   type CreateRfiInput,
   type CreateRfiResponseInput,
   type ListRfisQuery,
@@ -21,7 +22,7 @@ import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { notifyUsers } from "./notification.service";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
-import { withUserContext } from "./permission.service";
+import { loadPermissionContext, withUserContext } from "./permission.service";
 import { enforceWorkflowTransitionRule } from "./workflow-rule.service";
 
 type RfiRow = typeof schema.rfis.$inferSelect;
@@ -344,6 +345,62 @@ export async function transitionRfiStatus(
     });
     return withOverdue(updated);
   });
+}
+
+export interface BulkTransitionResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * DataTable row-selection's first bulk action (Phase 28, docs/DATA_MODEL.md
+ * §9p) -- a thin loop over the exact same `transitionRfiStatus` a single-
+ * item PATCH uses, so every rule it enforces (RFI_STATUS_TRANSITIONS,
+ * workflow rules, the audit log write) applies per row here too, not a
+ * parallel copy of that logic.
+ *
+ * Every id must belong to the same project: a bulk action only ever
+ * targets rows a user selected on one list page (one project's worth),
+ * and loading a single `PermissionContext` for a mix of projects would
+ * apply the wrong project's role to some of the rows -- reject the whole
+ * batch rather than risk that. A missing or already-processed id and a
+ * rule violation on one row (e.g. that RFI is already closed) are both
+ * reported per-row instead of failing the batch, so 9 valid transitions
+ * still go through when the 10th one is stale.
+ */
+export async function bulkTransitionRfiStatus(
+  appDb: Database,
+  userId: string,
+  input: BulkTransitionRfiStatusInput,
+): Promise<BulkTransitionResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => {
+    return tx.select({ id: schema.rfis.id, projectId: schema.rfis.projectId }).from(schema.rfis).where(inArray(schema.rfis.id, input.ids));
+  });
+  if (rows.length === 0) throw new NotFoundError("No RFIs found for the given ids");
+
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) {
+    throw new ApiError(400, "mixed_projects", "All selected RFIs must belong to the same project");
+  }
+  const [projectId] = projectIds;
+  const ctx = await loadPermissionContext(appDb, userId, projectId!);
+  const foundIds = new Set(rows.map((r) => r.id));
+
+  const results: BulkTransitionResult[] = [];
+  for (const id of input.ids) {
+    if (!foundIds.has(id)) {
+      results.push({ id, ok: false, error: "RFI not found" });
+      continue;
+    }
+    try {
+      await transitionRfiStatus(appDb, userId, ctx, id, { toStatus: input.toStatus });
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to transition this RFI" });
+    }
+  }
+  return results;
 }
 
 export interface RfiReportResponse {

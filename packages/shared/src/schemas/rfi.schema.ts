@@ -64,6 +64,24 @@ export const transitionRfiStatusSchema = z
   .strict();
 export type TransitionRfiStatusInput = z.infer<typeof transitionRfiStatusSchema>;
 
+/**
+ * POST /rfis/bulk-transition's body (Phase 28, the list-page bulk-actions
+ * pilot -- see docs/DATA_MODEL.md §9p). `ids` is capped at 100, matching
+ * `DEFAULT_PAGE_SIZE` twice over -- a bulk action only ever targets rows
+ * a user has actually selected on one page, never an unbounded set.
+ * Per-id transition legality (RFI_STATUS_TRANSITIONS, workflow rules)
+ * is still enforced one row at a time by the same `transitionRfiStatus`
+ * a single-item PATCH uses -- this schema only shapes the request, not
+ * the transition rules themselves.
+ */
+export const bulkTransitionRfiStatusSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+    toStatus: rfiStatusSchema,
+  })
+  .strict();
+export type BulkTransitionRfiStatusInput = z.infer<typeof bulkTransitionRfiStatusSchema>;
+
 /** Valid forward transitions — enforced server-side. Marking an official response auto-transitions draft/open → answered (see rfi.service.ts); this table also allows that same edge for an explicit PATCH. */
 export const RFI_STATUS_TRANSITIONS: Record<RfiStatus, readonly RfiStatus[]> = {
   draft: ["open"],

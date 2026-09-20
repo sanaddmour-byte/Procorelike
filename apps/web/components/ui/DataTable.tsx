@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { List, type RowComponentProps } from "react-window";
 import { EmptyState } from "./EmptyState";
 import { ErrorState } from "./ErrorState";
@@ -20,14 +20,21 @@ export interface DataTableColumn<T> {
   hideable?: boolean;
 }
 
+interface RowSelectionHandlers<T> {
+  isSelected: (row: T) => boolean;
+  toggle: (row: T) => void;
+}
+
 interface RowProps<T> {
   rows: T[];
   columns: DataTableColumn<T>[];
   onRowClick?: (row: T) => void;
   gridTemplate: string;
+  selection?: RowSelectionHandlers<T>;
 }
 
-function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate }: RowComponentProps<RowProps<T>>) {
+function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate, selection }: RowComponentProps<RowProps<T>>) {
+  const tc = useTranslations("Common");
   const row = rows[index];
   if (!row) return null;
   return (
@@ -50,6 +57,11 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate
         onRowClick ? "cursor-pointer hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700" : ""
       } ${index % 2 === 1 ? "bg-cream/50" : "bg-white"}`}
     >
+      {selection && (
+        <div role="cell" className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} className="h-4 w-4" />
+        </div>
+      )}
       {columns.map((col) => (
         <div key={col.key} role="cell" className={`truncate ${col.align === "end" ? "text-end" : ""}`}>
           {col.render(row)}
@@ -78,6 +90,12 @@ export interface DataTablePagination {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+}
+
+export interface DataTableSelection<T> {
+  selectedIds: Set<string>;
+  getRowId: (row: T) => string;
+  onSelectionChange: (ids: Set<string>) => void;
 }
 
 interface Props<T> {
@@ -117,6 +135,17 @@ interface Props<T> {
    * existing caller already relies on.
    */
   storageKey?: string;
+  /**
+   * Enables a checkbox column: one per row plus a header "select all
+   * (currently rendered rows)" checkbox. `getRowId` must return a stable
+   * id per row (usually the row's own `id`); `selectedIds` is owned by
+   * the caller, not this component, so it can be read back into a bulk-
+   * actions bar rendered alongside the table. Selection is scoped to
+   * whatever rows are currently rendered (one page in server mode) --
+   * "select all" never reaches into rows outside the current page/view.
+   * Omit to keep every row exactly as before, no checkbox column at all.
+   */
+  selection?: DataTableSelection<T>;
 }
 
 function loadHiddenColumns(storageKey: string): Set<string> {
@@ -149,8 +178,9 @@ function saveHiddenColumns(storageKey: string, hidden: Set<string>): void {
  * Server-driven sort/pagination (Phase 21) are additive: a caller that
  * passes neither `serverSort`/`onServerSortChange` nor `pagination` gets
  * the exact original client-side behavior, unchanged. Column visibility
- * (Phase 27) is the same shape: a caller that omits `storageKey` gets no
- * "Columns" toggle and every column always renders, unchanged.
+ * (Phase 27) and row selection (Phase 28) are the same shape: omitting
+ * `storageKey`/`selection` renders exactly as before, no toggle UI and
+ * no checkbox column at all.
  */
 export function DataTable<T>({
   columns,
@@ -167,12 +197,14 @@ export function DataTable<T>({
   onServerSortChange,
   pagination,
   storageKey,
+  selection,
 }: Props<T>) {
   const tc = useTranslations("Common");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => new Set());
   const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (storageKey) setHiddenColumns(loadHiddenColumns(storageKey));
@@ -193,7 +225,7 @@ export function DataTable<T>({
     saveHiddenColumns(storageKey, next);
   }
 
-  const gridTemplate = visibleColumns.map((c) => c.width ?? "1fr").join(" ");
+  const gridTemplate = [selection ? "36px" : null, ...visibleColumns.map((c) => c.width ?? "1fr")].filter((track): track is string => track !== null).join(" ");
   const activeSortKey = onServerSortChange ? (serverSort?.key ?? null) : sortKey;
   const activeSortDir = onServerSortChange ? (serverSort?.direction ?? "asc") : sortDir;
 
@@ -225,11 +257,42 @@ export function DataTable<T>({
     }
   }
 
+  const selectedOnPageCount = useMemo(() => {
+    if (!selection) return 0;
+    return sortedRows.reduce((n, row) => (selection.selectedIds.has(selection.getRowId(row)) ? n + 1 : n), 0);
+  }, [selection, sortedRows]);
+  const allOnPageSelected = Boolean(selection) && sortedRows.length > 0 && selectedOnPageCount === sortedRows.length;
+  const someOnPageSelected = Boolean(selection) && selectedOnPageCount > 0 && !allOnPageSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someOnPageSelected;
+  }, [someOnPageSelected]);
+
+  function toggleSelectAllOnPage(): void {
+    if (!selection) return;
+    const next = new Set(selection.selectedIds);
+    if (allOnPageSelected) {
+      for (const row of sortedRows) next.delete(selection.getRowId(row));
+    } else {
+      for (const row of sortedRows) next.add(selection.getRowId(row));
+    }
+    selection.onSelectionChange(next);
+  }
+
+  function toggleRowSelected(row: T): void {
+    if (!selection) return;
+    const id = selection.getRowId(row);
+    const next = new Set(selection.selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    selection.onSelectionChange(next);
+  }
+
   if (error) return <ErrorState message={error} onRetry={onRetry} />;
   if (!rows) return <LoadingState rows={6} />;
   if (rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
 
-  const minWidth = minTableWidth(visibleColumns as DataTableColumn<unknown>[]);
+  const minWidth = minTableWidth(visibleColumns as DataTableColumn<unknown>[]) + (selection ? 48 : 0);
   const pageCount = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize)) : null;
 
   return (
@@ -268,6 +331,18 @@ export function DataTable<T>({
       <div role="table" aria-rowcount={(pagination?.total ?? rows.length) + 1} className="overflow-x-auto">
         <div style={{ minWidth }}>
           <div role="row" className="grid items-center gap-3 border-b-3 border-ink bg-cream px-3 text-xs font-semibold text-navy-800" style={{ gridTemplateColumns: gridTemplate, height: 36 }}>
+            {selection && (
+              <div role="columnheader" className="flex items-center justify-center">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={allOnPageSelected}
+                  onChange={toggleSelectAllOnPage}
+                  aria-label={tc("selectAllRows")}
+                  className="h-4 w-4"
+                />
+              </div>
+            )}
             {visibleColumns.map((col) => (
               <button
                 key={col.key}
@@ -287,7 +362,13 @@ export function DataTable<T>({
             rowComponent={DataTableRow}
             rowCount={sortedRows.length}
             rowHeight={rowHeight}
-            rowProps={{ rows: sortedRows, columns: visibleColumns, onRowClick, gridTemplate }}
+            rowProps={{
+              rows: sortedRows,
+              columns: visibleColumns,
+              onRowClick,
+              gridTemplate,
+              selection: selection ? { isSelected: (row: T) => selection.selectedIds.has(selection.getRowId(row)), toggle: toggleRowSelected } : undefined,
+            }}
             style={{ height: Math.min(maxHeight, sortedRows.length * rowHeight) }}
           />
         </div>

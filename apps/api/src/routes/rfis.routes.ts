@@ -1,5 +1,12 @@
 import type { Database } from "@siteops/db";
-import { createRfiResponseSchema, createRfiSchema, listRfisQuerySchema, transitionRfiStatusSchema, updateRfiSchema } from "@siteops/shared";
+import {
+  bulkTransitionRfiStatusSchema,
+  createRfiResponseSchema,
+  createRfiSchema,
+  listRfisQuerySchema,
+  transitionRfiStatusSchema,
+  updateRfiSchema,
+} from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -76,6 +83,17 @@ export function rfisRouter(appDb: Database, authDb: Database, env: Env): Router 
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="rfi-register.pdf"`);
       res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/bulk-transition", validateBody(bulkTransitionRfiStatusSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const results = await rfiService.bulkTransitionRfiStatus(appDb, authUser.id, req.body);
+      res.json(results);
     } catch (err) {
       next(err);
     }

@@ -792,6 +792,77 @@ module before rolling out over several phases, wiring this feature is a
 one-line, purely-additive prop per call site with no server-side
 counterpart to design per module, so there was no reason to stage it.
 
+## 9p. DataTable row selection + bulk actions pilot (Phase 28)
+
+Picks up the other half of §9o's "column resize and bulk row selection
+remain deferred" note -- bulk actions, proven on one module (RFIs) before
+any wider rollout, the same staging discipline the list-query contract
+used in Phase 21 and for the same reason: unlike column visibility, a
+bulk action needs a real server-side counterpart (a bulk-mutation
+endpoint) designed per module, not just a UI prop.
+
+**`DataTable` shape**: a new `selection?: DataTableSelection<T>` prop
+(`{ selectedIds: Set<string>; getRowId: (row: T) => string;
+onSelectionChange: (ids: Set<string>) => void }`). When set, a checkbox
+column renders at the start of the grid -- one checkbox per row plus a
+header "select all" checkbox scoped to whatever rows are currently
+rendered (one page, in server mode; `selection` never reaches into rows
+outside the current view). `selectedIds` is owned by the caller, not
+`DataTable`, so a page can read it back into a bulk-actions bar rendered
+alongside the table. Omitting `selection` renders exactly as before --
+the same additive shape column visibility (Phase 27) and server
+sort/pagination (Phase 21) already established.
+
+**`BulkActionsBar`** (`components/ui/BulkActionsBar.tsx`): a small,
+deliberately generic toolbar -- "N selected," a clear-selection button,
+and whatever action buttons the page passes as children. Which bulk
+actions make sense for a module (close, assign, export, ...) and how
+each one calls that module's API is left entirely to the page; the
+component itself renders nothing when `count === 0`.
+
+**The one bulk action built this phase**: `POST /rfis/bulk-transition`
+(`bulkTransitionRfiStatus` in `rfi.service.ts`), wired into the RFIs
+list page as a "Close selected" button. It is a thin loop over the exact
+same `transitionRfiStatus` a single-item PATCH already uses -- every rule
+that function enforces (`RFI_STATUS_TRANSITIONS`, workflow-transition
+rules, the audit log write) applies per row here too, not a parallel copy
+of that logic. Two things this endpoint does that a naive "loop over
+PATCH client-side" wouldn't get right on its own:
+
+1. **Every id must belong to the same project, checked before any row is
+   touched.** A bulk action only ever targets rows selected on one list
+   page (one project's worth); loading a single `PermissionContext` for
+   a mix of projects would apply the wrong project's role to some rows.
+   Mixed-project ids reject the whole batch with 400 `mixed_projects`
+   rather than risk that.
+2. **A rule violation or missing id on one row doesn't fail the batch.**
+   The response is `{ id, ok, error? }[]`, one entry per requested id --
+   9 valid closes still go through when the 10th RFI is already closed or
+   the id doesn't exist. The web page surfaces this as `Common.
+   bulkPartialFailure` ("N of M could not be updated") rather than a
+   generic error, and still reloads the table and clears the selection so
+   the successful 9 show their new status immediately.
+
+**Selection lifecycle on the web side**: the RFIs page clears
+`selectedIds` whenever `serverTable.search`/`filters`/`sort`/`page`
+changes (a `useEffect` keyed on those four), so a checked id never
+lingers into a different filtered view or page where it isn't even
+rendered -- consistent with "select all" being page-scoped, not global.
+
+**Explicitly not built this phase, on record**: bulk actions on any
+module besides RFIs, column resize, and density modes all remain
+deferred -- rolling this pattern out to more modules (Punch List bulk
+status change, Submittals bulk reassignment, etc.) is now a mechanical
+repeat of this recipe (extend that module's transition/mutation schema
+with a bulk variant, loop the existing single-item service function,
+wire `selection` + `BulkActionsBar` into the page), not a redesign.
+Client-side hiding of actions the current user lacks permission for
+(the parent spec's Section 17) is not implemented here or anywhere else
+in the app yet -- the API independently enforces every permission check
+regardless (`requirePermission` inside `transitionRfiStatus` itself), so
+this is a UX polish gap, not a security one; flagged here rather than
+silently carried forward.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

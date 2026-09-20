@@ -3666,6 +3666,108 @@ tokens, the PDF architecture overhaul) remains unstarted.
   Confirmed the sandbox's Postgres 16 cluster was already running before
   the API test suite.
 
+## Phase 28 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- following an architectural-audit
+check-in against the full 42-section spec, which turned up two concrete,
+still-open items on the DataTable side: `DataTable.tsx`'s own doc comment
+has flagged "bulk row selection" as deferred since its first build, and
+the spec's Section 9 names bulk actions explicitly, with Section 17
+requiring the API to independently enforce permissions regardless of
+what the UI does; per the user's "proceed with the remaining work") --
+**PASSED**, see Verification. Bulk actions are piloted on one module
+(RFIs) before any wider rollout, the same staging discipline Phase 21
+used for the list-query contract.
+
+**What was built:**
+
+- **`apps/web/components/ui/DataTable.tsx`**: a new `selection?:
+  DataTableSelection<T>` prop (`selectedIds`, `getRowId`,
+  `onSelectionChange`) renders a checkbox column -- per-row checkboxes
+  plus a header "select all" checkbox scoped to whatever rows are
+  currently rendered (one page, in server mode). Additive: a table that
+  omits `selection` renders exactly as before, the same shape
+  `storageKey` (Phase 27) and `serverSort`/`pagination` (Phase 21)
+  already established.
+- **`apps/web/components/ui/BulkActionsBar.tsx`** (new): a small generic
+  toolbar -- selected count, a clear-selection button, and whatever
+  action buttons the page passes as children. Renders nothing when
+  nothing is selected. Which bulk actions exist for a module and how
+  each calls that module's API is left to the page, not this component.
+- **`packages/shared/src/schemas/rfi.schema.ts`**: `bulkTransitionRfiStatusSchema`
+  (`{ ids: string[] (1-100, uuid), toStatus: RfiStatus }`).
+- **`apps/api/src/services/rfi.service.ts`**: `bulkTransitionRfiStatus`
+  -- loads every requested RFI, rejects the whole batch with 400
+  `mixed_projects` if the ids span more than one project (a bulk action
+  only ever targets one project's worth of selected rows, and loading one
+  `PermissionContext` for a mix of projects would apply the wrong
+  project's role to some rows), then loops the exact same
+  `transitionRfiStatus` a single-item PATCH already uses -- so
+  `RFI_STATUS_TRANSITIONS`, workflow-transition rules, and the audit log
+  write all apply per row here too, not a parallel copy of that logic. A
+  rule violation or missing id on one row is reported as `{ id, ok:
+  false, error }` in the response array rather than failing the whole
+  batch, so 9 valid transitions still go through when the 10th is stale.
+- **`apps/api/src/routes/rfis.routes.ts`**: `POST /rfis/bulk-transition`,
+  registered as a literal route before the `/:id` dynamic routes
+  (matching this file's existing convention for `/summary-report`).
+- **RFIs list page**: wired `selection` into `DataTable`, added a "Close
+  selected" button in a `BulkActionsBar`, gated behind a `ConfirmDialog`.
+  Partial failures surface as `Common.bulkPartialFailure` ("N of M could
+  not be updated") rather than a generic error. Selection clears
+  whenever `serverTable.search`/`filters`/`sort`/`page` changes, so a
+  checked id never lingers into a different filtered view or a page it
+  isn't even rendered on.
+- **`apps/api/src/routes/phase28-bulk-actions.test.ts`** (new): 4 tests
+  -- full-batch success (with a re-fetch confirming the status actually
+  changed), a partial failure (one already-closed RFI alongside a valid
+  one), a missing id reported as a per-row failure rather than 404ing the
+  batch, and the empty-`ids`-array 400 from schema validation.
+- **Manual browser verification** (Playwright against the dev servers):
+  created two fresh RFIs, selected both via the new checkboxes, opened
+  the bulk-actions bar, confirmed the "Close selected" dialog, and
+  observed the exact partial-failure path in the running app -- draft
+  RFIs can't jump straight to closed (`RFI_STATUS_TRANSITIONS.draft =
+  ["open"]` only), so the UI correctly showed "2 of 2 could not be
+  updated" rather than silently doing nothing or crashing. This exercises
+  the same code path the success-case API test covers, from the actual
+  UI rather than a raw HTTP call.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` §9o's "bulk row
+selection remain[s] deferred" note is superseded by this phase for RFIs
+specifically; §9p records the pilot and what's still deferred for every
+other module.
+
+**Explicitly not built this phase, on record**: bulk actions on any
+module besides RFIs, column resize, and density modes all remain
+deferred -- extending this pattern to more modules is now a mechanical
+repeat of this recipe, not a redesign. Client-side hiding of actions a
+user lacks permission for (spec Section 17) is not implemented here or
+anywhere else in the app -- the API independently enforces every
+permission check regardless, so this is a UX-polish gap, not a security
+one, flagged rather than silently carried forward. The much larger
+remaining body of the parent spec -- the PDF architecture overhaul
+(Arabic font embedding in particular, confirmed still using only
+`StandardFonts.Helvetica`), document-viewer unification, and annotation
+generalization -- has not been started; see the architectural-audit
+findings that opened this phase for the full breakdown against the
+spec's own 10-phase order.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 230 tests across 41 files (226 pre-existing plus the 4 new
+  Phase 28 tests; every pre-existing RFI-touching suite, including
+  `rfi.test.ts` and `rfi-list-query.test.ts`, re-verified unaffected),
+  `apps/web`: 28, unaffected. The expected stderr blocks in the API test
+  run (mailer/Expo-push network calls failing in this sandbox) are
+  pre-existing and unrelated. Full `next build` succeeded across all
+  routes including the RFIs page. Confirmed the sandbox's Postgres 16
+  cluster before the API test suite (it had stopped between sessions
+  again, the same recurring sandbox note as every prior phase's gate
+  report).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

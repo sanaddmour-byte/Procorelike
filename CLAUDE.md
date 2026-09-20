@@ -81,32 +81,53 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 27 (DataTable column
-visibility) is complete and gate-verified** -- the next item in the
-user-directed "Enterprise UX, Data Architecture & PDF System Upgrade"
-initiative after Phase 26 closed out the list-query-contract rollout.
-`components/ui/DataTable.tsx` gained an optional per-column `hideable`
-flag and a table-level `storageKey` prop that turns on a "Columns"
-show/hide menu, persisted per browser via `localStorage` (the same
-per-browser-only pattern `GlobalSearch`'s recent-searches already use,
-not a database-backed preference -- see `docs/DATA_MODEL.md` §9o for why
-that's the right call for this feature specifically). Both are additive:
-omit them and a table renders exactly as before. All ~20 pages already on
-`DataTable` got a unique `storageKey` in this same phase, verified with a
-Playwright smoke check against the dev servers (hide a column, reload,
-confirm it stays hidden). Column resize and bulk row selection remain
-deferred, unchanged from `DataTable.tsx`'s own doc comment since its
-first build. Scoping this phase also surfaced that two other items the
-parent spec's remaining-work list names -- global search and the
-navigation/icon-rail shell -- already exist (`search.service.ts` +
-`GlobalSearch.tsx`, `components/shell/`), shipped in an earlier,
-un-phase-tracked "UX/UI foundation pass" predating Phase 21's numbering;
-Phase 27's gate report records that correction rather than re-building
-them. Phase 26 (server-driven list query contract rolled out to
-Schedule, Bidding, and Estimating) preceded this, closing out the
-list-query-contract half of the initiative -- every real list module in
-the app has server-side search/filter/sort/pagination. No changes to the
-shared contract
+mid-build corrections). As of this writing: **Phase 28 (DataTable row
+selection + a bulk-actions pilot on RFIs) is complete and
+gate-verified** -- built after an architectural-audit check-in against
+the full 42-section "Enterprise UX, Data Architecture & PDF System
+Upgrade" spec turned up two concrete open items: `DataTable.tsx`'s own
+doc comment has flagged bulk row selection as deferred since its first
+build, and the spec's Section 17 requires the API to independently
+enforce permissions regardless of UI state (already true here --
+`requirePermission` runs inside `transitionRfiStatus` itself). Bulk
+actions are piloted on one module before any wider rollout, same staging
+discipline Phase 21 used for the list-query contract: `DataTable` gained
+an optional `selection` prop (checkbox column + header "select all,"
+scoped to whatever's currently rendered), a new generic
+`BulkActionsBar` component, and one real action -- `POST
+/rfis/bulk-transition`, a thin loop over the exact same
+`transitionRfiStatus` a single-item PATCH already uses, rejecting the
+whole batch with 400 if the selected ids span more than one project
+(loading one `PermissionContext` for a mix of projects would apply the
+wrong project's role to some rows) and reporting a per-row failure (e.g.
+one already-closed RFI) without failing the rest of the batch. See
+`docs/DATA_MODEL.md` §9p for the full design and what's explicitly still
+deferred (bulk actions on other modules, column resize, density modes,
+and client-side permission-aware UI hiding -- a UX gap, not a security
+one, since the API enforces regardless). The audit that opened this
+phase is also worth keeping in mind for what comes next: the much larger
+remaining half of the parent spec -- the PDF architecture overhaul, most
+notably Arabic font embedding (confirmed still `StandardFonts.Helvetica`
+only, a real gap for a bilingual product), document-viewer unification,
+and annotation generalization -- has not been started.
+
+Phase 27 (DataTable column visibility) preceded this: `DataTable.tsx`
+gained an optional per-column `hideable` flag and a table-level
+`storageKey` prop that turns on a "Columns" show/hide menu, persisted per
+browser via `localStorage` (the same per-browser-only pattern
+`GlobalSearch`'s recent-searches already use, not a database-backed
+preference -- see `docs/DATA_MODEL.md` §9o). All ~20 pages already on
+`DataTable` got a unique `storageKey` in that phase. Scoping it also
+surfaced that two other items the parent spec's remaining-work list
+names -- global search and the navigation/icon-rail shell -- already
+exist (`search.service.ts` + `GlobalSearch.tsx`, `components/shell/`),
+shipped in an earlier, un-phase-tracked "UX/UI foundation pass" predating
+Phase 21's numbering; Phase 27's gate report records that correction
+rather than re-building them. Phase 26 (server-driven list query
+contract rolled out to Schedule, Bidding, and Estimating) preceded that,
+closing out the list-query-contract half of the initiative -- every real
+list module in the app has server-side search/filter/sort/pagination. No
+changes to the shared contract
 (`packages/shared/schemas/list-query.schema.ts`, `PaginatedResult<T>`)
 itself this phase. Schedule's pre-migration default order was an in-JS
 sort on `sortOrder, startDate` (a manual drag-order), not one column like
