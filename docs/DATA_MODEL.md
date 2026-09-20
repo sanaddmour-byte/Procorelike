@@ -589,17 +589,53 @@ library, and adopting one now would touch every existing page's dependency
 footprint for no problem it uniquely solves. Revisit only if a real
 caching/dedup need surfaces once more modules migrate.
 
-**Migrated so far** (Phase 21 + 22 + 23 + 24): RFIs, Submittals, Change
-Orders, Punch List, Commitments, Documents, Drawings, Meetings,
-Correspondence, Inspections, T&M Tickets, Transmittals, Safety Incidents.
-Still on the old "fetch everything, filter client-side" path: Schedule,
-Direct Costs, Prime Contract, Billing, Prequalification, Bidding,
-Estimating, and Safety Observations (deliberately left out of Phase 24,
-same documented scope cut as Change Events in Phase 22 -- see
-`safety.schema.ts`'s doc comment). Migrating each remaining module is a
-matter of repeating this pattern (extend the shared query schema, move
-the service's filter/sort/pagination into SQL, wire the page onto
-`useServerTable` + `DataTable`'s server props), not re-designing it.
+**Migrated so far** (Phase 21 + 22 + 23 + 24 + 25): RFIs, Submittals,
+Change Orders, Punch List, Commitments, Documents, Drawings, Meetings,
+Correspondence, Inspections, T&M Tickets, Transmittals, Safety Incidents,
+Direct Costs, Payment Applications (Billing), Prequalification, Safety
+Observations. Still on the old "fetch everything, filter client-side"
+path: Schedule, Bidding, Estimating. **Prime Contract is not a list
+module at all** -- `prime-contract.service.ts` has no `list*` function,
+only `getPrimeContractByProject` (one row per project, enforced by a
+unique index), and its page is a detail/edit form, not a table; earlier
+phase notes that filed it under "still on client-side filtering" were
+imprecise and are corrected here. Migrating each remaining real list
+module is a matter of repeating this pattern (extend the shared query
+schema, move the service's filter/sort/pagination into SQL, wire the
+page onto `useServerTable` + `DataTable`'s server props), not
+re-designing it.
+
+**When a module has no plain text column at all to search or sort by,
+join to the table that does, the same way Inspections joined
+`checklist_templates` in Phase 24 -- don't just drop the feature.**
+Phase 25's Payment Applications (`payment_applications` has only
+`commitmentId`/dates/`status`, no title) and Prequalification
+(`prequalifications` has only `companyId`/`status`/score fields) both
+hit this: `listPaymentApplications` does a `leftJoin` to `commitments`
+(left, since `commitmentId` is nullable for a prime-contract
+application) and searches/sorts on `commitments.number`/`title`;
+`listPrequalifications` does an `innerJoin` to `companies` and
+searches/sorts on `companies.name`. This is a different call than the
+"drop `sortValue`" fix below: that one applies when the module *already
+has* a plain field to fall back on (Commitments' own `number`/`title`,
+T&M Tickets' `description`, Safety Incidents' `description`) and the
+joined field is a bonus that wasn't judged worth a join; here, without
+the join there is nothing to search or sort by at all, so the join is
+the whole feature, not an add-on.
+
+**Not every list page uses `DataTable`, and `useServerTable` migrates
+onto a plain card list just as well -- there's no column header to
+click, so drive sort from an explicit control instead.** Prequalification
+and Safety Observations (Phase 25) both render an array of expandable
+cards with inline forms, not a `DataTableColumn[]` table -- migrating
+them still means real server-side search/filter/sort/pagination, just
+without `DataTable`'s built-in sortable-header and pagination-footer
+UI. The fix used here: a plain `<select>` next to `FilterBar` that calls
+`serverTable.onServerSortChange(key)` on change (exactly what a column
+header does internally), and a hand-rolled pagination footer copying
+`DataTable`'s own markup/classes so it looks identical. Any future
+non-tabular list page should follow this same recipe rather than
+skipping sort/pagination because "there's no table."
 
 **A `DataTable` column's `key` must exactly match a member of its
 module's server sort-key enum whenever that column also sets

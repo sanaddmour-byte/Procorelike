@@ -1,6 +1,14 @@
 import { schema, withRequestContext, type Database } from "@siteops/db";
-import { requirePermission, type CreateDirectCostInput, type PermissionContext } from "@siteops/shared";
-import { eq } from "drizzle-orm";
+import {
+  DEFAULT_PAGE_SIZE,
+  requirePermission,
+  type CreateDirectCostInput,
+  type DirectCostSortKey,
+  type ListDirectCostsQuery,
+  type PaginatedResult,
+  type PermissionContext,
+} from "@siteops/shared";
+import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
 import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { withUserContext } from "./permission.service";
@@ -50,15 +58,53 @@ export async function findDirectCostById(appDb: Database, userId: string, direct
   });
 }
 
+const DIRECT_COST_SORT_COLUMNS: Record<
+  DirectCostSortKey,
+  | typeof schema.directCosts.description
+  | typeof schema.directCosts.type
+  | typeof schema.directCosts.amount
+  | typeof schema.directCosts.incurredDate
+  | typeof schema.directCosts.status
+> = {
+  description: schema.directCosts.description,
+  type: schema.directCosts.type,
+  amount: schema.directCosts.amount,
+  incurredDate: schema.directCosts.incurredDate,
+  status: schema.directCosts.status,
+};
+
 export async function listDirectCosts(
   appDb: Database,
   userId: string,
   ctx: PermissionContext,
   projectId: string,
-): Promise<DirectCostRow[]> {
+  query: ListDirectCostsQuery = {},
+): Promise<PaginatedResult<DirectCostRow>> {
   requirePermission(ctx, "direct_costs", "read");
   return withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
-    return tx.select().from(schema.directCosts).where(eq(schema.directCosts.projectId, projectId));
+    const conditions = [eq(schema.directCosts.projectId, projectId)];
+
+    if (query.status) conditions.push(eq(schema.directCosts.status, query.status));
+    if (query.search) conditions.push(ilike(schema.directCosts.description, `%${query.search}%`));
+    const where = and(...conditions)!;
+
+    const sortColumn = DIRECT_COST_SORT_COLUMNS[query.sort ?? "incurredDate"];
+    const orderFn = query.direction === "desc" ? desc : asc;
+
+    const isPaginated = query.page !== undefined || query.pageSize !== undefined;
+    let rowsQuery = tx.select().from(schema.directCosts).where(where).orderBy(orderFn(sortColumn));
+    if (isPaginated) {
+      const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE;
+      const page = query.page ?? 1;
+      rowsQuery = rowsQuery.limit(pageSize).offset((page - 1) * pageSize) as typeof rowsQuery;
+    }
+
+    const [rows, [totalRow]] = await Promise.all([
+      rowsQuery,
+      tx.select({ value: count() }).from(schema.directCosts).where(where),
+    ]);
+
+    return { rows, total: totalRow?.value ?? 0 };
   });
 }
 

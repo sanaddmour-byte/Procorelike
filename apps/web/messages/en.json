@@ -783,6 +783,11 @@
     "noResultsObservations": "No safety observations match your filters.",
     "occurredAt": "Occurred at",
     "observedAt": "Observed at",
+    "sortBy": "Sort by",
+    "sortByObservedAt": "Sort by date observed",
+    "sortByDescription": "Sort by description",
+    "sortByCategory": "Sort by category",
+    "sortByStatus": "Sort by status",
     "severity": "Severity",
     "severityNearMiss": "Near miss",
     "severityMinor": "Minor",
@@ -1129,7 +1134,11 @@
     "submitPrompt": "Submit prequalification details on this company's behalf",
     "submit": "Submit",
     "markQualified": "Mark qualified",
-    "markDisqualified": "Mark disqualified"
+    "markDisqualified": "Mark disqualified",
+    "sortBy": "Sort by",
+    "sortByCompany": "Sort by company",
+    "sortByStatus": "Sort by status",
+    "sortByScore": "Sort by score"
   },
   "Bidding": {
     "title": "Bidding",

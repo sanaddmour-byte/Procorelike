@@ -82,6 +82,19 @@ export type SafetyObservationCategory = z.infer<typeof safetyObservationCategory
 export const safetyObservationStatusSchema = z.enum(["open", "resolved"]);
 export type SafetyObservationStatus = z.infer<typeof safetyObservationStatusSchema>;
 
+export const SAFETY_OBSERVATION_SORT_KEYS = ["description", "observedAt", "category", "status"] as const;
+export type SafetyObservationSortKey = (typeof SAFETY_OBSERVATION_SORT_KEYS)[number];
+
+/** GET /safety-observations's query contract (Phase 25, same shape as Safety Incidents' listSafetyIncidentsQuerySchema from Phase 24 -- no joined columns on this module's list page at all, so no sort-key exclusion is needed here). */
+export const listSafetyObservationsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(SAFETY_OBSERVATION_SORT_KEYS).optional(),
+    category: safetyObservationCategorySchema.optional(),
+    status: safetyObservationStatusSchema.optional(),
+  })
+  .strict();
+export type ListSafetyObservationsQuery = z.infer<typeof listSafetyObservationsQuerySchema>;
+
 export const createSafetyObservationSchema = z
   .object({
     projectId: z.string().uuid(),

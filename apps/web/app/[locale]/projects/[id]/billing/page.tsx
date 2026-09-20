@@ -3,13 +3,15 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface Commitment {
   id: string;
@@ -43,30 +45,21 @@ export default function BillingPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [applications, setApplications] = useState<PaymentApplication[] | null>(null);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [commitmentId, setCommitmentId] = useState("");
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [retentionPct, setRetentionPct] = useState("10");
   const [creating, setCreating] = useState(false);
-
-  function load(): void {
-    apiJson<PaymentApplication[]>(`/payment-applications?projectId=${params.id}`)
-      .then(setApplications)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<PaymentApplication>({ basePath: "/payment-applications", projectId: params.id, defaultSort: { key: "periodStart", direction: "desc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<Commitment[]>(`/commitments?projectId=${params.id}`)
       .then(setCommitments)
       .catch(() => undefined);
@@ -96,7 +89,7 @@ export default function BillingPage() {
       setPeriodStart("");
       setPeriodEnd("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -104,20 +97,12 @@ export default function BillingPage() {
     }
   }
 
-  const filteredApplications = useMemo(() => {
-    if (!applications) return null;
-    const q = search.trim().toLowerCase();
-    return applications.filter((app) => {
-      if (statusFilter && app.status !== statusFilter) return false;
-      if (q && !commitmentLabel(app.commitmentId).toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [applications, commitments, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<PaymentApplication>[] = [
     { key: "commitment", header: t("commitment"), render: (app) => commitmentLabel(app.commitmentId), sortValue: (app) => commitmentLabel(app.commitmentId) },
     {
-      key: "period",
+      key: "periodStart",
       header: t("period"),
       render: (app) => `${app.periodStart.slice(0, 10)} — ${app.periodEnd.slice(0, 10)}`,
       sortValue: (app) => app.periodStart,
@@ -177,9 +162,16 @@ export default function BillingPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="progress_billing"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -188,20 +180,22 @@ export default function BillingPage() {
               options: (["draft", "submitted", "certified", "paid"] as const).map((s) => ({ value: s, label: t(statusKey(s)) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
         <DataTable<PaymentApplication>
           columns={columns}
-          rows={filteredApplications}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
           onRowClick={(app) => router.push(`/${locale}/projects/${params.id}/billing/${app.id}`)}
-          emptyTitle={applications && applications.length > 0 ? t("noResults") : t("empty")}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
         />
       </main>
     </>

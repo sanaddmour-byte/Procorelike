@@ -3,15 +3,17 @@
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
 import { useProjectCurrency } from "@/lib/use-project-currency";
+import { useServerTable } from "@/lib/use-server-table";
 import { formatMoney, type DirectCostStatus, type DirectCostType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface CostCode {
   id: string;
@@ -44,11 +46,8 @@ export default function DirectCostsPage() {
   const currency = useProjectCurrency(params.id);
   const money = (value: string): string => formatMoney(value, currency, locale);
 
-  const [directCosts, setDirectCosts] = useState<DirectCost[] | null>(null);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [costCodeId, setCostCodeId] = useState("");
   const [type, setType] = useState<DirectCostType>("invoice");
@@ -57,19 +56,13 @@ export default function DirectCostsPage() {
   const [incurredDate, setIncurredDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [transitioningId, setTransitioningId] = useState<string | null>(null);
-
-  function load(): void {
-    apiJson<DirectCost[]>(`/direct-costs?projectId=${params.id}`)
-      .then(setDirectCosts)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<DirectCost>({ basePath: "/direct-costs", projectId: params.id, defaultSort: { key: "incurredDate", direction: "desc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<CostCode[]>(`/projects/${params.id}/cost-codes`)
       .then((codes) => {
         setCostCodes(codes);
@@ -103,7 +96,7 @@ export default function DirectCostsPage() {
       setAmount("");
       setIncurredDate("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -115,7 +108,7 @@ export default function DirectCostsPage() {
     setTransitioningId(id);
     try {
       await apiJson(`/direct-costs/${id}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -131,18 +124,10 @@ export default function DirectCostsPage() {
     return { invoice: t("typeInvoice"), expense: t("typeExpense"), payroll: t("typePayroll"), other: t("typeOther") }[value];
   }
 
-  const filteredDirectCosts = useMemo(() => {
-    if (!directCosts) return null;
-    const q = search.trim().toLowerCase();
-    return directCosts.filter((dc) => {
-      if (statusFilter && dc.status !== statusFilter) return false;
-      if (q && !dc.description.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [directCosts, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
 
   const columns: DataTableColumn<DirectCost>[] = [
-    { key: "costCode", header: t("costCode"), render: (dc) => costCodeLabel(dc.costCodeId), sortValue: (dc) => costCodeLabel(dc.costCodeId) },
+    { key: "costCode", header: t("costCode"), render: (dc) => costCodeLabel(dc.costCodeId) },
     { key: "description", header: t("description"), render: (dc) => dc.description, sortValue: (dc) => dc.description },
     { key: "type", header: t("type"), render: (dc) => typeLabel(dc.type), sortValue: (dc) => dc.type, width: "120px" },
     { key: "amount", header: t("amount"), align: "end", width: "130px", render: (dc) => money(dc.amount), sortValue: (dc) => Number(dc.amount) },
@@ -236,9 +221,16 @@ export default function DirectCostsPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
+        <SavedViewsBar
+          projectId={params.id}
+          module="direct_costs"
+          currentState={{ search: serverTable.search, filters: serverTable.filters, sort: serverTable.sort }}
+          onApply={(state) => serverTable.applyView(state)}
+        />
+
         <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
+          searchValue={serverTable.search}
+          onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
           filters={[
             {
@@ -247,16 +239,22 @@ export default function DirectCostsPage() {
               options: (["pending", "approved", "rejected"] as const).map((s) => ({ value: s, label: statusLabel(s) })),
             },
           ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
+          activeFilters={serverTable.filters}
+          onFilterChange={serverTable.onFilterChange}
+          onClearAll={serverTable.clearAll}
           clearAllLabel={tc("clearAll")}
         />
 
-        <DataTable<DirectCost> columns={columns} rows={filteredDirectCosts} emptyTitle={directCosts && directCosts.length > 0 ? t("noResults") : t("empty")} />
+        <DataTable<DirectCost>
+          columns={columns}
+          rows={serverTable.rows}
+          error={serverTable.error ? tc("errorGeneric") : null}
+          onRetry={serverTable.reload}
+          emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
+          serverSort={serverTable.sort}
+          onServerSortChange={serverTable.onServerSortChange}
+          pagination={{ page: serverTable.page, pageSize: serverTable.pageSize, total: serverTable.total, onPageChange: serverTable.onPageChange }}
+        />
       </main>
     </>
   );

@@ -1,17 +1,19 @@
 "use client";
 
 import { CorrectiveActionsPanel } from "@/components/CorrectiveActionsPanel";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { useServerTable } from "@/lib/use-server-table";
 import type { SafetyObservationCategory, SafetyObservationStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface Member {
   userId: string;
@@ -51,11 +53,8 @@ export default function SafetyObservationsPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
-  const [observations, setObservations] = useState<SafetyObservation[] | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [observedAt, setObservedAt] = useState("");
   const [category, setCategory] = useState<SafetyObservationCategory>("unsafe_condition");
@@ -63,19 +62,13 @@ export default function SafetyObservationsPage() {
   const [creating, setCreating] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  function load(): void {
-    apiJson<SafetyObservation[]>(`/safety-observations?projectId=${params.id}`)
-      .then(setObservations)
-      .catch(() => setError(tc("errorGeneric")));
-  }
+  const serverTable = useServerTable<SafetyObservation>({ basePath: "/safety-observations", projectId: params.id, defaultSort: { key: "observedAt", direction: "desc" } });
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
-    load();
     apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
   }, [router, locale, params.id]);
 
@@ -96,7 +89,7 @@ export default function SafetyObservationsPage() {
       setCategory("unsafe_condition");
       setDescription("");
       setShowForm(false);
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -108,7 +101,7 @@ export default function SafetyObservationsPage() {
     setTogglingId(id);
     try {
       await apiJson(`/safety-observations/${id}/toggle-resolved`, { method: "POST" });
-      load();
+      serverTable.reload();
     } catch {
       setError(tc("errorGeneric"));
     } finally {
@@ -116,15 +109,8 @@ export default function SafetyObservationsPage() {
     }
   }
 
-  const filteredObservations = useMemo(() => {
-    if (!observations) return null;
-    const q = search.trim().toLowerCase();
-    return observations.filter((obs) => {
-      if (statusFilter && obs.status !== statusFilter) return false;
-      if (q && !obs.description.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [observations, search, statusFilter]);
+  const hasActiveQuery = Boolean(serverTable.search) || Object.values(serverTable.filters).some(Boolean);
+  const pageCount = Math.max(1, Math.ceil(serverTable.total / serverTable.pageSize));
 
   return (
     <>
@@ -204,33 +190,54 @@ export default function SafetyObservationsPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
-        <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder={t("searchPlaceholder")}
-          filters={[
-            {
-              key: "status",
-              label: t("status"),
-              options: (["open", "resolved"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
-            },
-          ]}
-          activeFilters={{ status: statusFilter }}
-          onFilterChange={(_key, value) => setStatusFilter(value)}
-          onClearAll={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
-          clearAllLabel={tc("clearAll")}
-        />
+        {/* No SavedViewsBar here: Safety Observations shares the "safety" permission Module
+            with Safety Incidents (see safety.service.ts's requirePermission calls), and that
+            same Module is what SavedViewsBar's saved-view rows are scoped by -- adding a second
+            SavedViewsBar on this page with module="safety" would let a view saved here be
+            offered on the Incidents page (and vice versa), even though their sort-key enums
+            differ (this page has no "severity" key; Incidents has no "category" key). Deferred,
+            same reasoning as Transmittals in Phase 24. */}
 
-        {!observations && !error && <p>{tc("loading")}</p>}
-        {observations && observations.length === 0 && <p className="text-navy-600">{t("emptyObservations")}</p>}
-        {observations && observations.length > 0 && filteredObservations && filteredObservations.length === 0 && (
-          <p className="text-navy-600">{t("noResultsObservations")}</p>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <FilterBar
+            searchValue={serverTable.search}
+            onSearchChange={serverTable.onSearchChange}
+            searchPlaceholder={t("searchPlaceholder")}
+            filters={[
+              {
+                key: "status",
+                label: t("status"),
+                options: (["open", "resolved"] as const).map((s) => ({ value: s, label: statusLabel(s, t) })),
+              },
+            ]}
+            activeFilters={serverTable.filters}
+            onFilterChange={serverTable.onFilterChange}
+            onClearAll={serverTable.clearAll}
+            clearAllLabel={tc("clearAll")}
+          />
+          {/* No table header to click here (this page renders a card list, not DataTable) --
+              a plain sort control drives useServerTable's onServerSortChange the same way a
+              column header would elsewhere. */}
+          <select
+            value={serverTable.sort?.key ?? ""}
+            onChange={(e) => e.target.value && serverTable.onServerSortChange(e.target.value)}
+            className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
+            aria-label={t("sortBy")}
+          >
+            <option value="observedAt">{t("sortByObservedAt")}</option>
+            <option value="description">{t("sortByDescription")}</option>
+            <option value="category">{t("sortByCategory")}</option>
+            <option value="status">{t("sortByStatus")}</option>
+          </select>
+        </div>
+
+        {serverTable.error && <ErrorState message={tc("errorGeneric")} onRetry={serverTable.reload} retryLabel={tc("retry")} />}
+        {!serverTable.rows && !serverTable.error && <p>{tc("loading")}</p>}
+        {serverTable.rows && serverTable.rows.length === 0 && (
+          <p className="text-navy-600">{hasActiveQuery ? t("noResultsObservations") : t("emptyObservations")}</p>
         )}
         <ul className="flex flex-col gap-3">
-          {filteredObservations?.map((obs) => (
+          {serverTable.rows?.map((obs) => (
             <li
               key={obs.id}
               className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-4 shadow-brutal-sm"
@@ -264,6 +271,30 @@ export default function SafetyObservationsPage() {
             </li>
           ))}
         </ul>
+
+        {serverTable.rows && serverTable.rows.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border-3 border-ink bg-cream px-3 py-2">
+            <button
+              type="button"
+              onClick={() => serverTable.onPageChange(serverTable.page - 1)}
+              disabled={serverTable.page <= 1}
+              aria-label={tc("previousPage")}
+              className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            >
+              &#8249;
+            </button>
+            <span className="whitespace-nowrap text-xs font-semibold text-navy-700">{tc("pageIndicator", { current: serverTable.page, total: pageCount })}</span>
+            <button
+              type="button"
+              onClick={() => serverTable.onPageChange(serverTable.page + 1)}
+              disabled={serverTable.page >= pageCount}
+              aria-label={tc("nextPage")}
+              className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            >
+              &#8250;
+            </button>
+          </div>
+        )}
       </main>
     </>
   );

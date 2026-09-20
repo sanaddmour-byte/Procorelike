@@ -200,6 +200,18 @@ export interface ChangeOrderApprovalEntry {
 export const paymentApplicationStatusSchema = z.enum(["draft", "submitted", "certified", "paid"]);
 export type PaymentApplicationStatus = z.infer<typeof paymentApplicationStatusSchema>;
 
+export const PAYMENT_APPLICATION_SORT_KEYS = ["commitment", "periodStart", "status"] as const;
+export type PaymentApplicationSortKey = (typeof PAYMENT_APPLICATION_SORT_KEYS)[number];
+
+/** GET /payment-applications's query contract (Phase 25). Payment applications carry no title/subject of their own -- both search and the `commitment` sort key operate on the joined commitments.number/title (falling back to a fixed "prime application" label when commitmentId is null), the same join-for-search-and-sort treatment Inspections gave checklist_templates.title in Phase 24, since unlike Direct Costs there is no other plain text column on this table to search instead. */
+export const listPaymentApplicationsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(PAYMENT_APPLICATION_SORT_KEYS).optional(),
+    status: paymentApplicationStatusSchema.optional(),
+  })
+  .strict();
+export type ListPaymentApplicationsQuery = z.infer<typeof listPaymentApplicationsQuerySchema>;
+
 export const createPaymentApplicationSchema = z
   .object({
     projectId: z.string().uuid(),
@@ -301,6 +313,18 @@ export type DirectCostType = z.infer<typeof directCostTypeSchema>;
 
 export const directCostStatusSchema = z.enum(["pending", "approved", "rejected"]);
 export type DirectCostStatus = z.infer<typeof directCostStatusSchema>;
+
+export const DIRECT_COST_SORT_KEYS = ["description", "type", "amount", "incurredDate", "status"] as const;
+export type DirectCostSortKey = (typeof DIRECT_COST_SORT_KEYS)[number];
+
+/** GET /direct-costs's query contract (Phase 25, same shape as rfi.schema.ts's listRfisQuerySchema from Phase 21). No `costCode` sort key -- the list page's Cost Code column is a joined lookup by costCodeId (see docs/DATA_MODEL.md §9n's note on Commitments/T&M Tickets/Safety Incidents), not a plain column, and search only matches `description` (a plain field already exists here, so unlike Inspections/Prequalification/Billing there's no need to join just to get a searchable field). */
+export const listDirectCostsQuerySchema = paginationQuerySchema
+  .extend({
+    sort: z.enum(DIRECT_COST_SORT_KEYS).optional(),
+    status: directCostStatusSchema.optional(),
+  })
+  .strict();
+export type ListDirectCostsQuery = z.infer<typeof listDirectCostsQuerySchema>;
 
 /** A cost that hits a budget cost code without going through a commitment (subcontract/PO) -- a permit fee, owner-purchased material, payroll allocation, etc. */
 export const createDirectCostSchema = z

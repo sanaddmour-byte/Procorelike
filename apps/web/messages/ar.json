@@ -783,6 +783,11 @@
     "noResultsObservations": "لا توجد ملاحظات سلامة مطابقة لعوامل التصفية.",
     "occurredAt": "وقت الحدوث",
     "observedAt": "وقت الملاحظة",
+    "sortBy": "ترتيب حسب",
+    "sortByObservedAt": "ترتيب حسب تاريخ الملاحظة",
+    "sortByDescription": "ترتيب حسب الوصف",
+    "sortByCategory": "ترتيب حسب الفئة",
+    "sortByStatus": "ترتيب حسب الحالة",
     "severity": "الخطورة",
     "severityNearMiss": "حالة كادت تقع",
     "severityMinor": "بسيطة",
@@ -1129,7 +1134,11 @@
     "submitPrompt": "أرسل تفاصيل التأهيل المسبق نيابة عن هذه الشركة",
     "submit": "إرسال",
     "markQualified": "تحديد كمؤهلة",
-    "markDisqualified": "تحديد كغير مؤهلة"
+    "markDisqualified": "تحديد كغير مؤهلة",
+    "sortBy": "ترتيب حسب",
+    "sortByCompany": "ترتيب حسب الشركة",
+    "sortByStatus": "ترتيب حسب الحالة",
+    "sortByScore": "ترتيب حسب التقييم"
   },
   "Bidding": {
     "title": "المناقصات",

@@ -3424,6 +3424,94 @@ been started.
   suite would run -- it had stopped between sessions again, same
   recurring sandbox note as Phase 23's gate report.
 
+## Phase 25 gate report
+
+**Gate** (continuing the "Enterprise UX, Data Architecture & PDF System
+Upgrade" initiative -- rolling Phase 21/22/23/24's server-query contract
+out to Direct Costs, Payment Applications (Billing), Prequalification,
+and Safety Observations, per the user's "Proceed" after Phase 24's gate
+report was delivered) -- **PASSED**, see Verification.
+
+**What was built:**
+
+- **Direct Costs**: `listDirectCostsQuerySchema` (search on description,
+  `status` filter, sort by description/type/amount/incurredDate/status).
+  No `costCode` sort key -- the list page's Cost Code column is a joined
+  lookup by `costCodeId`, and `description` already gives the page a real
+  plain field to search/sort on, so this follows the "drop `sortValue`"
+  fix shape from Phase 24 rather than adding a join.
+- **Payment Applications (Billing)**: `listPaymentApplicationsQuerySchema`
+  (`status` filter, sort by commitment/periodStart/status). Unlike Direct
+  Costs, `payment_applications` has no plain text column at all --
+  `listPaymentApplications` does a `leftJoin` to `commitments` (left,
+  since `commitmentId` is null for a prime-contract application) and
+  searches/sorts on `commitments.number`/`title`, the same
+  join-for-search-and-sort treatment Inspections gave
+  `checklist_templates` in Phase 24.
+- **Prequalification**: `listPrequalificationsQuerySchema` (`status`
+  filter, sort by company/status/overallScore). Same shape as Payment
+  Applications -- `prequalifications` has no plain text column, so
+  `listPrequalifications` does an `innerJoin` to `companies` and
+  searches/sorts on `companies.name`. This page also isn't built on
+  `DataTable` at all (it renders expandable cards with inline
+  submit/review forms), so its migration wires `useServerTable` for
+  search/filter/pagination and adds a plain `<select>` sort control next
+  to `FilterBar` (calling `serverTable.onServerSortChange` the way a
+  column header would) plus a hand-rolled pagination footer matching
+  `DataTable`'s own markup.
+- **Safety Observations**: `listSafetyObservationsQuerySchema` (search on
+  description, `category`/`status` filters, sort by
+  description/observedAt/category/status) -- no joined columns, the
+  simplest of this phase's four. Also a card-list page, migrated with the
+  same sort-`<select>` + pagination-footer recipe as Prequalification.
+  Deliberately has **no `SavedViewsBar`**: Safety Observations shares the
+  `"safety"` permission `Module` with Safety Incidents (both go through
+  `requirePermission(ctx, "safety", ...)` in `safety.service.ts`), and
+  that's the same type `SavedViewsBar`'s saved-view rows are scoped by --
+  Safety Incidents already got a `SavedViewsBar` with `module="safety"`
+  in Phase 24, so adding a second one here on Observations would let a
+  view saved on one page be offered (and fail to apply cleanly, since the
+  two modules' sort-key enums differ) on the other. Deferred, same
+  reasoning as Transmittals' skipped `SavedViewsBar` in Phase 24 --
+  flagged here as a known gap in Phase 24's Safety Incidents work, not a
+  new one.
+- **`apps/api/src/routes/phase25-list-query.test.ts`** (new): 11 tests,
+  one backward-compatibility + search/filter + sort/pagination sweep per
+  module, including a `sort=costCode` 400-rejection regression test for
+  Direct Costs.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` §9n's "still on
+client-side filtering" list, carried forward unchanged since Phase 23,
+listed "Prime Contract" as a pending list-module migration. It isn't
+one -- `prime-contract.service.ts` has no `list*` function at all, only
+`getPrimeContractByProject` (one row per project, a unique-indexed
+singleton), and its page is a detail/edit form. Corrected in both
+`docs/DATA_MODEL.md` and this report rather than carried forward again.
+
+**Explicitly not built this phase, on record**: Schedule, Bidding, and
+Estimating remain on client-side filtering -- migrating each is a
+mechanical repeat of this pattern per `docs/DATA_MODEL.md` §9n, not a
+redesign, and is future work rather than a defect. The rest of the
+parent spec's phases (global search, navigation/icon-rail shell, the PDF
+architecture overhaul, bulk actions, column customization, etc.) have
+not been started.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 215 tests across 39 files (204 pre-existing plus the 11 new
+  Phase 25 tests; all pre-existing suites re-verified unaffected,
+  including `financial.test.ts`'s Direct Costs/Prime Contract coverage
+  and `preconstruction.test.ts`'s Prequalification/Bidding/Estimating
+  coverage), `apps/web`: 28, unaffected. The expected stderr blocks in
+  the API test run (mailer/Expo-push network calls failing in this
+  sandbox) are pre-existing and unrelated. Full `next build` succeeded
+  across all routes including the four migrated pages. Also restarted
+  the sandbox's Postgres 16 cluster (`pg_ctlcluster 16 main start`)
+  before the API test suite would run -- it had stopped between
+  sessions again, same recurring sandbox note as Phase 23/24's gate
+  reports.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the
