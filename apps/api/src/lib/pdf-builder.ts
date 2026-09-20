@@ -1,8 +1,26 @@
-import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+import { readFileSync } from "fs";
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { prepareBidiLine } from "./bidi-text";
 
 const PAGE_WIDTH = 595.28; // A4, points -- the default page size for every export (RFI/Submittal/Change Order/Correspondence/Inspection, single-item and summary alike)
 const PAGE_HEIGHT = 841.89;
 const MARGIN = 50;
+
+/**
+ * Noto Sans Arabic (SIL OFL 1.1, apps/api/assets/fonts/LICENSE-NotoSansArabic.txt)
+ * covers Latin + digits + common punctuation *and* Arabic in one font file
+ * (confirmed via @pdf-lib/fontkit glyph-coverage checks before adopting it),
+ * so it replaces pdf-lib's built-in Helvetica/HelveticaBold everywhere in
+ * this builder rather than switching fonts per line by content -- one font
+ * pair, always, is simpler and carries no risk of a line that mixes scripts
+ * hitting a font that can only cover half of it.
+ */
+const FONTS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "assets", "fonts");
+const REGULAR_FONT_PATH = join(FONTS_DIR, "NotoSansArabic-Regular.ttf");
+const BOLD_FONT_PATH = join(FONTS_DIR, "NotoSansArabic-Bold.ttf");
 
 export interface DrawLineOptions {
   size?: number;
@@ -37,8 +55,12 @@ export class PdfBuilder {
   static async create(): Promise<PdfBuilder> {
     const builder = new PdfBuilder();
     builder.doc = await PDFDocument.create();
-    builder.font = await builder.doc.embedFont(StandardFonts.Helvetica);
-    builder.boldFont = await builder.doc.embedFont(StandardFonts.HelveticaBold);
+    builder.doc.registerFontkit(fontkit);
+    // subset: true keeps the embedded font to just the glyphs actually used --
+    // the full Noto Sans Arabic file is ~190KB per weight, most of which is
+    // Arabic-script glyphs no all-English report will ever draw.
+    builder.font = await builder.doc.embedFont(readFileSync(REGULAR_FONT_PATH), { subset: true });
+    builder.boldFont = await builder.doc.embedFont(readFileSync(BOLD_FONT_PATH), { subset: true });
     builder.page = builder.doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     return builder;
   }
@@ -81,11 +103,16 @@ export class PdfBuilder {
     // bodies -- the exact text most likely to actually wrap.
     const continuationGap = Math.round(size * 0.35);
 
+    // Word-wrap on the original logical text -- wrapping decisions (where a line
+    // breaks) must not depend on the bidi reordering below, which only changes
+    // draw order/alignment for the line as a whole, not its content or width.
     const wrapped = this.wrapText(text, size, usedFont);
     wrapped.forEach((line, i) => {
       const isLast = i === wrapped.length - 1;
       this.ensureSpace(size + (isLast ? gap : continuationGap));
-      this.page.drawText(line, { x: MARGIN, y: this.y, size, font: usedFont, color });
+      const { text: drawnText, rtl } = prepareBidiLine(line);
+      const x = rtl ? PAGE_WIDTH - MARGIN - usedFont.widthOfTextAtSize(drawnText, size) : MARGIN;
+      this.page.drawText(drawnText, { x, y: this.y, size, font: usedFont, color });
       this.y -= size + (isLast ? gap : continuationGap);
     });
   }
@@ -152,7 +179,9 @@ export class PdfBuilder {
       const rowTopY = this.y;
       columns.forEach((col, i) => {
         wrappedCells[i]!.forEach((line, lineIndex) => {
-          this.page.drawText(line, { x, y: rowTopY - lineIndex * lineHeight, size: cellSize, font: this.font, color: rgb(0.15, 0.18, 0.24) });
+          const { text: drawnText, rtl } = prepareBidiLine(line);
+          const cellX = rtl ? x + col.width - 6 - this.font.widthOfTextAtSize(drawnText, cellSize) : x;
+          this.page.drawText(drawnText, { x: cellX, y: rowTopY - lineIndex * lineHeight, size: cellSize, font: this.font, color: rgb(0.15, 0.18, 0.24) });
         });
         x += col.width;
       });
@@ -228,7 +257,12 @@ export class PdfBuilder {
 
   private drawLetterheadCompanyName(companyName: string | null, anchorWidth: number, anchorHeight: number): void {
     if (!companyName) return;
-    this.page.drawText(companyName, {
+    // Anchored beside the logo/placeholder box rather than spanning the full text
+    // width, so an RTL name only needs its character order fixed here, not a
+    // right-aligned reposition against the page margin the way a full-width
+    // line (drawLine) or table cell does.
+    const { text: drawnText } = prepareBidiLine(companyName);
+    this.page.drawText(drawnText, {
       x: MARGIN + anchorWidth + 10,
       y: this.y - anchorHeight / 2 - 5,
       size: 12,

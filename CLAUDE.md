@@ -81,8 +81,30 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 29 (sidebar
-icon-rail) is complete and gate-verified** -- the second concrete gap
+mid-build corrections). As of this writing: **Phase 30 (Arabic-safe PDF
+exports) is complete and gate-verified** -- closing the crash-severity
+half of the PDF architecture overhaul the Phase 28 architectural-audit
+check-in flagged as unaddressed. Every PDF report generator drew text
+with pdf-lib's built-in `StandardFonts.Helvetica`, a WinAnsi (Latin-1)
+font whose `drawText` **throws** on any character outside that encoding
+-- confirmed empirically before writing the fix -- so any exported field
+containing Arabic text (this is a bilingual EN/AR product) crashed the
+export with a 500. Fixed by embedding Noto Sans Arabic (SIL OFL 1.1,
+sourced via `npm pack @expo-google-fonts/noto-sans-arabic`, verified via
+`@pdf-lib/fontkit` glyph-coverage checks to cover Latin+Arabic in one
+file) as `PdfBuilder`'s single font pair, replacing Helvetica/
+HelveticaBold everywhere rather than switching fonts per line. A new
+pure helper, `apps/api/src/lib/bidi-text.ts`'s `prepareBidiLine`, fixes
+reading direction with a pragmatic word-level reorder (first-strong-
+character direction detection, word + in-word character reversal for
+RTL-dominant text) -- explicitly **not** the full Unicode Bidirectional
+Algorithm and **not** Arabic contextual letter-shaping/joining, which
+would need a real shaping engine (HarfBuzz); `arabic-reshaper` was
+evaluated and rejected as GPL-3.0-licensed. See `docs/DATA_MODEL.md`
+§9r for the full writeup and `docs/ROADMAP.md`'s Phase 30 gate report
+for verification.
+
+Phase 29 (sidebar icon-rail) preceded this -- the second concrete gap
 the Phase 28 architectural-audit check-in surfaced against the full
 42-section "Enterprise UX, Data Architecture & PDF System Upgrade" spec:
 its Section 10 explicitly asks to replace the collapsed sidebar's

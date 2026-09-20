@@ -3827,6 +3827,101 @@ unification, annotation generalization) -- remains as recorded in Phase
   Confirmed the sandbox's Postgres 16 cluster was already running before
   the API test suite.
 
+## Phase 30 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- per the user's "proceeed"; the
+architectural-audit check-in that opened Phase 28 had already flagged
+the PDF architecture overhaul, and Arabic font embedding specifically,
+as still using only `StandardFonts.Helvetica` and unaddressed) --
+**PASSED**, see Verification. This closes the crash-severity half of the
+PDF architecture overhaul the parent spec calls for; document-viewer
+unification and annotation generalization remain out of scope for this
+phase.
+
+**The bug this phase fixes**: pdf-lib's `StandardFonts.Helvetica` is a
+WinAnsi (Latin-1) font whose `drawText`/`widthOfTextAtSize` **throw**
+(`WinAnsi cannot encode "..."`) on any character outside that encoding
+-- confirmed empirically with a throwaway script before writing any fix
+code. Since this app is bilingual EN/AR by design, every PDF export
+(RFI/Submittal/Change Order/Correspondence/Inspection, single-item and
+register alike) crashed with a 500 the moment any exported field
+contained Arabic text. This was a correctness bug affecting every export
+in the product, not a cosmetic gap.
+
+**What was built:**
+
+- **`apps/api/assets/fonts/`** (new): `NotoSansArabic-Regular.ttf`,
+  `NotoSansArabic-Bold.ttf` (SIL OFL 1.1 -- permits embedding in
+  generated documents), plus `LICENSE-NotoSansArabic.txt`. Extracted from
+  `npm pack @expo-google-fonts/noto-sans-arabic` -- a legitimate npm
+  registry package -- rather than fetched from a guessed/unverified URL.
+  Verified via `@pdf-lib/fontkit`'s glyph-coverage API that this single
+  font file covers full Latin, digits, and the punctuation the report
+  generators actually use, *and* Arabic, before adopting it as a
+  wholesale replacement rather than building per-line font-switching.
+- **`apps/api/src/lib/pdf-builder.ts`**: registers `@pdf-lib/fontkit`
+  (new dependency) and embeds the two Noto Sans Arabic files (`{ subset:
+  true }`, so each generated PDF only carries the glyphs it actually
+  uses) as `font`/`boldFont`, replacing `StandardFonts.Helvetica`/
+  `HelveticaBold` everywhere in the class -- every report generator built
+  on `PdfBuilder` (all five modules, single-item and register) gets the
+  fix automatically, with no changes needed in any of them.
+- **`apps/api/src/lib/bidi-text.ts`** (new): `prepareBidiLine(text)`, a
+  pure helper fixing reading direction -- pdf-lib's `drawText` has no
+  bidi support and places characters left-to-right in string order
+  regardless of script. Picks a line's base direction from its first
+  strong (letter) character (digits/punctuation are direction-neutral,
+  so `"RFI-102"` stays LTR), and for an RTL-dominant line reverses word
+  order plus each RTL word's own characters while leaving embedded LTR
+  tokens (a code, a date) untouched. This is a **pragmatic word-level
+  reorder, not the full Unicode Bidirectional Algorithm** and does not
+  perform Arabic contextual letter-joining/shaping -- see the gap noted
+  below. `drawLine`, `drawTable`, and `drawLetterheadCompanyName` all run
+  their text through it and right-align when `rtl` is true; word-wrap
+  still runs on the original logical text so wrapping decisions don't
+  depend on the reordering.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9r
+documenting the bug, the fix, and the shaping gap below in detail.
+
+**Explicitly not built this phase, on record -- a deliberate scope
+cut**: full Arabic contextual letter-shaping (initial/medial/final/
+isolated glyph forms) is not implemented -- each Arabic letter still
+renders in its isolated form, since correct shaping needs a real
+engine. `arabic-reshaper` was evaluated and rejected as GPL-3.0-licensed
+(a copyleft risk for a server-side dependency); `harfbuzzjs` (MIT, the
+real shaping engine) was judged too large/complex to integrate in this
+phase and is left as follow-up work. The `initials` placeholder-box text
+(drawn when a company has no logo) was left as-is -- it derives from the
+first character of each word in the company name, which is
+direction-neutral for a one-to-two-character initials snippet and
+carries no crash risk (`.toUpperCase()` on an Arabic character is a
+no-op, not an error). The rest of the parent spec's remaining work --
+bulk actions on modules besides RFIs, column resize, density modes,
+client-side permission-aware UI hiding, document-viewer unification, and
+annotation generalization -- remains as recorded in Phase 28's gate
+report.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 237 tests across 43 files (230 pre-existing plus 5 new
+  `bidi-text.test.ts` unit tests and 2 new `phase30-pdf-arabic.test.ts`
+  integration tests; every pre-existing PDF-touching suite --
+  `branded-pdf.test.ts`, `summary-report.test.ts`, `pdf-comments.test.ts`,
+  `pdf-sketches.test.ts` -- re-verified unaffected by the wholesale font
+  swap), `apps/web`: 28, unaffected. The new integration tests create an
+  RFI with Arabic subject/question text and confirm both the single-item
+  report and the register (summary) PDF return `200` with a well-formed
+  `%PDF-`-signed PDF -- the exact path that threw before this phase. The
+  expected stderr blocks in the API test run (mailer/Expo-push network
+  calls failing in this sandbox) are pre-existing and unrelated. Full
+  `next build` succeeded across all routes. Confirmed the sandbox's
+  Postgres 16 cluster before the API test suite (it had stopped between
+  sessions again, the same recurring sandbox note as every prior phase's
+  gate report).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

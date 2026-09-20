@@ -901,6 +901,78 @@ and (c) the Arabic (`/ar/...`) page renders `dir="rtl"` with the same
 icon and the correctly-translated Arabic label -- confirming the icon
 swap didn't regress RTL layout or i18n.
 
+## 9r. Arabic-safe PDF exports: embedded font + word-level bidi (Phase 30)
+
+**The bug**: every PDF report generator (RFI/Submittal/Change
+Order/Correspondence/Inspection, single-item and register alike) drew
+text with pdf-lib's built-in `StandardFonts.Helvetica`. Helvetica is a
+WinAnsi (Latin-1) font -- pdf-lib's `drawText`/`widthOfTextAtSize`
+**throw** (`WinAnsi cannot encode "..."`) the moment a string contains
+any character outside that encoding, Arabic included. Confirmed
+empirically with a throwaway script before writing any fix code. Given
+this app is bilingual EN/AR by design (`apps/web`'s own `/ar/...`
+locale), any exported field containing Arabic text -- an RFI subject
+typed in Arabic, a company name, a correspondence body -- crashed the
+export with a 500 rather than a cosmetic misrender. This was a
+correctness bug, not a polish gap.
+
+**Fix -- one embedded font, not per-line font switching**: sourced Noto
+Sans Arabic (SIL OFL 1.1 -- permits embedding in generated documents;
+license text kept alongside the font files at
+`apps/api/assets/fonts/LICENSE-NotoSansArabic.txt`) via `npm pack
+@expo-google-fonts/noto-sans-arabic`, extracting only the two real
+`.ttf` files needed (regular + bold) as committed repo assets --
+deliberately not fetched from a guessed/unverified URL. Verified via
+`@pdf-lib/fontkit`'s glyph-coverage API that this one font file covers
+full Latin (A-Z/a-z), digits, and the punctuation the report generators
+actually use, *and* Arabic -- so `PdfBuilder` now embeds it as the single
+font pair (`registerFontkit` + `embedFont(..., { subset: true })`)
+replacing `StandardFonts.Helvetica`/`HelveticaBold` everywhere, rather
+than selecting a font per line by content. One font, always, carries no
+risk of a line that mixes scripts hitting a font that only covers half
+of it, and the existing PDF tests (which assert only status/content-type/
+`%PDF-` signature, not exact glyphs) passed unmodified against the
+wholesale swap.
+
+**Fix -- reading direction**: pdf-lib's `drawText` has no bidi or
+shaping support at all; it places characters left-to-right in string
+order regardless of script. A new pure helper,
+`apps/api/src/lib/bidi-text.ts`'s `prepareBidiLine(text)`, applies a
+**pragmatic word-level reorder** -- not the full Unicode Bidirectional
+Algorithm: it picks a line's base direction from its first strong
+(letter) character (skipping leading digits/punctuation, so `"RFI-102"`
+and dates stay LTR), and for an RTL-dominant line reverses word order
+and reverses the characters within each RTL-dominant word while leaving
+embedded LTR tokens (an RFI code, a date) untouched. `PdfBuilder`'s
+`drawLine`, `drawTable`, and `drawLetterheadCompanyName` all run their
+text through it and right-align the result when `rtl` is true (word-wrap
+itself still runs on the original logical text, before reordering, since
+wrapping must not depend on draw-order changes). This makes an
+all-Arabic field, or Arabic-with-an-embedded-English-code, read in the
+right direction for the common case.
+
+**Known, deliberate gap -- not full shaping**: `prepareBidiLine` does
+not perform Arabic contextual letter-joining (initial/medial/final/
+isolated glyph forms) -- each Arabic letter still renders in its
+isolated form, since real shaping needs a shaping engine (e.g.
+HarfBuzz). `arabic-reshaper` (a candidate for this) was evaluated and
+rejected for being GPL-3.0-licensed -- a copyleft risk unacceptable for
+a server-side dependency; `harfbuzzjs` (MIT, the real engine) was judged
+too large/complex to integrate in this phase and is left as follow-up.
+This gap is scoped intentionally: Phase 30's goal was fixing the crash
+and getting approximate reading direction right, not full typographic
+correctness.
+
+**Verified**: `apps/api/src/lib/bidi-text.test.ts` (5 unit tests --
+plain English/digits/punctuation unchanged, pure-Arabic word+character
+reorder, an embedded English RFI code kept intact and un-reversed,
+first-strong-character direction detection) and
+`apps/api/src/routes/phase30-pdf-arabic.test.ts` (2 integration tests --
+a single-item RFI report and an RFI register/summary PDF, both with
+Arabic subject/question text, return `200` with a well-formed
+`%PDF-`-signed PDF instead of throwing) all pass, alongside the full
+existing 237-test API suite.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS
