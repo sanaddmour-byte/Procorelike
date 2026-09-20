@@ -8,6 +8,8 @@ import { prepareBidiLine } from "./bidi-text";
 const PAGE_WIDTH = 595.28; // A4, points -- the default page size for every export (RFI/Submittal/Change Order/Correspondence/Inspection, single-item and summary alike)
 const PAGE_HEIGHT = 841.89;
 const MARGIN = 50;
+/** Doubles drawLine's vertical spacing (both the between-line gap and the wrapped-continuation gap) per user request. */
+const LINE_SPACING_MULTIPLIER = 2;
 
 /**
  * Noto Sans Arabic (SIL OFL 1.1, apps/api/assets/fonts/LICENSE-NotoSansArabic.txt)
@@ -97,11 +99,14 @@ export class PdfBuilder {
     const size = options.size ?? 11;
     const usedFont = options.bold ? this.boldFont : this.font;
     const color = options.color ? rgb(...options.color) : rgb(0.06, 0.09, 0.16);
-    const gap = options.gap ?? 6;
+    // Doubled per user request -- applied as a multiplier (not a change to the base
+    // constants below) so it scales every caller's gap uniformly, including the many
+    // report generators that pass their own explicit `gap` value per line.
+    const gap = (options.gap ?? 6) * LINE_SPACING_MULTIPLIER;
     // Continuation lines within one word-wrapped block use standard single-spacing (~1.35x
     // the font size) rather than a flat 2pt, which read as cramped for long RFI/correspondence
     // bodies -- the exact text most likely to actually wrap.
-    const continuationGap = Math.round(size * 0.35);
+    const continuationGap = Math.round(size * 0.35 * LINE_SPACING_MULTIPLIER);
 
     // Word-wrap on the original logical text -- wrapping decisions (where a line
     // breaks) must not depend on the bidi reordering below, which only changes
@@ -211,9 +216,15 @@ export class PdfBuilder {
         const scale = Math.min(LOGO_MAX_WIDTH / image.width, LOGO_MAX_HEIGHT / image.height, 4);
         const width = image.width * scale;
         const height = image.height * scale;
-        this.page.drawImage(image, { x: MARGIN, y: this.y - height, width, height });
-        this.drawLetterheadCompanyName(companyName, width, height);
-        this.y -= height + 14;
+        // The letterhead row always reserves LOGO_MAX_HEIGHT -- not the scaled image's own
+        // height -- so a very small source image (e.g. a 1px test fixture, or a genuinely
+        // tiny real upload) still leaves the same clearance below the letterhead as every
+        // other report, rather than collapsing the row and letting the next drawLine
+        // overlap the company name drawn beside it. The image itself still renders at its
+        // natural scaled size, bottom-aligned within that reserved row.
+        this.page.drawImage(image, { x: MARGIN, y: this.y - LOGO_MAX_HEIGHT, width, height });
+        this.drawLetterheadCompanyName(companyName, width, LOGO_MAX_HEIGHT);
+        this.y -= LOGO_MAX_HEIGHT + 14;
         return;
       } catch {
         // fall through to the placeholder branch below

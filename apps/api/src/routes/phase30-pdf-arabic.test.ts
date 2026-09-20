@@ -96,4 +96,33 @@ describe("Phase 30: Arabic text no longer crashes PDF export", () => {
     expect(registerRes.headers["content-type"]).toBe("application/pdf");
     assertPdf(registerRes.body as Buffer);
   });
+
+  it("exports a report whose Arabic text contains a combining diacritic (tashkeel/tanwin), not just base letters", async () => {
+    // Regression test for a bug found after this phase originally shipped: Arabic
+    // text containing a combining mark (tanwin, e.g. the "ً" in "وفقاً") crashed
+    // pdf-lib/fontkit's automatic glyph-positioning shaping once bidi-text.ts's
+    // word-reversal split the mark away from its base character -- see
+    // bidi-text.test.ts's "keeps a combining diacritic ... attached" test for the
+    // unit-level repro and the fix (grapheme-cluster-aware reversal).
+    const token = await loginAs("sara.haddad@siteops.test");
+
+    const rfiRes = await request(app)
+      .post("/rfis")
+      .set("authorization", `Bearer ${token}`)
+      .send({
+        projectId,
+        subject: "طول التراكب المطلوب وفقاً لمواصفات المُصنّع",
+        question: "الرجاء تأكيد طول التراكب المطلوب هو 150 مم كحد أدنى وفقاً لمواصفات المُصنّع.",
+      });
+    expect(rfiRes.status).toBe(201);
+
+    const reportRes = await request(app)
+      .get(`/rfis/${rfiRes.body.id}/report`)
+      .set("authorization", `Bearer ${token}`)
+      .buffer(true)
+      .parse(binaryParser);
+    expect(reportRes.status).toBe(200);
+    expect(reportRes.headers["content-type"]).toBe("application/pdf");
+    assertPdf(reportRes.body as Buffer);
+  });
 });

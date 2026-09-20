@@ -40,4 +40,20 @@ describe("prepareBidiLine", () => {
     expect(prepareBidiLine("2026-03-01: مرحبا").rtl).toBe(true);
     expect(prepareBidiLine("2026-03-01: Hello").rtl).toBe(false);
   });
+
+  it("keeps a combining diacritic (tashkeel/tanwin) attached to its base character through reversal", () => {
+    // Regression test: a naive per-codepoint reversal splits a combining mark
+    // (here U+064B ARABIC FATHATAN, the tanwin on the alef in "وفقاً") away from
+    // its base character and puts it first instead of following the base --
+    // which not only misrenders but crashes pdf-lib/fontkit's automatic GPOS
+    // mark-attachment shaping for real fonts (confirmed via a direct PdfBuilder
+    // repro before this fix: "TypeError: Cannot read properties of null
+    // (reading 'xCoordinate')" from @pdf-lib/fontkit's GPOSProcessor).
+    const result = prepareBidiLine("وفقاً لمواصفات");
+    expect(result.rtl).toBe(true);
+    const codePoints = [...result.text].map((ch) => ch.codePointAt(0));
+    const markIndex = codePoints.indexOf(0x064b); // ARABIC FATHATAN
+    expect(markIndex).toBeGreaterThan(0);
+    expect(codePoints[markIndex - 1]).toBe(0x0627); // immediately preceded by its base ARABIC ALEF
+  });
 });

@@ -973,6 +973,48 @@ Arabic subject/question text, return `200` with a well-formed
 `%PDF-`-signed PDF instead of throwing) all pass, alongside the full
 existing 237-test API suite.
 
+**Post-ship fixes (found generating a real screenshot for the user,
+after this phase's original gate passed)**:
+
+1. **A residual crash for Arabic text containing a combining diacritic
+   (tashkeel/tanwin)** -- `prepareBidiLine`'s word-level character
+   reversal (`[...word].reverse()`) operated per Unicode codepoint, which
+   splits a combining mark (e.g. U+064B ARABIC FATHATAN, the tanwin on
+   the alef in "وفقاً") away from its base character and puts it
+   *before* the base instead of after -- the only valid order. This
+   malformed sequence isn't just a rendering glitch: it crashes
+   pdf-lib/fontkit's automatic GPOS mark-attachment shaping (`TypeError:
+   Cannot read properties of null (reading 'xCoordinate')` from
+   fontkit's `GPOSProcessor`), which runs unconditionally on any text
+   drawn with a non-standard embedded font regardless of what this
+   module does. Confirmed with a real RFI ("طول التراكب المطلوب هو 150
+   مم كحد أدنى **وفقاً** لمواصفات المُصنّع.") that crashed the `/report`
+   endpoint outright. Fixed by reversing **grapheme clusters** (a base
+   character plus any immediately-following combining marks, grouped via
+   a `\p{Mn}` Unicode-category test) instead of raw codepoints, so a mark
+   always stays attached to and immediately after its base through the
+   reversal. New regression coverage: a `bidi-text.test.ts` unit test
+   asserting the mark's codepoint immediately follows its base's after
+   `prepareBidiLine`, and a `phase30-pdf-arabic.test.ts` integration test
+   using the exact previously-crashing text.
+2. **A tiny uploaded company logo could collapse the letterhead row and
+   let the report title overlap the company name.** `drawLetterhead`'s
+   real-logo branch sized the whole row to the *scaled* logo image's own
+   height rather than a fixed minimum -- a 1x1 (or any unusually small)
+   source image produced a near-zero-height row, leaving far too little
+   clearance before the next `drawLine` call. The placeholder-box branch
+   (no logo) already reserved a fixed `LOGO_MAX_HEIGHT`; the real-logo
+   branch now does too -- the image still renders at its natural scaled
+   size, bottom-aligned within that fixed-height row, but the y-cursor
+   and the company name's vertical centering both use the reserved
+   height rather than the image's actual height.
+3. **Line spacing throughout every `drawLine`-based report doubled**, per
+   explicit user request after reviewing the screenshot -- a
+   `LINE_SPACING_MULTIPLIER = 2` constant scales both the between-line
+   `gap` and the wrapped-continuation gap uniformly, so it applies to
+   every report generator's calls (including ones that pass their own
+   explicit `gap` value) without editing each call site.
+
 ## 9s. Bulk actions rollout, module 2: Punch List (Phase 31)
 
 The first mechanical repeat of §9p's "extending this pattern to more

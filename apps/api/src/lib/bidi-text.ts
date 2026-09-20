@@ -3,6 +3,8 @@
 // literal Arabic/Hebrew/BOM-lookalike characters that trip up whitespace linting.
 const RTL_CHAR_RANGE = new RegExp("[\\u0590-\\u05FF\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB1D-\\uFDFF\\uFE70-\\uFEFF]");
 const LTR_LETTER_RANGE = new RegExp("[A-Za-z\\u00C0-\\u024F]");
+/** Unicode "Mark, Nonspacing" category -- Arabic tashkeel/tanwin (fatha, damma, kasra, sukun, shadda, fathatan, ...), Hebrew points, and other combining diacritics. These are zero-width and always attach to the character immediately before them. */
+const COMBINING_MARK = new RegExp("\\p{Mn}", "u");
 
 function isRtlChar(ch: string): boolean {
   return RTL_CHAR_RANGE.test(ch);
@@ -37,6 +39,32 @@ export interface BidiLine {
 }
 
 /**
+ * Splits a word into grapheme-like clusters -- each cluster is one base
+ * character plus any combining marks (diacritics) immediately following
+ * it -- so a naive character reversal never separates a mark from its
+ * base. A plain `[...word].reverse()` operates per codepoint: reversing
+ * "<alef><fathatan>" (base then mark, the only valid order) would put
+ * the mark first, which both misrenders (the mark has nothing to attach
+ * to) and -- confirmed empirically -- crashes pdf-lib/fontkit's
+ * automatic GPOS mark-attachment shaping for some Arabic diacritic
+ * sequences (fontkit runs this shaping unconditionally on any text drawn
+ * with a non-standard embedded font, regardless of what this module
+ * does). Clustering first keeps every base+mark pair intact through the
+ * reversal.
+ */
+function toGraphemeClusters(word: string): string[] {
+  const clusters: string[] = [];
+  for (const ch of word) {
+    if (COMBINING_MARK.test(ch) && clusters.length > 0) {
+      clusters[clusters.length - 1] += ch;
+    } else {
+      clusters.push(ch);
+    }
+  }
+  return clusters;
+}
+
+/**
  * pdf-lib's `drawText` has no bidi or shaping support at all -- it places
  * each character left-to-right in string order. For Arabic/Hebrew text
  * typed in normal logical order, that both reads backwards (right-to-
@@ -59,6 +87,6 @@ export function prepareBidiLine(text: string): BidiLine {
   if (!isRtlDominant(text)) return { text, rtl: false };
 
   const words = text.split(" ");
-  const reordered = words.reverse().map((word) => (isRtlDominant(word) ? [...word].reverse().join("") : word));
+  const reordered = words.reverse().map((word) => (isRtlDominant(word) ? toGraphemeClusters(word).reverse().join("") : word));
   return { text: reordered.join(" "), rtl: true };
 }

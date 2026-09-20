@@ -81,7 +81,25 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 32 (bulk actions
+mid-build corrections).
+
+**Post-Phase-32 hotfix**: generating a real screenshot of the Arabic RFI
+PDF for the user surfaced a residual Phase 30 crash -- `prepareBidiLine`
+reversed Arabic text per Unicode codepoint, which separates a combining
+diacritic (tashkeel/tanwin) from its base character and crashes
+pdf-lib/fontkit's automatic glyph-positioning shaping for real text
+containing one (confirmed with "وفقاً لمواصفات"). Fixed by reversing
+grapheme clusters (base + trailing combining marks) instead of raw
+codepoints. Also fixed, found in the same screenshot: a tiny uploaded
+company logo could collapse the letterhead row and let the report title
+overlap the company name (`drawLetterhead` now reserves a fixed row
+height regardless of the actual logo image's size, matching the
+no-logo placeholder branch). Also applied a user-requested doubling of
+`drawLine`'s line spacing (`LINE_SPACING_MULTIPLIER`). See
+`docs/DATA_MODEL.md` §9r's "Post-ship fixes" for the full writeup; new
+regression tests cover both bugs.
+
+As of this writing: **Phase 32 (bulk actions
 rollout to Submittals) is complete and gate-verified** -- the second
 mechanical repeat of Phase 28's bulk-actions recipe, this time on
 Submittals. Added `bulkCloseSubmittalsSchema` (shared) and
