@@ -416,7 +416,10 @@
     "viewSpecSection": "View specification section",
     "files": "Files",
     "noFiles": "No files attached yet.",
-    "uploadFile": "Upload file"
+    "uploadFile": "Upload file",
+    "bulkCloseAction": "Close selected",
+    "bulkCloseConfirmTitle": "Close selected submittals?",
+    "bulkCloseConfirmMessage": "{count} submittal(s) will be closed. Only approved (or approved-as-noted) submittals can be closed -- others will be skipped."
   },
   "Inspections": {
     "title": "Inspections",

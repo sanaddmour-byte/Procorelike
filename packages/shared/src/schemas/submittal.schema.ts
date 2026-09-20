@@ -119,3 +119,18 @@ export const submitSubmittalReviewSchema = z
   })
   .strict();
 export type SubmitSubmittalReviewInput = z.infer<typeof submitSubmittalReviewSchema>;
+
+/**
+ * Phase 32: bulk-close contract, rolling out the Phase 28/31 bulk-actions
+ * recipe to a third module. No `toStatus` field (unlike
+ * bulkTransitionRfiStatusSchema / bulkTransitionPunchItemStatusSchema) --
+ * closeSubmittal is a single fixed action (approved/approved_as_noted ->
+ * closed), not a generic transition, so there's only one target status
+ * to name.
+ */
+export const bulkCloseSubmittalsSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+  })
+  .strict();
+export type BulkCloseSubmittalsInput = z.infer<typeof bulkCloseSubmittalsSchema>;

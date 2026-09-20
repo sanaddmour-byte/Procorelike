@@ -81,8 +81,25 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 31 (bulk actions
-rollout to Punch List) is complete and gate-verified** -- the first
+mid-build corrections). As of this writing: **Phase 32 (bulk actions
+rollout to Submittals) is complete and gate-verified** -- the second
+mechanical repeat of Phase 28's bulk-actions recipe, this time on
+Submittals. Added `bulkCloseSubmittalsSchema` (shared) and
+`bulkCloseSubmittals` (API service + `POST /submittals/bulk-close`
+route), the same `{ id, ok, error? }[]`-per-row, mixed-project-rejecting
+shape as the RFI and Punch Item versions, looping the existing
+single-item `closeSubmittal`. One deliberate difference from the other
+two bulk schemas: no `toStatus` field, since `closeSubmittal` is a single
+fixed action (approved/approved_as_noted -> closed) rather than a generic
+transition with a caller-chosen target -- there's only one status to
+name. The Submittals page reused `DataTable`'s `selection` prop and
+`BulkActionsBar` unchanged since Phase 28, same as Punch List. See
+`docs/DATA_MODEL.md` §9t for the full writeup and `docs/ROADMAP.md`'s
+Phase 32 gate report for verification (4 new API tests -- including
+driving a submittal through its real package/revision/review flow to
+reach `approved` -- plus Playwright confirming no regression).
+
+Phase 31 (bulk actions rollout to Punch List) preceded this -- the first
 mechanical repeat of Phase 28's bulk-actions recipe on a second module,
 per that phase's own "extending this pattern to more modules is now a
 mechanical repeat of this recipe, not a redesign" note. Added

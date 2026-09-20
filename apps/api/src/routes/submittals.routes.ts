@@ -1,5 +1,12 @@
 import type { Database } from "@siteops/db";
-import { createSubmittalRevisionSchema, createSubmittalSchema, listSubmittalsQuerySchema, submitSubmittalReviewSchema, updateSubmittalSchema } from "@siteops/shared";
+import {
+  bulkCloseSubmittalsSchema,
+  createSubmittalRevisionSchema,
+  createSubmittalSchema,
+  listSubmittalsQuerySchema,
+  submitSubmittalReviewSchema,
+  updateSubmittalSchema,
+} from "@siteops/shared";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Env } from "../env";
 import { NotFoundError } from "../lib/errors";
@@ -103,6 +110,18 @@ export function submittalsRouter(appDb: Database, env: Env): Router {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="submittal-register.pdf"`);
       res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Registered before /:id (matches rfis.routes.ts's convention) so "bulk-close" isn't parsed as an id.
+  router.post("/bulk-close", validateBody(bulkCloseSubmittalsSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const results = await submittalService.bulkCloseSubmittals(appDb, authUser.id, req.body);
+      res.json(results);
     } catch (err) {
       next(err);
     }

@@ -416,7 +416,10 @@
     "viewSpecSection": "عرض قسم المواصفات",
     "files": "الملفات",
     "noFiles": "لم يتم إرفاق ملفات بعد.",
-    "uploadFile": "رفع ملف"
+    "uploadFile": "رفع ملف",
+    "bulkCloseAction": "إغلاق المحدد",
+    "bulkCloseConfirmTitle": "إغلاق المستندات الفنية المحددة؟",
+    "bulkCloseConfirmMessage": "سيتم إغلاق {count} من المستندات الفنية. سيتم تخطي أي مستند غير معتمد (أو معتمد مع ملاحظات)."
   },
   "Inspections": {
     "title": "التفتيشات",

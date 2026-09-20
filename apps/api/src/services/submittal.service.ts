@@ -4,6 +4,7 @@ import {
   formatSubmittalNumber,
   requirePermission,
   resolveEffectiveLevel,
+  type BulkCloseSubmittalsInput,
   type CreateSubmittalInput,
   type CreateSubmittalRevisionInput,
   type ListSubmittalsQuery,
@@ -21,7 +22,7 @@ import { ApiError, NotFoundError } from "../lib/errors";
 import { writeAuditLog } from "../lib/audit";
 import { notifyUsers } from "./notification.service";
 import { resolveAuthorCompanyBranding, type ReportBranding } from "../lib/report-branding";
-import { withUserContext } from "./permission.service";
+import { loadPermissionContext, withUserContext } from "./permission.service";
 
 type SubmittalRow = typeof schema.submittals.$inferSelect;
 type SubmittalPackageRow = typeof schema.submittalPackages.$inferSelect;
@@ -628,6 +629,61 @@ export async function closeSubmittal(
     if (!updated) throw new Error("Failed to close submittal");
     return updated;
   });
+}
+
+export interface BulkCloseSubmittalsResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Phase 32: bulk-close, rolling out the Phase 28/31 bulk-actions recipe
+ * to a third module -- a thin loop over the exact same closeSubmittal a
+ * single-item POST already uses, so the approved/approved_as_noted-only
+ * precondition and the audit log write both apply per row here too.
+ *
+ * Every id must belong to the same project, same reasoning as
+ * rfi.service.ts's bulkTransitionRfiStatus: one PermissionContext can't
+ * correctly apply to rows from different projects. A missing id or a
+ * rule violation on one row (a submittal that isn't approved yet) is
+ * reported per-row instead of failing the batch.
+ */
+export async function bulkCloseSubmittals(
+  appDb: Database,
+  userId: string,
+  input: BulkCloseSubmittalsInput,
+): Promise<BulkCloseSubmittalsResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => {
+    return tx
+      .select({ id: schema.submittals.id, projectId: schema.submittals.projectId })
+      .from(schema.submittals)
+      .where(inArray(schema.submittals.id, input.ids));
+  });
+  if (rows.length === 0) throw new NotFoundError("No submittals found for the given ids");
+
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) {
+    throw new ApiError(400, "mixed_projects", "All selected submittals must belong to the same project");
+  }
+  const [projectId] = projectIds;
+  const ctx = await loadPermissionContext(appDb, userId, projectId!);
+  const foundIds = new Set(rows.map((r) => r.id));
+
+  const results: BulkCloseSubmittalsResult[] = [];
+  for (const id of input.ids) {
+    if (!foundIds.has(id)) {
+      results.push({ id, ok: false, error: "Submittal not found" });
+      continue;
+    }
+    try {
+      await closeSubmittal(appDb, userId, ctx, id);
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to close this submittal" });
+    }
+  }
+  return results;
 }
 
 export interface SubmittalReportReview {

@@ -1038,6 +1038,65 @@ in §9p. Document-viewer unification, annotation generalization, and the
 HarfBuzz-level Arabic letter-shaping follow-up (§9r) also remain
 untouched by this phase.
 
+## 9t. Bulk actions rollout, module 3: Submittals (Phase 32)
+
+The second mechanical repeat of §9p's recipe -- same shape as §9s
+(Punch List), a third module, no redesign.
+
+**`packages/shared/src/schemas/submittal.schema.ts`**:
+`bulkCloseSubmittalsSchema` (`{ ids: string[] (1-100, uuid) }`) --
+notably **no `toStatus` field**, unlike the RFI and Punch Item bulk
+schemas. `closeSubmittal` is a single fixed action (moves an `approved`
+or `approved_as_noted` submittal to `closed`), not a generic transition
+with a caller-chosen target the way `transitionRfiStatus`/
+`transitionPunchItemStatus` are -- so there's only one status to name,
+and adding a `toStatus` field that could only ever be `"closed"` would
+be a no-op parameter.
+
+**`apps/api/src/services/submittal.service.ts`**: `bulkCloseSubmittals`
+loads every requested submittal, rejects the whole batch with 400
+`mixed_projects` if the ids span more than one project, loads one
+`PermissionContext`, then loops the exact same `closeSubmittal` a
+single-item `POST /submittals/:id/close` already uses -- so the
+approved/approved-as-noted-only precondition and the audit log write
+both apply per row. Returns `{ id, ok, error? }[]`, same shape as the
+other two bulk endpoints. `POST /submittals/bulk-close` is registered
+before the `/:id` dynamic routes.
+
+**Web**: the Submittals page reuses `DataTable`'s `selection` prop and
+`BulkActionsBar` unchanged since Phase 28 -- only page-level wiring is
+new, identical in shape to the RFIs and Punch List pages (selection
+state, a `ConfirmDialog`-gated "Close selected" button,
+`Common.bulkPartialFailure` on partial failure, selection cleared on
+`search`/`filters`/`sort`/`page` change).
+
+**A submittal's approval path is heavier than an RFI's or punch item's**
+(package -> revision -> sequential/parallel reviewer responses -> an
+aggregate outcome), which only affects the *test setup* needed to reach
+a closeable submittal, not the bulk-close logic itself -- the bulk
+endpoint doesn't care how a submittal became `approved`, only that it
+did.
+
+**Verified**: `apps/api/src/routes/phase32-submittal-bulk-actions.test.ts`
+(4 tests, mirroring the Phase 28/31 bulk-action suites -- full-batch
+success with a re-fetch confirming the status change, a partial failure
+where one submittal is still `draft` and can't close, a missing id
+reported per-row rather than 404ing the batch, and the empty-`ids` 400).
+Getting a submittal to `approved` for the success-case tests drives it
+through the real package/revision/review flow (one reviewer, a passing
+`responseCode`), the same setup `submittal.test.ts` already established.
+Playwright against the running dev servers confirmed the checkbox
+selection, `BulkActionsBar`, and `ConfirmDialog` render and behave
+correctly on the Submittals page with zero console errors, and that the
+Arabic (`/ar/...`) page still renders `dir="rtl"`.
+
+**Explicitly not built this phase, on record**: bulk actions on Change
+Orders (the next candidate module) and any others, column resize,
+density modes, and client-side permission-aware UI hiding all remain
+deferred, as recorded in §9p. Document-viewer unification, annotation
+generalization, and the HarfBuzz-level Arabic letter-shaping follow-up
+(§9r) also remain untouched by this phase.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

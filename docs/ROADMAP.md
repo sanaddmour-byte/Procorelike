@@ -3996,6 +3996,75 @@ Arabic letter-shaping follow-up (Phase 30) also remain untouched.
   stopped between sessions again, the same recurring sandbox note as
   every prior phase's gate report).
 
+## Phase 32 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- per the user's "proceed"; Phase 31's
+gate report explicitly listed Submittals as one of the modules still
+missing bulk actions, and this is the second mechanical repeat of Phase
+28's recipe) -- **PASSED**, see Verification.
+
+**What was built:**
+
+- **`packages/shared/src/schemas/submittal.schema.ts`**:
+  `bulkCloseSubmittalsSchema` (`{ ids: string[] (1-100, uuid) }`) -- no
+  `toStatus` field, unlike the RFI/Punch Item bulk schemas, since
+  `closeSubmittal` is a single fixed action (approved/approved_as_noted
+  -> closed), not a generic transition with a caller-chosen target.
+- **`apps/api/src/services/submittal.service.ts`**:
+  `bulkCloseSubmittals` -- loads every requested submittal, rejects the
+  whole batch with 400 `mixed_projects` if the ids span more than one
+  project, loads one `PermissionContext`, then loops the exact same
+  `closeSubmittal` a single-item POST already uses, so the
+  approved-only precondition and the audit log write both apply per
+  row. Returns `{ id, ok, error? }[]` so one bad row doesn't fail the
+  batch.
+- **`apps/api/src/routes/submittals.routes.ts`**: `POST
+  /submittals/bulk-close`, registered before the `/:id` dynamic routes.
+- **Submittals page**: reused `DataTable`'s `selection` prop and
+  `BulkActionsBar` unchanged since Phase 28 -- zero component changes,
+  only page-level wiring (selection state, a "Close selected" action
+  gated behind `ConfirmDialog`, `Common.bulkPartialFailure` messaging,
+  selection cleared on `search`/`filters`/`sort`/`page` change), the
+  same shape as the RFIs and Punch List pages.
+- **`apps/api/src/routes/phase32-submittal-bulk-actions.test.ts`** (new):
+  4 tests mirroring the Phase 28/31 bulk-action suites -- full-batch
+  success with a re-fetch confirming the status change, a partial
+  failure (one submittal still `draft`, which can't close), a missing
+  id reported per-row rather than 404ing the batch, and the empty-`ids`
+  400. Driving a submittal to `approved` for the success cases exercises
+  its real package/revision/review flow (one reviewer, a passing
+  `responseCode`) -- the bulk-close logic itself doesn't care how a
+  submittal got to `approved`, only that it did.
+- **Manual browser verification** (Playwright against the dev servers):
+  selecting a row on the Submittals page surfaced the `BulkActionsBar`
+  with "Close selected"; clicking it opened the `ConfirmDialog` with the
+  expected title; cancel closed it cleanly; zero console errors observed
+  throughout. Confirmed the Arabic (`/ar/...`) page still renders
+  `dir="rtl"`.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` gained a new §9t
+documenting this rollout and why the bulk schema omits a `toStatus`
+field.
+
+**Explicitly not built this phase, on record**: bulk actions on Change
+Orders (the next candidate module) and any others, column resize,
+density modes, and client-side permission-aware UI hiding all remain
+deferred, as recorded in Phase 28's gate report. Document-viewer
+unification, annotation generalization, and the HarfBuzz-level Arabic
+letter-shaping follow-up (Phase 30) also remain untouched.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package. `packages/shared`: 200 tests, `packages/db`: 1,
+  `apps/api`: 245 tests across 45 files (241 pre-existing plus 4 new
+  `phase32-submittal-bulk-actions.test.ts` tests; every pre-existing
+  submittal-touching suite, including `submittal.test.ts`, re-verified
+  unaffected), `apps/web`: 28, unaffected. Full `next build` succeeded
+  across all routes. Confirmed the sandbox's Postgres 16 cluster before
+  the API test suite (it had stopped between sessions again, the same
+  recurring sandbox note as every prior phase's gate report).
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the
