@@ -82,6 +82,47 @@ Standard Next.js production server (`next start`), or adapt
 `next build`'s output to your platform's Next.js integration if it has
 one.
 
+### 4a. Deploying apps/web to Vercel specifically
+
+`apps/web` is a plain Next.js 15 app with exactly one runtime dependency
+on the outside world -- `NEXT_PUBLIC_API_URL`, the deployed `apps/api`
+origin -- and no server-side routes of its own (`app/` has no
+`route.ts`/API handlers; every data call goes through `lib/api-client.ts`
+to that external API). That makes it a first-class fit for Vercel as-is.
+`apps/api` itself is a stateful Express server (direct Postgres
+connections, PDF generation, file uploads) and is **not** part of this
+Vercel deployment -- keep running it per steps 1-3 and 5 above, on any
+Node 22 host (Railway, Render, Fly.io, a VM, etc), and point
+`NEXT_PUBLIC_API_URL` at wherever that ends up.
+
+1. **Import the repo** in the Vercel dashboard (New Project → import
+   `sanaddmour-byte/procorelike` from GitHub).
+2. **Set the project's Root Directory to `apps/web`.** This is a
+   dashboard setting (Project Settings → General → Root Directory), not
+   a file in the repo. Vercel auto-detects the Next.js framework preset
+   once this is set.
+3. **Leave Install/Build Command on their defaults.** This repo is a
+   pnpm workspace (`pnpm-workspace.yaml` + a root `pnpm-lock.yaml`,
+   `packageManager: "pnpm@10.33.0"` pinned in the root `package.json`);
+   Vercel detects that automatically from the Root Directory setting and
+   runs `pnpm install` from the *workspace root* (not `apps/web`) so the
+   `@siteops/shared` workspace dependency resolves correctly, then runs
+   `next build` inside `apps/web`. `@siteops/shared` has no separate
+   build step of its own -- `next.config.mjs`'s `transpilePackages`
+   already tells Next.js to transpile it straight from TypeScript
+   source, so nothing extra needs to run before `next build`.
+4. **Add the one environment variable**: `NEXT_PUBLIC_API_URL` = your
+   deployed API's public origin (e.g. `https://api.example.com`), set
+   for Production (and Preview/Development if you want preview
+   deployments to hit a staging API). It is baked in at build time, so
+   changing it requires a redeploy, not just a restart.
+5. **Deploy.** Every push to the tracked branch triggers a new build;
+   Vercel's own preview-deployment flow applies to PRs as usual.
+6. Confirm the deployed site can reach the API: log in as a seeded (or
+   real) user and confirm a list page loads data. A CORS error in the
+   browser console means `apps/api`'s `CORS_ORIGIN` doesn't yet include
+   the Vercel deployment's origin -- update it there and restart the API.
+
 ## 5. Wire up the scheduled jobs
 
 There is deliberately no in-process scheduler (see
