@@ -268,6 +268,7 @@ export default function TransmittalsPage() {
         />
 
         <DataTable<Transmittal>
+          storageKey="transmittals"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

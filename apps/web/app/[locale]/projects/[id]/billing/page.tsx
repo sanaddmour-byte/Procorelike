@@ -187,6 +187,7 @@ export default function BillingPage() {
         />
 
         <DataTable<PaymentApplication>
+          storageKey="billing"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

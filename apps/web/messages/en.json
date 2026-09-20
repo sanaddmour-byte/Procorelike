@@ -16,6 +16,8 @@
     "pageIndicator": "Page {current} of {total}",
     "previousPage": "Previous page",
     "nextPage": "Next page",
+    "columns": "Columns",
+    "columnsMenuLabel": "Show or hide columns",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "cancel": "Cancel",

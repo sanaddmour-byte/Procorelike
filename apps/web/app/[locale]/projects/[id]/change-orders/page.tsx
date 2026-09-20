@@ -503,6 +503,7 @@ export default function ChangeOrdersPage() {
           />
 
           <DataTable<ChangeOrder>
+            storageKey="change-orders"
             columns={changeOrderColumns}
             rows={serverTable.rows}
             error={serverTable.error ? tc("errorGeneric") : null}

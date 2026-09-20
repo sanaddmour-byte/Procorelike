@@ -140,6 +140,7 @@ export default function EstimatingPage() {
         />
 
         <DataTable<Estimate>
+          storageKey="estimating"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

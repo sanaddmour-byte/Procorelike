@@ -183,6 +183,7 @@ export default function BiddingPage() {
         />
 
         <DataTable<BidPackage>
+          storageKey="bidding"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

@@ -268,6 +268,7 @@ export default function DrawingsPage() {
         />
 
         <DataTable<Drawing>
+          storageKey="drawings"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

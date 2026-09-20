@@ -249,6 +249,7 @@ export default function DocumentsPage() {
               clearAllLabel={tc("clearAll")}
             />
             <DataTable<DocumentRecord>
+              storageKey="documents"
               columns={columns}
               rows={serverTable.rows}
               error={serverTable.error ? tc("errorGeneric") : null}

@@ -3586,6 +3586,86 @@ started and remain future work.
   in fact already running this time, so the start command was a no-op
   confirmation rather than an actual restart).
 
+## Phase 27 gate report
+
+**Gate** (continuing the user-directed "Enterprise UX, Data Architecture
+& PDF System Upgrade" initiative -- with the server-driven list-query
+contract closed out in Phase 26, this picks up the next deferred item:
+`DataTable.tsx`'s own doc comment has flagged "column resize, visibility
+toggles, and bulk row selection" as deliberately deferred since the
+table's first build, and the parent spec's own remaining-items list
+names "column customization" alongside bulk actions; per the user's
+"proceed" after Phase 26's gate report was delivered) -- **PASSED**, see
+Verification.
+
+**What was built:**
+
+- **`apps/web/components/ui/DataTable.tsx`**: `DataTableColumn<T>` gained
+  an optional `hideable?: boolean` (default `true`); `Props<T>` gained an
+  optional `storageKey?: string`. When `storageKey` is set, a "Columns"
+  button renders above the header row, opening a checklist menu that
+  hides/shows any column not marked `hideable: false`, with a
+  `toggleColumn` guard that refuses to hide the last remaining visible
+  column. Both new fields are additive -- a column/table that doesn't set
+  them renders exactly as it did before this phase, the same shape every
+  earlier DataTable addition (`serverSort`, `pagination`) already used.
+  Hidden-column state persists to `localStorage` under
+  `siteops.dataTableHiddenColumns.<storageKey>`, per-browser only -- the
+  same pattern `GlobalSearch`'s recent-searches list already established,
+  not a database-backed per-user preference (a deliberate scope call: see
+  `docs/DATA_MODEL.md` §9o for the reasoning against reusing
+  `SavedViewsBar`/`/saved-views` for this).
+- **Rollout**: all ~20 pages already on `DataTable` (every module in
+  §9n's "migrated so far" list, plus Budget's line-item table, which was
+  never part of the list-query-contract rollout since it has no list
+  endpoint to paginate) got a unique `storageKey` in this same phase --
+  a one-line, purely-additive prop per call site with no per-module
+  server-side design work, so unlike the list-query contract this needed
+  no staged rollout across phases.
+- **i18n**: `Common.columns`/`Common.columnsMenuLabel` added to
+  `messages/en.json` and `messages/ar.json`.
+- **Manual browser verification** (Playwright against the dev servers,
+  logged in as `omar.nassar@siteops.test`): on the RFIs list page, opened
+  the Columns menu, unchecked "Number," confirmed the column disappeared
+  from the header and grid immediately, reloaded the page, and confirmed
+  it stayed hidden (`localStorage`'s
+  `siteops.dataTableHiddenColumns.rfis` held `["number"]`) -- the
+  persistence path this phase depends on actually round-trips, not just
+  typechecks.
+
+**Also corrected, not built**: `docs/DATA_MODEL.md` §9n's own list of
+what the "UX/UI foundation pass" commit deferred is now split accurately
+across two outcomes -- column visibility done (this phase, §9o), column
+resize and bulk row selection still deferred (see below).
+
+**Explicitly not built this phase, on record**: column resize (the
+`react-window`-virtualized grid's column widths are fixed CSS grid
+tracks per render; a resize handle needs its own design pass to avoid
+fighting that) and bulk row selection with a bulk-actions bar (needs a
+bulk-mutation endpoint per module -- a materially larger surface than a
+client-side render filter) both remain deferred, unchanged from every
+prior phase's note. Global search and the navigation/icon-rail shell
+named in the parent spec's remaining-items list were found, during this
+phase's scoping, to already exist (`search.service.ts` +
+`GlobalSearch.tsx`, `components/shell/`) from the pre-Phase-21 "UX/UI
+foundation pass" -- they were never phase-tracked under this initiative's
+numbering, so this report records the correction rather than re-building
+already-shipped functionality. The rest of the parent spec (a centralized
+status system beyond the existing `StatusBadge`/`lib/design/status.ts`
+tokens, the PDF architecture overhaul) remains unstarted.
+
+**Verification:**
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm build` all green
+  across every package, unaffected by this phase's scope
+  (`packages/shared`: 200 tests, `packages/db`: 1, `apps/api`: 226 across
+  40 files, `apps/web`: 28 -- no new automated test file, since this
+  phase is a client-only rendering feature with no new service, route,
+  or pure function to unit-test; coverage instead comes from the manual
+  Playwright verification above, per this repo's "test UI changes in a
+  browser" convention). Full `next build` succeeded across all routes.
+  Confirmed the sandbox's Postgres 16 cluster was already running before
+  the API test suite.
+
 ## Assumptions (numbered — flag any that need correction before Phase 1)
 
 1. **App name**: "SiteOps" (repository name `procorelike` is just the

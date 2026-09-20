@@ -737,6 +737,61 @@ the component itself -- confirming it was built broadly enough in Phase
 21 to fit an independently-evolved saved-views implementation, not just
 the one page it was extracted from.
 
+## 9o. DataTable column visibility (Phase 27)
+
+No new tables or endpoints. With the list-query-contract initiative
+closed out (Phase 26), this picks up the next item the "Enterprise UX,
+Data Architecture & PDF System Upgrade" spec named and `DataTable.tsx`'s
+own doc comment had flagged since its first pass (Phase "UX/UI foundation
+pass": `git log --oneline -- apps/web/components/ui/DataTable.tsx`):
+"column resize, visibility toggles, and bulk row selection are
+deliberately not in this first pass." Column resize and bulk row
+selection remain deferred (resize interacts with the `react-window`
+virtualization's fixed grid-template sizing in a way that needs its own
+design pass; bulk actions need a bulk-mutation endpoint per module, a
+much larger surface). Column visibility does not need either -- it is
+purely a client-side render filter over the same `columns` array every
+page already builds.
+
+**Shape**: `DataTableColumn<T>` gained an optional `hideable?: boolean`
+(defaults to `true`; a page sets it `false` on a column that must always
+stay visible, e.g. an identifying number column -- no migrated page
+needed this yet, so none currently sets it). `DataTable`'s `Props<T>`
+gained an optional `storageKey?: string`. Both are additive: a column
+that doesn't set `hideable` and a table that doesn't pass `storageKey`
+behave exactly as before -- the same "omit it, get the old behavior"
+shape every other DataTable prop (`serverSort`, `pagination`) already
+uses. When `storageKey` is set, a "Columns" button appears above the
+header row; its checklist menu can hide any column except one marked
+`hideable: false`, and the toggle refuses to hide the last remaining
+visible column outright (checked in `toggleColumn` before the state
+update, not just in the UI) so a table can never be checked into an
+empty, headerless state.
+
+**Persistence is per-browser, not per-user-in-the-database, and that's
+deliberate**: hidden-column keys are stored in `localStorage` under
+`siteops.dataTableHiddenColumns.<storageKey>`, the same per-browser-only
+pattern `GlobalSearch`'s recent-searches list already established
+(`components/shell/GlobalSearch.tsx`'s `loadRecent`/`saveRecent`) --
+read/write wrapped in `try/catch` since `localStorage` can throw (private
+browsing, quota). This is a smaller, purely-cosmetic preference than a
+`SavedViewsBar` view (search/filter/sort a user wants to name and share
+across devices via the project-scoped `/saved-views` API); inventing a
+server round trip for "which columns are hidden on my screen right now"
+would be over-engineering the feature relative to what it's for. Revisit
+only if a real cross-device sync need for this specific preference shows
+up.
+
+**Rollout**: every one of the ~20 pages already on `DataTable` (the same
+set enumerated in §9n's "migrated so far," plus Budget's line-item table,
+which was never part of the list-query-contract rollout since it has no
+list endpoint of its own to paginate) got a `storageKey` unique to that
+page (`"rfis"`, `"submittals"`, `"schedule"`, etc.) in this same phase --
+unlike the list-query contract, which was deliberately proven on one
+module before rolling out over several phases, wiring this feature is a
+one-line, purely-additive prop per call site with no server-side
+counterpart to design per module, so there was no reason to stage it.
+
 ## 10. Row-Level Security approach (implemented — `packages/db/src/sql/001_rls_and_functions.sql`)
 
 Every tenant-scoped table with a direct `project_id` column gets an RLS

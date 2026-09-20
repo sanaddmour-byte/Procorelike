@@ -246,6 +246,7 @@ export default function DirectCostsPage() {
         />
 
         <DataTable<DirectCost>
+          storageKey="direct-costs"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

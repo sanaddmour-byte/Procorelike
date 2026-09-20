@@ -16,6 +16,8 @@
     "pageIndicator": "صفحة {current} من {total}",
     "previousPage": "الصفحة السابقة",
     "nextPage": "الصفحة التالية",
+    "columns": "الأعمدة",
+    "columnsMenuLabel": "إظهار أو إخفاء الأعمدة",
     "zoomIn": "تكبير",
     "zoomOut": "تصغير",
     "cancel": "إلغاء",

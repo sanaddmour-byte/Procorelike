@@ -375,6 +375,7 @@ export default function SafetyIncidentsPage() {
         />
 
         <DataTable<SafetyIncident>
+          storageKey="safety-incidents"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

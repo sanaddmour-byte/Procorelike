@@ -81,12 +81,32 @@ docs/           ARCHITECTURE.md, DATA_MODEL.md, ROADMAP.md
 
 See `docs/ROADMAP.md` for the authoritative phase checklist, module-tier
 status table, and each phase's gate report (what was verified, known gaps,
-mid-build corrections). As of this writing: **Phase 26 (server-driven
-list query contract rolled out to Schedule, Bidding, and Estimating) is
-complete and gate-verified, closing out the user-directed "Enterprise
-UX, Data Architecture & PDF System Upgrade" list-query initiative --
-every real list module in the app now has server-side
-search/filter/sort/pagination.** No changes to the shared contract
+mid-build corrections). As of this writing: **Phase 27 (DataTable column
+visibility) is complete and gate-verified** -- the next item in the
+user-directed "Enterprise UX, Data Architecture & PDF System Upgrade"
+initiative after Phase 26 closed out the list-query-contract rollout.
+`components/ui/DataTable.tsx` gained an optional per-column `hideable`
+flag and a table-level `storageKey` prop that turns on a "Columns"
+show/hide menu, persisted per browser via `localStorage` (the same
+per-browser-only pattern `GlobalSearch`'s recent-searches already use,
+not a database-backed preference -- see `docs/DATA_MODEL.md` §9o for why
+that's the right call for this feature specifically). Both are additive:
+omit them and a table renders exactly as before. All ~20 pages already on
+`DataTable` got a unique `storageKey` in this same phase, verified with a
+Playwright smoke check against the dev servers (hide a column, reload,
+confirm it stays hidden). Column resize and bulk row selection remain
+deferred, unchanged from `DataTable.tsx`'s own doc comment since its
+first build. Scoping this phase also surfaced that two other items the
+parent spec's remaining-work list names -- global search and the
+navigation/icon-rail shell -- already exist (`search.service.ts` +
+`GlobalSearch.tsx`, `components/shell/`), shipped in an earlier,
+un-phase-tracked "UX/UI foundation pass" predating Phase 21's numbering;
+Phase 27's gate report records that correction rather than re-building
+them. Phase 26 (server-driven list query contract rolled out to
+Schedule, Bidding, and Estimating) preceded this, closing out the
+list-query-contract half of the initiative -- every real list module in
+the app has server-side search/filter/sort/pagination. No changes to the
+shared contract
 (`packages/shared/schemas/list-query.schema.ts`, `PaginatedResult<T>`)
 itself this phase. Schedule's pre-migration default order was an in-JS
 sort on `sortOrder, startDate` (a manual drag-order), not one column like

@@ -195,6 +195,7 @@ export default function CommitmentsPage() {
         />
 
         <DataTable<Commitment>
+          storageKey="commitments"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

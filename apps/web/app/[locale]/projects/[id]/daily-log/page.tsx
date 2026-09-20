@@ -84,6 +84,7 @@ export default function DailyLogListPage() {
         />
 
         <DataTable<DailyLog>
+          storageKey="daily-log"
           columns={columns}
           rows={filteredLogs}
           onRowClick={(log) => router.push(`/${locale}/projects/${params.id}/daily-log/${log.id}`)}

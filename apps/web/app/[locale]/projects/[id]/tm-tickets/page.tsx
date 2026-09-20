@@ -367,6 +367,7 @@ export default function TmTicketsPage() {
         />
 
         <DataTable<TmTicket>
+          storageKey="tm-tickets"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

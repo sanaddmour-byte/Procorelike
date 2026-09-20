@@ -105,6 +105,7 @@ export default function MeetingsPage() {
         />
 
         <DataTable<Meeting>
+          storageKey="meetings"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

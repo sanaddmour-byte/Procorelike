@@ -249,6 +249,7 @@ export default function SchedulePage() {
         />
 
         <DataTable<ScheduleTask>
+          storageKey="schedule"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

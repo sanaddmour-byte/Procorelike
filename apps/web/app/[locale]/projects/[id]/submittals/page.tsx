@@ -361,6 +361,7 @@ export default function SubmittalsPage() {
         />
 
         <DataTable<Submittal>
+          storageKey="submittals"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

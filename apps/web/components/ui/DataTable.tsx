@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { List, type RowComponentProps } from "react-window";
 import { EmptyState } from "./EmptyState";
 import { ErrorState } from "./ErrorState";
@@ -16,6 +16,8 @@ export interface DataTableColumn<T> {
   /** CSS grid track size, e.g. "1fr", "140px". Defaults to "1fr". */
   width?: string;
   align?: "start" | "end";
+  /** Set false to keep an identifying column always visible, excluded from the "Columns" show/hide menu. Defaults to true; only takes effect when the table's `storageKey` prop is set. */
+  hideable?: boolean;
 }
 
 interface RowProps<T> {
@@ -106,6 +108,32 @@ interface Props<T> {
    * the hook that drives this alongside `serverSort`/`onServerSortChange`.
    */
   pagination?: DataTablePagination;
+  /**
+   * Enables a "Columns" show/hide toggle above the header row, persisted
+   * per browser under this key (localStorage, not synced -- the same
+   * per-browser-only pattern GlobalSearch's recent-searches use). Give
+   * each table on a distinct page its own key. Omit to keep every column
+   * always visible with no toggle UI, the original behavior every
+   * existing caller already relies on.
+   */
+  storageKey?: string;
+}
+
+function loadHiddenColumns(storageKey: string): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(`siteops.dataTableHiddenColumns.${storageKey}`);
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveHiddenColumns(storageKey: string, hidden: Set<string>): void {
+  try {
+    window.localStorage.setItem(`siteops.dataTableHiddenColumns.${storageKey}`, JSON.stringify([...hidden]));
+  } catch {
+    // per-browser convenience only -- a failed write just means the choice isn't remembered
+  }
 }
 
 /**
@@ -114,12 +142,15 @@ interface Props<T> {
  * library and pattern the Gantt task grid already uses) so a
  * thousand-plus-row register scrolls smoothly instead of hanging the
  * page the way a plain `.map()` over `<li>` cards did before. Column
- * resize, visibility toggles, and bulk row selection are deliberately
- * not in this first pass -- flagged as follow-up, not silently dropped.
+ * resize and bulk row selection are deliberately not in this pass --
+ * flagged as follow-up, not silently dropped; column visibility (Phase
+ * 27) is.
  *
  * Server-driven sort/pagination (Phase 21) are additive: a caller that
  * passes neither `serverSort`/`onServerSortChange` nor `pagination` gets
- * the exact original client-side behavior, unchanged.
+ * the exact original client-side behavior, unchanged. Column visibility
+ * (Phase 27) is the same shape: a caller that omits `storageKey` gets no
+ * "Columns" toggle and every column always renders, unchanged.
  */
 export function DataTable<T>({
   columns,
@@ -135,12 +166,34 @@ export function DataTable<T>({
   serverSort,
   onServerSortChange,
   pagination,
+  storageKey,
 }: Props<T>) {
   const tc = useTranslations("Common");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => new Set());
+  const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
 
-  const gridTemplate = columns.map((c) => c.width ?? "1fr").join(" ");
+  useEffect(() => {
+    if (storageKey) setHiddenColumns(loadHiddenColumns(storageKey));
+  }, [storageKey]);
+
+  const visibleColumns = useMemo(() => columns.filter((c) => c.hideable === false || !hiddenColumns.has(c.key)), [columns, hiddenColumns]);
+
+  function toggleColumn(key: string): void {
+    if (!storageKey) return;
+    const col = columns.find((c) => c.key === key);
+    if (!col || col.hideable === false) return;
+    const isHidden = hiddenColumns.has(key);
+    if (!isHidden && visibleColumns.length <= 1) return; // never hide the last visible column
+    const next = new Set(hiddenColumns);
+    if (isHidden) next.delete(key);
+    else next.add(key);
+    setHiddenColumns(next);
+    saveHiddenColumns(storageKey, next);
+  }
+
+  const gridTemplate = visibleColumns.map((c) => c.width ?? "1fr").join(" ");
   const activeSortKey = onServerSortChange ? (serverSort?.key ?? null) : sortKey;
   const activeSortDir = onServerSortChange ? (serverSort?.direction ?? "asc") : sortDir;
 
@@ -176,15 +229,46 @@ export function DataTable<T>({
   if (!rows) return <LoadingState rows={6} />;
   if (rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
 
-  const minWidth = minTableWidth(columns as DataTableColumn<unknown>[]);
+  const minWidth = minTableWidth(visibleColumns as DataTableColumn<unknown>[]);
   const pageCount = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize)) : null;
 
   return (
     <div className="overflow-hidden rounded-xl border-3 border-ink shadow-brutal-sm">
+      {storageKey && (
+        <div className="relative flex items-center justify-end border-b-3 border-ink bg-cream px-3 py-1.5">
+          <button
+            type="button"
+            onClick={() => setColumnsMenuOpen((o) => !o)}
+            aria-expanded={columnsMenuOpen}
+            aria-haspopup="true"
+            aria-label={tc("columnsMenuLabel")}
+            className="rounded-lg border-2 border-ink bg-white px-2 py-1 text-xs font-semibold text-navy-800 hover:bg-navy-50"
+          >
+            {tc("columns")} ▾
+          </button>
+          {columnsMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setColumnsMenuOpen(false)} />
+              <div role="menu" aria-label={tc("columnsMenuLabel")} className="absolute end-3 top-full z-20 mt-1 w-56 rounded-lg border-3 border-ink bg-white p-2 shadow-brutal-sm">
+                {columns.map((col) => {
+                  const hidden = hiddenColumns.has(col.key);
+                  const locked = col.hideable === false;
+                  return (
+                    <label key={col.key} className={`flex items-center gap-2 rounded px-2 py-1 text-sm ${locked ? "opacity-50" : "cursor-pointer hover:bg-navy-50"}`}>
+                      <input type="checkbox" checked={!hidden} disabled={locked} onChange={() => toggleColumn(col.key)} className="h-4 w-4" />
+                      {col.header}
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
       <div role="table" aria-rowcount={(pagination?.total ?? rows.length) + 1} className="overflow-x-auto">
         <div style={{ minWidth }}>
           <div role="row" className="grid items-center gap-3 border-b-3 border-ink bg-cream px-3 text-xs font-semibold text-navy-800" style={{ gridTemplateColumns: gridTemplate, height: 36 }}>
-            {columns.map((col) => (
+            {visibleColumns.map((col) => (
               <button
                 key={col.key}
                 type="button"
@@ -203,7 +287,7 @@ export function DataTable<T>({
             rowComponent={DataTableRow}
             rowCount={sortedRows.length}
             rowHeight={rowHeight}
-            rowProps={{ rows: sortedRows, columns, onRowClick, gridTemplate }}
+            rowProps={{ rows: sortedRows, columns: visibleColumns, onRowClick, gridTemplate }}
             style={{ height: Math.min(maxHeight, sortedRows.length * rowHeight) }}
           />
         </div>

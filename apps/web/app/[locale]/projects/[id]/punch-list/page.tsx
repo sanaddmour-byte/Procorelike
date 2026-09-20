@@ -118,6 +118,7 @@ export default function PunchListPage() {
         />
 
         <DataTable<PunchItem>
+          storageKey="punch-list"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

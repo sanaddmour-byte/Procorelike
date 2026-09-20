@@ -263,6 +263,7 @@ export default function CorrespondencePage() {
         />
 
         <DataTable<CorrespondenceItem>
+          storageKey="correspondence"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

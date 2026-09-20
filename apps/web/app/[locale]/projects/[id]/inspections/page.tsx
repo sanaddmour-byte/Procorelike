@@ -192,6 +192,7 @@ export default function InspectionsPage() {
         />
 
         <DataTable<Inspection>
+          storageKey="inspections"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

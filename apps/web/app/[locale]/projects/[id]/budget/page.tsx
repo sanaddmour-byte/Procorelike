@@ -304,7 +304,7 @@ export default function BudgetPage() {
 
         {error && <p className="text-maroon-700">{error}</p>}
 
-        <DataTable<BudgetLineItem> columns={columns} rows={lineItems} emptyTitle={t("empty")} />
+        <DataTable<BudgetLineItem> storageKey="budget" columns={columns} rows={lineItems} emptyTitle={t("empty")} />
       </main>
 
       <Modal open={editingItem !== null} onClose={() => setEditingItem(null)} title={editingItem ? costCodeLabel(editingItem.costCodeId) : ""}>

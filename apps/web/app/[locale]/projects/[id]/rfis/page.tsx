@@ -260,6 +260,7 @@ export default function RfisPage() {
         />
 
         <DataTable<Rfi>
+          storageKey="rfis"
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}
