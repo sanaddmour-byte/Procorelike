@@ -34,11 +34,18 @@ export default function LoginPage() {
       saveStoredAuth(data);
       router.replace(`/${locale}/projects`);
     } catch (err) {
-      if (err instanceof ApiClientError && err.code === "totp_required") {
-        setNeedsTotp(true);
-        setError(t("totpRequired"));
+      if (err instanceof ApiClientError) {
+        if (err.code === "totp_required") {
+          setNeedsTotp(true);
+          setError(t("totpRequired"));
+        } else {
+          setError(t("invalidCredentials"));
+        }
       } else {
-        setError(t("invalidCredentials"));
+        // A request that never got a response at all (wrong/unreachable
+        // NEXT_PUBLIC_API_URL, network failure, CORS block) -- distinct from
+        // a real 401 from the server, which comes through as ApiClientError.
+        setError(tc("errorGeneric"));
       }
     } finally {
       setSubmitting(false);
