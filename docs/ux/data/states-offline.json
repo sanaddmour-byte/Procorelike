@@ -1,0 +1,1315 @@
+{
+  "emptyProject": "f6b955c1-c1ce-414e-af3d-f1b9278902be",
+  "states": {
+    "daily-log": {
+      "populated": {
+        "full": "Daily Logs New daily log Columns ▾ Date Notes Status 2026-09-30T12:00:00.000Z Pour on Level 3 slab. Weather clear. Open 2026-09-29T12:00:00.000Z Formwork Level 4. Open",
+        "text": "Daily Logs New daily log Columns ▾ Date Notes Status 2026-09-30T12:00:00.000Z Pour on Level 3 slab. Weather clear. Open 2026-09-29T12:00:00.000Z Formwork Level 4. Open",
+        "spinner": false,
+        "buttons": [
+          "New daily log",
+          "Columns ▾",
+          "Date",
+          "Notes",
+          "Status"
+        ]
+      },
+      "empty": {
+        "full": "Daily Logs New daily log No daily logs yet.",
+        "text": "Daily Logs New daily log No daily logs yet.",
+        "spinner": false,
+        "buttons": [
+          "New daily log"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Daily Logs New daily log",
+        "text": "Daily Logs New daily log",
+        "spinner": false,
+        "buttons": [
+          "New daily log"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Daily Logs New daily log Something went wrong. Please try again.",
+        "text": "Daily Logs New daily log Something went wrong. Please try again.",
+        "spinner": false,
+        "buttons": [
+          "New daily log"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": false
+      }
+    },
+    "inspections": {
+      "populated": {
+        "full": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed Columns ▾ Template ▲ Status Scheduled Concrete Pour Pre-Placement Checklist Completed 2026-10-02 Concrete Pour Pre-Placement Checklist Completed 2026-10-02 Concrete Pour Pre-Placement Checklist Scheduled 2026-10-02 ‹ Page 1 of 1 ›",
+        "text": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed Columns ▾ Template ▲ Status Scheduled Concrete Pour Pre-Placement Checklist Completed 2026-10",
+        "spinner": false,
+        "buttons": [
+          "Manage templates",
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New inspection",
+          "Save view",
+          "Columns ▾",
+          "Template ▲",
+          "Status",
+          "Scheduled",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed No inspections yet.",
+        "text": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed No inspections yet.",
+        "spinner": false,
+        "buttons": [
+          "Manage templates",
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New inspection",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed",
+        "text": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed",
+        "spinner": false,
+        "buttons": [
+          "Manage templates",
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New inspection",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed Something went wrong. Please try again. Retry",
+        "text": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "Manage templates",
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New inspection",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "punch-list": {
+      "populated": {
+        "full": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed Columns ▾ Number ▲ Description Status PL-001 Touch-up paint required at Level 3 corridor wall Closed PL-002 Missing outlet cover plates in Unit 402 Open PL-003 Door closer not adjusted -- slams shut, Level 2 stairwell Ready for review PL-004 Caulking gap at window sill, Unit 501 Approved PL-005 Cracked floor tile at lobby entrance Open PL-006 HVAC diffuser installed crooked in Unit 210 Closed PL-007 Fire extinguisher cabinet missing signage Open PL-008 Handrail loose at Level 4 exterior stair In dispute PL-009 Paint overspray on window glazing, Unit 305 Ready for review PL-010 Electrical panel labeling incomplete Open PL-021 Cracked tile -- unit 400 Open PL-022 Missing sealant -- unit 401 Open PL-023 Paint touch-up needed -- unit 402 Open PL-024 Outlet cover missing -- unit 403 Open PL-025 Door not closing -- unit 404 Open PL-026 Grout haze -- unit 405 Open PL-027 Cracked tile -- unit 406 Open PL-028 Missing sealant -- unit 407 Open ‹ Page 1 of 1 ›",
+        "text": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed Columns ▾ Number ▲ Description Status PL-001 Touch-up paint required at Level 3 corridor wall Closed PL-002 Missing",
+        "spinner": false,
+        "buttons": [
+          "New punch item",
+          "Save view",
+          "Columns ▾",
+          "Number ▲",
+          "Description",
+          "Status",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed No punch items yet.",
+        "text": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed No punch items yet.",
+        "spinner": false,
+        "buttons": [
+          "New punch item",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed",
+        "text": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed",
+        "spinner": false,
+        "buttons": [
+          "New punch item",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed Something went wrong. Please try again. Retry",
+        "text": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "New punch item",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "photos": {
+      "populated": {
+        "full": "Photos Upload photo 059176f5 059176f5 059176f5 059176f5 059176f5 059176f5",
+        "text": "Photos Upload photo 059176f5 059176f5 059176f5 059176f5 059176f5 059176f5",
+        "spinner": false,
+        "buttons": []
+      },
+      "empty": {
+        "full": "Photos Upload photo No photos yet.",
+        "text": "Photos Upload photo No photos yet.",
+        "spinner": false,
+        "buttons": [],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Photos Upload photo Loading…",
+        "text": "Photos Upload photo Loading…",
+        "spinner": false,
+        "buttons": [],
+        "hasLoadingIndicator": true
+      },
+      "error": {
+        "full": "Photos Upload photo Something went wrong. Please try again.",
+        "text": "Photos Upload photo Something went wrong. Please try again.",
+        "spinner": false,
+        "buttons": [],
+        "hasErrorMessage": true,
+        "hasRetry": false
+      }
+    },
+    "safety": {
+      "populated": {
+        "full": "Safety Observations Incidents 2 OSHA recordable 0 Total days away 1 Open incidents 2 Open observations New incident Save view Status Open Investigating Closed Columns ▾ Description Occurred at ▼ Involved company Severity Status Worker fell from ladder, treated at clinic for sprained ankle 2026-09-20 None Serious Investigating Worker sustained minor laceration from rebar tie wire 2026-09-20 None Minor Closed Scaffold plank shifted underfoot, no fall occurred 2026-09-20 None Near miss Open ‹ Page 1 of 1 ›",
+        "text": "Safety Observations Incidents 2 OSHA recordable 0 Total days away 1 Open incidents 2 Open observations New incident Save view Status Open Investigating Closed Columns ▾ Description Occurred at ▼ Involved company Severity",
+        "spinner": false,
+        "buttons": [
+          "Observations",
+          "New incident",
+          "Save view",
+          "Columns ▾",
+          "Description",
+          "Occurred at ▼",
+          "Involved company",
+          "Severity",
+          "Status",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Safety Observations Incidents 0 OSHA recordable 0 Total days away 0 Open incidents 0 Open observations New incident Save view Status Open Investigating Closed No safety incidents logged yet.",
+        "text": "Safety Observations Incidents 0 OSHA recordable 0 Total days away 0 Open incidents 0 Open observations New incident Save view Status Open Investigating Closed No safety incidents logged yet.",
+        "spinner": false,
+        "buttons": [
+          "Observations",
+          "New incident",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Safety Observations Incidents New incident Save view Status Open Investigating Closed",
+        "text": "Safety Observations Incidents New incident Save view Status Open Investigating Closed",
+        "spinner": false,
+        "buttons": [
+          "Observations",
+          "New incident",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Safety Observations Incidents New incident Save view Status Open Investigating Closed Something went wrong. Please try again. Retry",
+        "text": "Safety Observations Incidents New incident Save view Status Open Investigating Closed Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "Observations",
+          "New incident",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "tm-tickets": {
+      "populated": {
+        "full": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected Columns ▾ Number ▲ Company Work date Description Status TM-001 Structura Concrete Co. 2026-09-25 Emergency dewatering pump rental due to unforeseen groundwater Approved TM-002 Structura Concrete Co. 2026-09-25 Additional labor for weekend concrete pour Submitted TM-003 Structura Concrete Co. 2026-09-25 Repair of damaged conduit run, cause under dispute Draft TM-004 Structura Concrete Co. 2026-09-25 Overtime electrical crew for panel swap Rejected ‹ Page 1 of 1 ›",
+        "text": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected Columns ▾ Number ▲ Company Work date Description Status TM-001 Structura Concrete Co. 2026-09-25 Emergency dewatering pump rental due to unforesee",
+        "spinner": false,
+        "buttons": [
+          "New ticket",
+          "Save view",
+          "Columns ▾",
+          "Number ▲",
+          "Company",
+          "Work date",
+          "Description",
+          "Status",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected No T&M tickets yet.",
+        "text": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected No T&M tickets yet.",
+        "spinner": false,
+        "buttons": [
+          "New ticket",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected",
+        "text": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected",
+        "spinner": false,
+        "buttons": [
+          "New ticket",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected Something went wrong. Please try again. Retry",
+        "text": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "New ticket",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "documents": {
+      "populated": {
+        "full": "Documents Folders All documents (no folder) Specifications Permits New folder Upload document Columns ▾ Title ▲ Actions Geotechnical Report Download Replace file Site Logistics Plan Download Replace file ‹ Page 1 of 1 ›",
+        "text": "Documents Folders All documents (no folder) Specifications Permits New folder Upload document Columns ▾ Title ▲ Actions Geotechnical Report Download Replace file Site Logistics Plan Download Replace file ‹ Page 1 of 1 ›",
+        "spinner": false,
+        "buttons": [
+          "All documents (no folder)",
+          "Specifications",
+          "Permits",
+          "New folder",
+          "Columns ▾",
+          "Title ▲",
+          "Actions",
+          "Download",
+          "Download",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Documents Folders All documents (no folder) No folders yet. New folder Upload document No documents here yet.",
+        "text": "Documents Folders All documents (no folder) No folders yet. New folder Upload document No documents here yet.",
+        "spinner": false,
+        "buttons": [
+          "All documents (no folder)",
+          "New folder"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Documents Folders All documents (no folder) Loading… New folder Upload document",
+        "text": "Documents Folders All documents (no folder) Loading… New folder Upload document",
+        "spinner": false,
+        "buttons": [
+          "All documents (no folder)",
+          "New folder"
+        ],
+        "hasLoadingIndicator": true
+      },
+      "error": {
+        "full": "Documents Something went wrong. Please try again. Folders All documents (no folder) Loading… New folder Upload document Something went wrong. Please try again. Retry",
+        "text": "Documents Something went wrong. Please try again. Folders All documents (no folder) Loading… New folder Upload document Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "All documents (no folder)",
+          "New folder",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "drawings": {
+      "populated": {
+        "full": "Drawings Publish drawing set New drawing Save view Columns ▾ Sheet number ▲ Title Discipline A-101 Level 1 Floor Plan Architectural A-501 Wall Sections and Details Architectural E-401 Panel Schedules Electrical M-201 Level 2 HVAC Plan Mechanical S-201 Foundation Plan Structural ‹ Page 1 of 1 ›",
+        "text": "Drawings Publish drawing set New drawing Save view Columns ▾ Sheet number ▲ Title Discipline A-101 Level 1 Floor Plan Architectural A-501 Wall Sections and Details Architectural E-401 Panel Schedules Electrical M-201 Lev",
+        "spinner": false,
+        "buttons": [
+          "Publish drawing set",
+          "New drawing",
+          "Save view",
+          "Columns ▾",
+          "Sheet number ▲",
+          "Title",
+          "Discipline",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Drawings Publish drawing set New drawing Save view No drawings registered yet.",
+        "text": "Drawings Publish drawing set New drawing Save view No drawings registered yet.",
+        "spinner": false,
+        "buttons": [
+          "Publish drawing set",
+          "New drawing",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Drawings Publish drawing set New drawing Save view",
+        "text": "Drawings Publish drawing set New drawing Save view",
+        "spinner": false,
+        "buttons": [
+          "Publish drawing set",
+          "New drawing",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Drawings Publish drawing set New drawing Save view Something went wrong. Please try again. Retry",
+        "text": "Drawings Publish drawing set New drawing Save view Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "Publish drawing set",
+          "New drawing",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "transmittals": {
+      "populated": {
+        "full": "Back to transmittals Transmittals New transmittal Status Draft Sent Columns ▾ Number ▲ Subject Purpose Status TR-001 Issued for Construction - Structural Drawings Rev 2 For construction Sent TR-002 Submittal Package - Concrete Mix Designs For approval Sent TR-003 Record Drawings - Electrical For information Draft ‹ Page 1 of 1 ›",
+        "text": "Back to transmittals Transmittals New transmittal Status Draft Sent Columns ▾ Number ▲ Subject Purpose Status TR-001 Issued for Construction - Structural Drawings Rev 2 For construction Sent TR-002 Submittal Package - Co",
+        "spinner": false,
+        "buttons": [
+          "Back to transmittals",
+          "New transmittal",
+          "Columns ▾",
+          "Number ▲",
+          "Subject",
+          "Purpose",
+          "Status",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Back to transmittals Transmittals New transmittal Status Draft Sent No transmittals have been sent on this project yet.",
+        "text": "Back to transmittals Transmittals New transmittal Status Draft Sent No transmittals have been sent on this project yet.",
+        "spinner": false,
+        "buttons": [
+          "Back to transmittals",
+          "New transmittal"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Back to transmittals Transmittals New transmittal Status Draft Sent",
+        "text": "Back to transmittals Transmittals New transmittal Status Draft Sent",
+        "spinner": false,
+        "buttons": [
+          "Back to transmittals",
+          "New transmittal"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Back to transmittals Transmittals New transmittal Status Draft Sent Something went wrong. Please try again. Retry",
+        "text": "Back to transmittals Transmittals New transmittal Status Draft Sent Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "Back to transmittals",
+          "New transmittal",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "rfis": {
+      "populated": {
+        "full": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court Sara Haddad Omar Nassar Lina Kanaan Khalid Zu'bi Yousef Amer Rana Odeh Fadi Salameh Huda Masri Ziad Btoush Karim Abu-Ghazaleh Columns ▾ Number ▲ Subject Status Ball in court Flags RFI-001 Concrete mix design for foundation walls Answered Lina Kanaan RFI-002 Electrical panel schedule conflict Open Sara Haddad RFI-003 Rebar cover at slab edge Open Sara Haddad RFI-004 Waterproofing membrane at Level 1 podium Answered Khalid Zu'bi RFI-005 Door hardware finish Draft Omar Nassar RFI-006 HVAC duct routing above corridor ceiling Closed Lina Kanaan RFI-007 Curtain wall anchor embed depth Open Sara Haddad RFI-008 Fire-rated assembly at shaft wall Answered Omar Nassar ‹ Page 1 of 1 ›",
+        "text": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court Sara Haddad Omar Nassar Lina Kanaan Khalid Zu'bi Yousef Amer Rana Odeh Fadi Salameh Huda Masri Ziad Btoush Karim Ab",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New RFI",
+          "Save view",
+          "Columns ▾",
+          "Number ▲",
+          "Subject",
+          "Status",
+          "Ball in court",
+          "Flags",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court Sara Haddad No RFIs yet.",
+        "text": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court Sara Haddad No RFIs yet.",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New RFI",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court",
+        "text": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New RFI",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court Something went wrong. Please try again. Retry",
+        "text": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New RFI",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "submittals": {
+      "populated": {
+        "full": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rejected Closed Ball in court Sara Haddad Omar Nassar Lina Kanaan Khalid Zu'bi Yousef Amer Rana Odeh Fadi Salameh Huda Masri Ziad Btoush Karim Abu-Ghazaleh Columns ▾ Number ▲ Title Status Ball in court Flags SUB-001 Ready-Mix Concrete Mix Designs In review Lina Kanaan SUB-002 Reinforcing Steel Shop Drawings Approved Lina Kanaan SUB-003 Distribution Panel Product Data Revise & resubmit Lina Kanaan SUB-004 Lighting Fixture Samples Draft Lina Kanaan SUB-005 Concrete Curing Compound Certificates Approved as noted Lina Kanaan SUB-006 Generator Manufacturer Field Report Closed Lina Kanaan ‹ Page 1 of 1 ›",
+        "text": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rejected Closed Ball in court Sara Haddad Omar Nassar Lina Kanaan Khalid Zu'bi Yous",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New submittal",
+          "Save view",
+          "Columns ▾",
+          "Number ▲",
+          "Title",
+          "Status",
+          "Ball in court",
+          "Flags",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rejected Closed Ball in court Sara Haddad No submittals yet.",
+        "text": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rejected Closed Ball in court Sara Haddad No submittals yet.",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New submittal",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rejected Closed Ball in court",
+        "text": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rejected Closed Ball in court",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New submittal",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rejected Closed Ball in court Something went wrong. Please try again. Retry",
+        "text": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rejected Closed Ball in court Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New submittal",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "correspondence": {
+      "populated": {
+        "full": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed Columns ▾ Number Subject Type Status From / To CORR-001 Notice of Delay -- Rock Excavation Notice Sent Al-Amal General Contracting → Petra Development Holdings CORR-002 Request for Schedule Extension Letter Acknowledged Structura Concrete Co. → Al-Amal General Contracting CORR-003 Site Access Restrictions -- Ramadan Hours Memo Sent Al-Amal General Contracting → Rawafed Electrical Works CORR-004 Material Price Escalation Notice Notice Closed Rawafed Electrical Works → Al-Amal General Contracting CORR-005 Substantial Completion Notice Letter Draft Al-Amal General Contracting → Petra Development Holdings ‹ Page 1 of 1 ›",
+        "text": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed Columns ▾ Number Subject Type Status From / To CORR-001 Notice of Delay -- Rock Excavation Notice Sent A",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New correspondence",
+          "Save view",
+          "Columns ▾",
+          "Number",
+          "Subject",
+          "Type",
+          "Status",
+          "From / To",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed No correspondence logged yet.",
+        "text": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed No correspondence logged yet.",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New correspondence",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed",
+        "text": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New correspondence",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed Something went wrong. Please try again. Retry",
+        "text": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New correspondence",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "meetings": {
+      "populated": {
+        "full": "Meetings New meeting Columns ▾ Title Date ▼ Weekly OAC Meeting #13 9/30/2026, 8:18:10 AM Electrical Coordination Meeting 9/27/2026, 8:18:10 AM Weekly OAC Meeting #12 9/23/2026, 8:18:10 AM ‹ Page 1 of 1 ›",
+        "text": "Meetings New meeting Columns ▾ Title Date ▼ Weekly OAC Meeting #13 9/30/2026, 8:18:10 AM Electrical Coordination Meeting 9/27/2026, 8:18:10 AM Weekly OAC Meeting #12 9/23/2026, 8:18:10 AM ‹ Page 1 of 1 ›",
+        "spinner": false,
+        "buttons": [
+          "New meeting",
+          "Columns ▾",
+          "Title",
+          "Date ▼",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Meetings New meeting No meetings yet.",
+        "text": "Meetings New meeting No meetings yet.",
+        "spinner": false,
+        "buttons": [
+          "New meeting"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Meetings New meeting",
+        "text": "Meetings New meeting",
+        "spinner": false,
+        "buttons": [
+          "New meeting"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Meetings New meeting Something went wrong. Please try again. Retry",
+        "text": "Meetings New meeting Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "New meeting",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "budget": {
+      "populated": {
+        "full": "Budget Export CSV New budget modification New line item Columns ▾ Cost code Revised budget Committed costs Projected cost Variance 03-300 — Cast-in-Place Concrete $638,000.00 $185,000.00 $638,000.00 $0.00 Edit 07-200 — Thermal Protection $95,000.00 $0.00 $95,000.00 $0.00 Edit 09-900 — Painting and Coating $45,000.00 $42,000.00 $45,000.00 $0.00 Edit 26-000 — Electrical $424,500.00 $185,000.00 $424,500.00 $0.00 Edit",
+        "text": "Budget Export CSV New budget modification New line item Columns ▾ Cost code Revised budget Committed costs Projected cost Variance 03-300 — Cast-in-Place Concrete $638,000.00 $185,000.00 $638,000.00 $0.00 Edit 07-200 — T",
+        "spinner": false,
+        "buttons": [
+          "Export CSV",
+          "New budget modification",
+          "New line item",
+          "Columns ▾",
+          "Cost code",
+          "Revised budget",
+          "Committed costs",
+          "Projected cost",
+          "Variance",
+          "Edit",
+          "Edit",
+          "Edit"
+        ]
+      },
+      "empty": {
+        "full": "Budget Export CSV New budget modification New line item No budget line items yet.",
+        "text": "Budget Export CSV New budget modification New line item No budget line items yet.",
+        "spinner": false,
+        "buttons": [
+          "Export CSV",
+          "New budget modification",
+          "New line item"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Budget Export CSV New budget modification New line item",
+        "text": "Budget Export CSV New budget modification New line item",
+        "spinner": false,
+        "buttons": [
+          "Export CSV",
+          "New budget modification",
+          "New line item"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Budget Export CSV New budget modification New line item Something went wrong. Please try again.",
+        "text": "Budget Export CSV New budget modification New line item Something went wrong. Please try again.",
+        "spinner": false,
+        "buttons": [
+          "Export CSV",
+          "New budget modification",
+          "New line item"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": false
+      }
+    },
+    "commitments": {
+      "populated": {
+        "full": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company Al-Amal General Contracting Rawafed Electrical Works Structura Concrete Co. Petra Development Holdings Columns ▾ Number ▲ Title Company Type PO-001 Painting and Coating Purchase Order Structura Concrete Co. Purchase order SC-001 Rawafed Electrical Works -- Electrical Subcontract Rawafed Electrical Works Subcontract SC-002 Structura Concrete Co. -- Concrete Subcontract Structura Concrete Co. Subcontract ‹ Page 1 of 1 ›",
+        "text": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company Al-Amal General Contracting Rawafed Electrical Works Structura Concrete Co. Petra Development Holdings Columns ▾ Number ▲ Title Comp",
+        "spinner": false,
+        "buttons": [
+          "Export IIF",
+          "New commitment",
+          "Save view",
+          "Columns ▾",
+          "Number ▲",
+          "Title",
+          "Company",
+          "Type",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company Al-Amal General Contracting No commitments yet.",
+        "text": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company Al-Amal General Contracting No commitments yet.",
+        "spinner": false,
+        "buttons": [
+          "Export IIF",
+          "New commitment",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company",
+        "text": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company",
+        "spinner": false,
+        "buttons": [
+          "Export IIF",
+          "New commitment",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company Something went wrong. Please try again. Retry",
+        "text": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "Export IIF",
+          "New commitment",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "change-orders": {
+      "populated": {
+        "full": "Change Orders Change events New change event No change events yet. Change orders Export All (PDF) Export All (CSV) New change order Save view Status Draft Pending approval Approved Rejected Void Columns ▾ Number ▲ Title (optional) Status Cost impact CO-001 Additional excavation for unforeseen rock Approved $9,800.00 CO-002 Upgrade electrical panel per RFI-002 resolution Pending approval $14,500.00 CO-003 Owner-requested lobby finish upgrade Draft $22,000.00 CO-004 Value engineering credit -- alternate roofing membrane Approved -$8,200.00 CO-005 Design development change -- relocate mechanical room Rejected $5,400.00 ‹ Page 1 of 1 ›",
+        "text": "Change Orders Change events New change event No change events yet. Change orders Export All (PDF) Export All (CSV) New change order Save view Status Draft Pending approval Approved Rejected Void Columns ▾ Number ▲ Title ",
+        "spinner": false,
+        "buttons": [
+          "New change event",
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New change order",
+          "Save view",
+          "Columns ▾",
+          "Number ▲",
+          "Title (optional)",
+          "Status",
+          "Cost impact",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Change Orders Change events New change event No change events yet. Change orders Export All (PDF) Export All (CSV) New change order Save view Status Draft Pending approval Approved Rejected Void No change orders yet.",
+        "text": "Change Orders Change events New change event No change events yet. Change orders Export All (PDF) Export All (CSV) New change order Save view Status Draft Pending approval Approved Rejected Void No change orders yet.",
+        "spinner": false,
+        "buttons": [
+          "New change event",
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New change order",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Change Orders Change events New change event Loading… Change orders Export All (PDF) Export All (CSV) New change order Save view Status Draft Pending approval Approved Rejected Void",
+        "text": "Change Orders Change events New change event Loading… Change orders Export All (PDF) Export All (CSV) New change order Save view Status Draft Pending approval Approved Rejected Void",
+        "spinner": false,
+        "buttons": [
+          "New change event",
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New change order",
+          "Save view"
+        ],
+        "hasLoadingIndicator": true
+      },
+      "error": {
+        "full": "Change Orders Something went wrong. Please try again. Change events New change event Loading… Change orders Export All (PDF) Export All (CSV) New change order Save view Status Draft Pending approval Approved Rejected Void Something went wrong. Please try again. Retry",
+        "text": "Change Orders Something went wrong. Please try again. Change events New change event Loading… Change orders Export All (PDF) Export All (CSV) New change order Save view Status Draft Pending approval Approved Rejected Voi",
+        "spinner": false,
+        "buttons": [
+          "New change event",
+          "Export All (PDF)",
+          "Export All (CSV)",
+          "New change order",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "direct-costs": {
+      "populated": {
+        "full": "Direct Costs New direct cost Save view Status Pending Approved Rejected Columns ▾ Cost code Description Type Amount Date incurred ▼ Status Actions 07-200 — Thermal Protection Waterproofing membrane materials Invoice $12,800.00 2026-09-10 Pending Approve Reject 09-900 — Painting and Coating Paint materials Invoice $4,100.00 2026-09-10 Approved 26-000 — Electrical Electrical fixtures -- expedited freight Invoice $6,200.00 2026-09-10 Pending Approve Reject 03-300 — Cast-in-Place Concrete Ready-mix concrete delivery -- foundation pour Invoice $48,500.00 2026-09-10 Approved ‹ Page 1 of 1 ›",
+        "text": "Direct Costs New direct cost Save view Status Pending Approved Rejected Columns ▾ Cost code Description Type Amount Date incurred ▼ Status Actions 07-200 — Thermal Protection Waterproofing membrane materials Invoice $12,",
+        "spinner": false,
+        "buttons": [
+          "New direct cost",
+          "Save view",
+          "Columns ▾",
+          "Cost code",
+          "Description",
+          "Type",
+          "Amount",
+          "Date incurred ▼",
+          "Status",
+          "Actions",
+          "Approve",
+          "Reject"
+        ]
+      },
+      "empty": {
+        "full": "Direct Costs New direct cost Save view Status Pending Approved Rejected No direct costs recorded yet.",
+        "text": "Direct Costs New direct cost Save view Status Pending Approved Rejected No direct costs recorded yet.",
+        "spinner": false,
+        "buttons": [
+          "New direct cost",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Direct Costs New direct cost Save view Status Pending Approved Rejected",
+        "text": "Direct Costs New direct cost Save view Status Pending Approved Rejected",
+        "spinner": false,
+        "buttons": [
+          "New direct cost",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Direct Costs New direct cost Save view Status Pending Approved Rejected Something went wrong. Please try again. Retry",
+        "text": "Direct Costs New direct cost Save view Status Pending Approved Rejected Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "New direct cost",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "billing": {
+      "populated": {
+        "full": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid Columns ▾ Commitment (leave blank for a prime/owner application) Period ▼ Status SC-002 — Structura Concrete Co. -- Concrete Subcontract 2026-08-31 — 2026-09-30 Submitted SC-002 — Structura Concrete Co. -- Concrete Subcontract 2026-08-01 — 2026-08-31 Paid ‹ Page 1 of 1 ›",
+        "text": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid Columns ▾ Commitment (leave blank for a prime/owner application) Period ▼ Status SC-002 — Structura Concrete Co. -- Concrete Subcon",
+        "spinner": false,
+        "buttons": [
+          "New payment application",
+          "Save view",
+          "Columns ▾",
+          "Commitment (leave blank for a prime/owner application)",
+          "Period ▼",
+          "Status",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid No payment applications yet.",
+        "text": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid No payment applications yet.",
+        "spinner": false,
+        "buttons": [
+          "New payment application",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid",
+        "text": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid",
+        "spinner": false,
+        "buttons": [
+          "New payment application",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid Something went wrong. Please try again. Retry",
+        "text": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "New payment application",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "schedule": {
+      "populated": {
+        "full": "Schedule New task Save view Status Not started In progress Complete Delayed Columns ▾ Task name Status Dates Assigned company % complete Foundation Excavation Complete 2026-08-01 – 2026-08-16 Unassigned 100% Foundation Concrete Pour Complete 2026-08-17 – 2026-08-31 Unassigned 100% Structural Steel Erection - Levels 1-6 In progress 2026-09-01 – 2026-09-30 Unassigned 70% Structural Steel Erection - Levels 7-12 Not started 2026-09-30 – 2026-10-30 Unassigned 0% Electrical Rough-In - Levels 1-4 In progress 2026-09-20 – 2026-10-20 Unassigned 35% Exterior Curtain Wall Installation Not started 2026-10-10 – 2026-11-29 Unassigned 0% Interior Finishes - Levels 1-4 Not started 2026-11-09 – 2026-12-29 Unassigned 0% Elevator Installation Delayed 2026-10-20 – 2026-12-19 Unassigned 0% ‹ Page 1 of 1 ›",
+        "text": "Schedule New task Save view Status Not started In progress Complete Delayed Columns ▾ Task name Status Dates Assigned company % complete Foundation Excavation Complete 2026-08-01 – 2026-08-16 Unassigned 100% Foundation C",
+        "spinner": false,
+        "buttons": [
+          "New task",
+          "Save view",
+          "Columns ▾",
+          "Task name",
+          "Status",
+          "Dates",
+          "Assigned company",
+          "% complete",
+          "‹",
+          "›"
+        ]
+      },
+      "empty": {
+        "full": "Schedule New task Save view Status Not started In progress Complete Delayed No schedule tasks yet.",
+        "text": "Schedule New task Save view Status Not started In progress Complete Delayed No schedule tasks yet.",
+        "spinner": false,
+        "buttons": [
+          "New task",
+          "Save view"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Schedule New task Save view Status Not started In progress Complete Delayed",
+        "text": "Schedule New task Save view Status Not started In progress Complete Delayed",
+        "spinner": false,
+        "buttons": [
+          "New task",
+          "Save view"
+        ],
+        "hasLoadingIndicator": false
+      },
+      "error": {
+        "full": "Schedule New task Save view Status Not started In progress Complete Delayed Something went wrong. Please try again. Retry",
+        "text": "Schedule New task Save view Status Not started In progress Complete Delayed Something went wrong. Please try again. Retry",
+        "spinner": false,
+        "buttons": [
+          "New task",
+          "Save view",
+          "Retry"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": true
+      }
+    },
+    "lookahead": {
+      "populated": {
+        "full": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Tasks in this window Unassigned Structural Steel Erection - Levels 1-6 70% Structural Steel Erection - Levels 7-12 0% Electrical Rough-In - Levels 1-4 35% Exterior Curtain Wall Installation 0% Constraint log Select a task… Structural Steel Erection - Levels 1-6 Structural Steel Erection - Levels 7-12 Electrical Rough-In - Levels 1-4 Exterior Curtain Wall Installation Design Material Permit Access Labour Prerequisite work Other Add constraint Structural Steel Erection - Levels 1-6·Material·Awaiting delivery of Level 6-9 steel bundlesNeed by 2026-10-05 Clear Commitments & PPC Select a look-ahead plan… 2026-09-28 · 3w Select a task… Structural Steel Erection - Levels 1-6 Structural Steel Erection - Levels 7-12 Electrical Rough-In - Levels 1-4 Exterior Curtain Wall Installation Select a company… Al-Amal General Contracting Rawafed Electrical Works Structura Concrete Co. Petra Development Holdings Add commitment Structural Steel Erection - Levels 1-6·Structura Concrete Co.·Promised 2026-10-05 Confirmed Percent Plan Complete (PPC) Company Met Missed PPC Structura Concrete Co. 0 0 —% Submit a progress update Select a task… Structural Steel Erection - Levels 1-6 Structural Steel Erection - Levels 7-12 Electrical Rough-In - Levels 1-4 Exterior Curtain Wall Installation Submit Delay register No delay entries linked to a schedule task yet.",
+        "text": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Tasks in this window Unassigned Structural Steel Erection - Levels 1-6 70% Structural Steel Erection - Levels 7-12 0% Electrical Rough-In - Levels 1-4 35% Ext",
+        "spinner": false,
+        "buttons": [
+          "Publish plan",
+          "Add constraint",
+          "Clear",
+          "Add commitment",
+          "Submit"
+        ]
+      },
+      "empty": {
+        "full": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Tasks in this window No tasks fall in this window. Constraint log Select a task… Design Material Permit Access Labour Prerequisite work Other Add constraint No constraints logged for this project's current schedule. Commitments & PPC Select a look-ahead plan… Submit a progress update Select a task… Submit Delay register No delay entries linked to a schedule task yet.",
+        "text": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Tasks in this window No tasks fall in this window. Constraint log Select a task… Design Material Permit Access Labour Prerequisite work Other Add constraint N",
+        "spinner": false,
+        "buttons": [
+          "Publish plan",
+          "Add constraint",
+          "Submit"
+        ],
+        "hasEmptyMessage": true,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Loading… Constraint log Select a task… Design Material Permit Access Labour Prerequisite work Other Add constraint No constraints logged for this project's current schedule. Commitments & PPC Select a look-ahead plan… Submit a progress update Select a task… Submit Delay register No delay entries linked to a schedule task yet.",
+        "text": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Loading… Constraint log Select a task… Design Material Permit Access Labour Prerequisite work Other Add constraint No constraints logged for this project's cu",
+        "spinner": false,
+        "buttons": [
+          "Publish plan",
+          "Add constraint",
+          "Submit"
+        ],
+        "hasLoadingIndicator": true
+      },
+      "error": {
+        "full": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Something went wrong. Please try again. Constraint log Select a task… Design Material Permit Access Labour Prerequisite work Other Add constraint No constraints logged for this project's current schedule. Commitments & PPC Select a look-ahead plan… Submit a progress update Select a task… Submit Delay register No delay entries linked to a schedule task yet.",
+        "text": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Something went wrong. Please try again. Constraint log Select a task… Design Material Permit Access Labour Prerequisite work Other Add constraint No constrain",
+        "spinner": false,
+        "buttons": [
+          "Publish plan",
+          "Add constraint",
+          "Submit"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": false
+      }
+    },
+    "directory": {
+      "populated": {
+        "full": "Back to projects Project directory Invite person People Companies Name Email Business phone Mobile phone Role Company Sara Haddad sara.haddad@siteops.test — — owner_admin Al-Amal General Contracting Edit Omar Nassar omar.nassar@siteops.test — — project_manager Al-Amal General Contracting Lina Kanaan lina.kanaan@siteops.test — — project_engineer Al-Amal General Contracting Khalid Zu'bi khalid.zoubi@siteops.test — — superintendent Al-Amal General Contracting Yousef Amer yousef.amer@siteops.test — — foreman Al-Amal General Contracting Rana Odeh rana.odeh@siteops.test — — qa_qc Al-Amal General Contracting Fadi Salameh fadi.salameh@siteops.test — — safety_officer Al-Amal General Contracting Huda Masri huda.masri@siteops.test — — subcontractor Rawafed Electrical Works Ziad Btoush ziad.btoush@siteops.test — — subcontractor Structura Concrete Co. Karim Abu-Ghazaleh karim.abughazaleh@siteops.test — — client_viewer Petra Development Holdings",
+        "text": "Back to projects Project directory Invite person People Companies Name Email Business phone Mobile phone Role Company Sara Haddad sara.haddad@siteops.test — — owner_admin Al-Amal General Contracting Edit Omar Nassar omar",
+        "spinner": false,
+        "buttons": [
+          "Back to projects",
+          "Invite person",
+          "People",
+          "Companies",
+          "Edit"
+        ]
+      },
+      "empty": {
+        "full": "Back to projects Project directory Invite person People Companies Name Email Business phone Mobile phone Role Company Sara Haddad sara.haddad@siteops.test — — owner_admin Al-Amal General Contracting Edit",
+        "text": "Back to projects Project directory Invite person People Companies Name Email Business phone Mobile phone Role Company Sara Haddad sara.haddad@siteops.test — — owner_admin Al-Amal General Contracting Edit",
+        "spinner": false,
+        "buttons": [
+          "Back to projects",
+          "Invite person",
+          "People",
+          "Companies",
+          "Edit"
+        ],
+        "hasEmptyMessage": false,
+        "hasErrorInstead": false
+      },
+      "loading": {
+        "full": "Back to projects Project directory People Companies Loading…",
+        "text": "Back to projects Project directory People Companies Loading…",
+        "spinner": false,
+        "buttons": [
+          "Back to projects",
+          "People",
+          "Companies"
+        ],
+        "hasLoadingIndicator": true
+      },
+      "error": {
+        "full": "Back to projects Project directory Something went wrong. Please try again. People Companies",
+        "text": "Back to projects Project directory Something went wrong. Please try again. People Companies",
+        "spinner": false,
+        "buttons": [
+          "Back to projects",
+          "People",
+          "Companies"
+        ],
+        "hasErrorMessage": true,
+        "hasRetry": false
+      }
+    }
+  },
+  "offline": {
+    "daily-log": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      },
+      "reload": "page.reload: net::ERR_INTERNET_DISCONNECTED"
+    },
+    "inspections": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "punch-list": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      },
+      "reload": "page.reload: net::ERR_INTERNET_DISCONNECTED"
+    },
+    "photos": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "safety": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "tm-tickets": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "documents": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "drawings": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "transmittals": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "rfis": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      },
+      "reload": "page.reload: net::ERR_INTERNET_DISCONNECTED"
+    },
+    "submittals": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "correspondence": {
+      "clientNav": {
+        "url": "ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+        "drawerStillOpen": true,
+        "alerts": [
+          "2",
+          "Punch List",
+          "Punch List"
+        ],
+        "text": "☰ SiteOps Amman Heights Residential Tower ▾ English العربية 🔔 2 SH ✕ PROJECT Dashboard Analytics FIELD Daily Log Inspections Punch List Photos Safety T&M Ticke",
+        "spinnerVisible": false,
+        "loadingText": false,
+        "chromeError": false
+      }
+    },
+    "writePunchCreate": {
+      "url": "/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list/new",
+      "alerts": [
+        "2",
+        "Punch List",
+        "unknown_error"
+      ],
+      "buttonText": "Create",
+      "descriptionKept": "Offline test snag"
+    },
+    "writeRfiResponse": {
+      "alerts": [
+        "2",
+        "RFIs",
+        "Something went wrong. Please try again."
+      ],
+      "kept": "Offline response"
+    }
+  }
+}

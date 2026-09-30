@@ -1,0 +1,578 @@
+{
+  "login": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/login"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "Sign in to SiteOps Email Password Sign in",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "projects": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "",
+      "mainEmpty": true,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "companies": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/companies"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "",
+      "mainEmpty": true,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "dashboard": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/dashboard"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "",
+      "mainEmpty": true,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "analytics": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/analytics"
+    },
+    "mid": {
+      "action": "none available",
+      "mainText": "Analytics Trends and cycle-time metrics derived from this project's own history -- no fabricated data, only what's already recorded. RFIs 0 ",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "daily-log": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/daily-log"
+    },
+    "mid": {
+      "action": "typed in search",
+      "mainText": "Daily Logs New daily log Clear all No daily logs match your search.",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "daily-log-detail": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/daily-log/1b788d48-d88a-4133-bee1-ebc93c7a0ae5"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "",
+      "mainEmpty": true,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "daily-log-new": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/daily-log/new"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "New daily log Date Notes unknown_error Save Cancel",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "inspections": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/inspections"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Inspections Manage templates Export All (PDF) Export All (CSV) New inspection Save view Status Scheduled In progress Completed Clear all Som",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "inspection-detail": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/inspections/2eeeae69-cbed-4497-9347-5e124c55d3c2"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "",
+      "mainEmpty": true,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "punch-list": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Punch List New punch item Save view Status Open Ready for review Not accepted In dispute Approved Closed Clear all Something went wrong. Ple",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "punch-new": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list/new"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "New punch item Description Priority Low Medium High Due date Final approver Unassigned Sara Haddad Omar Nassar Lina Kanaan Khalid Zu'bi Yous",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "punch-detail": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list/6fe15d64-e1d7-43f3-a1db-fd78669057fc"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Back to punch list unknown_error PL-001 Touch-up paint required at Level 3 corridor wall Status: Closed · Final approver: Unassigned Sara Ha",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "photos": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/photos"
+    },
+    "mid": {
+      "action": "none available",
+      "mainText": "Photos Upload photo 059176f5 059176f5 059176f5 059176f5 059176f5 059176f5",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "safety": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/safety"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Safety Observations Incidents 2 OSHA recordable 0 Total days away 1 Open incidents 2 Open observations New incident Save view Status Open In",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "tm-tickets": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/tm-tickets"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "T&M Tickets New ticket Save view Status Draft Submitted Approved Rejected Clear all Something went wrong. Please try again. Retry",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "documents": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/documents"
+    },
+    "mid": {
+      "action": "typed in search",
+      "mainText": "Documents Folders All documents (no folder) Specifications Permits New folder Upload document Clear all Something went wrong. Please try aga",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "drawings": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/drawings"
+    },
+    "mid": {
+      "action": "typed in search",
+      "mainText": "Drawings Publish drawing set New drawing Save view Clear all Something went wrong. Please try again. Retry",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "drawing-detail": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/drawings/6fef6086-21a8-4699-9606-0e82b290f5a3"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "",
+      "mainEmpty": true,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "transmittals": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/transmittals"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Back to transmittals Transmittals New transmittal Status Draft Sent Clear all Something went wrong. Please try again. Retry",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "rfis": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/rfis"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "RFIs Export All (PDF) Export All (CSV) New RFI Save view Status Draft Open Answered Closed Ball in court Sara Haddad Omar Nassar Lina Kanaan",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "rfi-detail": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/rfis/95685f81-8286-478e-b675-83d2039daeda"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Back to RFIs Export PDF RFI-001 — Concrete mix design for foundation walls Answered · Ball in court: Unassigned Sara Haddad Omar Nassar Lina",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "submittals": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/submittals"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Submittals Export All (PDF) Export All (CSV) New submittal Save view Status Draft In review Approved Approved as noted Revise & resubmit Rej",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "submittal-detail": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/submittals/92af6904-8bb7-4f92-88e4-c66044beef05"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Back to submittals Export PDF SUB-001 — Ready-Mix Concrete Mix Designs In review Ball in court: Unassigned Sara Haddad Omar Nassar Lina Kana",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "correspondence": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/correspondence"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Correspondence Export All (PDF) Export All (CSV) New correspondence Save view Status Draft Sent Acknowledged Closed Clear all Something went",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "meetings": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/meetings"
+    },
+    "mid": {
+      "action": "typed in search",
+      "mainText": "Meetings New meeting Clear all Something went wrong. Please try again. Retry",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "budget": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/budget"
+    },
+    "mid": {
+      "action": "clicked first control",
+      "mainText": "Budget Export CSV New budget modification New line item Columns ▾ Cost code Revised budget Committed costs Projected cost Variance 03-300 — ",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "commitments": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/commitments"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Commitments Export IIF New commitment Save view Type Subcontract Purchase order Company Al-Amal General Contracting Rawafed Electrical Works",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "change-orders": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/change-orders"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Change Orders Change events New change event No change events yet. Change orders Export All (PDF) Export All (CSV) New change order Save vie",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "billing": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/billing"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Progress Billing New payment application Save view Status Draft Submitted Certified Paid Clear all Something went wrong. Please try again. R",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "schedule": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/schedule"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Schedule New task Save view Status Not started In progress Complete Delayed Clear all Something went wrong. Please try again. Retry",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": true,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "gantt": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/gantt"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Gantt Version 1 · 2026-09-30 Day Week Month Quarter Year Export PNG Re-import Export XML Enable editing Critical path only All companies Al-",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "lookahead": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/lookahead"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Look-ahead Week starting Horizon 3 weeks 6 weeks Publish plan Something went wrong. Please try again. Tasks in this window Unassigned Struct",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": true,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "directory": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/directory"
+    },
+    "mid": {
+      "action": "typed in search",
+      "mainText": "Back to projects Project directory Invite person People Companies Clear all No one matches your search.",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "permissions": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/permissions"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Back to projects Permissions Permission templates Default — client_viewer Delete directory none read standard admin documents none read stan",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": false,
+      "errorText": false,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  },
+  "settings": {
+    "cold": {
+      "navigationError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/settings"
+    },
+    "mid": {
+      "action": "changed first filter",
+      "mainText": "Settings General project settings and custom fields. Something went wrong. Please try again. General Default currency (ISO 4217 code, e.g. U",
+      "mainEmpty": false,
+      "spinner": false,
+      "loadingText": true,
+      "errorText": true,
+      "retryButton": false,
+      "browserErrorPage": false,
+      "p0": false
+    }
+  }
+}

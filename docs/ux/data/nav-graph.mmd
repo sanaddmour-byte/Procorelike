@@ -1,0 +1,175 @@
+flowchart LR
+  SHELL(["App shell (sidebar · header search · bell · project selector)"])
+  n_accept_invite["/accept-invite<br/>ORPHAN"]
+  n_companies__id__admin["C/[id]/admin"]
+  n_companies__id__dashboard["C/[id]/dashboard"]
+  n_companies["C"]
+  n_login["/login"]
+  n_["/<br/>shell-only"]
+  n_projects__id__analytics["P/analytics<br/>shell-only"]
+  n_projects__id__bidding__bidPackageId_["P/bidding/[bidPackageId]"]
+  n_projects__id__bidding["P/bidding"]
+  n_projects__id__billing__paymentApplicationId_["P/billing/[paymentApplicationId]"]
+  n_projects__id__billing["P/billing"]
+  n_projects__id__budget["P/budget<br/>shell-only"]
+  n_projects__id__change_orders__changeOrderId_["P/change-orders/[changeOrderId]"]
+  n_projects__id__change_orders["P/change-orders"]
+  n_projects__id__commitments__commitmentId_["P/commitments/[commitmentId]"]
+  n_projects__id__commitments["P/commitments"]
+  n_projects__id__correspondence__correspondenceId_["P/correspondence/[correspondenceId]"]
+  n_projects__id__correspondence["P/correspondence"]
+  n_projects__id__daily_log__logId_["P/daily-log/[logId]<br/>dead-end"]
+  n_projects__id__daily_log_new["P/daily-log/new"]
+  n_projects__id__daily_log["P/daily-log<br/>shell-only"]
+  n_projects__id__dashboard["P/dashboard"]
+  n_projects__id__direct_costs["P/direct-costs<br/>shell-only"]
+  n_projects__id__directory["P/directory"]
+  n_projects__id__documents["P/documents<br/>shell-only"]
+  n_projects__id__drawings__drawingId_["P/drawings/[drawingId]"]
+  n_projects__id__drawings["P/drawings"]
+  n_projects__id__estimating__estimateId_["P/estimating/[estimateId]"]
+  n_projects__id__estimating["P/estimating"]
+  n_projects__id__gantt["P/gantt<br/>shell-only"]
+  n_projects__id__inspections__inspectionId_["P/inspections/[inspectionId]"]
+  n_projects__id__inspections["P/inspections"]
+  n_projects__id__inspections_templates["P/inspections/templates"]
+  n_projects__id__lookahead["P/lookahead<br/>shell-only"]
+  n_projects__id__meetings__meetingId_["P/meetings/[meetingId]"]
+  n_projects__id__meetings["P/meetings"]
+  n_projects__id__permissions["P/permissions<br/>shell-only"]
+  n_projects__id__photos["P/photos<br/>shell-only"]
+  n_projects__id__prequalification["P/prequalification<br/>shell-only"]
+  n_projects__id__prime_contract["P/prime-contract<br/>shell-only"]
+  n_projects__id__progress_updates["P/progress-updates<br/>shell-only"]
+  n_projects__id__punch_list__itemId_["P/punch-list/[itemId]<br/>dead-end"]
+  n_projects__id__punch_list_new["P/punch-list/new"]
+  n_projects__id__punch_list["P/punch-list<br/>shell-only"]
+  n_projects__id__rfis__rfiId_["P/rfis/[rfiId]"]
+  n_projects__id__rfis["P/rfis"]
+  n_projects__id__safety__incidentId_["P/safety/[incidentId]"]
+  n_projects__id__safety_observations["P/safety/observations"]
+  n_projects__id__safety["P/safety"]
+  n_projects__id__schedule__taskId_["P/schedule/[taskId]"]
+  n_projects__id__schedule["P/schedule"]
+  n_projects__id__settings["P/settings<br/>shell-only"]
+  n_projects__id__specifications__specSectionId_["P/specifications/[specSectionId]"]
+  n_projects__id__submittals__submittalId_["P/submittals/[submittalId]"]
+  n_projects__id__submittals["P/submittals"]
+  n_projects__id__tm_tickets__ticketId_["P/tm-tickets/[ticketId]"]
+  n_projects__id__tm_tickets["P/tm-tickets"]
+  n_projects__id__transmittals__transmittalId_["P/transmittals/[transmittalId]"]
+  n_projects__id__transmittals["P/transmittals"]
+  n_projects["/projects"]
+  n_accept_invite --> n_projects
+  n_companies__id__admin --> n_companies
+  n_companies__id__dashboard --> n_companies
+  n_companies__id__dashboard --> n_projects__id__dashboard
+  n_companies --> n_companies__id__dashboard
+  n_companies --> n_companies__id__admin
+  n_companies --> n_projects
+  n_login --> n_projects
+  n_projects__id__bidding__bidPackageId_ --> n_projects__id__bidding
+  n_projects__id__bidding --> n_projects__id__bidding__bidPackageId_
+  n_projects__id__billing__paymentApplicationId_ --> n_projects__id__billing
+  n_projects__id__billing --> n_projects__id__billing__paymentApplicationId_
+  n_projects__id__change_orders__changeOrderId_ --> n_projects__id__change_orders
+  n_projects__id__change_orders --> n_projects__id__change_orders__changeOrderId_
+  n_projects__id__commitments__commitmentId_ --> n_projects__id__commitments
+  n_projects__id__commitments --> n_projects__id__commitments__commitmentId_
+  n_projects__id__correspondence__correspondenceId_ --> n_projects__id__correspondence
+  n_projects__id__correspondence --> n_projects__id__correspondence__correspondenceId_
+  n_projects__id__daily_log_new --> n_projects__id__daily_log__logId_
+  n_projects__id__daily_log --> n_projects__id__daily_log_new
+  n_projects__id__daily_log --> n_projects__id__daily_log__logId_
+  n_projects__id__directory --> n_projects
+  n_projects__id__drawings__drawingId_ --> n_projects__id__drawings
+  n_projects__id__drawings__drawingId_ --> n_projects__id__rfis__rfiId_
+  n_projects__id__drawings --> n_projects__id__drawings__drawingId_
+  n_projects__id__estimating__estimateId_ --> n_projects__id__estimating
+  n_projects__id__estimating --> n_projects__id__estimating__estimateId_
+  n_projects__id__inspections__inspectionId_ --> n_projects__id__inspections
+  n_projects__id__inspections__inspectionId_ --> n_projects__id__punch_list__itemId_
+  n_projects__id__inspections --> n_projects__id__inspections_templates
+  n_projects__id__inspections --> n_projects__id__inspections__inspectionId_
+  n_projects__id__meetings__meetingId_ --> n_projects__id__meetings
+  n_projects__id__meetings --> n_projects__id__meetings__meetingId_
+  n_projects__id__permissions --> n_projects
+  n_projects__id__punch_list_new --> n_projects__id__punch_list__itemId_
+  n_projects__id__punch_list --> n_projects__id__punch_list_new
+  n_projects__id__punch_list --> n_projects__id__punch_list__itemId_
+  n_projects__id__rfis__rfiId_ --> n_projects__id__rfis
+  n_projects__id__rfis --> n_projects__id__rfis__rfiId_
+  n_projects__id__safety__incidentId_ --> n_projects__id__safety
+  n_projects__id__safety_observations --> n_projects__id__safety
+  n_projects__id__safety --> n_projects__id__safety_observations
+  n_projects__id__safety --> n_projects__id__safety__incidentId_
+  n_projects__id__schedule__taskId_ --> n_projects__id__schedule
+  n_projects__id__schedule --> n_projects__id__schedule__taskId_
+  n_projects__id__specifications__specSectionId_ --> n_projects__id__submittals
+  n_projects__id__specifications__specSectionId_ --> n_projects__id__submittals__submittalId_
+  n_projects__id__specifications__specSectionId_ --> n_projects__id__rfis__rfiId_
+  n_projects__id__submittals__submittalId_ --> n_projects__id__submittals
+  n_projects__id__submittals__submittalId_ --> n_projects__id__specifications__specSectionId_
+  n_projects__id__submittals --> n_projects__id__submittals__submittalId_
+  n_projects__id__tm_tickets__ticketId_ --> n_projects__id__tm_tickets
+  n_projects__id__tm_tickets --> n_projects__id__tm_tickets__ticketId_
+  n_projects__id__transmittals__transmittalId_ --> n_projects__id__transmittals
+  n_projects__id__transmittals --> n_projects
+  n_projects__id__transmittals --> n_projects__id__transmittals__transmittalId_
+  n_projects --> n_companies
+  n_projects --> n_projects__id__directory
+  n_ --> n_projects
+  n_projects__id__dashboard --> n_projects__id__rfis
+  n_projects__id__dashboard --> n_projects__id__submittals
+  n_projects__id__dashboard --> n_projects__id__schedule
+  n_projects__id__dashboard --> n_projects__id__change_orders
+  SHELL -.-> n_projects__id__dashboard
+  SHELL -.-> n_projects__id__analytics
+  SHELL -.-> n_projects__id__daily_log
+  SHELL -.-> n_projects__id__inspections
+  SHELL -.-> n_projects__id__punch_list
+  SHELL -.-> n_projects__id__photos
+  SHELL -.-> n_projects__id__safety
+  SHELL -.-> n_projects__id__tm_tickets
+  SHELL -.-> n_projects__id__documents
+  SHELL -.-> n_projects__id__drawings
+  SHELL -.-> n_projects__id__transmittals
+  SHELL -.-> n_projects__id__rfis
+  SHELL -.-> n_projects__id__submittals
+  SHELL -.-> n_projects__id__correspondence
+  SHELL -.-> n_projects__id__meetings
+  SHELL -.-> n_projects__id__budget
+  SHELL -.-> n_projects__id__commitments
+  SHELL -.-> n_projects__id__change_orders
+  SHELL -.-> n_projects__id__direct_costs
+  SHELL -.-> n_projects__id__prime_contract
+  SHELL -.-> n_projects__id__billing
+  SHELL -.-> n_projects__id__prequalification
+  SHELL -.-> n_projects__id__bidding
+  SHELL -.-> n_projects__id__estimating
+  SHELL -.-> n_projects__id__schedule
+  SHELL -.-> n_projects__id__gantt
+  SHELL -.-> n_projects__id__lookahead
+  SHELL -.-> n_projects__id__progress_updates
+  SHELL -.-> n_projects__id__directory
+  SHELL -.-> n_projects__id__permissions
+  SHELL -.-> n_projects__id__settings
+  n_projects__id__bidding__bidPackageId_:::nosibling
+  n_projects__id__billing__paymentApplicationId_:::nosibling
+  n_projects__id__change_orders__changeOrderId_:::nosibling
+  n_projects__id__commitments__commitmentId_:::nosibling
+  n_projects__id__correspondence__correspondenceId_:::nosibling
+  n_projects__id__daily_log__logId_:::nosibling
+  n_projects__id__drawings__drawingId_:::nosibling
+  n_projects__id__estimating__estimateId_:::nosibling
+  n_projects__id__inspections__inspectionId_:::nosibling
+  n_projects__id__meetings__meetingId_:::nosibling
+  n_projects__id__punch_list__itemId_:::nosibling
+  n_projects__id__rfis__rfiId_:::nosibling
+  n_projects__id__safety__incidentId_:::nosibling
+  n_projects__id__schedule__taskId_:::nosibling
+  n_projects__id__specifications__specSectionId_:::nosibling
+  n_projects__id__submittals__submittalId_:::nosibling
+  n_projects__id__tm_tickets__ticketId_:::nosibling
+  n_projects__id__transmittals__transmittalId_:::nosibling
+  classDef nosibling stroke:#c00,stroke-width:3px,stroke-dasharray:4 2

@@ -1,0 +1,1236 @@
+{
+  "inventory": [
+    {
+      "route": "/accept-invite",
+      "file": "app/[locale]/accept-invite/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/projects"
+      ],
+      "orphan": true,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/companies/[id]/admin",
+      "file": "app/[locale]/companies/[id]/admin/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/companies"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/companies"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/companies/[id]/dashboard",
+      "file": "app/[locale]/companies/[id]/dashboard/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/companies"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/companies",
+        "/projects/[id]/dashboard"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/companies",
+      "file": "app/[locale]/companies/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/companies/[id]/admin",
+        "/companies/[id]/dashboard",
+        "/projects"
+      ],
+      "inboundFromShell": [
+        "GlobalSearch"
+      ],
+      "outboundPageLinks": [
+        "/companies/[id]/dashboard",
+        "/companies/[id]/admin",
+        "/login",
+        "/projects"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/login",
+      "file": "app/[locale]/login/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/companies/[id]/admin",
+        "/companies/[id]/dashboard",
+        "/companies",
+        "/projects/[id]/analytics",
+        "/projects/[id]/bidding/[bidPackageId]",
+        "/projects/[id]/bidding",
+        "/projects/[id]/billing/[paymentApplicationId]",
+        "/projects/[id]/billing",
+        "/projects/[id]/budget",
+        "/projects/[id]/change-orders/[changeOrderId]",
+        "/projects/[id]/change-orders",
+        "/projects/[id]/commitments/[commitmentId]",
+        "/projects/[id]/commitments",
+        "/projects/[id]/correspondence/[correspondenceId]",
+        "/projects/[id]/correspondence",
+        "/projects/[id]/daily-log",
+        "/projects/[id]/dashboard",
+        "/projects/[id]/direct-costs",
+        "/projects/[id]/directory",
+        "/projects/[id]/documents",
+        "/projects/[id]/drawings/[drawingId]",
+        "/projects/[id]/drawings",
+        "/projects/[id]/estimating/[estimateId]",
+        "/projects/[id]/estimating",
+        "/projects/[id]/gantt",
+        "/projects/[id]/inspections/[inspectionId]",
+        "/projects/[id]/inspections",
+        "/projects/[id]/inspections/templates",
+        "/projects/[id]/lookahead",
+        "/projects/[id]/meetings/[meetingId]",
+        "/projects/[id]/meetings",
+        "/projects/[id]/permissions",
+        "/projects/[id]/photos",
+        "/projects/[id]/prequalification",
+        "/projects/[id]/prime-contract",
+        "/projects/[id]/progress-updates",
+        "/projects/[id]/punch-list",
+        "/projects/[id]/rfis/[rfiId]",
+        "/projects/[id]/rfis",
+        "/projects/[id]/safety/[incidentId]",
+        "/projects/[id]/safety/observations",
+        "/projects/[id]/safety",
+        "/projects/[id]/schedule/[taskId]",
+        "/projects/[id]/schedule",
+        "/projects/[id]/settings",
+        "/projects/[id]/specifications/[specSectionId]",
+        "/projects/[id]/submittals/[submittalId]",
+        "/projects/[id]/submittals",
+        "/projects/[id]/tm-tickets/[ticketId]",
+        "/projects/[id]/tm-tickets",
+        "/projects/[id]/transmittals/[transmittalId]",
+        "/projects/[id]/transmittals",
+        "/projects",
+        "/"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/projects"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/",
+      "file": "app/[locale]/page.tsx",
+      "kind": "redirect",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "UserMenu.tsx"
+      ],
+      "outboundPageLinks": [
+        "/projects",
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/analytics",
+      "file": "app/[locale]/projects/[id]/analytics/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/bidding/[bidPackageId]",
+      "file": "app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/bidding"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/bidding"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/bidding",
+      "file": "app/[locale]/projects/[id]/bidding/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/bidding/[bidPackageId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/bidding/[bidPackageId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/billing/[paymentApplicationId]",
+      "file": "app/[locale]/projects/[id]/billing/[paymentApplicationId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/billing"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/billing"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/billing",
+      "file": "app/[locale]/projects/[id]/billing/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/billing/[paymentApplicationId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/billing/[paymentApplicationId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/budget",
+      "file": "app/[locale]/projects/[id]/budget/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/change-orders/[changeOrderId]",
+      "file": "app/[locale]/projects/[id]/change-orders/[changeOrderId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/change-orders"
+      ],
+      "inboundFromShell": [
+        "NotificationBell"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/change-orders"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/change-orders",
+      "file": "app/[locale]/projects/[id]/change-orders/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/change-orders/[changeOrderId]",
+        "/projects/[id]/dashboard"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/change-orders/[changeOrderId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/commitments/[commitmentId]",
+      "file": "app/[locale]/projects/[id]/commitments/[commitmentId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/commitments"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/commitments"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/commitments",
+      "file": "app/[locale]/projects/[id]/commitments/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/commitments/[commitmentId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/commitments/[commitmentId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/correspondence/[correspondenceId]",
+      "file": "app/[locale]/projects/[id]/correspondence/[correspondenceId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/correspondence"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/correspondence"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/correspondence",
+      "file": "app/[locale]/projects/[id]/correspondence/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/correspondence/[correspondenceId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/correspondence/[correspondenceId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/daily-log/[logId]",
+      "file": "app/[locale]/projects/[id]/daily-log/[logId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/daily-log/new",
+        "/projects/[id]/daily-log"
+      ],
+      "inboundFromShell": [
+        "GlobalSearch"
+      ],
+      "outboundPageLinks": [],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": true
+    },
+    {
+      "route": "/projects/[id]/daily-log/new",
+      "file": "app/[locale]/projects/[id]/daily-log/new/page.tsx",
+      "kind": "create",
+      "inboundFromPages": [
+        "/projects/[id]/daily-log"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/projects/[id]/daily-log/[logId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/daily-log",
+      "file": "app/[locale]/projects/[id]/daily-log/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/daily-log/new",
+        "/projects/[id]/daily-log/[logId]"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/dashboard",
+      "file": "app/[locale]/projects/[id]/dashboard/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/companies/[id]/dashboard"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar",
+        "GlobalSearch",
+        "ProjectSelector"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/rfis",
+        "/projects/[id]/submittals",
+        "/projects/[id]/schedule",
+        "/projects/[id]/change-orders"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/direct-costs",
+      "file": "app/[locale]/projects/[id]/direct-costs/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/directory",
+      "file": "app/[locale]/projects/[id]/directory/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar",
+        "GlobalSearch"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/documents",
+      "file": "app/[locale]/projects/[id]/documents/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar",
+        "GlobalSearch"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/drawings/[drawingId]",
+      "file": "app/[locale]/projects/[id]/drawings/[drawingId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/drawings"
+      ],
+      "inboundFromShell": [
+        "GlobalSearch"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/drawings",
+        "/projects/[id]/rfis/[rfiId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/drawings",
+      "file": "app/[locale]/projects/[id]/drawings/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/drawings/[drawingId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/drawings/[drawingId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/estimating/[estimateId]",
+      "file": "app/[locale]/projects/[id]/estimating/[estimateId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/estimating"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/estimating"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/estimating",
+      "file": "app/[locale]/projects/[id]/estimating/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/estimating/[estimateId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/estimating/[estimateId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/gantt",
+      "file": "app/[locale]/projects/[id]/gantt/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/inspections/[inspectionId]",
+      "file": "app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/inspections"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/inspections",
+        "/projects/[id]/punch-list/[itemId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/inspections",
+      "file": "app/[locale]/projects/[id]/inspections/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/inspections/[inspectionId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/inspections/templates",
+        "/projects/[id]/inspections/[inspectionId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/inspections/templates",
+      "file": "app/[locale]/projects/[id]/inspections/templates/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/inspections"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/lookahead",
+      "file": "app/[locale]/projects/[id]/lookahead/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/meetings/[meetingId]",
+      "file": "app/[locale]/projects/[id]/meetings/[meetingId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/meetings"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/meetings"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/meetings",
+      "file": "app/[locale]/projects/[id]/meetings/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/meetings/[meetingId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/meetings/[meetingId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/permissions",
+      "file": "app/[locale]/projects/[id]/permissions/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/photos",
+      "file": "app/[locale]/projects/[id]/photos/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/prequalification",
+      "file": "app/[locale]/projects/[id]/prequalification/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/prime-contract",
+      "file": "app/[locale]/projects/[id]/prime-contract/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/progress-updates",
+      "file": "app/[locale]/projects/[id]/progress-updates/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/punch-list/[itemId]",
+      "file": "app/[locale]/projects/[id]/punch-list/[itemId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/inspections/[inspectionId]",
+        "/projects/[id]/punch-list/new",
+        "/projects/[id]/punch-list"
+      ],
+      "inboundFromShell": [
+        "NotificationBell"
+      ],
+      "outboundPageLinks": [],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": true
+    },
+    {
+      "route": "/projects/[id]/punch-list/new",
+      "file": "app/[locale]/projects/[id]/punch-list/new/page.tsx",
+      "kind": "create",
+      "inboundFromPages": [
+        "/projects/[id]/punch-list"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/projects/[id]/punch-list/[itemId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/punch-list",
+      "file": "app/[locale]/projects/[id]/punch-list/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/punch-list/new",
+        "/projects/[id]/punch-list/[itemId]"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/rfis/[rfiId]",
+      "file": "app/[locale]/projects/[id]/rfis/[rfiId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/drawings/[drawingId]",
+        "/projects/[id]/rfis",
+        "/projects/[id]/specifications/[specSectionId]"
+      ],
+      "inboundFromShell": [
+        "PdfViewerModal.tsx",
+        "NotificationBell",
+        "GlobalSearch"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/rfis"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/rfis",
+      "file": "app/[locale]/projects/[id]/rfis/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/rfis/[rfiId]",
+        "/projects/[id]/dashboard"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/rfis/[rfiId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/safety/[incidentId]",
+      "file": "app/[locale]/projects/[id]/safety/[incidentId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/safety"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/safety"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/safety/observations",
+      "file": "app/[locale]/projects/[id]/safety/observations/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/safety"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/safety"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/safety",
+      "file": "app/[locale]/projects/[id]/safety/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/safety/[incidentId]",
+        "/projects/[id]/safety/observations"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/safety/observations",
+        "/projects/[id]/safety/[incidentId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/schedule/[taskId]",
+      "file": "app/[locale]/projects/[id]/schedule/[taskId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/schedule"
+      ],
+      "inboundFromShell": [
+        "GlobalSearch"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/schedule"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/schedule",
+      "file": "app/[locale]/projects/[id]/schedule/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/schedule/[taskId]",
+        "/projects/[id]/dashboard"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/schedule/[taskId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/settings",
+      "file": "app/[locale]/projects/[id]/settings/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login"
+      ],
+      "orphan": false,
+      "shellOnly": true,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/specifications/[specSectionId]",
+      "file": "app/[locale]/projects/[id]/specifications/[specSectionId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/submittals/[submittalId]"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/submittals",
+        "/projects/[id]/submittals/[submittalId]",
+        "/projects/[id]/rfis/[rfiId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/submittals/[submittalId]",
+      "file": "app/[locale]/projects/[id]/submittals/[submittalId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/specifications/[specSectionId]",
+        "/projects/[id]/submittals"
+      ],
+      "inboundFromShell": [
+        "NotificationBell",
+        "GlobalSearch"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/submittals",
+        "/projects/[id]/specifications/[specSectionId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/submittals",
+      "file": "app/[locale]/projects/[id]/submittals/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/specifications/[specSectionId]",
+        "/projects/[id]/submittals/[submittalId]",
+        "/projects/[id]/dashboard"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/submittals/[submittalId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/tm-tickets/[ticketId]",
+      "file": "app/[locale]/projects/[id]/tm-tickets/[ticketId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/tm-tickets"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/tm-tickets"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/tm-tickets",
+      "file": "app/[locale]/projects/[id]/tm-tickets/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/tm-tickets/[ticketId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/tm-tickets/[ticketId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/transmittals/[transmittalId]",
+      "file": "app/[locale]/projects/[id]/transmittals/[transmittalId]/page.tsx",
+      "kind": "detail",
+      "inboundFromPages": [
+        "/projects/[id]/transmittals"
+      ],
+      "inboundFromShell": [],
+      "outboundPageLinks": [
+        "/login",
+        "/projects/[id]/transmittals"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects/[id]/transmittals",
+      "file": "app/[locale]/projects/[id]/transmittals/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/projects/[id]/transmittals/[transmittalId]"
+      ],
+      "inboundFromShell": [
+        "ProjectSidebar"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/projects",
+        "/projects/[id]/transmittals/[transmittalId]"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    },
+    {
+      "route": "/projects",
+      "file": "app/[locale]/projects/page.tsx",
+      "kind": "list/screen",
+      "inboundFromPages": [
+        "/accept-invite",
+        "/companies",
+        "/login",
+        "/projects/[id]/directory",
+        "/projects/[id]/permissions",
+        "/projects/[id]/transmittals",
+        "/"
+      ],
+      "inboundFromShell": [
+        "error.tsx"
+      ],
+      "outboundPageLinks": [
+        "/login",
+        "/companies",
+        "/projects/[id]/directory"
+      ],
+      "orphan": false,
+      "shellOnly": false,
+      "deadEnd": false
+    }
+  ],
+  "unresolved": [
+    {
+      "from": "/projects/[id]/dashboard",
+      "raw": "/${locale}/projects/${params.id}/${ACTION_LINKS[item.type]}",
+      "via": "app/[locale]/projects/[id]/dashboard/page.tsx"
+    },
+    {
+      "from": "SHELL:GlobalSearch.tsx",
+      "raw": "/${locale}${item.path}",
+      "via": "components/shell/GlobalSearch.tsx"
+    },
+    {
+      "from": "SHELL:NotificationBell.tsx",
+      "raw": "/${locale}${path}",
+      "via": "components/shell/NotificationBell.tsx"
+    },
+    {
+      "from": "SHELL:ProjectSelector.tsx",
+      "raw": "/${locale}/projects/${nextId}/${currentSegment || ",
+      "via": "components/shell/ProjectSelector.tsx"
+    }
+  ],
+  "siblingReach": [
+    {
+      "route": "/projects/[id]/bidding/[bidPackageId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/billing/[paymentApplicationId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/change-orders/[changeOrderId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/commitments/[commitmentId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/correspondence/[correspondenceId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/daily-log/[logId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/drawings/[drawingId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/estimating/[estimateId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/inspections/[inspectionId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/meetings/[meetingId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/punch-list/[itemId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/rfis/[rfiId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/safety/[incidentId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/schedule/[taskId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/specifications/[specSectionId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/submittals/[submittalId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/tm-tickets/[ticketId]",
+      "selfLinks": 0,
+      "prevNext": false
+    },
+    {
+      "route": "/projects/[id]/transmittals/[transmittalId]",
+      "selfLinks": 0,
+      "prevNext": false
+    }
+  ],
+  "sidebarSegments": [
+    "dashboard",
+    "analytics",
+    "daily-log",
+    "inspections",
+    "punch-list",
+    "photos",
+    "safety",
+    "tm-tickets",
+    "documents",
+    "drawings",
+    "transmittals",
+    "rfis",
+    "submittals",
+    "correspondence",
+    "meetings",
+    "budget",
+    "commitments",
+    "change-orders",
+    "direct-costs",
+    "prime-contract",
+    "billing",
+    "prequalification",
+    "bidding",
+    "estimating",
+    "schedule",
+    "gantt",
+    "lookahead",
+    "progress-updates",
+    "directory",
+    "permissions",
+    "settings"
+  ]
+}

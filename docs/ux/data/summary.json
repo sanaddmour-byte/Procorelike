@@ -1,0 +1,5039 @@
+{
+  "totals": {
+    "screens": 36,
+    "targetsTotal": 925,
+    "targetsUnder44": 917,
+    "targetsUnder24": 172,
+    "textNodes": 1068,
+    "under45": 106,
+    "under7": 144,
+    "screensWithClippedControls": 19
+  },
+  "perScreen": [
+    {
+      "screen": "login",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 291,
+      "headerH": 53,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 0,
+      "targets": 7,
+      "targetsUnder44": 7,
+      "targetsUnder24": 0,
+      "textNodes": 10,
+      "contrastUnder45": 1,
+      "contrastUnder7": 3,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "projects",
+      "rowsAboveFold": 2,
+      "rowCount": 2,
+      "firstH1Y": 85,
+      "headerH": 53,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 2,
+      "targets": 7,
+      "targetsUnder44": 7,
+      "targetsUnder24": 1,
+      "textNodes": 14,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "companies",
+      "rowsAboveFold": 2,
+      "rowCount": 5,
+      "firstH1Y": 117,
+      "headerH": 53,
+      "scrollHeight": 1609,
+      "rowsAboveFoldAr": 2,
+      "targets": 25,
+      "targetsUnder44": 25,
+      "targetsUnder24": 11,
+      "textNodes": 22,
+      "contrastUnder45": 3,
+      "contrastUnder7": 4,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "dashboard",
+      "rowsAboveFold": 3,
+      "rowCount": 3,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 1351,
+      "rowsAboveFoldAr": 3,
+      "targets": 9,
+      "targetsUnder44": 9,
+      "targetsUnder24": 1,
+      "textNodes": 37,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "analytics",
+      "rowsAboveFold": 6,
+      "rowCount": 22,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 1944,
+      "rowsAboveFoldAr": 4,
+      "targets": 6,
+      "targetsUnder44": 6,
+      "targetsUnder24": 1,
+      "textNodes": 47,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 9,
+      "fontSizes": [
+        9,
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "daily-log",
+      "rowsAboveFold": 2,
+      "rowCount": 2,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 2,
+      "targets": 12,
+      "targetsUnder44": 12,
+      "targetsUnder24": 4,
+      "textNodes": 20,
+      "contrastUnder45": 2,
+      "contrastUnder7": 3,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 1
+    },
+    {
+      "screen": "daily-log-detail",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 185,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 0,
+      "targets": 10,
+      "targetsUnder44": 9,
+      "targetsUnder24": 2,
+      "textNodes": 15,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "daily-log-new",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 0,
+      "targets": 10,
+      "targetsUnder44": 9,
+      "targetsUnder24": 1,
+      "textNodes": 14,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "inspections",
+      "rowsAboveFold": 3,
+      "rowCount": 3,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 855,
+      "rowsAboveFoldAr": 3,
+      "targets": 20,
+      "targetsUnder44": 20,
+      "targetsUnder24": 4,
+      "textNodes": 31,
+      "contrastUnder45": 6,
+      "contrastUnder7": 7,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "inspection-detail",
+      "rowsAboveFold": 3,
+      "rowCount": 3,
+      "firstH1Y": 191,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 3,
+      "targets": 14,
+      "targetsUnder44": 14,
+      "targetsUnder24": 2,
+      "textNodes": 29,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "punch-list",
+      "rowsAboveFold": 9,
+      "rowCount": 18,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 1191,
+      "rowsAboveFoldAr": 9,
+      "targets": 36,
+      "targetsUnder44": 36,
+      "targetsUnder24": 23,
+      "textNodes": 36,
+      "contrastUnder45": 4,
+      "contrastUnder7": 5,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "punch-new",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 0,
+      "targets": 22,
+      "targetsUnder44": 21,
+      "targetsUnder24": 11,
+      "textNodes": 25,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "punch-detail",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 185,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 0,
+      "targets": 9,
+      "targetsUnder44": 9,
+      "targetsUnder24": 2,
+      "textNodes": 24,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "photos",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 0,
+      "targets": 6,
+      "targetsUnder44": 6,
+      "targetsUnder24": 1,
+      "textNodes": 17,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "safety",
+      "rowsAboveFold": 3,
+      "rowCount": 3,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 956,
+      "rowsAboveFoldAr": 1,
+      "targets": 18,
+      "targetsUnder44": 18,
+      "targetsUnder24": 4,
+      "textNodes": 35,
+      "contrastUnder45": 4,
+      "contrastUnder7": 5,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "tm-tickets",
+      "rowsAboveFold": 4,
+      "rowCount": 4,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 855,
+      "rowsAboveFoldAr": 4,
+      "targets": 17,
+      "targetsUnder44": 17,
+      "targetsUnder24": 4,
+      "textNodes": 31,
+      "contrastUnder45": 6,
+      "contrastUnder7": 7,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "documents",
+      "rowsAboveFold": 3,
+      "rowCount": 3,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 3,
+      "targets": 19,
+      "targetsUnder44": 19,
+      "targetsUnder24": 3,
+      "textNodes": 29,
+      "contrastUnder45": 6,
+      "contrastUnder7": 7,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 1
+    },
+    {
+      "screen": "drawings",
+      "rowsAboveFold": 5,
+      "rowCount": 5,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 855,
+      "rowsAboveFoldAr": 5,
+      "targets": 17,
+      "targetsUnder44": 17,
+      "targetsUnder24": 4,
+      "textNodes": 33,
+      "contrastUnder45": 6,
+      "contrastUnder7": 7,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "drawing-detail",
+      "rowsAboveFold": 1,
+      "rowCount": 1,
+      "firstH1Y": 191,
+      "headerH": 97,
+      "scrollHeight": 903,
+      "rowsAboveFoldAr": 1,
+      "targets": 17,
+      "targetsUnder44": 17,
+      "targetsUnder24": 2,
+      "textNodes": 34,
+      "contrastUnder45": 2,
+      "contrastUnder7": 3,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "transmittals",
+      "rowsAboveFold": 3,
+      "rowCount": 3,
+      "firstH1Y": 177,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 3,
+      "targets": 16,
+      "targetsUnder44": 16,
+      "targetsUnder24": 5,
+      "textNodes": 28,
+      "contrastUnder45": 4,
+      "contrastUnder7": 5,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 1
+    },
+    {
+      "screen": "rfis",
+      "rowsAboveFold": 8,
+      "rowCount": 8,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 959,
+      "rowsAboveFoldAr": 6,
+      "targets": 29,
+      "targetsUnder44": 29,
+      "targetsUnder24": 13,
+      "textNodes": 37,
+      "contrastUnder45": 4,
+      "contrastUnder7": 5,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "rfi-detail",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 203,
+      "headerH": 97,
+      "scrollHeight": 1587,
+      "rowsAboveFoldAr": 0,
+      "targets": 21,
+      "targetsUnder44": 20,
+      "targetsUnder24": 3,
+      "textNodes": 32,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "submittals",
+      "rowsAboveFold": 6,
+      "rowCount": 6,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 921,
+      "rowsAboveFoldAr": 5,
+      "targets": 27,
+      "targetsUnder44": 27,
+      "targetsUnder24": 11,
+      "textNodes": 36,
+      "contrastUnder45": 6,
+      "contrastUnder7": 7,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "submittal-detail",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 203,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 0,
+      "targets": 12,
+      "targetsUnder44": 12,
+      "targetsUnder24": 3,
+      "textNodes": 41,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "correspondence",
+      "rowsAboveFold": 5,
+      "rowCount": 5,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 855,
+      "rowsAboveFoldAr": 5,
+      "targets": 19,
+      "targetsUnder44": 19,
+      "targetsUnder24": 4,
+      "textNodes": 39,
+      "contrastUnder45": 6,
+      "contrastUnder7": 7,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "meetings",
+      "rowsAboveFold": 3,
+      "rowCount": 3,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 3,
+      "targets": 13,
+      "targetsUnder44": 13,
+      "targetsUnder24": 3,
+      "textNodes": 26,
+      "contrastUnder45": 4,
+      "contrastUnder7": 5,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 1
+    },
+    {
+      "screen": "budget",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 844,
+      "rowsAboveFoldAr": 0,
+      "targets": 13,
+      "targetsUnder44": 13,
+      "targetsUnder24": 4,
+      "textNodes": 25,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 1
+    },
+    {
+      "screen": "commitments",
+      "rowsAboveFold": 3,
+      "rowCount": 3,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 855,
+      "rowsAboveFoldAr": 3,
+      "targets": 19,
+      "targetsUnder44": 19,
+      "targetsUnder24": 4,
+      "textNodes": 28,
+      "contrastUnder45": 6,
+      "contrastUnder7": 7,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "change-orders",
+      "rowsAboveFold": 4,
+      "rowCount": 5,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 973,
+      "rowsAboveFoldAr": 4,
+      "targets": 26,
+      "targetsUnder44": 26,
+      "targetsUnder24": 10,
+      "textNodes": 33,
+      "contrastUnder45": 4,
+      "contrastUnder7": 5,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "billing",
+      "rowsAboveFold": 2,
+      "rowCount": 2,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 855,
+      "rowsAboveFoldAr": 2,
+      "targets": 16,
+      "targetsUnder44": 16,
+      "targetsUnder24": 3,
+      "textNodes": 23,
+      "contrastUnder45": 6,
+      "contrastUnder7": 7,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "schedule",
+      "rowsAboveFold": 8,
+      "rowCount": 8,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 869,
+      "rowsAboveFoldAr": 8,
+      "targets": 17,
+      "targetsUnder44": 17,
+      "targetsUnder24": 4,
+      "textNodes": 38,
+      "contrastUnder45": 6,
+      "contrastUnder7": 8,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 2
+    },
+    {
+      "screen": "gantt",
+      "rowsAboveFold": 0,
+      "rowCount": 0,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 1539,
+      "rowsAboveFoldAr": 0,
+      "targets": 18,
+      "targetsUnder44": 14,
+      "targetsUnder24": 2,
+      "textNodes": 53,
+      "contrastUnder45": 2,
+      "contrastUnder7": 3,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        11,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 5
+    },
+    {
+      "screen": "lookahead",
+      "rowsAboveFold": 4,
+      "rowCount": 7,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 1890,
+      "rowsAboveFoldAr": 4,
+      "targets": 24,
+      "targetsUnder44": 24,
+      "targetsUnder24": 1,
+      "textNodes": 30,
+      "contrastUnder45": 2,
+      "contrastUnder7": 3,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "directory",
+      "rowsAboveFold": 5,
+      "rowCount": 10,
+      "firstH1Y": 177,
+      "headerH": 97,
+      "scrollHeight": 1241,
+      "rowsAboveFoldAr": 4,
+      "targets": 11,
+      "targetsUnder44": 11,
+      "targetsUnder24": 2,
+      "textNodes": 35,
+      "contrastUnder45": 2,
+      "contrastUnder7": 3,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        24
+      ],
+      "clippedControls": 0
+    },
+    {
+      "screen": "permissions",
+      "rowsAboveFold": 1,
+      "rowCount": 20,
+      "firstH1Y": 185,
+      "headerH": 97,
+      "scrollHeight": 8363,
+      "rowsAboveFoldAr": 1,
+      "targets": 333,
+      "targetsUnder44": 333,
+      "targetsUnder24": 12,
+      "textNodes": 41,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 33
+    },
+    {
+      "screen": "settings",
+      "rowsAboveFold": 0,
+      "rowCount": 5,
+      "firstH1Y": 153,
+      "headerH": 97,
+      "scrollHeight": 2336,
+      "rowsAboveFoldAr": 0,
+      "targets": 30,
+      "targetsUnder44": 30,
+      "targetsUnder24": 7,
+      "textNodes": 20,
+      "contrastUnder45": 1,
+      "contrastUnder7": 2,
+      "contrastUnder45Large": 0,
+      "smallestFont": 10,
+      "fontSizes": [
+        10,
+        12,
+        14,
+        16,
+        18,
+        24
+      ],
+      "clippedControls": 0
+    }
+  ],
+  "touch": [
+    {
+      "sig": "button[button]",
+      "label": "English",
+      "cls": "rounded-md border-2 px-2 py-1 font-semibold border-white bg-orange-500 text-ink",
+      "minW": 71,
+      "minH": 32,
+      "screens": [
+        "login",
+        "projects",
+        "companies",
+        "dashboard",
+        "analytics",
+        "daily-log",
+        "daily-log-detail",
+        "daily-log-new",
+        "inspections",
+        "inspection-detail",
+        "punch-list",
+        "punch-new",
+        "punch-detail",
+        "photos",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "drawing-detail",
+        "transmittals",
+        "rfis",
+        "rfi-detail",
+        "submittals",
+        "submittal-detail",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule",
+        "gantt",
+        "lookahead",
+        "directory",
+        "permissions",
+        "settings"
+      ],
+      "count": 36,
+      "nScreens": 36,
+      "at": "apps/web/components/LanguageToggle.tsx:28 (manual)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "العربية",
+      "cls": "rounded-md border-2 px-2 py-1 font-semibold border-white/40 bg-navy-800 text-white hover:border-white",
+      "minW": 66,
+      "minH": 32,
+      "screens": [
+        "login",
+        "projects",
+        "companies",
+        "dashboard",
+        "analytics",
+        "daily-log",
+        "daily-log-detail",
+        "daily-log-new",
+        "inspections",
+        "inspection-detail",
+        "punch-list",
+        "punch-new",
+        "punch-detail",
+        "photos",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "drawing-detail",
+        "transmittals",
+        "rfis",
+        "rfi-detail",
+        "submittals",
+        "submittal-detail",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule",
+        "gantt",
+        "lookahead",
+        "directory",
+        "permissions",
+        "settings"
+      ],
+      "count": 36,
+      "nScreens": 36,
+      "at": "apps/web/components/LanguageToggle.tsx:28 (manual)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "🔔 2",
+      "cls": "relative flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10",
+      "minW": 32,
+      "minH": 32,
+      "screens": [
+        "login",
+        "projects",
+        "companies",
+        "dashboard",
+        "analytics",
+        "daily-log",
+        "daily-log-detail",
+        "daily-log-new",
+        "inspections",
+        "inspection-detail",
+        "punch-list",
+        "punch-new",
+        "punch-detail",
+        "photos",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "drawing-detail",
+        "transmittals",
+        "rfis",
+        "rfi-detail",
+        "submittals",
+        "submittal-detail",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule",
+        "gantt",
+        "lookahead",
+        "directory",
+        "permissions",
+        "settings"
+      ],
+      "count": 36,
+      "nScreens": 36,
+      "at": "apps/web/components/shell/NotificationBell.tsx:114 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "SH",
+      "cls": "flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/40 bg-gradient-to-b from-orange-400 to-orange-600 text-xs font-bold text-white",
+      "minW": 32,
+      "minH": 32,
+      "screens": [
+        "login",
+        "projects",
+        "companies",
+        "dashboard",
+        "analytics",
+        "daily-log",
+        "daily-log-detail",
+        "daily-log-new",
+        "inspections",
+        "inspection-detail",
+        "punch-list",
+        "punch-new",
+        "punch-detail",
+        "photos",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "drawing-detail",
+        "transmittals",
+        "rfis",
+        "rfi-detail",
+        "submittals",
+        "submittal-detail",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule",
+        "gantt",
+        "lookahead",
+        "directory",
+        "permissions",
+        "settings"
+      ],
+      "count": 36,
+      "nScreens": 36,
+      "at": "apps/web/components/shell/UserMenu.tsx:67 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "☰",
+      "cls": "rounded p-1 text-white/80 hover:bg-white/10 md:hidden",
+      "minW": 22,
+      "minH": 32,
+      "screens": [
+        "dashboard",
+        "analytics",
+        "daily-log",
+        "daily-log-detail",
+        "daily-log-new",
+        "inspections",
+        "inspection-detail",
+        "punch-list",
+        "punch-new",
+        "punch-detail",
+        "photos",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "drawing-detail",
+        "transmittals",
+        "rfis",
+        "rfi-detail",
+        "submittals",
+        "submittal-detail",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule",
+        "gantt",
+        "lookahead",
+        "directory",
+        "permissions",
+        "settings"
+      ],
+      "count": 33,
+      "nScreens": 33,
+      "at": "apps/web/components/Header.tsx:39 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Amman Heights Residential Tower ▾",
+      "cls": "flex max-w-[220px] items-center gap-1.5 rounded-lg border-2 border-white/30 bg-white/10 px-2.5 py-1.5 text-sm font-semibold text-white hover:bg-white/20",
+      "minW": 220,
+      "minH": 36,
+      "screens": [
+        "dashboard",
+        "analytics",
+        "daily-log",
+        "daily-log-detail",
+        "daily-log-new",
+        "inspections",
+        "inspection-detail",
+        "punch-list",
+        "punch-new",
+        "punch-detail",
+        "photos",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "drawing-detail",
+        "transmittals",
+        "rfis",
+        "rfi-detail",
+        "submittals",
+        "submittal-detail",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule",
+        "gantt",
+        "lookahead",
+        "directory",
+        "permissions",
+        "settings"
+      ],
+      "count": 33,
+      "nScreens": 33,
+      "at": "apps/web/components/shell/ProjectSelector.tsx:79 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Columns ▾",
+      "cls": "rounded-lg border-2 border-ink bg-white px-2 py-1 text-xs font-semibold text-navy-800 hover:bg-navy-50",
+      "minW": 86,
+      "minH": 28,
+      "screens": [
+        "daily-log",
+        "inspections",
+        "punch-list",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "transmittals",
+        "rfis",
+        "submittals",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule"
+      ],
+      "count": 17,
+      "nScreens": 17,
+      "at": "apps/web/components/ui/DataTable.tsx:308 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "‹",
+      "cls": "rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40",
+      "minW": 28,
+      "minH": 32,
+      "screens": [
+        "inspections",
+        "punch-list",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "transmittals",
+        "rfis",
+        "submittals",
+        "correspondence",
+        "meetings",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule"
+      ],
+      "count": 15,
+      "nScreens": 15,
+      "at": "apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:392 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:402 · apps/web/app/[locale]/projects/[id]/safety/observations/page.tsx:282 (+3 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "›",
+      "cls": "rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40",
+      "minW": 28,
+      "minH": 32,
+      "screens": [
+        "inspections",
+        "punch-list",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "transmittals",
+        "rfis",
+        "submittals",
+        "correspondence",
+        "meetings",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule"
+      ],
+      "count": 15,
+      "nScreens": 15,
+      "at": "apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:392 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:402 · apps/web/app/[locale]/projects/[id]/safety/observations/page.tsx:282 (+3 more) (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "View name",
+      "cls": "min-w-[140px] rounded-lg border-2 border-ink px-2 py-1 text-xs",
+      "minW": 252,
+      "minH": 28,
+      "screens": [
+        "inspections",
+        "punch-list",
+        "safety",
+        "tm-tickets",
+        "drawings",
+        "rfis",
+        "submittals",
+        "correspondence",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule"
+      ],
+      "count": 12,
+      "nScreens": 12,
+      "at": "apps/web/components/ui/SavedViewsBar.tsx:133 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Save view",
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50",
+      "minW": 90,
+      "minH": 28,
+      "screens": [
+        "inspections",
+        "punch-list",
+        "safety",
+        "tm-tickets",
+        "drawings",
+        "rfis",
+        "submittals",
+        "correspondence",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule"
+      ],
+      "count": 12,
+      "nScreens": 12,
+      "at": "apps/web/components/ui/SavedViewsBar.tsx:140 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Number ▲",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 110,
+      "minH": 16,
+      "screens": [
+        "punch-list",
+        "tm-tickets",
+        "transmittals",
+        "rfis",
+        "submittals",
+        "commitments",
+        "change-orders"
+      ],
+      "count": 7,
+      "nScreens": 7,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Status",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 130,
+      "minH": 16,
+      "screens": [
+        "inspections",
+        "punch-list",
+        "rfis",
+        "submittals",
+        "change-orders",
+        "schedule"
+      ],
+      "count": 6,
+      "nScreens": 6,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "input[checkbox]",
+      "label": "Select row",
+      "cls": "h-4 w-4",
+      "minW": 16,
+      "minH": 16,
+      "screens": [
+        "punch-list",
+        "rfis",
+        "submittals",
+        "change-orders"
+      ],
+      "count": 37,
+      "nScreens": 4,
+      "at": "apps/web/components/PdfViewerModal.tsx:558 · apps/web/components/gantt/TaskGrid.tsx:44 · apps/web/components/shell/ProjectSidebar.tsx:164 (+3 more) (exact)"
+    },
+    {
+      "sig": "input[checkbox]",
+      "label": "",
+      "cls": "",
+      "minW": 13,
+      "minH": 13,
+      "screens": [
+        "punch-new",
+        "rfi-detail",
+        "gantt",
+        "settings"
+      ],
+      "count": 18,
+      "nScreens": 4,
+      "at": null
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Export All (PDF)",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-2 text-sm font-semibold text-white",
+      "minW": 139,
+      "minH": 38,
+      "screens": [
+        "inspections",
+        "rfis",
+        "submittals",
+        "correspondence"
+      ],
+      "count": 4,
+      "nScreens": 4,
+      "at": "apps/web/app/[locale]/projects/[id]/correspondence/page.tsx:143 · apps/web/app/[locale]/projects/[id]/inspections/page.tsx:123 · apps/web/app/[locale]/projects/[id]/rfis/page.tsx:176 (+1 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Export All (CSV)",
+      "cls": "rounded-lg border-3 border-ink bg-white brutal-interactive px-3 py-2 text-sm font-semibold text-navy-800",
+      "minW": 141,
+      "minH": 38,
+      "screens": [
+        "inspections",
+        "rfis",
+        "submittals",
+        "correspondence"
+      ],
+      "count": 4,
+      "nScreens": 4,
+      "at": "apps/web/app/[locale]/projects/[id]/correspondence/page.tsx:149 · apps/web/app/[locale]/projects/[id]/inspections/page.tsx:129 · apps/web/app/[locale]/projects/[id]/rfis/page.tsx:182 (+1 more) (exact)"
+    },
+    {
+      "sig": "input[checkbox]",
+      "label": "Select all rows on this page",
+      "cls": "h-4 w-4",
+      "minW": 16,
+      "minH": 16,
+      "screens": [
+        "punch-list",
+        "rfis",
+        "submittals",
+        "change-orders"
+      ],
+      "count": 4,
+      "nScreens": 4,
+      "at": "apps/web/components/PdfViewerModal.tsx:558 · apps/web/components/gantt/TaskGrid.tsx:44 · apps/web/components/shell/ProjectSidebar.tsx:164 (+3 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Title",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "drawings",
+        "submittals",
+        "meetings",
+        "commitments"
+      ],
+      "count": 4,
+      "nScreens": 4,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "a",
+      "label": "Back to projects",
+      "cls": "text-sm text-navy-700 underline",
+      "minW": 113,
+      "minH": 20,
+      "screens": [
+        "companies",
+        "directory",
+        "permissions"
+      ],
+      "count": 3,
+      "nScreens": 3,
+      "at": "apps/web/app/[locale]/companies/page.tsx:159 · apps/web/app/[locale]/projects/[id]/daily-log/[logId]/page.tsx:83 · apps/web/app/[locale]/projects/[id]/directory/page.tsx:151 (+4 more) (exact)"
+    },
+    {
+      "sig": "input[date]",
+      "label": "",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2",
+      "minW": 170,
+      "minH": 40,
+      "screens": [
+        "daily-log-new",
+        "punch-new",
+        "lookahead"
+      ],
+      "count": 3,
+      "nScreens": 3,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:68 · apps/web/app/[locale]/accept-invite/page.tsx:80 · apps/web/app/[locale]/companies/[id]/admin/page.tsx:182 (+155 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Unassigned Sara Haddad Omar Nassar Lina ",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800 disabled:opacity-50",
+      "minW": 183,
+      "minH": 32,
+      "screens": [
+        "punch-detail",
+        "rfi-detail",
+        "submittal-detail"
+      ],
+      "count": 3,
+      "nScreens": 3,
+      "at": "apps/web/app/[locale]/projects/[id]/punch-list/[itemId]/page.tsx:140 · apps/web/app/[locale]/projects/[id]/rfis/[rfiId]/page.tsx:256 · apps/web/app/[locale]/projects/[id]/submittals/[submittalId]/page.tsx:325 (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by number or subject…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 212,
+      "minH": 34,
+      "screens": [
+        "transmittals",
+        "rfis",
+        "correspondence"
+      ],
+      "count": 3,
+      "nScreens": 3,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Subject",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "transmittals",
+        "rfis",
+        "correspondence"
+      ],
+      "count": 3,
+      "nScreens": 3,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs",
+      "minW": 91,
+      "minH": 27,
+      "screens": [
+        "permissions",
+        "settings"
+      ],
+      "count": 269,
+      "nScreens": 2,
+      "at": "apps/web/app/[locale]/projects/[id]/directory/page.tsx:297 · apps/web/app/[locale]/projects/[id]/directory/page.tsx:304 · apps/web/app/[locale]/projects/[id]/permissions/page.tsx:206 (+3 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Cancel",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-navy-800",
+      "minW": 84,
+      "minH": 42,
+      "screens": [
+        "daily-log-new",
+        "punch-new"
+      ],
+      "count": 2,
+      "nScreens": 2,
+      "at": "apps/web/app/[locale]/projects/[id]/daily-log/new/page.tsx:68 · apps/web/app/[locale]/projects/[id]/punch-list/new/page.tsx:117 (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by number or description…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 206,
+      "minH": 34,
+      "screens": [
+        "punch-list",
+        "tm-tickets"
+      ],
+      "count": 2,
+      "nScreens": 2,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Description",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "punch-list",
+        "safety"
+      ],
+      "count": 2,
+      "nScreens": 2,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "History",
+      "cls": "rounded-lg border-3 border-ink bg-white px-3 py-1.5 text-xs font-semibold text-navy-800",
+      "minW": 71,
+      "minH": 30,
+      "screens": [
+        "punch-detail",
+        "rfi-detail"
+      ],
+      "count": 2,
+      "nScreens": 2,
+      "at": "apps/web/app/[locale]/projects/[id]/safety/observations/page.tsx:261 · apps/web/components/ui/RecordHistory.tsx:45 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Company",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-default",
+      "minW": 180,
+      "minH": 16,
+      "screens": [
+        "tm-tickets",
+        "commitments"
+      ],
+      "count": 2,
+      "nScreens": 2,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Ball in court Sara Haddad Omar Nassar Li",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 183,
+      "minH": 36,
+      "screens": [
+        "rfis",
+        "submittals"
+      ],
+      "count": 2,
+      "nScreens": 2,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Export PDF",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white",
+      "minW": 105,
+      "minH": 34,
+      "screens": [
+        "rfi-detail",
+        "submittal-detail"
+      ],
+      "count": 2,
+      "nScreens": 2,
+      "at": "apps/web/app/[locale]/projects/[id]/change-orders/[changeOrderId]/page.tsx:133 · apps/web/app/[locale]/projects/[id]/change-orders/page.tsx:438 · apps/web/app/[locale]/projects/[id]/correspondence/[correspondenceId]/page.tsx:143 (+2 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by number or title…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "submittals",
+        "change-orders"
+      ],
+      "count": 2,
+      "nScreens": 2,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Delete",
+      "cls": "text-xs font-semibold text-maroon-700 underline",
+      "minW": 43,
+      "minH": 16,
+      "screens": [
+        "permissions"
+      ],
+      "count": 10,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:190 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Save changes",
+      "cls": "mt-3 rounded-lg border-3 border-ink bg-navy-700 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50",
+      "minW": 121,
+      "minH": 30,
+      "screens": [
+        "permissions"
+      ],
+      "count": 10,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:221 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "— none — Default — client_viewer Default",
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs",
+      "minW": 201,
+      "minH": 27,
+      "screens": [
+        "permissions"
+      ],
+      "count": 10,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/directory/page.tsx:297 · apps/web/app/[locale]/projects/[id]/directory/page.tsx:304 · apps/web/app/[locale]/projects/[id]/permissions/page.tsx:206 (+3 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "directory documents drawings rfis submit",
+      "cls": "rounded border-2 border-ink px-1 py-0.5",
+      "minW": 176,
+      "minH": 27,
+      "screens": [
+        "permissions"
+      ],
+      "count": 10,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/directory/page.tsx:297 · apps/web/app/[locale]/projects/[id]/directory/page.tsx:304 · apps/web/app/[locale]/projects/[id]/permissions/page.tsx:206 (+5 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "cls": "rounded border-2 border-ink px-1 py-0.5",
+      "minW": 91,
+      "minH": 27,
+      "screens": [
+        "permissions"
+      ],
+      "count": 10,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/directory/page.tsx:297 · apps/web/app/[locale]/projects/[id]/directory/page.tsx:304 · apps/web/app/[locale]/projects/[id]/permissions/page.tsx:206 (+5 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Set",
+      "cls": "rounded border-2 border-ink bg-navy-700 px-2 py-0.5 font-bold text-white",
+      "minW": 42,
+      "minH": 24,
+      "screens": [
+        "permissions"
+      ],
+      "count": 10,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:344 (exact)"
+    },
+    {
+      "sig": "input[file]",
+      "label": "",
+      "cls": "text-sm",
+      "minW": 306,
+      "minH": 26,
+      "screens": [
+        "companies"
+      ],
+      "count": 5,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:61 · apps/web/app/[locale]/accept-invite/page.tsx:71 · apps/web/app/[locale]/accept-invite/page.tsx:83 (+620 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Upload logo",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50",
+      "minW": 117,
+      "minH": 34,
+      "screens": [
+        "companies"
+      ],
+      "count": 5,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/page.tsx:116 (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Dashboard",
+      "cls": "text-sm font-semibold text-navy-700 underline",
+      "minW": 84,
+      "minH": 20,
+      "screens": [
+        "companies"
+      ],
+      "count": 5,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/page.tsx:123 · apps/web/app/[locale]/companies/page.tsx:126 · apps/web/app/[locale]/projects/page.tsx:42 (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Admin Console",
+      "cls": "text-sm font-semibold text-navy-700 underline",
+      "minW": 111,
+      "minH": 20,
+      "screens": [
+        "companies"
+      ],
+      "count": 5,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/page.tsx:123 · apps/web/app/[locale]/companies/page.tsx:126 · apps/web/app/[locale]/projects/page.tsx:42 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Review",
+      "cls": "shrink-0 rounded-lg border-3 border-ink px-3 py-1.5 text-sm font-semibold text-navy-800 brutal-interactive",
+      "minW": 77,
+      "minH": 34,
+      "screens": [
+        "dashboard"
+      ],
+      "count": 3,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/dashboard/page.tsx:91 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Pass",
+      "cls": "rounded px-3 py-1 text-sm border border-ink text-navy-800",
+      "minW": 61,
+      "minH": 30,
+      "screens": [
+        "inspection-detail"
+      ],
+      "count": 3,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:350 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Fail",
+      "cls": "rounded px-3 py-1 text-sm border border-ink text-navy-800",
+      "minW": 52,
+      "minH": 30,
+      "screens": [
+        "inspection-detail"
+      ],
+      "count": 3,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:350 (approx)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Select a task… Structural Steel Erection",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "minW": 298,
+      "minH": 32,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 3,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:257 · apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:287 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:346 (+30 more) (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "View directory",
+      "cls": "mt-3 inline-block rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive",
+      "minW": 133,
+      "minH": 34,
+      "screens": [
+        "projects"
+      ],
+      "count": 2,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/page.tsx:58 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Download",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-xs text-navy-800",
+      "minW": 83,
+      "minH": 26,
+      "screens": [
+        "documents"
+      ],
+      "count": 2,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:204 · apps/web/app/[locale]/projects/[id]/change-orders/page.tsx:401 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:148 (+6 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "N/A Yes No",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800",
+      "minW": 63,
+      "minH": 32,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 2,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/punch-list/[itemId]/page.tsx:140 · apps/web/app/[locale]/projects/[id]/rfis/[rfiId]/page.tsx:256 · apps/web/app/[locale]/projects/[id]/rfis/[rfiId]/page.tsx:290 (+3 more) (exact)"
+    },
+    {
+      "sig": "input[date]",
+      "label": "",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "minW": 162,
+      "minH": 32,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 2,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:257 · apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:287 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:346 (+30 more) (exact)"
+    },
+    {
+      "sig": "input[email]",
+      "label": "",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 font-normal focus:outline-none focus:shadow-focus",
+      "minW": 302,
+      "minH": 38,
+      "screens": [
+        "login"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:68 · apps/web/app/[locale]/accept-invite/page.tsx:80 · apps/web/app/[locale]/login/page.tsx:72 (+2 more) (exact)"
+    },
+    {
+      "sig": "input[password]",
+      "label": "",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 font-normal focus:outline-none focus:shadow-focus",
+      "minW": 302,
+      "minH": 38,
+      "screens": [
+        "login"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:68 · apps/web/app/[locale]/accept-invite/page.tsx:80 · apps/web/app/[locale]/login/page.tsx:72 (+2 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Sign in",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-3 py-2 font-bold text-ink disabled:opacity-50",
+      "minW": 302,
+      "minH": 42,
+      "screens": [
+        "login"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:87 · apps/web/app/[locale]/login/page.tsx:103 (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Manage company logo",
+      "cls": "text-sm font-semibold text-navy-700 underline",
+      "minW": 171,
+      "minH": 20,
+      "screens": [
+        "projects"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/page.tsx:123 · apps/web/app/[locale]/companies/page.tsx:126 · apps/web/app/[locale]/projects/page.tsx:42 (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "New daily log",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 116,
+      "minH": 38,
+      "screens": [
+        "daily-log"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search notes…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "daily-log"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Date",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 140,
+      "minH": 16,
+      "screens": [
+        "daily-log"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Notes",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-default",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "daily-log"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Status",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-default",
+      "minW": 110,
+      "minH": 16,
+      "screens": [
+        "daily-log"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "a",
+      "label": "Back to daily logs",
+      "cls": "text-sm text-navy-700 underline",
+      "minW": 120,
+      "minH": 20,
+      "screens": [
+        "daily-log-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/page.tsx:159 · apps/web/app/[locale]/projects/[id]/daily-log/[logId]/page.tsx:83 · apps/web/app/[locale]/projects/[id]/directory/page.tsx:151 (+4 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Save",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50",
+      "minW": 62,
+      "minH": 38,
+      "screens": [
+        "daily-log-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 · apps/web/app/[locale]/projects/[id]/billing/[paymentApplicationId]/page.tsx:203 (+44 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Submit & lock",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800",
+      "minW": 127,
+      "minH": 38,
+      "screens": [
+        "daily-log-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:218 · apps/web/app/[locale]/projects/[id]/budget/page.tsx:223 · apps/web/app/[locale]/projects/[id]/commitments/page.tsx:120 (+4 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Save",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-white disabled:opacity-50",
+      "minW": 67,
+      "minH": 42,
+      "screens": [
+        "daily-log-new"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/daily-log/new/page.tsx:62 · apps/web/app/[locale]/projects/[id]/punch-list/new/page.tsx:111 (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Manage templates",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800",
+      "minW": 160,
+      "minH": 38,
+      "screens": [
+        "inspections"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:218 · apps/web/app/[locale]/projects/[id]/budget/page.tsx:223 · apps/web/app/[locale]/projects/[id]/commitments/page.tsx:120 (+4 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New inspection",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 139,
+      "minH": 38,
+      "screens": [
+        "inspections"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by template…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 200,
+      "minH": 34,
+      "screens": [
+        "inspections"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Scheduled In progress Completed",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 118,
+      "minH": 36,
+      "screens": [
+        "inspections"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Template ▲",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "inspections"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Scheduled",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 150,
+      "minH": 16,
+      "screens": [
+        "inspections"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "a",
+      "label": "Back to inspections",
+      "cls": "mb-4 inline-block text-sm text-navy-600 underline",
+      "minW": 136,
+      "minH": 20,
+      "screens": [
+        "inspection-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/[id]/admin/page.tsx:155 · apps/web/app/[locale]/companies/[id]/dashboard/page.tsx:75 · apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:171 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Download report (PDF)",
+      "cls": "self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 197,
+      "minH": 38,
+      "screens": [
+        "inspection-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 · apps/web/app/[locale]/projects/[id]/billing/page.tsx:157 · apps/web/app/[locale]/projects/[id]/budget/page.tsx:273 (+26 more) (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "New punch item",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 141,
+      "minH": 38,
+      "screens": [
+        "punch-list"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Open Ready for review Not accepte",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 154,
+      "minH": 36,
+      "screens": [
+        "punch-list"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Low Medium High",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2",
+      "minW": 326,
+      "minH": 40,
+      "screens": [
+        "punch-new"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:68 · apps/web/app/[locale]/accept-invite/page.tsx:80 · apps/web/app/[locale]/companies/[id]/admin/page.tsx:182 (+155 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Unassigned Sara Haddad Omar Nassar Lina ",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2",
+      "minW": 326,
+      "minH": 40,
+      "screens": [
+        "punch-new"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:68 · apps/web/app/[locale]/accept-invite/page.tsx:80 · apps/web/app/[locale]/companies/[id]/admin/page.tsx:182 (+155 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Create",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-white disabled:opacity-50",
+      "minW": 84,
+      "minH": 42,
+      "screens": [
+        "punch-new"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/daily-log/new/page.tsx:62 · apps/web/app/[locale]/projects/[id]/punch-list/new/page.tsx:111 (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Back to punch list",
+      "cls": "text-sm text-navy-700 underline",
+      "minW": 124,
+      "minH": 20,
+      "screens": [
+        "punch-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/page.tsx:159 · apps/web/app/[locale]/projects/[id]/daily-log/[logId]/page.tsx:83 · apps/web/app/[locale]/projects/[id]/directory/page.tsx:151 (+4 more) (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Observations",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800",
+      "minW": 119,
+      "minH": 38,
+      "screens": [
+        "safety"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/safety/observations/page.tsx:123 · apps/web/app/[locale]/projects/[id]/safety/page.tsx:182 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New incident",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 121,
+      "minH": 38,
+      "screens": [
+        "safety"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by description…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 190,
+      "minH": 34,
+      "screens": [
+        "safety"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Open Investigating Closed",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 128,
+      "minH": 36,
+      "screens": [
+        "safety"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Occurred at ▼",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 130,
+      "minH": 16,
+      "screens": [
+        "safety"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Involved company",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-default",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "safety"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New ticket",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 104,
+      "minH": 38,
+      "screens": [
+        "tm-tickets"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Draft Submitted Approved Rejected",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 112,
+      "minH": 36,
+      "screens": [
+        "tm-tickets"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Work date",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 130,
+      "minH": 16,
+      "screens": [
+        "tm-tickets"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "All documents (no folder)",
+      "cls": "w-full rounded px-2 py-1.5 text-left text-sm bg-navy-900 text-white",
+      "minW": 326,
+      "minH": 32,
+      "screens": [
+        "documents"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:182 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Specifications",
+      "cls": "w-full rounded px-2 py-1.5 text-left text-sm text-navy-800 hover:bg-orange-100",
+      "minW": 326,
+      "minH": 32,
+      "screens": [
+        "documents"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:182 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Permits",
+      "cls": "w-full rounded px-2 py-1.5 text-left text-sm text-navy-800 hover:bg-orange-100",
+      "minW": 326,
+      "minH": 32,
+      "screens": [
+        "documents"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:182 (approx)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "Folder name",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "documents"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New folder",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm text-navy-800 disabled:opacity-50",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "documents"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search documents…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "documents"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Title ▲",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "documents"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Actions",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-end cursor-default",
+      "minW": 220,
+      "minH": 16,
+      "screens": [
+        "documents"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Publish drawing set",
+      "cls": "rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm font-semibold text-navy-800 brutal-interactive",
+      "minW": 170,
+      "minH": 38,
+      "screens": [
+        "drawings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/drawings/page.tsx:157 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New drawing",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 121,
+      "minH": 38,
+      "screens": [
+        "drawings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by sheet number or title…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "drawings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Sheet number ▲",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 140,
+      "minH": 16,
+      "screens": [
+        "drawings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Discipline",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "drawings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "a",
+      "label": "Back to drawings",
+      "cls": "mb-4 inline-block text-sm text-navy-600 underline",
+      "minW": 118,
+      "minH": 20,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/[id]/admin/page.tsx:155 · apps/web/app/[locale]/companies/[id]/dashboard/page.tsx:75 · apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:171 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Pin",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold bg-gradient-to-b from-maroon-600 to-maroon-800 text-white",
+      "minW": 41,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/DrawingViewer.tsx:230 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Sketch",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800",
+      "minW": 67,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/AttachmentList.tsx:86 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Cloud",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800",
+      "minW": 61,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/AttachmentList.tsx:86 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Box",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800",
+      "minW": 44,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/AttachmentList.tsx:86 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Ellipse",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800",
+      "minW": 64,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/AttachmentList.tsx:86 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Arrow",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800",
+      "minW": 59,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/AttachmentList.tsx:86 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Line",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800",
+      "minW": 47,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/AttachmentList.tsx:86 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Text",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800",
+      "minW": 50,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/AttachmentList.tsx:86 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Measure",
+      "cls": "rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800",
+      "minW": 78,
+      "minH": 26,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/AttachmentList.tsx:86 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Upload revision",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 141,
+      "minH": 38,
+      "screens": [
+        "drawing-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Back to transmittals",
+      "cls": "text-sm text-navy-700 underline",
+      "minW": 141,
+      "minH": 20,
+      "screens": [
+        "transmittals"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/page.tsx:159 · apps/web/app/[locale]/projects/[id]/daily-log/[logId]/page.tsx:83 · apps/web/app/[locale]/projects/[id]/directory/page.tsx:151 (+4 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "New transmittal",
+      "cls": "rounded-lg border-3 border-ink bg-maroon-600 px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_0_#1a1a1a]",
+      "minW": 159,
+      "minH": 38,
+      "screens": [
+        "transmittals"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/directory/page.tsx:161 · apps/web/app/[locale]/projects/[id]/transmittals/page.tsx:167 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Draft Sent",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 83,
+      "minH": 36,
+      "screens": [
+        "transmittals"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Purpose",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 150,
+      "minH": 16,
+      "screens": [
+        "transmittals"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New RFI",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 81,
+      "minH": 38,
+      "screens": [
+        "rfis"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Draft Open Answered Closed",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 106,
+      "minH": 36,
+      "screens": [
+        "rfis"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Back to RFIs",
+      "cls": "inline-block text-sm text-navy-600 underline",
+      "minW": 81,
+      "minH": 20,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/[id]/admin/page.tsx:155 · apps/web/app/[locale]/companies/[id]/dashboard/page.tsx:75 · apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:171 (+10 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Select a drawing… A-101 — Level 1 Floor ",
+      "cls": "min-w-0 max-w-full flex-1 rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 170,
+      "minH": 36,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/RecordLinks.tsx:141 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Link drawing",
+      "cls": "shrink-0 rounded-lg border-3 border-ink bg-white px-2.5 py-1.5 text-sm text-navy-800 disabled:opacity-50",
+      "minW": 114,
+      "minH": 34,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/RecordLinks.tsx:154 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Select a spec section… 03.30.00 — Cast-i",
+      "cls": "min-w-0 max-w-full flex-1 rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 136,
+      "minH": 36,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/RecordLinks.tsx:141 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Link spec section",
+      "cls": "shrink-0 rounded-lg border-3 border-ink bg-white px-2.5 py-1.5 text-sm text-navy-800 disabled:opacity-50",
+      "minW": 148,
+      "minH": 34,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/RecordLinks.tsx:154 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Close",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50",
+      "minW": 68,
+      "minH": 38,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 · apps/web/app/[locale]/projects/[id]/billing/[paymentApplicationId]/page.tsx:203 (+44 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Reopen",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50",
+      "minW": 82,
+      "minH": 38,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 · apps/web/app/[locale]/projects/[id]/billing/[paymentApplicationId]/page.tsx:203 (+44 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Add response",
+      "cls": "self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50",
+      "minW": 128,
+      "minH": 38,
+      "screens": [
+        "rfi-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 · apps/web/app/[locale]/projects/[id]/billing/page.tsx:157 · apps/web/app/[locale]/projects/[id]/budget/page.tsx:273 (+25 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New submittal",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 133,
+      "minH": 38,
+      "screens": [
+        "submittals"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Draft In review Approved Approved",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 171,
+      "minH": 36,
+      "screens": [
+        "submittals"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "Back to submittals",
+      "cls": "inline-block text-sm text-navy-600 underline",
+      "minW": 130,
+      "minH": 20,
+      "screens": [
+        "submittal-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/[id]/admin/page.tsx:155 · apps/web/app/[locale]/companies/[id]/dashboard/page.tsx:75 · apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:171 (+10 more) (exact)"
+    },
+    {
+      "sig": "a",
+      "label": "03.30.00 — Cast-in-Place Concrete",
+      "cls": "text-navy-800 underline",
+      "minW": 248,
+      "minH": 20,
+      "screens": [
+        "submittal-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/drawings/[drawingId]/page.tsx:370 · apps/web/app/[locale]/projects/[id]/submittals/[submittalId]/page.tsx:341 · apps/web/components/AttachmentList.tsx:122 (+2 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Shop drawings Product data Samples Desig",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm text-navy-800",
+      "minW": 277,
+      "minH": 32,
+      "screens": [
+        "submittal-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/punch-list/[itemId]/page.tsx:140 · apps/web/app/[locale]/projects/[id]/rfis/[rfiId]/page.tsx:256 · apps/web/app/[locale]/projects/[id]/rfis/[rfiId]/page.tsx:290 (+3 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New package",
+      "cls": "rounded-lg border-3 border-ink px-3 py-1.5 text-sm text-navy-800",
+      "minW": 126,
+      "minH": 34,
+      "screens": [
+        "submittal-detail"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:350 · apps/web/app/[locale]/projects/[id]/drawings/[drawingId]/page.tsx:236 · apps/web/app/[locale]/projects/[id]/prime-contract/page.tsx:238 (+2 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New correspondence",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 183,
+      "minH": 38,
+      "screens": [
+        "correspondence"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Draft Sent Acknowledged Closed",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 140,
+      "minH": 36,
+      "screens": [
+        "correspondence"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Number",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 110,
+      "minH": 16,
+      "screens": [
+        "correspondence"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Type",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 130,
+      "minH": 16,
+      "screens": [
+        "correspondence"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New meeting",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 122,
+      "minH": 38,
+      "screens": [
+        "meetings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by title…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "meetings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Date ▼",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 220,
+      "minH": 16,
+      "screens": [
+        "meetings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Export CSV",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800",
+      "minW": 107,
+      "minH": 38,
+      "screens": [
+        "budget"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:218 · apps/web/app/[locale]/projects/[id]/budget/page.tsx:223 · apps/web/app/[locale]/projects/[id]/commitments/page.tsx:120 (+4 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New budget modification",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800",
+      "minW": 215,
+      "minH": 38,
+      "screens": [
+        "budget"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:218 · apps/web/app/[locale]/projects/[id]/budget/page.tsx:223 · apps/web/app/[locale]/projects/[id]/commitments/page.tsx:120 (+4 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New line item",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 123,
+      "minH": 38,
+      "screens": [
+        "budget"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Cost code",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "budget"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Revised budget",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-end cursor-pointer hover:text-maroon-700",
+      "minW": 130,
+      "minH": 16,
+      "screens": [
+        "budget"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Committed costs",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-end cursor-pointer hover:text-maroon-700",
+      "minW": 130,
+      "minH": 16,
+      "screens": [
+        "budget"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Export IIF",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800",
+      "minW": 93,
+      "minH": 38,
+      "screens": [
+        "commitments"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:218 · apps/web/app/[locale]/projects/[id]/budget/page.tsx:223 · apps/web/app/[locale]/projects/[id]/commitments/page.tsx:120 (+4 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New commitment",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 157,
+      "minH": 38,
+      "screens": [
+        "commitments"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by number, title, or company…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "commitments"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Type Subcontract Purchase order",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 144,
+      "minH": 36,
+      "screens": [
+        "commitments"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Company Al-Amal General Contracting Rawa",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 242,
+      "minH": 36,
+      "screens": [
+        "commitments"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New change event",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white",
+      "minW": 161,
+      "minH": 34,
+      "screens": [
+        "change-orders"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:347 · apps/web/app/[locale]/projects/[id]/change-orders/page.tsx:335 · apps/web/app/[locale]/projects/[id]/change-orders/page.tsx:448 (+4 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Export All (PDF)",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-navy-600 to-navy-800 brutal-interactive px-3 py-1.5 text-sm font-semibold text-white",
+      "minW": 139,
+      "minH": 34,
+      "screens": [
+        "change-orders"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/change-orders/[changeOrderId]/page.tsx:133 · apps/web/app/[locale]/projects/[id]/change-orders/page.tsx:438 · apps/web/app/[locale]/projects/[id]/correspondence/[correspondenceId]/page.tsx:143 (+2 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Export All (CSV)",
+      "cls": "rounded-lg border-3 border-ink bg-white brutal-interactive px-3 py-1.5 text-sm font-semibold text-navy-800",
+      "minW": 141,
+      "minH": 34,
+      "screens": [
+        "change-orders"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/change-orders/page.tsx:444 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New change order",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white",
+      "minW": 160,
+      "minH": 34,
+      "screens": [
+        "change-orders"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/budget/page.tsx:347 · apps/web/app/[locale]/projects/[id]/change-orders/page.tsx:335 · apps/web/app/[locale]/projects/[id]/change-orders/page.tsx:448 (+4 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Draft Pending approval Approved R",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 159,
+      "minH": 36,
+      "screens": [
+        "change-orders"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Title (optional)",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-default",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "change-orders"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New payment application",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 217,
+      "minH": 38,
+      "screens": [
+        "billing"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by period…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 206,
+      "minH": 34,
+      "screens": [
+        "billing"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Draft Submitted Certified Paid",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 112,
+      "minH": 36,
+      "screens": [
+        "billing"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Commitment (leave blank for a prime/owne",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "billing"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Period ▼",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 220,
+      "minH": 16,
+      "screens": [
+        "billing"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New task",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 93,
+      "minH": 38,
+      "screens": [
+        "schedule"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search tasks…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 201,
+      "minH": 34,
+      "screens": [
+        "schedule"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Status Not started In progress Complete ",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "minW": 117,
+      "minH": 36,
+      "screens": [
+        "schedule"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Task name",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 160,
+      "minH": 16,
+      "screens": [
+        "schedule"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Dates",
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700",
+      "minW": 220,
+      "minH": 16,
+      "screens": [
+        "schedule"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/DataTable.tsx:354 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Day",
+      "cls": "px-2 py-2 text-xs font-semibold bg-white text-navy-800",
+      "minW": 41,
+      "minH": 32,
+      "screens": [
+        "gantt"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:225 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Week",
+      "cls": "px-2 py-2 text-xs font-semibold bg-navy-700 text-white",
+      "minW": 51,
+      "minH": 32,
+      "screens": [
+        "gantt"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:266 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Month",
+      "cls": "px-2 py-2 text-xs font-semibold bg-white text-navy-800",
+      "minW": 57,
+      "minH": 32,
+      "screens": [
+        "gantt"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:225 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Quarter",
+      "cls": "px-2 py-2 text-xs font-semibold bg-white text-navy-800",
+      "minW": 67,
+      "minH": 32,
+      "screens": [
+        "gantt"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:225 (approx)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Year",
+      "cls": "px-2 py-2 text-xs font-semibold bg-white text-navy-800",
+      "minW": 46,
+      "minH": 32,
+      "screens": [
+        "gantt"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:225 (approx)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "Search tasks…",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm",
+      "minW": 297,
+      "minH": 38,
+      "screens": [
+        "gantt"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/[id]/admin/page.tsx:182 · apps/web/app/[locale]/companies/[id]/admin/page.tsx:230 · apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:200 (+22 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "All companies Al-Amal General Contractin",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm",
+      "minW": 250,
+      "minH": 40,
+      "screens": [
+        "gantt"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/[id]/admin/page.tsx:182 · apps/web/app/[locale]/companies/[id]/admin/page.tsx:230 · apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:200 (+22 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "3 weeks 6 weeks",
+      "cls": "rounded-lg border-3 border-ink px-3 py-2",
+      "minW": 102,
+      "minH": 40,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:68 · apps/web/app/[locale]/accept-invite/page.tsx:80 · apps/web/app/[locale]/companies/[id]/admin/page.tsx:182 (+155 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Publish plan",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white",
+      "minW": 115,
+      "minH": 38,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:189 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:125 · apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 (+69 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Design Material Permit Access Labour Pre",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "minW": 156,
+      "minH": 32,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:257 · apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:287 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:346 (+30 more) (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "Description",
+      "cls": "min-w-[12rem] flex-1 rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "minW": 292,
+      "minH": 30,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:370 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:543 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Add constraint",
+      "cls": "rounded-lg border-3 border-ink bg-white px-3 py-1 text-sm text-navy-800 brutal-interactive",
+      "minW": 138,
+      "minH": 30,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:379 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:453 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Clear",
+      "cls": "whitespace-nowrap rounded bg-orange-100 px-2 py-1 text-xs text-navy-800",
+      "minW": 52,
+      "minH": 24,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:398 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Select a look-ahead plan… 2026-09-28 · 3",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "minW": 223,
+      "minH": 32,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:257 · apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:287 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:346 (+30 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Select a company… Al-Amal General Contra",
+      "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "minW": 242,
+      "minH": 32,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:257 · apps/web/app/[locale]/projects/[id]/inspections/[inspectionId]/page.tsx:287 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:346 (+30 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Add commitment",
+      "cls": "rounded-lg border-3 border-ink bg-white px-3 py-1 text-sm text-navy-800 brutal-interactive",
+      "minW": 156,
+      "minH": 30,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:379 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:453 (exact)"
+    },
+    {
+      "sig": "input[number]",
+      "label": "% complete",
+      "cls": "w-24 rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "minW": 96,
+      "minH": 30,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:537 · apps/web/app/[locale]/projects/[id]/tm-tickets/page.tsx:238 · apps/web/app/[locale]/projects/[id]/tm-tickets/page.tsx:277 (+1 more) (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "Note",
+      "cls": "min-w-[12rem] flex-1 rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "minW": 205,
+      "minH": 30,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:370 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:543 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Submit",
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1 text-sm text-white",
+      "minW": 79,
+      "minH": 30,
+      "screens": [
+        "lookahead"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:545 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Invite person",
+      "cls": "rounded-lg border-3 border-ink bg-maroon-600 px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_0_#1a1a1a] transition-transform hover:-translate-y-0.5",
+      "minW": 136,
+      "minH": 38,
+      "screens": [
+        "directory"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/directory/page.tsx:161 (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "People",
+      "cls": "px-3 py-2 text-sm font-bold border-b-4 border-maroon-600 text-maroon-700",
+      "minW": 77,
+      "minH": 40,
+      "screens": [
+        "directory"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/directory/page.tsx:177 (approx)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Companies",
+      "cls": "px-3 py-2 text-sm font-bold text-navy-600",
+      "minW": 112,
+      "minH": 40,
+      "screens": [
+        "directory"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/directory/page.tsx:177 (approx)"
+    },
+    {
+      "sig": "input[search]",
+      "label": "Search by name, email, or company…",
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "minW": 326,
+      "minH": 34,
+      "screens": [
+        "directory"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "Template name",
+      "cls": "mb-3 w-full rounded-lg border-2 border-ink px-2 py-1 text-sm",
+      "minW": 292,
+      "minH": 32,
+      "screens": [
+        "permissions"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:237 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Create template",
+      "cls": "mt-3 rounded-lg border-3 border-ink bg-maroon-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50",
+      "minW": 140,
+      "minH": 30,
+      "screens": [
+        "permissions"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:260 (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "",
+      "cls": "w-24 rounded-lg border-3 border-ink px-3 py-2 uppercase",
+      "minW": 96,
+      "minH": 38,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:188 (exact)"
+    },
+    {
+      "sig": "input[number]",
+      "label": "",
+      "cls": "w-48 rounded-lg border-3 border-ink px-3 py-2",
+      "minW": 192,
+      "minH": 38,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:200 (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "",
+      "cls": "w-64 rounded-lg border-3 border-ink px-3 py-2",
+      "minW": 256,
+      "minH": 38,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:205 · apps/web/app/[locale]/projects/[id]/settings/page.tsx:242 · apps/web/components/WorkflowRulesSection.tsx:97 (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Save",
+      "cls": "self-start rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50",
+      "minW": 62,
+      "minH": 38,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/page.tsx:153 · apps/web/app/[locale]/projects/[id]/billing/page.tsx:157 · apps/web/app/[locale]/projects/[id]/budget/page.tsx:273 (+25 more) (exact)"
+    },
+    {
+      "sig": "button[button]",
+      "label": "Copy",
+      "cls": "rounded-lg border-2 border-ink bg-white px-2 py-1 text-xs font-semibold text-navy-800",
+      "minW": 54,
+      "minH": 28,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:225 · apps/web/components/CorrectiveActionsPanel.tsx:201 · apps/web/components/CorrectiveActionsPanel.tsx:209 (+1 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Directory Documents Drawings RFIs Submit",
+      "cls": "w-64 rounded-lg border-3 border-ink px-3 py-2",
+      "minW": 256,
+      "minH": 40,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:205 · apps/web/app/[locale]/projects/[id]/settings/page.tsx:242 · apps/web/components/WorkflowRulesSection.tsx:97 (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "Field label",
+      "cls": "rounded-lg border-2 border-ink px-2 py-1 text-sm",
+      "minW": 266,
+      "minH": 32,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:237 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:286 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:294 (+15 more) (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "Text Number Date Yes/No Dropdown",
+      "cls": "rounded-lg border-2 border-ink px-2 py-1 text-sm",
+      "minW": 266,
+      "minH": 34,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:237 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:286 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:294 (+15 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "Add field",
+      "cls": "self-start rounded-lg border-2 border-ink bg-navy-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50",
+      "minW": 88,
+      "minH": 32,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:304 · apps/web/components/ActionPlanTemplatesSection.tsx:212 (exact)"
+    },
+    {
+      "sig": "select[select-one]",
+      "label": "RFIs Punch List",
+      "cls": "w-64 rounded-lg border-3 border-ink px-3 py-2",
+      "minW": 256,
+      "minH": 40,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:205 · apps/web/app/[locale]/projects/[id]/settings/page.tsx:242 · apps/web/components/WorkflowRulesSection.tsx:97 (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "Template name",
+      "cls": "rounded-lg border-2 border-ink px-2 py-1 text-sm",
+      "minW": 266,
+      "minH": 32,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:237 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:286 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:294 (+15 more) (exact)"
+    },
+    {
+      "sig": "input[text]",
+      "label": "Description (optional)",
+      "cls": "rounded-lg border-2 border-ink px-2 py-1 text-sm",
+      "minW": 266,
+      "minH": 32,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/permissions/page.tsx:237 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:286 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:294 (+15 more) (exact)"
+    },
+    {
+      "sig": "button[submit]",
+      "label": "New template",
+      "cls": "self-start rounded-lg border-2 border-ink bg-navy-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50",
+      "minW": 120,
+      "minH": 32,
+      "screens": [
+        "settings"
+      ],
+      "count": 1,
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/settings/page.tsx:304 · apps/web/components/ActionPlanTemplatesSection.tsx:212 (exact)"
+    }
+  ],
+  "contrast": [
+    {
+      "text": "Current",
+      "fg": "rgb(255, 255, 255)",
+      "size": 12,
+      "weight": 400,
+      "worst": 1.07,
+      "large": false,
+      "cls": "whitespace-nowrap rounded px-2 py-0.5 text-xs bg-navy-900 text-white",
+      "screens": [
+        "drawing-detail"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/bidding/[bidPackageId]/page.tsx:257 (approx)"
+    },
+    {
+      "text": "Upload logo",
+      "fg": "rgb(255, 255, 255)",
+      "size": 14,
+      "weight": 600,
+      "worst": 1.92,
+      "large": false,
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50",
+      "screens": [
+        "companies"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/companies/page.tsx:116 (exact)"
+    },
+    {
+      "text": "‹",
+      "fg": "rgb(13, 24, 45)",
+      "size": 14,
+      "weight": 600,
+      "worst": 2.52,
+      "large": false,
+      "cls": "rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40",
+      "screens": [
+        "inspections",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "transmittals",
+        "submittals",
+        "correspondence",
+        "meetings",
+        "commitments",
+        "billing",
+        "schedule"
+      ],
+      "nScreens": 11,
+      "at": "apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:392 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:402 · apps/web/app/[locale]/projects/[id]/safety/observations/page.tsx:282 (+3 more) (exact)"
+    },
+    {
+      "text": "›",
+      "fg": "rgb(13, 24, 45)",
+      "size": 14,
+      "weight": 600,
+      "worst": 2.52,
+      "large": false,
+      "cls": "rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40",
+      "screens": [
+        "inspections",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "transmittals",
+        "submittals",
+        "correspondence",
+        "meetings",
+        "commitments",
+        "billing",
+        "schedule"
+      ],
+      "nScreens": 11,
+      "at": "apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:392 · apps/web/app/[locale]/projects/[id]/prequalification/page.tsx:402 · apps/web/app/[locale]/projects/[id]/safety/observations/page.tsx:282 (+3 more) (exact)"
+    },
+    {
+      "text": "SH",
+      "fg": "rgb(255, 255, 255)",
+      "size": 12,
+      "weight": 700,
+      "worst": 2.88,
+      "large": false,
+      "cls": "flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/40 bg-gradient-to-b from-orange-400 to-orange-600 text-xs font-bold text-white",
+      "screens": [
+        "login",
+        "projects",
+        "companies",
+        "dashboard",
+        "analytics",
+        "daily-log",
+        "daily-log-detail",
+        "daily-log-new",
+        "inspections",
+        "inspection-detail",
+        "punch-list",
+        "punch-new",
+        "punch-detail",
+        "photos",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "drawing-detail",
+        "transmittals",
+        "rfis",
+        "rfi-detail",
+        "submittals",
+        "submittal-detail",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule",
+        "gantt",
+        "lookahead",
+        "directory",
+        "permissions",
+        "settings"
+      ],
+      "nScreens": 36,
+      "at": "apps/web/components/shell/UserMenu.tsx:67 (exact)"
+    },
+    {
+      "text": "Save view",
+      "fg": "rgb(23, 19, 16)",
+      "size": 12,
+      "weight": 700,
+      "worst": 3.01,
+      "large": false,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50",
+      "screens": [
+        "inspections",
+        "punch-list",
+        "safety",
+        "tm-tickets",
+        "drawings",
+        "rfis",
+        "submittals",
+        "correspondence",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule"
+      ],
+      "nScreens": 12,
+      "at": "apps/web/components/ui/SavedViewsBar.tsx:140 (exact)"
+    },
+    {
+      "text": "New folder",
+      "fg": "rgb(13, 24, 45)",
+      "size": 14,
+      "weight": 600,
+      "worst": 3.34,
+      "large": false,
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm text-navy-800 disabled:opacity-50",
+      "screens": [
+        "documents"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 (exact)"
+    },
+    {
+      "text": "[placeholder] Search notes…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "daily-log"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] View name",
+      "fg": "rgb(111, 136, 184)",
+      "size": 12,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[140px] rounded-lg border-2 border-ink px-2 py-1 text-xs",
+      "screens": [
+        "inspections",
+        "punch-list",
+        "safety",
+        "tm-tickets",
+        "drawings",
+        "rfis",
+        "submittals",
+        "correspondence",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule"
+      ],
+      "nScreens": 12,
+      "at": "apps/web/components/ui/SavedViewsBar.tsx:133 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by template…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "inspections"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by number or descript",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "punch-list",
+        "tm-tickets"
+      ],
+      "nScreens": 2,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by description…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "safety"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Folder name",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "rounded-lg border-3 border-ink px-2 py-1.5 text-sm",
+      "screens": [
+        "documents"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/documents/page.tsx:214 · apps/web/app/[locale]/projects/[id]/documents/page.tsx:219 · apps/web/app/[locale]/projects/[id]/inspections/templates/page.tsx:110 (+7 more) (exact)"
+    },
+    {
+      "text": "[placeholder] Search documents…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "documents"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by sheet number or ti",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "drawings"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by number or subject…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "transmittals",
+        "rfis",
+        "correspondence"
+      ],
+      "nScreens": 3,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by number or title…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "submittals",
+        "change-orders"
+      ],
+      "nScreens": 2,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by title…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "meetings"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by number, title, or ",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "commitments"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by period…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "billing"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Search tasks…",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "schedule",
+        "gantt"
+      ],
+      "nScreens": 2,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "[placeholder] Description",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[12rem] flex-1 rounded-lg border-3 border-ink px-2 py-1 text-sm",
+      "screens": [
+        "lookahead"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:370 · apps/web/app/[locale]/projects/[id]/lookahead/page.tsx:543 (exact)"
+    },
+    {
+      "text": "[placeholder] Search by name, email, or co",
+      "fg": "rgb(111, 136, 184)",
+      "size": 14,
+      "weight": 400,
+      "worst": 3.57,
+      "large": false,
+      "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm",
+      "screens": [
+        "directory"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/FilterBar.tsx:33 (exact)"
+    },
+    {
+      "text": "Delayed",
+      "fg": "rgb(185, 28, 28)",
+      "size": 12,
+      "weight": 600,
+      "worst": 5.92,
+      "large": false,
+      "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-700 border-red-300 ",
+      "screens": [
+        "schedule"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/components/ui/StatusBadge.tsx:21 (approx)"
+    },
+    {
+      "text": "Sign in",
+      "fg": "rgb(23, 19, 16)",
+      "size": 16,
+      "weight": 700,
+      "worst": 6.53,
+      "large": false,
+      "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-3 py-2 font-bold text-ink disabled:opacity-50",
+      "screens": [
+        "login"
+      ],
+      "nScreens": 1,
+      "at": "apps/web/app/[locale]/accept-invite/page.tsx:87 · apps/web/app/[locale]/login/page.tsx:103 (exact)"
+    },
+    {
+      "text": "English",
+      "fg": "rgb(23, 19, 16)",
+      "size": 14,
+      "weight": 600,
+      "worst": 6.59,
+      "large": false,
+      "cls": "rounded-md border-2 px-2 py-1 font-semibold border-white bg-orange-500 text-ink",
+      "screens": [
+        "login",
+        "projects",
+        "companies",
+        "dashboard",
+        "analytics",
+        "daily-log",
+        "daily-log-detail",
+        "daily-log-new",
+        "inspections",
+        "inspection-detail",
+        "punch-list",
+        "punch-new",
+        "punch-detail",
+        "photos",
+        "safety",
+        "tm-tickets",
+        "documents",
+        "drawings",
+        "drawing-detail",
+        "transmittals",
+        "rfis",
+        "rfi-detail",
+        "submittals",
+        "submittal-detail",
+        "correspondence",
+        "meetings",
+        "budget",
+        "commitments",
+        "change-orders",
+        "billing",
+        "schedule",
+        "gantt",
+        "lookahead",
+        "directory",
+        "permissions",
+        "settings"
+      ],
+      "nScreens": 36,
+      "at": "apps/web/components/LanguageToggle.tsx:28 (manual)"
+    }
+  ],
+  "clipped": [
+    {
+      "screen": "daily-log",
+      "sig": "button[button]",
+      "label": "Status",
+      "w": 110,
+      "h": 16,
+      "x": 369,
+      "y": 349,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-default"
+    },
+    {
+      "screen": "inspections",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 310,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "inspections",
+      "sig": "button[button]",
+      "label": "Scheduled",
+      "w": 150,
+      "h": 16,
+      "x": 379,
+      "y": 463,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "punch-list",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 264,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "punch-list",
+      "sig": "button[button]",
+      "label": "Status",
+      "w": 160,
+      "h": 16,
+      "x": 387,
+      "y": 459,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "safety",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 551,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "safety",
+      "sig": "button[button]",
+      "label": "Involved company",
+      "w": 160,
+      "h": 16,
+      "x": 359,
+      "y": 704,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-default"
+    },
+    {
+      "screen": "tm-tickets",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 264,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "tm-tickets",
+      "sig": "button[button]",
+      "label": "Work date",
+      "w": 130,
+      "h": 16,
+      "x": 359,
+      "y": 417,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "documents",
+      "sig": "button[button]",
+      "label": "Actions",
+      "w": 220,
+      "h": 16,
+      "x": 217,
+      "y": 597,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-end cursor-default"
+    },
+    {
+      "screen": "drawings",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 264,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "drawings",
+      "sig": "button[button]",
+      "label": "Discipline",
+      "w": 160,
+      "h": 16,
+      "x": 369,
+      "y": 415,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "transmittals",
+      "sig": "button[button]",
+      "label": "Purpose",
+      "w": 150,
+      "h": 16,
+      "x": 339,
+      "y": 375,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "rfis",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 310,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "rfis",
+      "sig": "button[button]",
+      "label": "Status",
+      "w": 130,
+      "h": 16,
+      "x": 387,
+      "y": 507,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "submittals",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 310,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "submittals",
+      "sig": "button[button]",
+      "label": "Status",
+      "w": 150,
+      "h": 16,
+      "x": 387,
+      "y": 549,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "correspondence",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 310,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "correspondence",
+      "sig": "button[button]",
+      "label": "Type",
+      "w": 130,
+      "h": 16,
+      "x": 339,
+      "y": 505,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "meetings",
+      "sig": "button[button]",
+      "label": "Date ▼",
+      "w": 220,
+      "h": 16,
+      "x": 217,
+      "y": 349,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "budget",
+      "sig": "button[button]",
+      "label": "Committed costs",
+      "w": 130,
+      "h": 16,
+      "x": 359,
+      "y": 395,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-end cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "commitments",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 264,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "commitments",
+      "sig": "button[button]",
+      "label": "Company",
+      "w": 200,
+      "h": 16,
+      "x": 339,
+      "y": 503,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-default"
+    },
+    {
+      "screen": "change-orders",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 446,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "change-orders",
+      "sig": "button[button]",
+      "label": "Status",
+      "w": 150,
+      "h": 16,
+      "x": 387,
+      "y": 641,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "billing",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 264,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "billing",
+      "sig": "button[button]",
+      "label": "Period ▼",
+      "w": 220,
+      "h": 16,
+      "x": 217,
+      "y": 417,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "schedule",
+      "sig": "button[button]",
+      "label": "Save view",
+      "w": 90,
+      "h": 28,
+      "x": 305,
+      "y": 264,
+      "cls": "whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+    },
+    {
+      "screen": "schedule",
+      "sig": "button[button]",
+      "label": "Dates",
+      "w": 220,
+      "h": 16,
+      "x": 359,
+      "y": 417,
+      "cls": "truncate focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700 text-start cursor-pointer hover:text-maroon-700"
+    },
+    {
+      "screen": "gantt",
+      "sig": "button[submit]",
+      "label": "Year",
+      "w": 46,
+      "h": 32,
+      "x": 365,
+      "y": 206,
+      "cls": "px-2 py-2 text-xs font-semibold bg-white text-navy-800"
+    },
+    {
+      "screen": "gantt",
+      "sig": "button[submit]",
+      "label": "Export PNG",
+      "w": 81,
+      "h": 58,
+      "x": 339,
+      "y": 193,
+      "cls": "rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm text-navy-800 brutal-interactive"
+    },
+    {
+      "screen": "gantt",
+      "sig": "button[submit]",
+      "label": "Re-import",
+      "w": 78,
+      "h": 58,
+      "x": 432,
+      "y": 193,
+      "cls": "rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm text-navy-800 brutal-interactive"
+    },
+    {
+      "screen": "gantt",
+      "sig": "button[submit]",
+      "label": "Export XML",
+      "w": 81,
+      "h": 58,
+      "x": 522,
+      "y": 193,
+      "cls": "rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm text-navy-800 brutal-interactive"
+    },
+    {
+      "screen": "gantt",
+      "sig": "button[submit]",
+      "label": "Enable editing",
+      "w": 97,
+      "h": 58,
+      "x": 614,
+      "y": 193,
+      "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm brutal-interactive disabled:opacity-50 bg-white text-navy-800"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 497,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 637,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 672,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 1033,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 1173,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 1208,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 1569,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 1709,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 1744,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 2105,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 2245,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 2280,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 2641,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 2781,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 2816,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 3177,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 3317,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 3352,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 3713,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 3853,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 3888,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 4249,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 4389,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 4424,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 4785,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 4925,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 4960,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 5321,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 5461,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 5496,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 351,
+      "y": 5901,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 303,
+      "y": 6041,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    },
+    {
+      "screen": "permissions",
+      "sig": "select[select-one]",
+      "label": "none read standard admin",
+      "w": 91,
+      "h": 27,
+      "x": 305,
+      "y": 6076,
+      "cls": "rounded border-2 border-ink px-1 py-0.5 text-xs"
+    }
+  ]
+}
