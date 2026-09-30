@@ -4,7 +4,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { errorMessage } from "@/lib/error-message";
-import { formatDate, humanize } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useEnumLabel } from "@/lib/use-enum-label";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -30,6 +31,7 @@ export default function MyWorkPage() {
   const t = useTranslations("MyWork");
   const te = useTranslations("Errors");
   const tc = useTranslations("Common");
+  const enumLabel = useEnumLabel();
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -102,7 +104,7 @@ export default function MyWorkPage() {
                         <div className="truncate text-sm font-semibold">{i.title}</div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        <StatusBadge label={humanize(i.status)} status={i.status} />
+                        <StatusBadge label={enumLabel(i.status)} status={i.status} />
                         {i.dueDate && (
                           <span className="text-xs text-ink/70">
                             {t("due")} <bdi dir="ltr">{formatDate(i.dueDate)}</bdi>

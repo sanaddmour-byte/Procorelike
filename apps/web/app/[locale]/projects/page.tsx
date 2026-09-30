@@ -36,7 +36,7 @@ export default function ProjectsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl px-0 py-2 sm:px-4 sm:py-8">
+      <main className="mx-auto max-w-2xl px-3 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <Link href={`/${locale}/companies`} className="text-sm font-semibold text-navy-700 underline">
