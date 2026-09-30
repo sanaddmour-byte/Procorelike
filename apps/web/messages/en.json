@@ -168,7 +168,11 @@
     "reopenButton": "Reopen",
     "editForbidden": "You can only edit a daily log you created, unless you have admin-level access.",
     "logLocked": "This daily log is locked. Reopen it before editing.",
-    "back": "Back to daily logs"
+    "back": "Back to daily logs",
+    "fewer": "Fewer",
+    "more": "More",
+    "removeRow": "Remove",
+    "manpowerTotal": "{count, plural, one {# person on site} other {# people on site}}"
   },
   "PunchList": {
     "title": "Punch List",

@@ -1,6 +1,7 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { ManpowerEditor } from "@/components/ManpowerEditor";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { errorMessage } from "@/lib/error-message";
 import { useLocale, useTranslations } from "next-intl";
@@ -145,18 +146,7 @@ export default function DailyLogDetailPage() {
               )}
             </div>
 
-            {log.manpower.length > 0 && (
-              <section className="mt-6">
-                <h2 className="mb-2 text-sm font-medium text-navy-800">{t("manpowerSection")}</h2>
-                <ul className="flex flex-col gap-2">
-                  {log.manpower.map((row) => (
-                    <li key={row.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-2 text-sm">
-                      {t("headcount")}: {row.headcount} · {t("hours")}: {row.hours}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            <ManpowerEditor projectId={params.id} logId={params.logId} rows={log.manpower} locked={!!log.lockedAt} onChange={(manpower) => setLog((prev) => (prev ? { ...prev, manpower } : prev))} />
           </>
         )}
       </main>
