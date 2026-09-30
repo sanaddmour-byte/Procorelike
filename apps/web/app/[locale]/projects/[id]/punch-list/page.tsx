@@ -183,6 +183,7 @@ export default function PunchListPage() {
           error={serverTable.error ? tc("errorGeneric") : null}
           onRetry={serverTable.reload}
           onRowClick={(item) => router.push(`/${locale}/projects/${params.id}/punch-list/${item.id}`)}
+          rowHref={(item) => `/${locale}/projects/${params.id}/punch-list/${item.id}`}
           emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
           serverSort={serverTable.sort}
           onServerSortChange={serverTable.onServerSortChange}

@@ -277,6 +277,7 @@ export default function DrawingsPage() {
           error={serverTable.error ? tc("errorGeneric") : null}
           onRetry={serverTable.reload}
           onRowClick={(drawing) => router.push(`/${locale}/projects/${params.id}/drawings/${drawing.id}`)}
+          rowHref={(drawing) => `/${locale}/projects/${params.id}/drawings/${drawing.id}`}
           emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
           serverSort={serverTable.sort}
           onServerSortChange={serverTable.onServerSortChange}

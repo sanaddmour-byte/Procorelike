@@ -53,3 +53,17 @@ test("Back from a record returns to the same filtered list (C3)", async ({ page,
   await expect(page).toHaveURL(/q=tile/);
   await expect(page.getByRole("searchbox")).toHaveValue("tile");
 });
+
+test("list rows are real links, so open-in-new-tab and long-press work (C4)", async ({ page, request }) => {
+  const { id } = await ammanId(request);
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill(EMAIL);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/en\/projects$/);
+  await page.goto(`/en/projects/${id}/rfis`);
+  const link = page.locator("[role=row] a[href*='/rfis/']").first();
+  await expect(link).toHaveAttribute("href", new RegExp(`/en/projects/${id}/rfis/[0-9a-f-]{36}$`));
+  const [popup] = await Promise.all([page.context().waitForEvent("page"), link.click({ modifiers: ["Control"] })]);
+  await expect(popup).toHaveURL(/\/rfis\/[0-9a-f-]{36}$/);
+});

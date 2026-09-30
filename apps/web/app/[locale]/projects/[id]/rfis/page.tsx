@@ -312,6 +312,7 @@ export default function RfisPage() {
           error={serverTable.error ? tc("errorGeneric") : null}
           onRetry={serverTable.reload}
           onRowClick={(rfi) => router.push(`/${locale}/projects/${params.id}/rfis/${rfi.id}`)}
+          rowHref={(rfi) => `/${locale}/projects/${params.id}/rfis/${rfi.id}`}
           emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
           serverSort={serverTable.sort}
           onServerSortChange={serverTable.onServerSortChange}

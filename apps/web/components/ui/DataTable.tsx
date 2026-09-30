@@ -71,6 +71,24 @@ function useCompact(): boolean {
   return compact;
 }
 
+
+/** Anchor that turns a row's main cell into a real link: plain taps stay client-side (the row handler navigates), modified clicks and long-press use the browser's own link behaviour. */
+function RowLink({ href, children }: { href?: string; children: ReactNode }) {
+  if (!href) return <>{children}</>;
+  return (
+    <a
+      href={href}
+      className="block text-inherit no-underline"
+      onClick={(e) => {
+        if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) e.preventDefault();
+        else e.stopPropagation();
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
 interface RowSelectionHandlers<T> {
   isSelected: (row: T) => boolean;
   toggle: (row: T) => void;
@@ -80,13 +98,14 @@ interface RowProps<T> {
   rows: T[];
   columns: DataTableColumn<T>[];
   onRowClick?: (row: T) => void;
+  rowHref?: (row: T) => string;
   gridTemplate: string;
   selection?: RowSelectionHandlers<T>;
   compact?: boolean;
   roles?: Map<string, NonNullable<DataTableColumn<T>["mobile"]>>;
 }
 
-function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate, selection, compact, roles }: RowComponentProps<RowProps<T>>) {
+function DataTableRow<T>({ index, style, rows, columns, onRowClick, rowHref, gridTemplate, selection, compact, roles }: RowComponentProps<RowProps<T>>) {
   const tc = useTranslations("Common");
   const row = rows[index];
   if (!row) return null;
@@ -102,11 +121,12 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate
         className={`grid items-center border-b border-navy-100 pe-3 text-sm ${selection ? "ps-0" : "ps-3"} ${onRowClick ? "cursor-pointer active:bg-orange-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700" : ""} ${index % 2 === 1 ? "bg-cream/50" : "bg-white"}`}
       >
         {selection && (
-          <label role="cell" className="hit-label" onClick={(e) => e.stopPropagation()}>
+          <label role="cell" className="hit-label relative z-10" onClick={(e) => e.stopPropagation()}>
             <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} />
           </label>
         )}
         <div role="cell" className="min-w-0">
+          <RowLink href={rowHref?.(row)}>
           <div className="flex items-baseline gap-2">
             {by("id").map((c) => (
               <span key={c.key} className="shrink-0 font-bold text-navy-900"><bdi dir="ltr">{c.render(row)}</bdi></span>
@@ -130,6 +150,7 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate
               ))}
             </span>
           </div>
+          </RowLink>
         </div>
       </div>
     );
@@ -155,13 +176,13 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate
       } ${index % 2 === 1 ? "bg-cream/50" : "bg-white"}`}
     >
       {selection && (
-        <label role="cell" className="hit-label" onClick={(e) => e.stopPropagation()}>
+        <label role="cell" className="hit-label relative z-10" onClick={(e) => e.stopPropagation()}>
           <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} />
         </label>
       )}
-      {columns.map((col) => (
+      {columns.map((col, ci) => (
         <div key={col.key} role="cell" className={`truncate ${col.align === "end" ? "text-end" : ""}`}>
-          {col.render(row)}
+          <RowLink href={ci === 0 ? rowHref?.(row) : undefined}>{col.render(row)}</RowLink>
         </div>
       ))}
     </div>
@@ -202,6 +223,8 @@ interface Props<T> {
   error?: string | null;
   onRetry?: () => void;
   onRowClick?: (row: T) => void;
+  /** Optional real URL per row: an invisible link sits over the row so long-press and "open in new tab" work (plan C4). */
+  rowHref?: (row: T) => string;
   emptyTitle: string;
   emptyDescription?: string;
   emptyAction?: ReactNode;
@@ -285,6 +308,7 @@ export function DataTable<T>({
   error,
   onRetry,
   onRowClick,
+  rowHref,
   emptyTitle,
   emptyDescription,
   emptyAction,
@@ -508,6 +532,7 @@ export function DataTable<T>({
               rows: sortedRows,
               columns: visibleColumns,
               onRowClick,
+              rowHref,
               gridTemplate,
               compact,
               roles,

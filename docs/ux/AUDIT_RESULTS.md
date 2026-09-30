@@ -79,17 +79,17 @@ Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms 
 | G1 glove mode | **Done** (toggle in the avatar menu) | `PrefsApplier` |
 | B5 previous / next through the list you came from | **Done** (punch list + RFI detail; list order kept in sessionStorage) | `RecordNav`, `use-server-table.ts` |
 | C3 list state in the URL (Back restores search/filter/sort/page) | **Done** for every server-driven list | `use-server-table.ts` |
-| C4 deep link survives the login wall | **Done** | `ReturnTo` |
+| C4 deep link survives the login wall · list rows are real links (open in new tab / long-press) on punch list, RFIs, drawings | **Done** | `ReturnTo`, `DataTable` `rowHref` |
 | E2/E6 "Mine" one-tap preset (punch list, RFIs) | **Done** | `FilterBar` presets |
 | G2 interaction-count tests | **Done** — 10 Playwright tests (EN+AR) enforcing budgets for T3, T4, T7, T9 and the offline queue; existing 12 E2E tests updated for the new UI | `apps/web/e2e/field-taps.spec.ts` |
 
-Test state at the end: web typecheck, lint and unit tests pass; **25 of 25** Playwright tests pass against the production build; the API test file for bulk actions passes (6 tests, including 2 new). I did **not** re-run the complete API test suite in this stretch.
+Test state at the end: web typecheck, lint and unit tests pass; **26 of 26** Playwright tests pass (one earlier full run had a single failure in the safety-incident test that passed in isolation twice and in the next full run; I treat it as a flake, not proof it can't recur) against the production build; the API test file for bulk actions passes (6 tests, including 2 new). I did **not** re-run the complete API test suite in this stretch.
 
 Eight existing E2E tests failed after the UI changes and I updated them. Six were caused by this work's intentional changes (search boxes now have an accessible name that substring-matches "Title/Subject/Description"; Priority is three chips instead of a select; Log out is inside the avatar menu; the signed-out landing is `/login`; the snag status buttons are labelled by status). Two were already stale from earlier phases, not from this work: correspondence has needed a typed signature to send since Phase 12, and the RFI status text is split across elements. I updated all of them rather than leave them red.
 
 ## 6. Not built (backlog, in plan order)
 
-B2 grouping engine · C4 rows as real links and recents · C5 command palette and phone search · E2 punch-list grouping and swipe actions · E7 drawings search-first · E8 photos thumbnails · E11 dashboard personal actions · E12/E13 polish and clipped-control verification · offline queue for record types other than snags · bulk due-date/distribution UI · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
+B2 grouping engine · C4 recents list · C5 command palette and phone search · E2 punch-list grouping and swipe actions · E7 drawings search-first · E8 photos thumbnails · E11 dashboard personal actions · E12/E13 polish and clipped-control verification · offline queue for record types other than snags · bulk due-date/distribution UI · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
 
 **Mobile app (Expo), M1–M5:** not started. It cannot be run in this environment, so any mobile change would be unmeasured; new dependencies (`expo-image-picker`, `expo-haptics`, a dictation module) need your explicit yes first.
 
