@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Header } from "../Header";
 import { BottomNav } from "./BottomNav";
 import { ProjectSidebar } from "./ProjectSidebar";
+import { SyncStatus } from "./SyncStatus";
 
 const COLLAPSE_KEY = "siteops.sidebarCollapsed";
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -108,7 +109,10 @@ export function AppShell({ projectId, children }: { projectId: string; children:
         )}
 
         <BottomNav projectId={projectId} onMore={() => setMobileOpen(true)} />
-        <main className="min-w-0 flex-1 px-3 py-2 pb-[calc(var(--bottom-nav-h,0px)+1rem)] sm:px-6 sm:py-6">{children}</main>
+        <main className="min-w-0 flex-1 px-3 py-2 pb-[calc(var(--bottom-nav-h,0px)+1rem)] sm:px-6 sm:py-6">
+          <SyncStatus />
+          {children}
+        </main>
       </div>
     </div>
   );

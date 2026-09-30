@@ -4,6 +4,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { PrefsApplier } from "@/components/PrefsApplier";
+import { ServiceWorker } from "@/components/ServiceWorker";
 import "../globals.css";
 
 export function generateStaticParams(): { locale: string }[] {
@@ -28,6 +29,7 @@ export default async function LocaleLayout({
     <html lang={locale} dir={dir}>
       <body>
         <PrefsApplier />
+        <ServiceWorker />
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
       </body>
     </html>

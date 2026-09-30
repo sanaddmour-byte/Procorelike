@@ -5,11 +5,12 @@ import { CaptureButton } from "@/components/ui/CaptureButton";
 import { FormShell } from "@/components/ui/FormShell";
 import { LocationPicker } from "@/components/ui/LocationPicker";
 import { VoiceField } from "@/components/ui/VoiceField";
-import { apiJson } from "@/lib/api-client";
+import { cachedJson } from "@/lib/cached-json";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useDraft } from "@/lib/drafts";
 import { errorMessage } from "@/lib/error-message";
-import { createSnag } from "@/lib/snag";
+import { enqueueSnag, isOfflineError } from "@/lib/outbox";
+import { createSnag, type NewSnag } from "@/lib/snag";
 import { loadCreateDefaults, saveCreateDefaults } from "@/lib/session-defaults";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
@@ -44,6 +45,7 @@ export default function NewPunchItemPage() {
   const t = useTranslations("PunchList");
   const tf = useTranslations("Field");
   const te = useTranslations("Errors");
+  const ts = useTranslations("Sync");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -58,8 +60,8 @@ export default function NewPunchItemPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    apiJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
-    apiJson<Trade[]>(`/projects/${params.id}/trades`).then(setTrades).catch(() => undefined);
+    cachedJson<Member[]>(`/projects/${params.id}/members`).then(setMembers).catch(() => undefined);
+    cachedJson<Trade[]>(`/projects/${params.id}/trades`).then(setTrades).catch(() => undefined);
   }, [params.id]);
 
   // "Same as last": prefill location / trade / assignee from the previous snag on this device (plan D7) unless a draft was restored.
@@ -71,7 +73,7 @@ export default function NewPunchItemPage() {
 
   const canSubmit = f.description.trim().length > 0 || f.photos.length > 0;
 
-  async function save(): Promise<{ id: string; number: string } | null> {
+  async function save(): Promise<{ id: string | null; number: string | null } | null> {
     if (!canSubmit) {
       setError(tf("required"));
       return null;
@@ -80,21 +82,27 @@ export default function NewPunchItemPage() {
     setSubmitting(true);
     try {
       const assignee = members.find((m) => m.userId === f.assigneeUserId);
-      const created = await createSnag(
-        {
-          projectId: params.id,
-          description: f.description.trim() || tf("photoOnlyDescription"),
-          priority: f.priority,
-          dueDate: f.dueDate ? new Date(f.dueDate).toISOString() : undefined,
-          locationId: f.locationId,
-          tradeId: f.tradeId,
-          assigneeUserId: f.assigneeUserId,
-          assigneeCompanyId: assignee?.companyId,
-          finalApproverUserId: f.finalApproverUserId,
-          distributionUserIds: f.distributionUserIds,
-        },
-        f.photos,
-      );
+      const snag: NewSnag = {
+        projectId: params.id,
+        description: f.description.trim() || tf("photoOnlyDescription"),
+        priority: f.priority,
+        dueDate: f.dueDate ? new Date(f.dueDate).toISOString() : undefined,
+        locationId: f.locationId,
+        tradeId: f.tradeId,
+        assigneeUserId: f.assigneeUserId,
+        assigneeCompanyId: assignee?.companyId,
+        finalApproverUserId: f.finalApproverUserId,
+        distributionUserIds: f.distributionUserIds,
+      };
+      let created: { id: string | null; number: string | null };
+      try {
+        created = await createSnag(snag, f.photos);
+      } catch (err) {
+        if (!isOfflineError(err)) throw err;
+        // No connection: keep the snag (and its photos) on the device and send it later -- never lose it, never make the user wait (plan D2).
+        await enqueueSnag(snag, f.photos);
+        created = { id: null, number: null };
+      }
       saveCreateDefaults(params.id, { locationId: f.locationId, tradeId: f.tradeId, assigneeUserId: f.assigneeUserId, assigneeCompanyId: assignee?.companyId });
       if ("vibrate" in navigator) navigator.vibrate?.(30);
       clear();
@@ -109,14 +117,15 @@ export default function NewPunchItemPage() {
 
   async function handleCreate(): Promise<void> {
     const created = await save();
-    if (created) router.replace(`/${locale}/projects/${params.id}/punch-list/${created.id}`);
+    if (!created) return;
+    router.replace(created.id ? `/${locale}/projects/${params.id}/punch-list/${created.id}` : `/${locale}/projects/${params.id}/my-work`);
   }
 
   async function handleAddAnother(): Promise<void> {
     const created = await save();
     if (!created) return;
     replace({ ...EMPTY, locationId: f.locationId, tradeId: f.tradeId, assigneeUserId: f.assigneeUserId });
-    setNotice(tf("savedNumber", { number: created.number }));
+    setNotice(created.number ? tf("savedNumber", { number: created.number }) : ts("queued"));
   }
 
   const chip = (active: boolean): string =>

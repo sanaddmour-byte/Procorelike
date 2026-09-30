@@ -1437,5 +1437,14 @@
     "module_corrective_actions": "Safety action",
     "count": "{count, plural, one {# item} other {# items}}",
     "due": "Due"
+  },
+  "Sync": {
+    "offline": "You're offline. New snags are saved on this device and sent when you're back.",
+    "waiting": "{count, plural, one {# item waiting to send} other {# items waiting to send}}",
+    "syncing": "{count, plural, one {Sending # item…} other {Sending # items…}}",
+    "failedItem": "Not sent: {title}",
+    "retry": "Try again",
+    "discard": "Discard",
+    "queued": "Saved on this device. It will send when you're back online."
   }
 }

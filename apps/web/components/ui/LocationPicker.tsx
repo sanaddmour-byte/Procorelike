@@ -2,6 +2,7 @@
 
 import { Modal } from "@/components/ui/Modal";
 import { apiJson } from "@/lib/api-client";
+import { cachedJson } from "@/lib/cached-json";
 import { idbGet, idbSet } from "@/lib/idb";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -20,7 +21,7 @@ export function useLocations(projectId: string): { locations: LocationOption[]; 
     let alive = true;
     const cacheKey = `locations:${projectId}`;
     idbGet<LocationOption[]>("cache", cacheKey).then((c) => alive && c && setLocations((cur) => (cur.length ? cur : c)));
-    apiJson<LocationOption[]>(`/projects/${projectId}/locations`)
+    cachedJson<LocationOption[]>(`/projects/${projectId}/locations`)
       .then((rows) => {
         if (!alive) return;
         setLocations(rows);
