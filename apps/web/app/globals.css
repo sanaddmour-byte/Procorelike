@@ -120,6 +120,8 @@ body {
     }
     /* Plain text links used as "Back to ..." and inline navigation, and rows that wrap a checkbox: full-height targets (audit A1). */
     main a.underline,
+    main a[class*="border-3"]:not(.flex):not(.block):not(.grid):not(.inline-flex),
+    main a[class*="border-2"]:not(.flex):not(.block):not(.grid):not(.inline-flex),
     main label:has(> input[type="checkbox"]),
     main label:has(> input[type="radio"]) {
       display: inline-flex;
@@ -129,6 +131,11 @@ body {
     main label:has(> input[type="checkbox"]),
     main label:has(> input[type="radio"]) {
       gap: 0.5rem;
+    }
+    /* A visible file chooser is a target too (the camera/photo buttons are label-wrapped and already full size). */
+    main input[type="file"]:not(.sr-only) {
+      min-height: var(--hit-min);
+      padding-block: 0.5rem;
     }
     input[type="checkbox"],
     input[type="radio"] {

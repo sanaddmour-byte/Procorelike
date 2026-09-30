@@ -358,7 +358,8 @@
     "files": "Files",
     "noFiles": "No files attached yet.",
     "uploadFile": "Upload file",
-    "uploading": "Uploading…"
+    "uploading": "Uploading…",
+    "answerQueued": "Saved on this device — it will send when you're back online."
   },
   "Submittals": {
     "title": "Submittals",

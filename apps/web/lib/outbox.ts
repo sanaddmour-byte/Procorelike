@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ApiClientError } from "./api-client";
+import { ApiClientError, apiFetch } from "./api-client";
 import { idbAll, idbDel, idbSet } from "./idb";
 import { createSnag, type NewSnag } from "./snag";
 
@@ -12,7 +12,9 @@ import { createSnag, type NewSnag } from "./snag";
  */
 export interface OutboxEntry {
   id: string;
-  kind: "snag";
+  kind: "snag" | "request";
+  /** For kind "request": a plain JSON write replayed as-is (RFI answer, new daily log ...). `label` is what the sync banner shows. */
+  request?: { method: string; path: string; body: unknown; label: string };
   snag: NewSnag;
   photos: File[];
   createdAt: number;
@@ -33,6 +35,15 @@ export function isOfflineError(err: unknown): boolean {
 export async function enqueueSnag(snag: NewSnag, photos: File[]): Promise<string> {
   const id = `snag-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const entry: OutboxEntry = { id, kind: "snag", snag, photos, createdAt: Date.now(), status: "pending" };
+  await idbSet("outbox", id, entry);
+  notify();
+  return id;
+}
+
+/** Queues a plain JSON write (POST/PATCH) to be replayed when the connection returns. `projectId` scopes the sync banner. */
+export async function enqueueRequest(projectId: string, request: { method: string; path: string; body: unknown; label: string }): Promise<string> {
+  const id = `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const entry: OutboxEntry = { id, kind: "request", request, snag: { projectId, description: request.label, priority: "medium", distributionUserIds: [] }, photos: [], createdAt: Date.now(), status: "pending" };
   await idbSet("outbox", id, entry);
   notify();
   return id;
@@ -59,6 +70,13 @@ export async function flushOutbox(): Promise<number> {
     for (const entry of await listOutbox()) {
       if (entry.status === "failed") continue;
       try {
+        if (entry.kind === "request" && entry.request) {
+          const res = await apiFetch(entry.request.path, { method: entry.request.method, body: JSON.stringify(entry.request.body) });
+          if (!res.ok) throw new ApiClientError(res.status, "replay_failed");
+          await idbDel("outbox", entry.id);
+          sent += 1;
+          continue;
+        }
         const res = await createSnag(entry.snag, entry.photos);
         if (res.failedPhotos.length > 0) {
           // The record exists; keep only the photos that failed so a retry never creates a duplicate record.

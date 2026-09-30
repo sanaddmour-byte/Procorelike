@@ -15,6 +15,7 @@ import { RFI_STATUS_TRANSITIONS, type RfiStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { enqueueRequest, isOfflineError } from "@/lib/outbox";
 import { pushRecent } from "@/lib/recents";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
@@ -107,6 +108,7 @@ export default function RfiDetailScreen() {
   const [specSections, setSpecSections] = useState<SpecSection[]>([]);
   const [linkedComments, setLinkedComments] = useState<LinkedComment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
   const [isOfficial, setIsOfficial] = useState(false);
   const [submittingResponse, setSubmittingResponse] = useState(false);
@@ -171,13 +173,20 @@ export default function RfiDetailScreen() {
     e.preventDefault();
     setSubmittingResponse(true);
     try {
-      await apiJson(`/rfis/${params.rfiId}/responses`, {
-        method: "POST",
-        body: JSON.stringify({ responseText, isOfficial }),
-      });
+      try {
+        await apiJson(`/rfis/${params.rfiId}/responses`, {
+          method: "POST",
+          body: JSON.stringify({ responseText, isOfficial }),
+        });
+      } catch (err) {
+        if (!isOfflineError(err)) throw err;
+        // No connection: keep the answer on the device and send it later (plan D2).
+        await enqueueRequest(params.id, { method: "POST", path: `/rfis/${params.rfiId}/responses`, body: { responseText, isOfficial }, label: `${t("answerQueued")} ${rfi?.number ?? ""}` });
+        setNotice(t("answerQueued"));
+      }
       setResponseText("");
       setIsOfficial(false);
-      await load();
+      await load().catch(() => undefined);
     } catch (err) {
       setError(errorMessage(err, te));
     } finally {
@@ -318,6 +327,11 @@ export default function RfiDetailScreen() {
             </select>
           </span>
         </div>
+        {notice && (
+          <p role="status" className="mb-3 rounded-lg border-3 border-ink bg-green-50 px-3 py-2 text-sm font-semibold text-navy-900">
+            {notice}
+          </p>
+        )}
         {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

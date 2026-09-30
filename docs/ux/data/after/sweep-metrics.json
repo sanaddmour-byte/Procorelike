@@ -866,7 +866,7 @@
           "sig": "input[file]",
           "label": "",
           "w": 306,
-          "h": 26,
+          "h": 48,
           "x": 29,
           "y": 374,
           "cls": "text-sm"
@@ -877,7 +877,7 @@
           "w": 117,
           "h": 48,
           "x": 29,
-          "y": 412,
+          "y": 434,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -886,7 +886,7 @@
           "w": 84,
           "h": 48,
           "x": 29,
-          "y": 486,
+          "y": 508,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -895,16 +895,16 @@
           "w": 111,
           "h": 48,
           "x": 125,
-          "y": 486,
+          "y": 508,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
           "sig": "input[file]",
           "label": "",
           "w": 306,
-          "h": 26,
+          "h": 48,
           "x": 29,
-          "y": 684,
+          "y": 706,
           "cls": "text-sm"
         },
         {
@@ -913,7 +913,7 @@
           "w": 117,
           "h": 48,
           "x": 29,
-          "y": 722,
+          "y": 766,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -922,7 +922,7 @@
           "w": 84,
           "h": 48,
           "x": 29,
-          "y": 796,
+          "y": 840,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -931,16 +931,16 @@
           "w": 111,
           "h": 48,
           "x": 125,
-          "y": 796,
+          "y": 840,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
           "sig": "input[file]",
           "label": "",
           "w": 306,
-          "h": 26,
+          "h": 48,
           "x": 29,
-          "y": 994,
+          "y": 1038,
           "cls": "text-sm"
         },
         {
@@ -949,7 +949,7 @@
           "w": 117,
           "h": 48,
           "x": 29,
-          "y": 1032,
+          "y": 1098,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -958,7 +958,7 @@
           "w": 84,
           "h": 48,
           "x": 29,
-          "y": 1106,
+          "y": 1172,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -967,16 +967,16 @@
           "w": 111,
           "h": 48,
           "x": 125,
-          "y": 1106,
+          "y": 1172,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
           "sig": "input[file]",
           "label": "",
           "w": 306,
-          "h": 26,
+          "h": 48,
           "x": 29,
-          "y": 1304,
+          "y": 1370,
           "cls": "text-sm"
         },
         {
@@ -985,7 +985,7 @@
           "w": 117,
           "h": 48,
           "x": 29,
-          "y": 1342,
+          "y": 1430,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -994,7 +994,7 @@
           "w": 84,
           "h": 48,
           "x": 29,
-          "y": 1416,
+          "y": 1504,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -1003,16 +1003,16 @@
           "w": 111,
           "h": 48,
           "x": 125,
-          "y": 1416,
+          "y": 1504,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
           "sig": "input[file]",
           "label": "",
           "w": 306,
-          "h": 26,
+          "h": 48,
           "x": 29,
-          "y": 1614,
+          "y": 1702,
           "cls": "text-sm"
         },
         {
@@ -1021,7 +1021,7 @@
           "w": 117,
           "h": 48,
           "x": 29,
-          "y": 1652,
+          "y": 1762,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -1030,7 +1030,7 @@
           "w": 84,
           "h": 48,
           "x": 29,
-          "y": 1726,
+          "y": 1836,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -1039,7 +1039,7 @@
           "w": 111,
           "h": 48,
           "x": 125,
-          "y": 1726,
+          "y": 1836,
           "cls": "text-sm font-semibold text-navy-700 underline"
         }
       ],
@@ -1048,7 +1048,7 @@
       "firstContentY": 121,
       "headerH": 57,
       "hOverflow": 0,
-      "scrollHeight": 1799,
+      "scrollHeight": 1909,
       "fontSizes": [
         10,
         14,
@@ -1163,8 +1163,8 @@
           "weight": 400,
           "fg": "rgb(24, 42, 81)",
           "opacity": 1,
-          "ratio": 13.65,
-          "ratioMin": 13.64,
+          "ratio": 13.67,
+          "ratioMin": 13.65,
           "large": false,
           "cls": "text-sm text-navy-600"
         },
@@ -1229,8 +1229,8 @@
           "weight": 400,
           "fg": "rgb(24, 42, 81)",
           "opacity": 1,
-          "ratio": 13.65,
-          "ratioMin": 13.64,
+          "ratio": 13.67,
+          "ratioMin": 13.65,
           "large": false,
           "cls": "text-sm text-navy-600"
         },
@@ -1240,32 +1240,10 @@
           "weight": 600,
           "fg": "rgb(255, 255, 255)",
           "opacity": 0.5,
-          "ratio": 1.9,
-          "ratioMin": 1.85,
+          "ratio": 1.91,
+          "ratioMin": 1.86,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
-        },
-        {
-          "t": "Dashboard",
-          "size": 14,
-          "weight": 600,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 14.72,
-          "ratioMin": 14.69,
-          "large": false,
-          "cls": "text-sm font-semibold text-navy-700 underline"
-        },
-        {
-          "t": "Admin Console",
-          "size": 14,
-          "weight": 600,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 14.8,
-          "ratioMin": 14.69,
-          "large": false,
-          "cls": "text-sm font-semibold text-navy-700 underline"
         }
       ]
     },
@@ -1311,7 +1289,7 @@
           "sig": "input[file]",
           "label": "",
           "w": 303,
-          "h": 26,
+          "h": 48,
           "x": 58,
           "y": 354,
           "cls": "text-sm"
@@ -1322,7 +1300,7 @@
           "w": 103,
           "h": 48,
           "x": 258,
-          "y": 392,
+          "y": 414,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -1331,7 +1309,7 @@
           "w": 82,
           "h": 48,
           "x": 279,
-          "y": 466,
+          "y": 488,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -1340,16 +1318,16 @@
           "w": 84,
           "h": 48,
           "x": 183,
-          "y": 466,
+          "y": 488,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
           "sig": "input[file]",
           "label": "",
           "w": 303,
-          "h": 26,
+          "h": 48,
           "x": 58,
-          "y": 664,
+          "y": 686,
           "cls": "text-sm"
         },
         {
@@ -1358,7 +1336,7 @@
           "w": 103,
           "h": 48,
           "x": 258,
-          "y": 702,
+          "y": 746,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -1367,7 +1345,7 @@
           "w": 82,
           "h": 48,
           "x": 279,
-          "y": 776,
+          "y": 820,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -1376,16 +1354,16 @@
           "w": 84,
           "h": 48,
           "x": 183,
-          "y": 776,
+          "y": 820,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
           "sig": "input[file]",
           "label": "",
           "w": 303,
-          "h": 26,
+          "h": 48,
           "x": 58,
-          "y": 974,
+          "y": 1018,
           "cls": "text-sm"
         },
         {
@@ -1394,7 +1372,7 @@
           "w": 103,
           "h": 48,
           "x": 258,
-          "y": 1012,
+          "y": 1078,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -1403,7 +1381,7 @@
           "w": 82,
           "h": 48,
           "x": 279,
-          "y": 1086,
+          "y": 1152,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -1412,16 +1390,16 @@
           "w": 84,
           "h": 48,
           "x": 183,
-          "y": 1086,
+          "y": 1152,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
           "sig": "input[file]",
           "label": "",
           "w": 303,
-          "h": 26,
+          "h": 48,
           "x": 58,
-          "y": 1312,
+          "y": 1378,
           "cls": "text-sm"
         },
         {
@@ -1430,7 +1408,7 @@
           "w": 103,
           "h": 48,
           "x": 258,
-          "y": 1350,
+          "y": 1438,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -1439,7 +1417,7 @@
           "w": 82,
           "h": 48,
           "x": 279,
-          "y": 1424,
+          "y": 1512,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -1448,16 +1426,16 @@
           "w": 84,
           "h": 48,
           "x": 183,
-          "y": 1424,
+          "y": 1512,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
           "sig": "input[file]",
           "label": "",
           "w": 303,
-          "h": 26,
+          "h": 48,
           "x": 58,
-          "y": 1622,
+          "y": 1710,
           "cls": "text-sm"
         },
         {
@@ -1466,7 +1444,7 @@
           "w": 103,
           "h": 48,
           "x": 258,
-          "y": 1660,
+          "y": 1770,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
         {
@@ -1475,7 +1453,7 @@
           "w": 82,
           "h": 48,
           "x": 279,
-          "y": 1734,
+          "y": 1844,
           "cls": "text-sm font-semibold text-navy-700 underline"
         },
         {
@@ -1484,16 +1462,16 @@
           "w": 84,
           "h": 48,
           "x": 183,
-          "y": 1734,
+          "y": 1844,
           "cls": "text-sm font-semibold text-navy-700 underline"
         }
       ],
-      "rowsAbove": 2,
+      "rowsAbove": 1,
       "rowCount": 5,
       "firstContentY": 121,
       "headerH": 57,
       "hOverflow": 0,
-      "scrollHeight": 1807,
+      "scrollHeight": 1917,
       "fontSizes": [
         10,
         14,
@@ -1598,7 +1576,7 @@
           "fg": "rgb(24, 42, 81)",
           "opacity": 1,
           "ratio": 13.87,
-          "ratioMin": 13.77,
+          "ratioMin": 13.78,
           "large": false,
           "cls": "text-sm text-navy-600"
         },
@@ -1608,8 +1586,8 @@
           "weight": 400,
           "fg": "rgb(24, 42, 81)",
           "opacity": 1,
-          "ratio": 13.67,
-          "ratioMin": 13.64,
+          "ratio": 13.76,
+          "ratioMin": 13.65,
           "large": false,
           "cls": "text-sm text-navy-600"
         },
@@ -1620,7 +1598,7 @@
           "fg": "rgb(255, 255, 255)",
           "opacity": 0.5,
           "ratio": 1.91,
-          "ratioMin": 1.86,
+          "ratioMin": 1.87,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
         },
@@ -1664,7 +1642,7 @@
           "fg": "rgb(24, 42, 81)",
           "opacity": 1,
           "ratio": 13.87,
-          "ratioMin": 13.77,
+          "ratioMin": 13.78,
           "large": false,
           "cls": "text-sm text-navy-600"
         },
@@ -1674,8 +1652,8 @@
           "weight": 400,
           "fg": "rgb(24, 42, 81)",
           "opacity": 1,
-          "ratio": 13.67,
-          "ratioMin": 13.64,
+          "ratio": 13.68,
+          "ratioMin": 13.66,
           "large": false,
           "cls": "text-sm text-navy-600"
         },
@@ -1685,32 +1663,10 @@
           "weight": 600,
           "fg": "rgb(255, 255, 255)",
           "opacity": 0.5,
-          "ratio": 1.9,
+          "ratio": 1.91,
           "ratioMin": 1.86,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive disabled:opacity-50"
-        },
-        {
-          "t": "لوحة التحكم",
-          "size": 14,
-          "weight": 600,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 14.72,
-          "ratioMin": 14.69,
-          "large": false,
-          "cls": "text-sm font-semibold text-navy-700 underline"
-        },
-        {
-          "t": "وحدة الإدارة",
-          "size": 14,
-          "weight": 600,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 14.72,
-          "ratioMin": 14.69,
-          "large": false,
-          "cls": "text-sm font-semibold text-navy-700 underline"
         }
       ]
     }
@@ -4511,7 +4467,7 @@
           "sig": "a",
           "label": "New daily log",
           "w": 116,
-          "h": 38,
+          "h": 48,
           "x": 12,
           "y": 117,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
@@ -4522,7 +4478,7 @@
           "w": 366,
           "h": 48,
           "x": 12,
-          "y": 171,
+          "y": 181,
           "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         },
         {
@@ -4531,7 +4487,7 @@
           "w": 226,
           "h": 48,
           "x": 87,
-          "y": 232,
+          "y": 242,
           "cls": "min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
         },
         {
@@ -4540,7 +4496,7 @@
           "w": 48,
           "h": 48,
           "x": 321,
-          "y": 232,
+          "y": 242,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         }
       ],
@@ -4744,8 +4700,8 @@
           "weight": 400,
           "fg": "rgb(255, 255, 255)",
           "opacity": 1,
-          "ratio": 13.29,
-          "ratioMin": 11.57,
+          "ratio": 13.19,
+          "ratioMin": 11.83,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
         },
@@ -4789,7 +4745,7 @@
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
           "ratio": 19.17,
-          "ratioMin": 17.8,
+          "ratioMin": 17.83,
           "large": false,
           "cls": ""
         },
@@ -4822,7 +4778,7 @@
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
           "ratio": 17.7,
-          "ratioMin": 17.67,
+          "ratioMin": 17.65,
           "large": false,
           "cls": ""
         },
@@ -4946,7 +4902,7 @@
           "sig": "a",
           "label": "سجل يومي جديد",
           "w": 124,
-          "h": 38,
+          "h": 48,
           "x": 254,
           "y": 117,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
@@ -4957,7 +4913,7 @@
           "w": 366,
           "h": 48,
           "x": 12,
-          "y": 171,
+          "y": 181,
           "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         },
         {
@@ -4966,7 +4922,7 @@
           "w": 200,
           "h": 48,
           "x": 77,
-          "y": 232,
+          "y": 242,
           "cls": "min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
         },
         {
@@ -4975,7 +4931,7 @@
           "w": 48,
           "h": 48,
           "x": 21,
-          "y": 232,
+          "y": 242,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         }
       ],
@@ -5190,8 +5146,8 @@
           "weight": 400,
           "fg": "rgb(255, 255, 255)",
           "opacity": 1,
-          "ratio": 13.29,
-          "ratioMin": 11.74,
+          "ratio": 13.19,
+          "ratioMin": 12.05,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
         },
@@ -7140,9 +7096,9 @@
           "sig": "a",
           "label": "Manage templates",
           "w": 160,
-          "h": 38,
+          "h": 48,
           "x": 12,
-          "y": 122,
+          "y": 117,
           "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800"
         },
         {
@@ -7759,9 +7715,9 @@
           "sig": "a",
           "label": "إدارة القوالب",
           "w": 103,
-          "h": 38,
+          "h": 48,
           "x": 275,
-          "y": 122,
+          "y": 117,
           "cls": "rounded-lg border-3 border-ink px-3 py-2 text-sm text-navy-800"
         },
         {
@@ -9542,7 +9498,7 @@
           "sig": "a",
           "label": "New punch item",
           "w": 141,
-          "h": 38,
+          "h": 48,
           "x": 12,
           "y": 117,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
@@ -9553,8 +9509,17 @@
           "w": 137,
           "h": 56,
           "x": 12,
-          "y": 171,
+          "y": 181,
           "cls": "hit-task flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-3 text-sm font-bold text-navy-900"
+        },
+        {
+          "sig": "button[button]",
+          "label": "Mine",
+          "w": 71,
+          "h": 48,
+          "x": 12,
+          "y": 245,
+          "cls": "min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold bg-white text-navy-900"
         },
         {
           "sig": "input[search]",
@@ -9562,7 +9527,7 @@
           "w": 188,
           "h": 48,
           "x": 12,
-          "y": 235,
+          "y": 301,
           "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         },
         {
@@ -9571,7 +9536,7 @@
           "w": 170,
           "h": 48,
           "x": 208,
-          "y": 235,
+          "y": 301,
           "cls": "rounded-lg border-3 border-ink px-2 text-base"
         },
         {
@@ -9580,7 +9545,7 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 296,
+          "y": 362,
           "cls": ""
         },
         {
@@ -9589,7 +9554,7 @@
           "w": 190,
           "h": 48,
           "x": 123,
-          "y": 296,
+          "y": 362,
           "cls": "min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
         },
         {
@@ -9598,7 +9563,7 @@
           "w": 48,
           "h": 48,
           "x": 321,
-          "y": 296,
+          "y": 362,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         },
         {
@@ -9607,8 +9572,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 351,
+          "y": 417,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-001 Touch-up paint required at Level ",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 419,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9616,8 +9590,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 411,
+          "y": 477,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-002 Missing outlet cover plates in Un",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 479,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9625,8 +9608,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 471,
+          "y": 537,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-003 Door closer not adjusted -- slams",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 539,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9634,8 +9626,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 531,
+          "y": 597,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-004 Caulking gap at window sill, Unit",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 599,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9643,8 +9644,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 591,
+          "y": 657,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-005 Cracked floor tile at lobby entra",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 659,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9652,8 +9662,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 651,
+          "y": 717,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-006 HVAC diffuser installed crooked i",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 719,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9661,8 +9680,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 711,
+          "y": 777,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-007 Fire extinguisher cabinet missing",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 779,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9670,8 +9698,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 771,
+          "y": 837,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-008 Handrail loose at Level 4 exterio",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 839,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9679,8 +9716,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 831,
+          "y": 897,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-009 Paint overspray on window glazing",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 899,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9688,8 +9734,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 891,
+          "y": 957,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-010 Electrical panel labeling incompl",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 959,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9697,8 +9752,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 951,
+          "y": 1017,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-021 Cracked tile -- unit 400 Open",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 1019,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9706,8 +9770,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 1011,
+          "y": 1077,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-022 Missing sealant -- unit 401 Open",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 1079,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -9715,8 +9788,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 1071,
+          "y": 1137,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-023 Paint touch-up needed -- unit 402",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 1139,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "button[button]",
@@ -9724,7 +9806,7 @@
           "w": 48,
           "h": 48,
           "x": 25,
-          "y": 954,
+          "y": 1020,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         },
         {
@@ -9733,16 +9815,16 @@
           "w": 48,
           "h": 48,
           "x": 317,
-          "y": 954,
+          "y": 1020,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         }
       ],
-      "rowsAbove": 8,
+      "rowsAbove": 7,
       "rowCount": 13,
       "firstContentY": 73,
       "headerH": 57,
       "hOverflow": 0,
-      "scrollHeight": 1099,
+      "scrollHeight": 1165,
       "fontSizes": [
         10,
         12,
@@ -9938,7 +10020,7 @@
           "fg": "rgb(255, 255, 255)",
           "opacity": 1,
           "ratio": 13.29,
-          "ratioMin": 11.57,
+          "ratioMin": 11.82,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
         },
@@ -9963,6 +10045,17 @@
           "ratioMin": 19.17,
           "large": false,
           "cls": ""
+        },
+        {
+          "t": "Mine",
+          "size": 14,
+          "weight": 700,
+          "fg": "rgb(8, 15, 28)",
+          "opacity": 1,
+          "ratio": 19.17,
+          "ratioMin": 19.17,
+          "large": false,
+          "cls": "min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold bg-white text-navy-900"
         },
         {
           "t": "Sort by",
@@ -10004,7 +10097,7 @@
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
           "ratio": 19.17,
-          "ratioMin": 17.8,
+          "ratioMin": 17.68,
           "large": false,
           "cls": ""
         },
@@ -10026,7 +10119,7 @@
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
           "ratio": 17.65,
-          "ratioMin": 17.65,
+          "ratioMin": 17.54,
           "large": false,
           "cls": ""
         },
@@ -10036,8 +10129,8 @@
           "weight": 500,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.7,
-          "ratioMin": 17.65,
+          "ratio": 17.69,
+          "ratioMin": 17.54,
           "large": false,
           "cls": ""
         },
@@ -10102,8 +10195,8 @@
           "weight": 500,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.69,
-          "ratioMin": 17.54,
+          "ratio": 17.58,
+          "ratioMin": 17.53,
           "large": false,
           "cls": ""
         },
@@ -10113,7 +10206,7 @@
           "weight": 600,
           "fg": "rgb(19, 33, 63)",
           "opacity": 1,
-          "ratio": 14.62,
+          "ratio": 14.59,
           "ratioMin": 14.59,
           "large": false,
           "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-green-50 text-green-700 border-green-300 "
@@ -10168,7 +10261,7 @@
           "weight": 500,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.58,
+          "ratio": 17.53,
           "ratioMin": 17.53,
           "large": false,
           "cls": ""
@@ -10183,39 +10276,6 @@
           "ratioMin": 14.58,
           "large": false,
           "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-gray-100 text-gray-700 border-gray-300 "
-        },
-        {
-          "t": "PL-007",
-          "size": 14,
-          "weight": 700,
-          "fg": "rgb(8, 15, 28)",
-          "opacity": 1,
-          "ratio": 19.17,
-          "ratioMin": 19.17,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "Fire extinguisher cabinet missing signag",
-          "size": 14,
-          "weight": 500,
-          "fg": "rgb(8, 15, 28)",
-          "opacity": 1,
-          "ratio": 19.17,
-          "ratioMin": 19.17,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "Open",
-          "size": 12,
-          "weight": 600,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 15.95,
-          "ratioMin": 15.95,
-          "large": false,
-          "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 border-blue-300 "
         },
         {
           "t": "[placeholder] Search by number or descript",
@@ -10326,7 +10386,7 @@
           "sig": "a",
           "label": "ملاحظة جديدة",
           "w": 109,
-          "h": 38,
+          "h": 48,
           "x": 269,
           "y": 117,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
@@ -10337,8 +10397,17 @@
           "w": 172,
           "h": 56,
           "x": 206,
-          "y": 171,
+          "y": 181,
           "cls": "hit-task flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-3 text-sm font-bold text-navy-900"
+        },
+        {
+          "sig": "button[button]",
+          "label": "لي",
+          "w": 53,
+          "h": 48,
+          "x": 325,
+          "y": 245,
+          "cls": "min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold bg-white text-navy-900"
         },
         {
           "sig": "input[search]",
@@ -10346,7 +10415,7 @@
           "w": 215,
           "h": 48,
           "x": 163,
-          "y": 235,
+          "y": 301,
           "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         },
         {
@@ -10355,7 +10424,7 @@
           "w": 143,
           "h": 48,
           "x": 12,
-          "y": 235,
+          "y": 301,
           "cls": "rounded-lg border-3 border-ink px-2 text-base"
         },
         {
@@ -10364,7 +10433,7 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 296,
+          "y": 362,
           "cls": ""
         },
         {
@@ -10373,7 +10442,7 @@
           "w": 164,
           "h": 48,
           "x": 77,
-          "y": 296,
+          "y": 362,
           "cls": "min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
         },
         {
@@ -10382,7 +10451,7 @@
           "w": 48,
           "h": 48,
           "x": 21,
-          "y": 296,
+          "y": 362,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         },
         {
@@ -10391,8 +10460,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 351,
+          "y": 417,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-001 Touch-up paint required at Level ",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 419,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10400,8 +10478,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 411,
+          "y": 477,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-002 Missing outlet cover plates in Un",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 479,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10409,8 +10496,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 471,
+          "y": 537,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-003 Door closer not adjusted -- slams",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 539,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10418,8 +10514,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 531,
+          "y": 597,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-004 Caulking gap at window sill, Unit",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 599,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10427,8 +10532,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 591,
+          "y": 657,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-005 Cracked floor tile at lobby entra",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 659,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10436,8 +10550,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 651,
+          "y": 717,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-006 HVAC diffuser installed crooked i",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 719,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10445,8 +10568,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 711,
+          "y": 777,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-007 Fire extinguisher cabinet missing",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 779,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10454,8 +10586,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 771,
+          "y": 837,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-008 Handrail loose at Level 4 exterio",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 839,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10463,8 +10604,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 831,
+          "y": 897,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-009 Paint overspray on window glazing",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 899,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10472,8 +10622,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 891,
+          "y": 957,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-010 Electrical panel labeling incompl",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 959,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10481,8 +10640,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 951,
+          "y": 1017,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-021 Cracked tile -- unit 400 مفتوحة",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 1019,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10490,8 +10658,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 1011,
+          "y": 1077,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-022 Missing sealant -- unit 401 مفتوح",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 1079,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -10499,8 +10676,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 1071,
+          "y": 1137,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "PL-023 Paint touch-up needed -- unit 402",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 1139,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "button[button]",
@@ -10508,7 +10694,7 @@
           "w": 48,
           "h": 48,
           "x": 317,
-          "y": 954,
+          "y": 1020,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         },
         {
@@ -10517,16 +10703,16 @@
           "w": 48,
           "h": 48,
           "x": 25,
-          "y": 954,
+          "y": 1020,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         }
       ],
-      "rowsAbove": 8,
+      "rowsAbove": 7,
       "rowCount": 13,
       "firstContentY": 73,
       "headerH": 57,
       "hOverflow": 0,
-      "scrollHeight": 1099,
+      "scrollHeight": 1165,
       "fontSizes": [
         10,
         12,
@@ -10733,7 +10919,7 @@
           "fg": "rgb(255, 255, 255)",
           "opacity": 1,
           "ratio": 13.29,
-          "ratioMin": 11.74,
+          "ratioMin": 12.05,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
         },
@@ -10758,6 +10944,17 @@
           "ratioMin": 19.17,
           "large": false,
           "cls": ""
+        },
+        {
+          "t": "لي",
+          "size": 14,
+          "weight": 700,
+          "fg": "rgb(8, 15, 28)",
+          "opacity": 1,
+          "ratio": 19.17,
+          "ratioMin": 19.17,
+          "large": false,
+          "cls": "min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold bg-white text-navy-900"
         },
         {
           "t": "ترتيب حسب",
@@ -10820,7 +11017,7 @@
           "weight": 700,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.7,
+          "ratio": 17.65,
           "ratioMin": 17.54,
           "large": false,
           "cls": ""
@@ -10831,7 +11028,7 @@
           "weight": 500,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.7,
+          "ratio": 17.69,
           "ratioMin": 17.54,
           "large": false,
           "cls": ""
@@ -10842,7 +11039,7 @@
           "weight": 600,
           "fg": "rgb(19, 33, 63)",
           "opacity": 1,
-          "ratio": 14.72,
+          "ratio": 14.71,
           "ratioMin": 12.88,
           "large": false,
           "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 border-blue-300 "
@@ -10887,7 +11084,7 @@
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
           "ratio": 17.54,
-          "ratioMin": 17.54,
+          "ratioMin": 17.53,
           "large": false,
           "cls": ""
         },
@@ -10897,8 +11094,8 @@
           "weight": 500,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.65,
-          "ratioMin": 17.54,
+          "ratio": 17.54,
+          "ratioMin": 17.53,
           "large": false,
           "cls": ""
         },
@@ -10952,7 +11149,7 @@
           "weight": 700,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.54,
+          "ratio": 17.53,
           "ratioMin": 17.53,
           "large": false,
           "cls": ""
@@ -10978,39 +11175,6 @@
           "ratioMin": 12.88,
           "large": false,
           "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-gray-100 text-gray-700 border-gray-300 "
-        },
-        {
-          "t": "PL-007",
-          "size": 14,
-          "weight": 700,
-          "fg": "rgb(8, 15, 28)",
-          "opacity": 1,
-          "ratio": 19.17,
-          "ratioMin": 19.17,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "Fire extinguisher cabinet missing signag",
-          "size": 14,
-          "weight": 500,
-          "fg": "rgb(8, 15, 28)",
-          "opacity": 1,
-          "ratio": 19.17,
-          "ratioMin": 19.17,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "مفتوحة",
-          "size": 12,
-          "weight": 600,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 15.95,
-          "ratioMin": 12.88,
-          "large": false,
-          "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 border-blue-300 "
         },
         {
           "t": "[placeholder] ابحث بالرقم أو الوصف…",
@@ -14412,7 +14576,7 @@
           "sig": "a",
           "label": "Observations",
           "w": 119,
-          "h": 38,
+          "h": 48,
           "x": 12,
           "y": 117,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800"
@@ -14423,7 +14587,7 @@
           "w": 121,
           "h": 48,
           "x": 257,
-          "y": 404,
+          "y": 414,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
         },
         {
@@ -14432,7 +14596,7 @@
           "w": 137,
           "h": 56,
           "x": 12,
-          "y": 468,
+          "y": 478,
           "cls": "hit-task flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-3 text-sm font-bold text-navy-900"
         },
         {
@@ -14441,7 +14605,7 @@
           "w": 219,
           "h": 48,
           "x": 12,
-          "y": 532,
+          "y": 542,
           "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         },
         {
@@ -14450,7 +14614,7 @@
           "w": 139,
           "h": 48,
           "x": 239,
-          "y": 532,
+          "y": 542,
           "cls": "rounded-lg border-3 border-ink px-2 text-base"
         },
         {
@@ -14459,7 +14623,7 @@
           "w": 226,
           "h": 48,
           "x": 87,
-          "y": 593,
+          "y": 603,
           "cls": "min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
         },
         {
@@ -14468,7 +14632,7 @@
           "w": 48,
           "h": 48,
           "x": 321,
-          "y": 593,
+          "y": 603,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         },
         {
@@ -14477,7 +14641,7 @@
           "w": 48,
           "h": 48,
           "x": 25,
-          "y": 831,
+          "y": 841,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         },
         {
@@ -14486,7 +14650,7 @@
           "w": 48,
           "h": 48,
           "x": 317,
-          "y": 831,
+          "y": 841,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         }
       ],
@@ -14495,7 +14659,7 @@
       "firstContentY": 73,
       "headerH": 57,
       "hOverflow": 0,
-      "scrollHeight": 976,
+      "scrollHeight": 986,
       "fontSizes": [
         10,
         12,
@@ -14691,7 +14855,7 @@
           "fg": "rgb(13, 24, 45)",
           "opacity": 1,
           "ratio": 16.99,
-          "ratioMin": 16.33,
+          "ratioMin": 16.44,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800"
         },
@@ -14800,7 +14964,7 @@
           "weight": 600,
           "fg": "rgb(255, 255, 255)",
           "opacity": 1,
-          "ratio": 13.35,
+          "ratio": 13.29,
           "ratioMin": 11.89,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
@@ -14921,7 +15085,7 @@
           "weight": 600,
           "fg": "rgb(19, 33, 63)",
           "opacity": 1,
-          "ratio": 14.61,
+          "ratio": 14.58,
           "ratioMin": 14.58,
           "large": false,
           "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-green-50 text-green-700 border-green-300 "
@@ -14933,7 +15097,7 @@
           "fg": "rgb(19, 33, 63)",
           "opacity": 1,
           "ratio": 14.58,
-          "ratioMin": 13.44,
+          "ratioMin": 13.47,
           "large": false,
           "cls": ""
         },
@@ -15068,7 +15232,7 @@
           "sig": "a",
           "label": "الملاحظات",
           "w": 88,
-          "h": 38,
+          "h": 48,
           "x": 290,
           "y": 117,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800"
@@ -15079,7 +15243,7 @@
           "w": 107,
           "h": 48,
           "x": 12,
-          "y": 404,
+          "y": 414,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
         },
         {
@@ -15088,7 +15252,7 @@
           "w": 172,
           "h": 56,
           "x": 206,
-          "y": 468,
+          "y": 478,
           "cls": "hit-task flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-3 text-sm font-bold text-navy-900"
         },
         {
@@ -15097,7 +15261,7 @@
           "w": 243,
           "h": 48,
           "x": 135,
-          "y": 532,
+          "y": 542,
           "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         },
         {
@@ -15106,7 +15270,7 @@
           "w": 115,
           "h": 48,
           "x": 12,
-          "y": 532,
+          "y": 542,
           "cls": "rounded-lg border-3 border-ink px-2 text-base"
         },
         {
@@ -15115,7 +15279,7 @@
           "w": 200,
           "h": 48,
           "x": 77,
-          "y": 593,
+          "y": 603,
           "cls": "min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
         },
         {
@@ -15124,7 +15288,7 @@
           "w": 48,
           "h": 48,
           "x": 21,
-          "y": 593,
+          "y": 603,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         },
         {
@@ -15133,7 +15297,7 @@
           "w": 48,
           "h": 48,
           "x": 317,
-          "y": 831,
+          "y": 841,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         },
         {
@@ -15142,7 +15306,7 @@
           "w": 48,
           "h": 48,
           "x": 25,
-          "y": 831,
+          "y": 841,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         }
       ],
@@ -15151,7 +15315,7 @@
       "firstContentY": 73,
       "headerH": 57,
       "hOverflow": 0,
-      "scrollHeight": 976,
+      "scrollHeight": 986,
       "fontSizes": [
         10,
         12,
@@ -15357,8 +15521,8 @@
           "weight": 400,
           "fg": "rgb(13, 24, 45)",
           "opacity": 1,
-          "ratio": 17,
-          "ratioMin": 16.47,
+          "ratio": 16.89,
+          "ratioMin": 16.48,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream brutal-interactive px-3 py-2 text-sm text-navy-800"
         },
@@ -15467,8 +15631,8 @@
           "weight": 600,
           "fg": "rgb(255, 255, 255)",
           "opacity": 1,
-          "ratio": 13.35,
-          "ratioMin": 12.06,
+          "ratio": 13.29,
+          "ratioMin": 12.05,
           "large": false,
           "cls": "rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white"
         },
@@ -18463,6 +18627,51 @@
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         },
         {
+          "sig": "a",
+          "label": "A-101 Level 1 Floor Plan Architectural ·",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 366,
+          "cls": "block text-inherit no-underline"
+        },
+        {
+          "sig": "a",
+          "label": "A-501 Wall Sections and Details Architec",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 426,
+          "cls": "block text-inherit no-underline"
+        },
+        {
+          "sig": "a",
+          "label": "E-401 Panel Schedules Electrical ·",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 486,
+          "cls": "block text-inherit no-underline"
+        },
+        {
+          "sig": "a",
+          "label": "M-201 Level 2 HVAC Plan Mechanical ·",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 546,
+          "cls": "block text-inherit no-underline"
+        },
+        {
+          "sig": "a",
+          "label": "S-201 Foundation Plan Structural ·",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 606,
+          "cls": "block text-inherit no-underline"
+        },
+        {
           "sig": "button[button]",
           "label": "‹",
           "w": 48,
@@ -19152,6 +19361,51 @@
           "x": 21,
           "y": 306,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
+        },
+        {
+          "sig": "a",
+          "label": "A-101 Level 1 Floor Plan Architectural ·",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 366,
+          "cls": "block text-inherit no-underline"
+        },
+        {
+          "sig": "a",
+          "label": "A-501 Wall Sections and Details Architec",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 426,
+          "cls": "block text-inherit no-underline"
+        },
+        {
+          "sig": "a",
+          "label": "E-401 Panel Schedules Electrical ·",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 486,
+          "cls": "block text-inherit no-underline"
+        },
+        {
+          "sig": "a",
+          "label": "M-201 Level 2 HVAC Plan Mechanical ·",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 546,
+          "cls": "block text-inherit no-underline"
+        },
+        {
+          "sig": "a",
+          "label": "S-201 Foundation Plan Structural ·",
+          "w": 340,
+          "h": 38,
+          "x": 25,
+          "y": 606,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "button[button]",
@@ -22354,12 +22608,21 @@
           "cls": "hit-task flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-3 text-sm font-bold text-navy-900"
         },
         {
+          "sig": "button[button]",
+          "label": "Mine",
+          "w": 71,
+          "h": 48,
+          "x": 12,
+          "y": 301,
+          "cls": "min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold bg-white text-navy-900"
+        },
+        {
           "sig": "input[search]",
           "label": "Search by number or subject…",
           "w": 241,
           "h": 48,
           "x": 12,
-          "y": 301,
+          "y": 357,
           "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         },
         {
@@ -22368,7 +22631,7 @@
           "w": 117,
           "h": 48,
           "x": 261,
-          "y": 301,
+          "y": 357,
           "cls": "rounded-lg border-3 border-ink px-2 text-base"
         },
         {
@@ -22377,7 +22640,7 @@
           "w": 203,
           "h": 48,
           "x": 12,
-          "y": 357,
+          "y": 413,
           "cls": "rounded-lg border-3 border-ink px-2 text-base"
         },
         {
@@ -22386,7 +22649,7 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 418,
+          "y": 474,
           "cls": ""
         },
         {
@@ -22395,7 +22658,7 @@
           "w": 190,
           "h": 48,
           "x": 123,
-          "y": 418,
+          "y": 474,
           "cls": "min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
         },
         {
@@ -22404,7 +22667,7 @@
           "w": 48,
           "h": 48,
           "x": 321,
-          "y": 418,
+          "y": 474,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         },
         {
@@ -22413,8 +22676,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 473,
+          "y": 529,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-001 Concrete mix design for foundati",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 531,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -22422,8 +22694,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 533,
+          "y": 589,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-002 Electrical panel schedule confli",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 591,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -22431,8 +22712,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 593,
+          "y": 649,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-003 Rebar cover at slab edge Open Sa",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 651,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -22440,8 +22730,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 653,
+          "y": 709,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-004 Waterproofing membrane at Level ",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 711,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -22449,8 +22748,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 713,
+          "y": 769,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-005 Door hardware finish Draft Omar ",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 771,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -22458,8 +22766,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 773,
+          "y": 829,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-006 HVAC duct routing above corridor",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 831,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -22467,8 +22784,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 833,
+          "y": 889,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-007 Curtain wall anchor embed depth ",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 891,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -22476,8 +22802,17 @@
           "w": 48,
           "h": 48,
           "x": 13,
-          "y": 893,
+          "y": 949,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-008 Fire-rated assembly at shaft wal",
+          "w": 304,
+          "h": 44,
+          "x": 61,
+          "y": 951,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "button[button]",
@@ -22485,7 +22820,7 @@
           "w": 48,
           "h": 48,
           "x": 25,
-          "y": 956,
+          "y": 1012,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         },
         {
@@ -22494,16 +22829,16 @@
           "w": 48,
           "h": 48,
           "x": 317,
-          "y": 956,
+          "y": 1012,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         }
       ],
-      "rowsAbove": 6,
+      "rowsAbove": 5,
       "rowCount": 8,
       "firstContentY": 73,
       "headerH": 57,
       "hOverflow": 0,
-      "scrollHeight": 1101,
+      "scrollHeight": 1157,
       "fontSizes": [
         10,
         12,
@@ -22748,6 +23083,17 @@
           "cls": ""
         },
         {
+          "t": "Mine",
+          "size": 14,
+          "weight": 700,
+          "fg": "rgb(8, 15, 28)",
+          "opacity": 1,
+          "ratio": 19.17,
+          "ratioMin": 19.17,
+          "large": false,
+          "cls": "min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold bg-white text-navy-900"
+        },
+        {
           "t": "Sort by",
           "size": 12,
           "weight": 600,
@@ -22830,8 +23176,8 @@
           "weight": 700,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.69,
-          "ratioMin": 17.54,
+          "ratio": 17.58,
+          "ratioMin": 17.53,
           "large": false,
           "cls": ""
         },
@@ -22853,7 +23199,7 @@
           "fg": "rgb(19, 33, 63)",
           "opacity": 1,
           "ratio": 14.59,
-          "ratioMin": 14.59,
+          "ratioMin": 14.58,
           "large": false,
           "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 border-blue-300 "
         },
@@ -22986,61 +23332,6 @@
           "opacity": 1,
           "ratio": 14.58,
           "ratioMin": 10.92,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "RFI-005",
-          "size": 14,
-          "weight": 700,
-          "fg": "rgb(8, 15, 28)",
-          "opacity": 1,
-          "ratio": 19.17,
-          "ratioMin": 19.17,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "Door hardware finish",
-          "size": 14,
-          "weight": 500,
-          "fg": "rgb(8, 15, 28)",
-          "opacity": 1,
-          "ratio": 19.17,
-          "ratioMin": 19.17,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "Draft",
-          "size": 12,
-          "weight": 600,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 15.95,
-          "ratioMin": 15.95,
-          "large": false,
-          "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-gray-100 text-gray-700 border-gray-300 "
-        },
-        {
-          "t": "Omar Nassar",
-          "size": 12,
-          "weight": 400,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 15.95,
-          "ratioMin": 14.74,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "·",
-          "size": 12,
-          "weight": 400,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 15.95,
-          "ratioMin": 1,
           "large": false,
           "cls": ""
         },
@@ -23186,12 +23477,21 @@
           "cls": "hit-task flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-3 text-sm font-bold text-navy-900"
         },
         {
+          "sig": "button[button]",
+          "label": "لي",
+          "w": 53,
+          "h": 48,
+          "x": 325,
+          "y": 301,
+          "cls": "min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold bg-white text-navy-900"
+        },
+        {
           "sig": "input[search]",
           "label": "ابحث بالرقم أو الموضوع…",
           "w": 244,
           "h": 48,
           "x": 134,
-          "y": 301,
+          "y": 357,
           "cls": "min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         },
         {
@@ -23200,7 +23500,7 @@
           "w": 114,
           "h": 48,
           "x": 12,
-          "y": 301,
+          "y": 357,
           "cls": "rounded-lg border-3 border-ink px-2 text-base"
         },
         {
@@ -23209,7 +23509,7 @@
           "w": 203,
           "h": 48,
           "x": 175,
-          "y": 357,
+          "y": 413,
           "cls": "rounded-lg border-3 border-ink px-2 text-base"
         },
         {
@@ -23218,7 +23518,7 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 418,
+          "y": 474,
           "cls": ""
         },
         {
@@ -23227,7 +23527,7 @@
           "w": 164,
           "h": 48,
           "x": 77,
-          "y": 418,
+          "y": 474,
           "cls": "min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
         },
         {
@@ -23236,7 +23536,7 @@
           "w": 48,
           "h": 48,
           "x": 21,
-          "y": 418,
+          "y": 474,
           "cls": "rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
         },
         {
@@ -23245,8 +23545,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 473,
+          "y": 529,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-001 Concrete mix design for foundati",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 531,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -23254,8 +23563,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 533,
+          "y": 589,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-002 Electrical panel schedule confli",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 591,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -23263,8 +23581,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 593,
+          "y": 649,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-003 Rebar cover at slab edge مفتوح S",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 651,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -23272,8 +23599,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 653,
+          "y": 709,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-004 Waterproofing membrane at Level ",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 711,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -23281,8 +23617,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 713,
+          "y": 769,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-005 Door hardware finish مسودة Omar ",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 771,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -23290,8 +23635,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 773,
+          "y": 829,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-006 HVAC duct routing above corridor",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 831,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -23299,8 +23653,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 833,
+          "y": 889,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-007 Curtain wall anchor embed depth ",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 891,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "input[checkbox]",
@@ -23308,8 +23671,17 @@
           "w": 48,
           "h": 48,
           "x": 329,
-          "y": 893,
+          "y": 949,
           "cls": ""
+        },
+        {
+          "sig": "a",
+          "label": "RFI-008 Fire-rated assembly at shaft wal",
+          "w": 304,
+          "h": 44,
+          "x": 25,
+          "y": 951,
+          "cls": "block text-inherit no-underline"
         },
         {
           "sig": "button[button]",
@@ -23317,7 +23689,7 @@
           "w": 48,
           "h": 48,
           "x": 317,
-          "y": 956,
+          "y": 1012,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         },
         {
@@ -23326,16 +23698,16 @@
           "w": 48,
           "h": 48,
           "x": 25,
-          "y": 956,
+          "y": 1012,
           "cls": "rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
         }
       ],
-      "rowsAbove": 6,
+      "rowsAbove": 5,
       "rowCount": 8,
       "firstContentY": 73,
       "headerH": 57,
       "hOverflow": 0,
-      "scrollHeight": 1101,
+      "scrollHeight": 1157,
       "fontSizes": [
         10,
         12,
@@ -23591,6 +23963,17 @@
           "cls": ""
         },
         {
+          "t": "لي",
+          "size": 14,
+          "weight": 700,
+          "fg": "rgb(8, 15, 28)",
+          "opacity": 1,
+          "ratio": 19.17,
+          "ratioMin": 19.17,
+          "large": false,
+          "cls": "min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold bg-white text-navy-900"
+        },
+        {
           "t": "ترتيب حسب",
           "size": 12,
           "weight": 600,
@@ -23674,7 +24057,7 @@
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
           "ratio": 17.54,
-          "ratioMin": 17.54,
+          "ratioMin": 17.53,
           "large": false,
           "cls": ""
         },
@@ -23684,8 +24067,8 @@
           "weight": 500,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.69,
-          "ratioMin": 17.54,
+          "ratio": 17.58,
+          "ratioMin": 17.53,
           "large": false,
           "cls": ""
         },
@@ -23706,8 +24089,8 @@
           "weight": 400,
           "fg": "rgb(19, 33, 63)",
           "opacity": 1,
-          "ratio": 14.71,
-          "ratioMin": 14.59,
+          "ratio": 14.62,
+          "ratioMin": 14.58,
           "large": false,
           "cls": ""
         },
@@ -23717,7 +24100,7 @@
           "weight": 400,
           "fg": "rgb(19, 33, 63)",
           "opacity": 1,
-          "ratio": 14.59,
+          "ratio": 14.58,
           "ratioMin": 13.81,
           "large": false,
           "cls": ""
@@ -23794,7 +24177,7 @@
           "weight": 500,
           "fg": "rgb(8, 15, 28)",
           "opacity": 1,
-          "ratio": 17.58,
+          "ratio": 17.57,
           "ratioMin": 17.53,
           "large": false,
           "cls": ""
@@ -23827,63 +24210,8 @@
           "weight": 400,
           "fg": "rgb(19, 33, 63)",
           "opacity": 1,
-          "ratio": 14.62,
+          "ratio": 14.58,
           "ratioMin": 1.16,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "RFI-005",
-          "size": 14,
-          "weight": 700,
-          "fg": "rgb(8, 15, 28)",
-          "opacity": 1,
-          "ratio": 19.17,
-          "ratioMin": 19.17,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "Door hardware finish",
-          "size": 14,
-          "weight": 500,
-          "fg": "rgb(8, 15, 28)",
-          "opacity": 1,
-          "ratio": 19.17,
-          "ratioMin": 19.17,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "مسودة",
-          "size": 12,
-          "weight": 600,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 15.95,
-          "ratioMin": 12.88,
-          "large": false,
-          "cls": "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold bg-gray-100 text-gray-700 border-gray-300 "
-        },
-        {
-          "t": "Omar Nassar",
-          "size": 12,
-          "weight": 400,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 15.95,
-          "ratioMin": 15.95,
-          "large": false,
-          "cls": ""
-        },
-        {
-          "t": "·",
-          "size": 12,
-          "weight": 400,
-          "fg": "rgb(19, 33, 63)",
-          "opacity": 1,
-          "ratio": 15.95,
-          "ratioMin": 15.95,
           "large": false,
           "cls": ""
         },
@@ -40351,9 +40679,9 @@
         {
           "sig": "select[select-one]",
           "label": "اختر مهمة… Structural Steel Erection - L",
-          "w": 340,
+          "w": 304,
           "h": 48,
-          "x": 21,
+          "x": 57,
           "y": 580,
           "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm"
         },
@@ -40414,9 +40742,9 @@
         {
           "sig": "select[select-one]",
           "label": "اختر مهمة… Structural Steel Erection - L",
-          "w": 340,
+          "w": 304,
           "h": 48,
-          "x": 21,
+          "x": 57,
           "y": 997,
           "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm"
         },
@@ -40450,9 +40778,9 @@
         {
           "sig": "select[select-one]",
           "label": "اختر مهمة… Structural Steel Erection - L",
-          "w": 340,
+          "w": 304,
           "h": 48,
-          "x": 21,
+          "x": 57,
           "y": 1478,
           "cls": "rounded-lg border-3 border-ink px-2 py-1 text-sm"
         },

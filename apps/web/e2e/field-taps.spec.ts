@@ -110,3 +110,36 @@ for (const locale of ["en", "ar"] as const) {
     });
   });
 }
+
+test("an RFI answer written with no connection is kept and sent on reconnect (D2, T6)", async ({ page, context }) => {
+  const res = await page.request.post("http://localhost:4000/auth/login", { data: { email: EMAIL, password: PASSWORD } });
+  const auth = await res.json();
+  const projects = await (await page.request.get("http://localhost:4000/projects", { headers: { authorization: `Bearer ${auth.accessToken}` } })).json();
+  const amman = projects.find((p: { name: string }) => p.name.startsWith("Amman"));
+  await page.addInitScript(
+    ([a, id]) => {
+      localStorage.setItem("siteops.auth", JSON.stringify(a));
+      localStorage.setItem("siteops.lastProject", id as string);
+    },
+    [auth, amman.id] as const,
+  );
+  await page.goto("/en");
+  await page.locator("main a[href*='/rfis/']").first().click();
+  await expect(page).toHaveURL(/rfis\/[0-9a-f-]{36}$/);
+  const rfiId = page.url().split("/").pop()!;
+  await page.locator("main textarea").first().waitFor();
+  await context.setOffline(true);
+  await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+  const text = `Offline answer ${Date.now()}`;
+  await page.locator("main textarea").first().fill(text);
+  await page.getByRole("button", { name: "Add response" }).click();
+  await expect(page.getByText(/Saved on this device/).first()).toBeVisible();
+  await context.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect
+    .poll(async () => {
+      const rfi = await (await page.request.get(`http://localhost:4000/rfis/${rfiId}`, { headers: { authorization: `Bearer ${auth.accessToken}` } })).json();
+      return (rfi.responses ?? []).some((r: { responseText: string }) => r.responseText === text);
+    })
+    .toBe(true);
+});

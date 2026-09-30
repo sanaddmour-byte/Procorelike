@@ -44,8 +44,8 @@ Notes that matter:
 | Sweep | Before | After | Remaining |
 |---|---|---|---|
 | Horizontal overflow at 360/390 px, EN+AR, 36 screens (144 combinations) | **34** overflow | **0** | none |
-| Touch targets < 44 × 44 px (390 px, per language) | **917** of 925 | **18** of 1029 | Company pages (5), Settings (5), a few 20 px links and hidden 1×1 file inputs — listed in `after/sweep-metrics.json` |
-| Text contrast failures (WCAG AA, sampled) | 106 of 1068 | **28** of 1341 (EN) · 26 of 1386 (AR) | Mostly **disabled** controls (Add row, pagination ‹ ›, "Upload logo"); a handful of real ones remain — see backlog |
+| Touch targets < 44 × 44 px (390 px, per language) | **917** of 925 | **14** of 1057 (10 visible + 4 hidden 1×1 file inputs whose label is a full-size button) | Settings checkboxes (24 px, inside larger labels) and the company-page controls — listed in `after/sweep-metrics.json` |
+| Text contrast failures (WCAG AA, sampled) | 106 of 1068 | **28** of 1333 (EN) · 26 of 1378 (AR) | I inspected every one: they are disabled controls (WCAG exempts them: pagination ‹ ›, Add row, ▲, Upload logo, New folder, Link drawing) or a mis-sampled badge ("Current", 1.07 — the badge is white on navy-900 in the source). I found no genuine failure left, but the sampler still counts them |
 | Screens that go **blank** when a request fails offline | **6** of 36 | **0** | — |
 | Screens stuck on a spinner / "Loading" with no error offline | 0 | 0 | — |
 | Offline: screens that show an error with a Retry button | 15 | 22 | — |
@@ -73,7 +73,7 @@ Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms 
 | B8 compact rows · saved-views bar | **Done** | `DataTable`, `SavedViewsBar`, `FilterBar` |
 | B9 bulk operations | **Partly** — assign and due date (API + UI + tests). Bulk distribution: not built. | `BulkAssign`, `POST /punch-items/bulk-update` |
 | C1 bottom nav · C2 last project · create sheet | **Done** | `BottomNav`, `CreateSheet`, `lib/last-project.ts` |
-| D1 service worker · D2 outbox · D3 truthful failures | **Done for snags**; service worker caches the shell and visited pages (production only). Other record types are **not** queued offline. | `public/sw.js`, `lib/outbox.ts`, `SyncStatus` |
+| D1 service worker · D2 outbox · D3 truthful failures | **Done for snags and RFI answers** (a generic JSON-write queue exists, so more record types are a small change); service worker caches the shell and visited pages (production only). Other record types are **not** queued offline. | `public/sw.js`, `lib/outbox.ts`, `SyncStatus` |
 | E1 location · E3 close-out · E4 manpower · E5 My Work | **Done** | `LocationPicker`, snag detail, `ManpowerEditor`, `my-work/page.tsx` |
 | E9 permissions layout · E10 Gantt overflow | **Done** | see §3 |
 | G1 glove mode | **Done** (toggle in the avatar menu) | `PrefsApplier` |
@@ -85,13 +85,13 @@ Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms 
 | E2/E6 "Mine" one-tap preset (punch list, RFIs) | **Done** | `FilterBar` presets |
 | G2 interaction-count tests | **Done** — 10 Playwright tests (EN+AR) enforcing budgets for T3, T4, T7, T9 and the offline queue; existing 12 E2E tests updated for the new UI | `apps/web/e2e/field-taps.spec.ts` |
 
-Test state at the end: web typecheck, lint and unit tests pass; **29 of 29** Playwright tests pass (one earlier full run had a single failure in the safety-incident test that passed in isolation twice and in the next full run; I treat it as a flake, not proof it can't recur) against the production build; the API test file for bulk actions passes (6 tests, including 2 new). I did **not** re-run the complete API test suite in this stretch.
+Test state at the end: web typecheck, lint and unit tests pass; **30 of 30** Playwright tests pass (one earlier full run had a single failure in the safety-incident test that passed in isolation twice and in the next full run; I treat it as a flake, not proof it can't recur) against the production build; the API test file for bulk actions passes (6 tests, including 2 new). I did **not** re-run the complete API test suite in this stretch.
 
 Eight existing E2E tests failed after the UI changes and I updated them. Six were caused by this work's intentional changes (search boxes now have an accessible name that substring-matches "Title/Subject/Description"; Priority is three chips instead of a select; Log out is inside the avatar menu; the signed-out landing is `/login`; the snag status buttons are labelled by status). Two were already stale from earlier phases, not from this work: correspondence has needed a typed signature to send since Phase 12, and the RFI status text is split across elements. I updated all of them rather than leave them red.
 
 ## 6. Not built (backlog, in plan order)
 
-B2 grouping engine · E2 punch-list grouping and swipe actions · E7 drawings search-first · E8 photos thumbnails · E11 dashboard personal actions · E12/E13 polish and clipped-control verification · offline queue for record types other than snags · bulk distribution · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
+B2 grouping engine · E2 punch-list grouping and swipe actions · E7 drawings search-first · E8 photos thumbnails · E11 dashboard personal actions · E12/E13 polish and clipped-control verification · offline queue for record types other than snags and RFI answers · bulk distribution · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
 
 **Mobile app (Expo), M1–M5:** not started. It cannot be run in this environment, so any mobile change would be unmeasured; new dependencies (`expo-image-picker`, `expo-haptics`, a dictation module) need your explicit yes first.
 
