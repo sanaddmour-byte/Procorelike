@@ -68,9 +68,11 @@ export const bulkUpdatePunchItemsSchema = z
     assigneeUserId: z.string().uuid().optional(),
     assigneeCompanyId: z.string().uuid().optional(),
     dueDate: z.string().datetime().optional(),
+    /** People to add to every selected snag's distribution list (existing entries are kept, duplicates skipped). */
+    addDistributionUserIds: z.array(z.string().uuid()).max(50).optional(),
   })
   .strict()
-  .refine((v) => v.assigneeUserId !== undefined || v.dueDate !== undefined, { message: "Nothing to update" });
+  .refine((v) => v.assigneeUserId !== undefined || v.dueDate !== undefined || (v.addDistributionUserIds?.length ?? 0) > 0, { message: "Nothing to update" });
 export type BulkUpdatePunchItemsInput = z.infer<typeof bulkUpdatePunchItemsSchema>;
 
 /**

@@ -29,6 +29,7 @@ export function BulkAssign({ projectId, ids, onDone }: Props) {
   const [members, setMembers] = useState<Member[]>([]);
   const [userId, setUserId] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [notify, setNotify] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +39,7 @@ export function BulkAssign({ projectId, ids, onDone }: Props) {
 
   async function apply(): Promise<void> {
     const m = members.find((x) => x.userId === userId);
-    if (!m && !dueDate) return;
+    if (!m && !dueDate && notify.size === 0) return;
     setBusy(true);
     setError(null);
     try {
@@ -47,12 +48,14 @@ export function BulkAssign({ projectId, ids, onDone }: Props) {
         body: JSON.stringify({
           ids,
           ...(m ? { assigneeUserId: m.userId, ...(m.companyId ? { assigneeCompanyId: m.companyId } : {}) } : {}),
+          ...(notify.size > 0 ? { addDistributionUserIds: [...notify] } : {}),
           ...(dueDate ? { dueDate: new Date(`${dueDate}T12:00:00`).toISOString() } : {}),
         }),
       });
       setOpen(false);
       setUserId("");
       setDueDate("");
+      setNotify(new Set());
       onDone({ failed: results.filter((r) => !r.ok).length, total: results.length });
     } catch (err) {
       setError(errorMessage(err, te));
@@ -81,12 +84,25 @@ export function BulkAssign({ projectId, ids, onDone }: Props) {
             {t("dueDate")}
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="hit-task rounded-lg border-3 border-ink bg-white px-2" />
           </label>
+          <fieldset className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-lg border-3 border-ink p-2">
+            <legend className="px-1 text-sm font-semibold">{t("notify")}</legend>
+            {members.map((m) => (
+              <label key={m.userId} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={notify.has(m.userId)}
+                  onChange={() => setNotify((prev) => { const n = new Set(prev); if (n.has(m.userId)) n.delete(m.userId); else n.add(m.userId); return n; })}
+                />
+                {m.name}
+              </label>
+            ))}
+          </fieldset>
           {error && (
             <p role="alert" className="text-sm text-maroon-700">
               {error}
             </p>
           )}
-          <button type="button" disabled={(!userId && !dueDate) || busy} onClick={() => void apply()} className="hit-task rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 font-bold text-white disabled:opacity-50">
+          <button type="button" disabled={(!userId && !dueDate && notify.size === 0) || busy} onClick={() => void apply()} className="hit-task rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 font-bold text-white disabled:opacity-50">
             {t("apply", { count: ids.length })}
           </button>
         </div>

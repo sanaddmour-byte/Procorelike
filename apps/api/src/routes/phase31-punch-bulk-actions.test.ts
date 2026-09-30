@@ -133,4 +133,20 @@ describe("POST /punch-items/bulk-update (UX plan B9)", () => {
     const res = await request(app).post("/punch-items/bulk-update").set("authorization", `Bearer ${adminToken}`).send({ ids: [a.id] });
     expect(res.status).toBe(400);
   });
+
+  it("adds people to every selected snag's distribution without duplicating existing entries", async () => {
+    const a = await createPunchItem(`${MARKER}-dist-a`);
+    const b = await createPunchItem(`${MARKER}-dist-b`);
+    const members = await request(app).get(`/projects/${projectId}/members`).set("authorization", `Bearer ${adminToken}`);
+    const ids = (members.body as { userId: string }[]).slice(0, 2).map((m) => m.userId);
+    for (let i = 0; i < 2; i += 1) {
+      const res = await request(app).post("/punch-items/bulk-update").set("authorization", `Bearer ${adminToken}`).send({ ids: [a.id, b.id], addDistributionUserIds: ids });
+      expect(res.status).toBe(200);
+      expect((res.body as { ok: boolean }[]).every((r) => r.ok)).toBe(true);
+    }
+    const detail = await request(app).get(`/punch-items/${a.id}`).set("authorization", `Bearer ${adminToken}`);
+    const got = (detail.body.distribution as { userId: string | null }[]).map((d) => d.userId).filter(Boolean);
+    expect(new Set(got)).toEqual(new Set(ids));
+    expect(got.length).toBe(ids.length);
+  });
 });

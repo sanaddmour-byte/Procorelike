@@ -360,6 +360,7 @@ export async function bulkUpdatePunchItems(appDb: Database, userId: string, inpu
   if (input.assigneeUserId !== undefined) patch.assigneeUserId = input.assigneeUserId;
   if (input.assigneeCompanyId !== undefined) patch.assigneeCompanyId = input.assigneeCompanyId;
   if (input.dueDate !== undefined) patch.dueDate = input.dueDate;
+  const addUsers = input.addDistributionUserIds ?? [];
   const results: BulkTransitionResult[] = [];
   for (const id of input.ids) {
     if (!found.has(id)) {
@@ -367,7 +368,15 @@ export async function bulkUpdatePunchItems(appDb: Database, userId: string, inpu
       continue;
     }
     try {
-      await updatePunchItem(appDb, userId, ctx, id, patch);
+      if (Object.keys(patch).length > 0) await updatePunchItem(appDb, userId, ctx, id, patch);
+      if (addUsers.length > 0) {
+        await withRequestContext(appDb, { userId, role: ctx.role }, async (tx) => {
+          const existing = await tx.select({ userId: schema.punchItemDistribution.userId }).from(schema.punchItemDistribution).where(eq(schema.punchItemDistribution.punchItemId, id));
+          const have = new Set(existing.map((e) => e.userId));
+          const fresh = addUsers.filter((u) => !have.has(u));
+          if (fresh.length > 0) await tx.insert(schema.punchItemDistribution).values(fresh.map((u) => ({ punchItemId: id, userId: u })));
+        });
+      }
       results.push({ id, ok: true });
     } catch (err) {
       results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to update this punch item" });

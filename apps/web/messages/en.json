@@ -1466,7 +1466,8 @@
     "title": "Assign {count, plural, one {# snag} other {# snags}}",
     "person": "Choose a person",
     "apply": "{count, plural, one {Assign # snag} other {Assign # snags}}",
-    "dueDate": "Due date (optional)"
+    "dueDate": "Due date (optional)",
+    "notify": "Also notify (optional)"
   },
   "RecordNav": {
     "label": "Records in this list",
