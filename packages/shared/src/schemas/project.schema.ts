@@ -44,3 +44,11 @@ export const updateProjectSettingsSchema = z
   })
   .strict();
 export type UpdateProjectSettingsInput = z.infer<typeof updateProjectSettingsSchema>;
+
+export const createLocationSchema = z
+  .object({
+    name: z.string().min(1).max(200),
+    parentId: z.string().uuid().nullable().optional(),
+  })
+  .strict();
+export type CreateLocationInput = z.infer<typeof createLocationSchema>;
