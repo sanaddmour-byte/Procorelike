@@ -21,7 +21,7 @@ test("a T&M ticket is created with entries, computes its total, and moves throug
   const description = `E2E T&M ticket ${Date.now()}`;
   await page.getByRole("button", { name: "New ticket" }).click();
   await page.getByLabel("Work date").fill("2026-01-20");
-  await page.getByLabel("Description").fill(description);
+  await page.getByLabel("Description", { exact: true }).fill(description);
   await page.getByRole("button", { name: "+ Add labor entry" }).click();
   await page.getByPlaceholder("Worker name").fill("Ahmad Salem");
   await page.getByPlaceholder("Hours").fill("8");
@@ -51,8 +51,8 @@ test("correspondence is created and moves through draft -> sent -> acknowledged 
 
   const subject = `E2E correspondence ${Date.now()}`;
   await page.getByRole("button", { name: "New correspondence" }).click();
-  await page.getByLabel("Subject").fill(subject);
-  await page.getByLabel("Body").fill("Please proceed with the scope discussed on site.");
+  await page.getByLabel("Subject", { exact: true }).fill(subject);
+  await page.getByLabel("Body", { exact: true }).fill("Please proceed with the scope discussed on site.");
   await page.getByRole("button", { name: "Create", exact: true }).click();
 
   await expect(page.getByText(subject, { exact: false })).toBeVisible();
@@ -60,7 +60,9 @@ test("correspondence is created and moves through draft -> sent -> acknowledged 
   await expect(page).toHaveURL(/\/correspondence\/.+/);
   await expect(page.getByText("Draft", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "Sent" }).click();
+  // Since Phase 12 sending needs a typed signature ("Sign & send").
+  await page.getByPlaceholder(/name/i).first().fill("Omar Nassar");
+  await page.getByRole("button", { name: "Sign & send" }).click();
   await expect(page.getByText("Sent", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Acknowledged" }).click();

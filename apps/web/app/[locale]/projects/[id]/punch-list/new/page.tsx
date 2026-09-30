@@ -153,6 +153,7 @@ export default function NewPunchItemPage() {
         <label className="flex flex-col gap-1 text-sm">
           {t("description")}
           <VoiceField
+            aria-label={t("description")}
             rows={3}
             value={f.description}
             onValueChange={(description) => {

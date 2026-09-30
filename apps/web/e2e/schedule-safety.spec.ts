@@ -51,7 +51,7 @@ test("safety incident is logged, investigated, and closed with a corrective acti
   const description = `E2E safety incident ${Date.now()}`;
   await page.getByRole("button", { name: "New incident" }).click();
   await page.getByLabel("Occurred at").fill("2026-01-10T09:00");
-  await page.getByLabel("Description").fill(description);
+  await page.getByLabel("Description", { exact: true }).fill(description);
   await page.getByRole("button", { name: "Create", exact: true }).click();
 
   await expect(page.getByText(description, { exact: false })).toBeVisible();
@@ -80,7 +80,7 @@ test("safety observation is logged and resolved", async ({ page }) => {
   const description = `E2E safety observation ${Date.now()}`;
   await page.getByRole("button", { name: "New observation" }).click();
   await page.getByLabel("Observed at").fill("2026-01-10T09:00");
-  await page.getByLabel("Description").fill(description);
+  await page.getByLabel("Description", { exact: true }).fill(description);
   await page.getByRole("button", { name: "Create", exact: true }).click();
 
   const row = page.locator("li", { hasText: description });

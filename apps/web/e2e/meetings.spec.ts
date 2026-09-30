@@ -25,7 +25,7 @@ test("logs a meeting, adds an action item, and converts it to a punch item", asy
 
   const title = `E2E Weekly Coordination ${Date.now()}`;
   await page.getByRole("button", { name: "New meeting" }).click();
-  await page.getByLabel("Title").fill(title);
+  await page.getByLabel("Title", { exact: true }).fill(title);
   await page.getByLabel("Date").fill(localDatetimeValue(new Date()));
   await page.getByRole("button", { name: "Create" }).click();
 
