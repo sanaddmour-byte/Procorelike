@@ -1,6 +1,7 @@
 "use client";
 
 import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
+import { BulkAssign } from "@/components/ui/BulkAssign";
 import { errorMessage } from "@/lib/error-message";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -163,6 +164,15 @@ export default function PunchListPage() {
           >
             {t("bulkSendForReviewAction")}
           </button>
+          <BulkAssign
+            projectId={params.id}
+            ids={[...selectedIds]}
+            onDone={({ failed, total }) => {
+              setError(failed > 0 ? tc("bulkPartialFailure", { failed, total }) : null);
+              setSelectedIds(new Set());
+              serverTable.reload();
+            }}
+          />
         </BulkActionsBar>
 
         <DataTable<PunchItem>

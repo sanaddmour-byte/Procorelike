@@ -1450,5 +1450,11 @@
     "retry": "Try again",
     "discard": "Discard",
     "queued": "Saved on this device. It will send when you're back online."
+  },
+  "BulkAssign": {
+    "action": "Assign to…",
+    "title": "Assign {count, plural, one {# snag} other {# snags}}",
+    "person": "Choose a person",
+    "apply": "{count, plural, one {Assign # snag} other {Assign # snags}}"
   }
 }

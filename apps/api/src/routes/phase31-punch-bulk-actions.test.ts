@@ -108,3 +108,29 @@ describe("POST /punch-items/bulk-transition (Phase 31)", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("POST /punch-items/bulk-update (UX plan B9)", () => {
+  it("assigns every selected snag to one person and reports each one ok", async () => {
+    const a = await createPunchItem(`${MARKER}-assign-a`);
+    const b = await createPunchItem(`${MARKER}-assign-b`);
+    const members = await request(app).get(`/projects/${projectId}/members`).set("authorization", `Bearer ${adminToken}`);
+    const person = (members.body as { userId: string; companyId: string | null }[]).find((m) => m.companyId);
+    expect(person).toBeDefined();
+
+    const res = await request(app)
+      .post("/punch-items/bulk-update")
+      .set("authorization", `Bearer ${adminToken}`)
+      .send({ ids: [a.id, b.id], assigneeUserId: person!.userId, assigneeCompanyId: person!.companyId });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(expect.arrayContaining([{ id: a.id, ok: true }, { id: b.id, ok: true }]));
+
+    const refetched = await request(app).get(`/punch-items/${b.id}`).set("authorization", `Bearer ${adminToken}`);
+    expect(refetched.body.assigneeUserId).toBe(person!.userId);
+  });
+
+  it("rejects a request that changes nothing", async () => {
+    const a = await createPunchItem(`${MARKER}-noop`);
+    const res = await request(app).post("/punch-items/bulk-update").set("authorization", `Bearer ${adminToken}`).send({ ids: [a.id] });
+    expect(res.status).toBe(400);
+  });
+});

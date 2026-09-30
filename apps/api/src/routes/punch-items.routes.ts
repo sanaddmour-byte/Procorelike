@@ -1,6 +1,7 @@
 import type { Database } from "@siteops/db";
 import {
   bulkTransitionPunchItemStatusSchema,
+  bulkUpdatePunchItemsSchema,
   createPunchItemSchema,
   listPunchItemsQuerySchema,
   transitionPunchItemStatusSchema,
@@ -72,6 +73,16 @@ export function punchItemsRouter(appDb: Database, env: Env): Router {
       }
     },
   );
+
+  router.post("/bulk-update", validateBody(bulkUpdatePunchItemsSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      res.json(await punchItemService.bulkUpdatePunchItems(appDb, authUser.id, req.body));
+    } catch (err) {
+      next(err);
+    }
+  });
 
   router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
     try {

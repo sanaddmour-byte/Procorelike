@@ -61,6 +61,18 @@ export const bulkTransitionPunchItemStatusSchema = z
   .strict();
 export type BulkTransitionPunchItemStatusInput = z.infer<typeof bulkTransitionPunchItemStatusSchema>;
 
+/** Bulk field update (plan B9): set the assignee and/or due date on many snags in one call. */
+export const bulkUpdatePunchItemsSchema = z
+  .object({
+    ids: z.array(z.string().uuid()).min(1).max(100),
+    assigneeUserId: z.string().uuid().optional(),
+    assigneeCompanyId: z.string().uuid().optional(),
+    dueDate: z.string().datetime().optional(),
+  })
+  .strict()
+  .refine((v) => v.assigneeUserId !== undefined || v.dueDate !== undefined, { message: "Nothing to update" });
+export type BulkUpdatePunchItemsInput = z.infer<typeof bulkUpdatePunchItemsSchema>;
+
 /**
  * Valid forward transitions — enforced server-side, not just in the UI.
  * Mirrors Procore's Punch List Workflow: a reviewer can send an item back

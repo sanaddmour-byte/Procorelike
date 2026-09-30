@@ -10,6 +10,7 @@ import {
   requirePermission,
   resolveEffectiveLevel,
   type BulkTransitionPunchItemStatusInput,
+  type BulkUpdatePunchItemsInput,
   type CreatePunchItemInput,
   type FieldConflict,
   type ListPunchItemsQuery,
@@ -342,6 +343,34 @@ export async function bulkTransitionPunchItemStatus(
       results.push({ id, ok: true });
     } catch (err) {
       results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to transition this punch item" });
+    }
+  }
+  return results;
+}
+
+/** Applies the same assignee / due date to many snags; per-item permission checks run through updatePunchItem, and a failure on one item is reported rather than aborting the batch. */
+export async function bulkUpdatePunchItems(appDb: Database, userId: string, input: BulkUpdatePunchItemsInput): Promise<BulkTransitionResult[]> {
+  const rows = await withUserContext(appDb, userId, async (tx) => tx.select({ id: schema.punchItems.id, projectId: schema.punchItems.projectId }).from(schema.punchItems).where(inArray(schema.punchItems.id, input.ids)));
+  if (rows.length === 0) throw new NotFoundError("No punch items found for the given ids");
+  const projectIds = new Set(rows.map((r) => r.projectId));
+  if (projectIds.size > 1) throw new ApiError(400, "mixed_projects", "All selected punch items must belong to the same project");
+  const ctx = await loadPermissionContext(appDb, userId, [...projectIds][0]!);
+  const found = new Set(rows.map((r) => r.id));
+  const patch: UpdatePunchItemInput = {};
+  if (input.assigneeUserId !== undefined) patch.assigneeUserId = input.assigneeUserId;
+  if (input.assigneeCompanyId !== undefined) patch.assigneeCompanyId = input.assigneeCompanyId;
+  if (input.dueDate !== undefined) patch.dueDate = input.dueDate;
+  const results: BulkTransitionResult[] = [];
+  for (const id of input.ids) {
+    if (!found.has(id)) {
+      results.push({ id, ok: false, error: "Punch item not found" });
+      continue;
+    }
+    try {
+      await updatePunchItem(appDb, userId, ctx, id, patch);
+      results.push({ id, ok: true });
+    } catch (err) {
+      results.push({ id, ok: false, error: err instanceof ApiError ? err.message : "Failed to update this punch item" });
     }
   }
   return results;
