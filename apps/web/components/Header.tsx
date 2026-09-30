@@ -34,26 +34,38 @@ export function Header({ projectId, onToggleSidebar }: Props) {
   }, []);
 
   return (
-    <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b-3 border-ink bg-gradient-to-b from-navy-700 to-navy-900 px-4 py-2.5 text-white shadow-brutal-sm sm:px-6">
+    <header className="sticky top-0 z-30 flex min-h-[56px] items-center gap-2 border-b-3 border-ink bg-gradient-to-b from-navy-700 to-navy-900 px-2 py-1 text-white shadow-brutal-sm sm:gap-3 sm:px-6">
       {onToggleSidebar && (
-        <button type="button" onClick={onToggleSidebar} aria-label={tShell("openNavigation")} className="rounded p-1 text-white/80 hover:bg-white/10 md:hidden">
+        <button type="button" onClick={onToggleSidebar} aria-label={tShell("openNavigation")} className="flex shrink-0 items-center justify-center rounded text-xl text-white hover:bg-white/10 md:hidden">
           ☰
         </button>
       )}
-      <span className="flex shrink-0 items-center gap-2 text-base font-extrabold tracking-tight">
+      <span className="hidden shrink-0 items-center gap-2 text-base font-extrabold tracking-tight sm:flex">
         <span className="inline-block h-3 w-3 rounded-sm border-2 border-white bg-gradient-to-b from-orange-400 to-orange-600" aria-hidden="true" />
         {t("appName")}
       </span>
-      {projectId && <ProjectSelector projectId={projectId} />}
+      {projectId && (
+        <div className="min-w-0 flex-1 sm:flex-none">
+          <ProjectSelector projectId={projectId} />
+        </div>
+      )}
+      {!projectId && <span className="flex-1 sm:hidden" />}
       {authed && (
-        <div className="mx-2 hidden flex-1 justify-center sm:flex">
+        <div className="flex sm:mx-2 sm:flex-1 sm:justify-center">
           <GlobalSearch projectId={projectId} />
         </div>
       )}
-      <div className="ms-auto flex items-center gap-2 sm:gap-3">
-        <LanguageToggle />
+      <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-3">
+        <div className="hidden sm:block">
+          <LanguageToggle />
+        </div>
         {authed && <NotificationBell />}
         {authed && <UserMenu />}
+        {!authed && (
+          <div className="sm:hidden">
+            <LanguageToggle />
+          </div>
+        )}
       </div>
     </header>
   );

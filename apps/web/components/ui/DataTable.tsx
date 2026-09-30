@@ -18,6 +18,57 @@ export interface DataTableColumn<T> {
   align?: "start" | "end";
   /** Set false to keep an identifying column always visible, excluded from the "Columns" show/hide menu. Defaults to true; only takes effect when the table's `storageKey` prop is set. */
   hideable?: boolean;
+  /**
+   * How this column appears in the phone "card row" layout (plan B1): `id` (bold, first line, left), `title` (first line, fills the width),
+   * `badge` (second line, first), `meta` (second line, joined with " · "), `hide` (omitted on phones). When no column sets it, roles are
+   * derived: column 0 = id, column 1 = title, a column whose key contains "status" = badge, up to two further columns = meta.
+   */
+  mobile?: "id" | "title" | "badge" | "meta" | "hide";
+}
+
+function mobileRoles<T>(columns: DataTableColumn<T>[]): Map<string, NonNullable<DataTableColumn<T>["mobile"]>> {
+  const roles = new Map<string, NonNullable<DataTableColumn<T>["mobile"]>>();
+  if (columns.some((c) => c.mobile)) {
+    for (const c of columns) roles.set(c.key, c.mobile ?? "hide");
+    return roles;
+  }
+  let metaLeft = 2;
+  columns.forEach((c, i) => {
+    if (/status/i.test(c.key) && !roles.size) roles.set(c.key, "badge");
+    else if (i === 0) roles.set(c.key, columns.length > 1 ? "id" : "title");
+    else if (i === 1) roles.set(c.key, "title");
+    else if (/status/i.test(c.key)) roles.set(c.key, "badge");
+    else if (metaLeft > 0) {
+      roles.set(c.key, "meta");
+      metaLeft -= 1;
+    } else roles.set(c.key, "hide");
+  });
+  return roles;
+}
+
+function useCoarsePointer(): boolean {
+  const [coarse, setCoarse] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const update = (): void => setCoarse(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return coarse;
+}
+
+/** True below the `sm` breakpoint (640 px): the table becomes a list of tappable cards. */
+function useCompact(): boolean {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = (): void => setCompact(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return compact;
 }
 
 interface RowSelectionHandlers<T> {
@@ -31,12 +82,58 @@ interface RowProps<T> {
   onRowClick?: (row: T) => void;
   gridTemplate: string;
   selection?: RowSelectionHandlers<T>;
+  compact?: boolean;
+  roles?: Map<string, NonNullable<DataTableColumn<T>["mobile"]>>;
 }
 
-function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate, selection }: RowComponentProps<RowProps<T>>) {
+function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate, selection, compact, roles }: RowComponentProps<RowProps<T>>) {
   const tc = useTranslations("Common");
   const row = rows[index];
   if (!row) return null;
+  if (compact && roles) {
+    const by = (r: string) => columns.filter((c) => roles.get(c.key) === r);
+    return (
+      <div
+        style={{ ...style, gridTemplateColumns: selection ? "48px 1fr" : "1fr" }}
+        onClick={() => onRowClick?.(row)}
+        onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
+        role="row"
+        tabIndex={onRowClick ? 0 : undefined}
+        className={`grid items-center border-b border-navy-100 pe-3 text-sm ${selection ? "ps-0" : "ps-3"} ${onRowClick ? "cursor-pointer active:bg-orange-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700" : ""} ${index % 2 === 1 ? "bg-cream/50" : "bg-white"}`}
+      >
+        {selection && (
+          <label role="cell" className="hit-label" onClick={(e) => e.stopPropagation()}>
+            <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} />
+          </label>
+        )}
+        <div role="cell" className="min-w-0">
+          <div className="flex items-baseline gap-2">
+            {by("id").map((c) => (
+              <span key={c.key} className="shrink-0 font-bold text-navy-900"><bdi dir="ltr">{c.render(row)}</bdi></span>
+            ))}
+            <span className="min-w-0 flex-1 truncate font-medium text-navy-900">
+              {by("title").map((c) => (
+                <span key={c.key}>{c.render(row)}</span>
+              ))}
+            </span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-navy-700">
+            {by("badge").map((c) => (
+              <span key={c.key} className="shrink-0">{c.render(row)}</span>
+            ))}
+            <span className="min-w-0 flex-1 truncate">
+              {by("meta").map((c, i) => (
+                <span key={c.key}>
+                  {i > 0 && " · "}
+                  {c.render(row)}
+                </span>
+              ))}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       style={{ ...style, gridTemplateColumns: gridTemplate }}
@@ -58,9 +155,9 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate
       } ${index % 2 === 1 ? "bg-cream/50" : "bg-white"}`}
     >
       {selection && (
-        <div role="cell" className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-          <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} className="h-4 w-4" />
-        </div>
+        <label role="cell" className="hit-label" onClick={(e) => e.stopPropagation()}>
+          <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} />
+        </label>
       )}
       {columns.map((col) => (
         <div key={col.key} role="cell" className={`truncate ${col.align === "end" ? "text-end" : ""}`}>
@@ -225,7 +322,11 @@ export function DataTable<T>({
     saveHiddenColumns(storageKey, next);
   }
 
-  const gridTemplate = [selection ? "36px" : null, ...visibleColumns.map((c) => c.width ?? "1fr")].filter((track): track is string => track !== null).join(" ");
+  const gridTemplate = [selection ? "48px" : null, ...visibleColumns.map((c) => c.width ?? "1fr")].filter((track): track is string => track !== null).join(" ");
+  const compact = useCompact();
+  const coarse = useCoarsePointer();
+  const roles = useMemo(() => mobileRoles(visibleColumns), [visibleColumns]);
+  const effRowHeight = compact ? 60 : coarse ? Math.max(rowHeight, 48) : rowHeight;
   const activeSortKey = onServerSortChange ? (serverSort?.key ?? null) : sortKey;
   const activeSortDir = onServerSortChange ? (serverSort?.direction ?? "asc") : sortDir;
 
@@ -292,12 +393,12 @@ export function DataTable<T>({
   if (!rows) return <LoadingState rows={6} />;
   if (rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
 
-  const minWidth = minTableWidth(visibleColumns as DataTableColumn<unknown>[]) + (selection ? 48 : 0);
+  const minWidth = compact ? 0 : minTableWidth(visibleColumns as DataTableColumn<unknown>[]) + (selection ? 48 : 0);
   const pageCount = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize)) : null;
 
   return (
     <div className="overflow-hidden rounded-xl border-3 border-ink shadow-brutal-sm">
-      {storageKey && (
+      {storageKey && !compact && (
         <div className="relative flex items-center justify-end border-b-3 border-ink bg-cream px-3 py-1.5">
           <button
             type="button"
@@ -317,8 +418,8 @@ export function DataTable<T>({
                   const hidden = hiddenColumns.has(col.key);
                   const locked = col.hideable === false;
                   return (
-                    <label key={col.key} className={`flex items-center gap-2 rounded px-2 py-1 text-sm ${locked ? "opacity-50" : "cursor-pointer hover:bg-navy-50"}`}>
-                      <input type="checkbox" checked={!hidden} disabled={locked} onChange={() => toggleColumn(col.key)} className="h-4 w-4" />
+                    <label key={col.key} className={`flex min-h-hit items-center gap-2 rounded px-2 text-sm ${locked ? "opacity-50" : "cursor-pointer hover:bg-navy-50"}`}>
+                      <input type="checkbox" checked={!hidden} disabled={locked} onChange={() => toggleColumn(col.key)} />
                       {col.header}
                     </label>
                   );
@@ -330,6 +431,46 @@ export function DataTable<T>({
       )}
       <div role="table" aria-rowcount={(pagination?.total ?? rows.length) + 1} className="overflow-x-auto">
         <div style={{ minWidth }}>
+          {compact ? (
+            <div role="row" className="flex items-center gap-2 border-b-3 border-ink bg-cream pe-2 text-sm font-semibold text-navy-800">
+              {selection ? (
+                <label className="hit-label" role="columnheader">
+                  <input ref={selectAllRef} type="checkbox" checked={allOnPageSelected} onChange={toggleSelectAllOnPage} aria-label={tc("selectAllRows")} />
+                </label>
+              ) : (
+                <span className="ps-3" />
+              )}
+              <span className="text-xs text-navy-700">{tc("sortBy")}</span>
+              <select
+                aria-label={tc("sortBy")}
+                value={activeSortKey ?? ""}
+                onChange={(e) => {
+                  const col = visibleColumns.find((c) => c.key === e.target.value);
+                  if (col) handleSort(col);
+                }}
+                className="min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
+              >
+                {!activeSortKey && <option value="" />}
+                {visibleColumns.filter((c) => c.sortValue).map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.header}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                aria-label={tc("sortDirection")}
+                disabled={!activeSortKey}
+                onClick={() => {
+                  const col = visibleColumns.find((c) => c.key === activeSortKey);
+                  if (col) handleSort(col);
+                }}
+                className="rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
+              >
+                {activeSortDir === "asc" ? "▲" : "▼"}
+              </button>
+            </div>
+          ) : (
           <div role="row" className="grid items-center gap-3 border-b-3 border-ink bg-cream px-3 text-xs font-semibold text-navy-800" style={{ gridTemplateColumns: gridTemplate, height: 36 }}>
             {selection && (
               <div role="columnheader" className="flex items-center justify-center">
@@ -339,7 +480,7 @@ export function DataTable<T>({
                   checked={allOnPageSelected}
                   onChange={toggleSelectAllOnPage}
                   aria-label={tc("selectAllRows")}
-                  className="h-4 w-4"
+                 
                 />
               </div>
             )}
@@ -358,18 +499,21 @@ export function DataTable<T>({
               </button>
             ))}
           </div>
+          )}
           <List<RowProps<T>>
             rowComponent={DataTableRow}
             rowCount={sortedRows.length}
-            rowHeight={rowHeight}
+            rowHeight={effRowHeight}
             rowProps={{
               rows: sortedRows,
               columns: visibleColumns,
               onRowClick,
               gridTemplate,
+              compact,
+              roles,
               selection: selection ? { isSelected: (row: T) => selection.selectedIds.has(selection.getRowId(row)), toggle: toggleRowSelected } : undefined,
             }}
-            style={{ height: Math.min(maxHeight, sortedRows.length * rowHeight) }}
+            style={{ height: Math.min(maxHeight, sortedRows.length * effRowHeight) }}
           />
         </div>
       </div>
@@ -380,7 +524,7 @@ export function DataTable<T>({
             onClick={() => pagination.onPageChange(pagination.page - 1)}
             disabled={pagination.page <= 1}
             aria-label={tc("previousPage")}
-            className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            className="rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
           >
             &#8249;
           </button>
@@ -390,7 +534,7 @@ export function DataTable<T>({
             onClick={() => pagination.onPageChange(pagination.page + 1)}
             disabled={pagination.page >= pageCount}
             aria-label={tc("nextPage")}
-            className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            className="rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
           >
             &#8250;
           </button>

@@ -163,7 +163,7 @@ export default function ProjectSettingsPage() {
 
   if (forbidden) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader title={t("title")} />
         <p className="text-navy-600">{t("forbidden")}</p>
       </main>
@@ -171,7 +171,7 @@ export default function ProjectSettingsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
       <PageHeader title={t("title")} description={t("intro")} />
       {error && <p className="mb-4 text-maroon-700">{error}</p>}
 

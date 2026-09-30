@@ -11,6 +11,8 @@ interface Props {
   children: ReactNode;
   /** Wider panel for content-heavy dialogs (e.g. global search). */
   wide?: boolean;
+  /** Anchor to the bottom edge on phones (thumb zone) -- used by pickers and the create sheet. */
+  sheet?: boolean;
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -23,7 +25,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [ta
  * GlobalSearch both build on it rather than each hand-rolling their own
  * overlay + focus handling.
  */
-export function Modal({ open, onClose, title, children, wide = false }: Props) {
+export function Modal({ open, onClose, title, children, wide = false, sheet = false }: Props) {
   const t = useTranslations("Common");
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -64,14 +66,14 @@ export function Modal({ open, onClose, title, children, wide = false }: Props) {
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 px-4 pt-[10vh]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className={`fixed inset-0 z-50 flex justify-center bg-ink/40 ${sheet ? "items-end px-0 pt-[10vh] sm:items-start sm:px-4" : "items-start px-4 pt-[10vh]"}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         tabIndex={-1}
-        className={`flex max-h-[75vh] w-full flex-col overflow-hidden rounded-xl border-3 border-ink bg-white shadow-brutal-lg ${wide ? "max-w-2xl" : "max-w-md"}`}
+        className={`flex w-full flex-col overflow-hidden border-3 border-ink bg-white shadow-brutal-lg ${sheet ? "max-h-[85vh] rounded-t-xl sm:max-h-[75vh] sm:rounded-xl" : "max-h-[75vh] rounded-xl"} ${wide ? "max-w-2xl" : "max-w-md"}`}
       >
         <div className="flex items-center justify-between border-b border-navy-100 px-4 py-3">
           <h2 id="modal-title" className="text-sm font-bold text-navy-900">

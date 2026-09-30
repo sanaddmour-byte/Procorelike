@@ -151,7 +151,7 @@ export default function CompanyAdminPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/companies`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}
         </Link>
