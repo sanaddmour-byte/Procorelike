@@ -131,7 +131,7 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, rowHref, gri
             {by("id").map((c) => (
               <span key={c.key} className="shrink-0 font-bold text-navy-900"><bdi dir="ltr">{c.render(row)}</bdi></span>
             ))}
-            <span className="min-w-0 flex-1 truncate font-medium text-navy-900">
+            <span dir="auto" className="min-w-0 flex-1 truncate text-start font-medium text-navy-900">
               {by("title").map((c) => (
                 <span key={c.key}>{c.render(row)}</span>
               ))}

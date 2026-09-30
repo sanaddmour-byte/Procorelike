@@ -104,7 +104,7 @@ export default function MyWorkPage() {
                           <span>{t(`module_${i.module}`)}</span>
                           {i.number && <bdi dir="ltr">{i.number}</bdi>}
                         </div>
-                        <div className="truncate text-sm font-semibold">{i.title}</div>
+                        <div dir="auto" className="truncate text-start text-sm font-semibold">{i.title}</div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <StatusBadge label={enumLabel(i.status)} status={i.status} />
