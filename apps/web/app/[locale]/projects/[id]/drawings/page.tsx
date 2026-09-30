@@ -9,6 +9,7 @@ import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { detectSheetInfoFromPdf } from "@/lib/ocr";
+import { getRecents, type Recent } from "@/lib/recents";
 import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
@@ -32,10 +33,13 @@ interface DrawingSet {
 export default function DrawingsPage() {
   const t = useTranslations("Drawings");
   const tc = useTranslations("Common");
+  const tw = useTranslations("MyWork");
   const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
+  const [recentSheets, setRecentSheets] = useState<Recent[]>([]);
+  useEffect(() => setRecentSheets(getRecents(params.id).filter((r) => r.kind === "drawing").slice(0, 5)), [params.id]);
 
   const [drawingSets, setDrawingSets] = useState<DrawingSet[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -260,7 +264,17 @@ export default function DrawingsPage() {
           onApply={(state) => serverTable.applyView(state)}
         />
 
+        {recentSheets.length > 0 && (
+          <nav aria-label={tw("recent")} className="mb-3 flex flex-wrap gap-2">
+            {recentSheets.map((r) => (
+              <a key={r.id} href={r.href} className="min-h-hit rounded-full border-3 border-ink bg-white px-3 py-2 text-sm font-semibold text-navy-900">
+                {r.label.split(" — ")[0]}
+              </a>
+            ))}
+          </nav>
+        )}
         <FilterBar
+          autoFocusSearch
           searchValue={serverTable.search}
           onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}

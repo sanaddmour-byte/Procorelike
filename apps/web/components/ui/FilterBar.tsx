@@ -12,6 +12,8 @@ interface PresetDef {
 }
 
 interface Props {
+  /** Focus the search box on load (drawings: search-first landing). */
+  autoFocusSearch?: boolean;
   /** One-tap shortcuts such as "Mine" -- a chip that toggles a whole filter combination (plan E2/E6). */
   presets?: PresetDef[];
   searchValue: string;
@@ -29,7 +31,7 @@ interface Props {
  * shows once something is actually set, so it isn't dead chrome on an
  * unfiltered list.
  */
-export function FilterBar({ presets = [], searchValue, onSearchChange, searchPlaceholder = "Search…", filters = [], activeFilters, onFilterChange, onClearAll, clearAllLabel = "Clear all" }: Props) {
+export function FilterBar({ autoFocusSearch = false, presets = [], searchValue, onSearchChange, searchPlaceholder = "Search…", filters = [], activeFilters, onFilterChange, onClearAll, clearAllLabel = "Clear all" }: Props) {
   const hasActiveFilters = Boolean(searchValue) || Object.values(activeFilters).some(Boolean);
 
   const activeChips = [
@@ -63,6 +65,7 @@ export function FilterBar({ presets = [], searchValue, onSearchChange, searchPla
         </div>
       )}
       <input
+        autoFocus={autoFocusSearch}
         type="search"
         value={searchValue}
         onChange={(e) => onSearchChange(e.target.value)}

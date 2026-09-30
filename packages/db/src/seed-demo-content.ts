@@ -40,10 +40,7 @@ async function main(): Promise<void> {
   const yousef = uid("yousef.amer@siteops.test");
   const rana = uid("rana.odeh@siteops.test");
   const fadi = uid("fadi.salameh@siteops.test");
-  const huda = uid("huda.masri@siteops.test");
-  const ziad = uid("ziad.btoush@siteops.test");
   const nadia = uid("nadia.qutub@siteops.test");
-  const karim = uid("karim.abughazaleh@siteops.test");
 
   const companyRows = await sql`select id, name from companies`;
   const companyByName = new Map<string, string>(companyRows.map((c) => [c.name as string, c.id as string]));
@@ -55,7 +52,6 @@ async function main(): Promise<void> {
   const gc = cid("Al-Amal General Contracting");
   const sub1 = cid("Rawafed Electrical Works");
   const sub2 = cid("Structura Concrete Co.");
-  const consultant = cid("Amman Engineering Consultants");
   const owner = cid("Petra Development Holdings");
 
   const costCodeRows = await sql`select id, code from cost_codes where project_id = ${buildingId}`;

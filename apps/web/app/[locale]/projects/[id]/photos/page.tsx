@@ -1,5 +1,6 @@
 "use client";
 
+import { LazyThumb } from "@/components/LazyThumb";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { errorMessage } from "@/lib/error-message";
@@ -13,6 +14,7 @@ interface Photo {
   id: string;
   attachmentId: string;
   takenAt: string | null;
+  createdAt?: string;
   tags: string[] | null;
 }
 
@@ -127,13 +129,28 @@ export default function PhotosPage() {
         {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!photos && !error && <p>{tc("loading")}</p>}
         {photos && photos.length === 0 && <p>{t("empty")}</p>}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {photos?.map((photo) => (
-            <div key={photo.id} className="flex aspect-square items-center justify-center rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm bg-orange-50 p-2 text-center text-xs text-navy-600">
-              {photo.attachmentId.slice(0, 8)}
-            </div>
-          ))}
-        </div>
+        {photos && photos.length > 0 &&
+          Object.entries(
+            photos.reduce<Record<string, Photo[]>>((acc, p) => {
+              const day = (p.takenAt ?? p.createdAt ?? "").slice(0, 10) || "—";
+              (acc[day] ??= []).push(p);
+              return acc;
+            }, {}),
+          )
+            .sort(([a], [b]) => b.localeCompare(a))
+            .map(([day, list]) => (
+              <section key={day} className="mb-5" aria-label={day}>
+                <h2 className="mb-2 flex items-center justify-between text-sm font-bold text-navy-900">
+                  <bdi dir="ltr">{day}</bdi>
+                  <span className="text-xs font-semibold text-navy-600">{list.length}</span>
+                </h2>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                  {list.map((photo) => (
+                    <LazyThumb key={photo.id} attachmentId={photo.attachmentId} alt={`${t("title")} ${photo.attachmentId.slice(0, 8)}`} />
+                  ))}
+                </div>
+              </section>
+            ))}
       </main>
     </>
   );
