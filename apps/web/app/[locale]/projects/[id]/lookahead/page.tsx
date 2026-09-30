@@ -1,6 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/ui/PageHeader";
+import { errorMessage } from "@/lib/error-message";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
@@ -94,6 +95,7 @@ const COMMITMENT_STATUS_TONE: Record<Commitment["status"], StatusTone> = {
 export default function LookaheadPage() {
   const t = useTranslations("Lookahead");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -140,7 +142,7 @@ export default function LookaheadPage() {
     setError(null);
     apiJson<LookaheadView>(`/lookahead/view?projectId=${params.id}&weekStart=${weekStart}&horizonWeeks=${horizonWeeks}`)
       .then(setView)
-      .catch(() => setError(tc("errorGeneric")))
+      .catch((err) => setError(errorMessage(err, te)))
       .finally(() => setLoading(false));
   }
 
@@ -197,8 +199,8 @@ export default function LookaheadPage() {
       });
       setPlans((prev) => [...prev, plan]);
       setSelectedPlanId(plan.id);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -213,8 +215,8 @@ export default function LookaheadPage() {
       setConstraintDescription("");
       setConstraintNeedBy("");
       loadConstraints();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -222,8 +224,8 @@ export default function LookaheadPage() {
     try {
       await apiJson(`/schedule-constraints/${id}/clear`, { method: "POST" });
       loadConstraints();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -243,8 +245,8 @@ export default function LookaheadPage() {
       setCommitments((prev) => [...prev, commitment]);
       setCommitmentTaskId("");
       setCommitmentPromisedFinish("");
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -277,8 +279,8 @@ export default function LookaheadPage() {
       setProgressNote("");
       setProgressSubmitted(true);
       setTimeout(() => setProgressSubmitted(false), 4000);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 

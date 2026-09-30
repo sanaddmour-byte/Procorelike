@@ -1,6 +1,8 @@
 "use client";
 
-import { ApiClientError, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { errorMessage } from "@/lib/error-message";
 import { useLocale, useTranslations } from "next-intl";
 import Link, { type LinkProps } from "next/link";
 import { useParams } from "next/navigation";
@@ -26,6 +28,7 @@ interface DailyLogDetail {
 
 export default function DailyLogDetailPage() {
   const t = useTranslations("DailyLog");
+  const te = useTranslations("Errors");
   const tc = useTranslations("Common");
   const locale = useLocale();
   const params = useParams<{ id: string; logId: string }>();
@@ -41,7 +44,7 @@ export default function DailyLogDetailPage() {
         setLog(data);
         setNotes(data.notes ?? "");
       })
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [params.logId, tc]);
 
   async function saveNotes(): Promise<void> {
@@ -54,7 +57,7 @@ export default function DailyLogDetailPage() {
       });
       setLog((prev) => (prev ? { ...prev, ...updated } : updated));
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -70,7 +73,7 @@ export default function DailyLogDetailPage() {
       });
       setLog((prev) => (prev ? { ...prev, ...updated } : updated));
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -85,7 +88,7 @@ export default function DailyLogDetailPage() {
           {t("back")}
         </Link>
         {!log && !error && <p className="mt-4">{tc("loading")}</p>}
-        {error && <p className="mt-4 text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {log && (
           <>
             <div className="mb-4 mt-2 flex items-center justify-between">

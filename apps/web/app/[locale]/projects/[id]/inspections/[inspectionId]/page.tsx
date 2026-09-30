@@ -1,6 +1,9 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { SignatureBadge } from "@/components/SignatureBadge";
 import { SignaturePad } from "@/components/SignaturePad";
 import { apiJson } from "@/lib/api-client";
@@ -47,6 +50,7 @@ function statusLabel(status: InspectionDetail["status"], t: (key: string) => str
 export default function InspectionDetailScreen() {
   const t = useTranslations("Inspections");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; inspectionId: string }>();
@@ -74,8 +78,8 @@ export default function InspectionDetailScreen() {
       if (detail.status === "completed") {
         apiJson<EsignatureVerification>(`/inspections/${params.inspectionId}/signature`).then(setSignature).catch(() => undefined);
       }
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.inspectionId, tc]);
 
@@ -102,8 +106,8 @@ export default function InspectionDetailScreen() {
     try {
       await apiJson(`/inspections/${params.inspectionId}/transition`, { method: "POST", body: JSON.stringify({ toStatus: "in_progress" }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -124,8 +128,8 @@ export default function InspectionDetailScreen() {
         file,
       });
       setDraft(templateItemId, { type: "photo", attachmentId });
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setUploadingItemId(null);
     }
@@ -139,8 +143,8 @@ export default function InspectionDetailScreen() {
     try {
       await apiJson(`/inspections/${params.inspectionId}/responses`, { method: "PATCH", body: JSON.stringify({ responses }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -156,8 +160,8 @@ export default function InspectionDetailScreen() {
         body: JSON.stringify({ signedByName: signedByName.trim(), signatureImageBase64: signatureImage ?? undefined }),
       });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -170,7 +174,7 @@ export default function InspectionDetailScreen() {
   if (!inspection) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -189,7 +193,7 @@ export default function InspectionDetailScreen() {
           <span className="whitespace-nowrap rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(inspection.status, t)}</span>
         </div>
         {inspection.scheduledAt && <p className="mb-4 text-sm text-navy-600">{inspection.scheduledAt.slice(0, 10)}</p>}
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         {inspection.status === "scheduled" && (
           <button onClick={() => void handleStart()} disabled={busy} className="mb-6 rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white disabled:opacity-50">

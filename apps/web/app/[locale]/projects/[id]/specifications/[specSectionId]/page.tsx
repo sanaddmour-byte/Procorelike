@@ -1,6 +1,9 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -35,6 +38,7 @@ export default function SpecSectionDetailScreen() {
   const ts = useTranslations("Submittals");
   const tr = useTranslations("Rfis");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; specSectionId: string }>();
@@ -46,8 +50,8 @@ export default function SpecSectionDetailScreen() {
     try {
       const detail = await apiJson<SpecSectionDetail>(`/submittals/spec-sections/${params.specSectionId}`);
       setSection(detail);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.specSectionId, tc]);
 
@@ -81,7 +85,7 @@ export default function SpecSectionDetailScreen() {
   if (!section) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -95,7 +99,7 @@ export default function SpecSectionDetailScreen() {
         <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">
           {section.csiCode} — {section.title}
         </h1>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <section className="mb-6">
           <h2 className="mb-2 text-lg font-medium">{t("submittalsInSection")}</h2>

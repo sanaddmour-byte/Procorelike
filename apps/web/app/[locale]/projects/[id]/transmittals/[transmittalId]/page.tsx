@@ -1,6 +1,8 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -35,6 +37,7 @@ interface TransmittalDetail {
 export default function TransmittalDetailPage() {
   const t = useTranslations("Transmittals");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; transmittalId: string }>();
@@ -49,7 +52,7 @@ export default function TransmittalDetailPage() {
   function reload(): void {
     apiJson<TransmittalDetail>(`/transmittals/${params.transmittalId}`)
       .then(setTransmittal)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -73,8 +76,8 @@ export default function TransmittalDetailPage() {
     try {
       await apiJson(`/transmittals/${params.transmittalId}/send`, { method: "POST" });
       reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -85,8 +88,8 @@ export default function TransmittalDetailPage() {
     try {
       await apiJson(`/transmittals/${params.transmittalId}/acknowledge`, { method: "POST" });
       reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -100,7 +103,7 @@ export default function TransmittalDetailPage() {
         <Link href={`/${locale}/projects/${params.id}/transmittals`} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!transmittal && !error && <p>{tc("loading")}</p>}
         {transmittal && (
           <>

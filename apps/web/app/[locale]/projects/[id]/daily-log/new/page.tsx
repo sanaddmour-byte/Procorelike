@@ -1,12 +1,14 @@
 "use client";
 
-import { ApiClientError, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 export default function NewDailyLogPage() {
   const t = useTranslations("DailyLog");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -27,7 +29,7 @@ export default function NewDailyLogPage() {
       });
       router.replace(`/${locale}/projects/${params.id}/daily-log/${log.id}`);
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+      setError(errorMessage(err, te));
     } finally {
       setSubmitting(false);
     }

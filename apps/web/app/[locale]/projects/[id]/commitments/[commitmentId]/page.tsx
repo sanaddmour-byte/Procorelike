@@ -1,6 +1,8 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -35,6 +37,7 @@ interface CommitmentDetail {
 export default function CommitmentDetailPage() {
   const t = useTranslations("Commitments");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; commitmentId: string }>();
@@ -52,7 +55,7 @@ export default function CommitmentDetailPage() {
   function load(): void {
     apiJson<CommitmentDetail>(`/commitments/${params.commitmentId}`)
       .then(setCommitment)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -87,8 +90,8 @@ export default function CommitmentDetailPage() {
       setAmount("");
       setShowForm(false);
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -110,7 +113,7 @@ export default function CommitmentDetailPage() {
         <Link href={`/${locale}/projects/${params.id}/commitments`} className="mb-4 inline-block text-sm text-maroon-700 underline">
           {t("back")}
         </Link>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {commitment && (
           <>
             <h1 className="mb-1 text-2xl font-extrabold tracking-tight text-navy-900">

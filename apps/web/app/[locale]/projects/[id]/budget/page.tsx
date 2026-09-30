@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { apiFetch, apiJson } from "@/lib/api-client";
@@ -33,6 +35,7 @@ interface BudgetLineItem {
 export default function BudgetPage() {
   const t = useTranslations("Budget");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -58,7 +61,7 @@ export default function BudgetPage() {
   function load(): void {
     apiJson<BudgetLineItem[]>(`/budget-line-items?projectId=${params.id}`)
       .then(setLineItems)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -98,8 +101,8 @@ export default function BudgetPage() {
       setForecastToComplete("");
       setShowForm(false);
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -121,8 +124,8 @@ export default function BudgetPage() {
       });
       setEditingItem(null);
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -164,8 +167,8 @@ export default function BudgetPage() {
       setModReason("");
       setShowModForm(false);
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -302,7 +305,7 @@ export default function BudgetPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <DataTable<BudgetLineItem> storageKey="budget" columns={columns} rows={lineItems} emptyTitle={t("empty")} />
       </main>

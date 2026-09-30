@@ -1,6 +1,9 @@
 "use client";
 
 import { AttachmentList } from "@/components/AttachmentList";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { RecordLinks, type RecordLinkTargetConfig } from "@/components/RecordLinks";
 import { RecordHistory } from "@/components/ui/RecordHistory";
@@ -91,6 +94,7 @@ function transitionLabel(from: RfiStatus, to: RfiStatus, t: (key: string) => str
 export default function RfiDetailScreen() {
   const t = useTranslations("Rfis");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; rfiId: string }>();
@@ -112,8 +116,8 @@ export default function RfiDetailScreen() {
     try {
       const detail = await apiJson<RfiDetail>(`/rfis/${params.rfiId}`);
       setRfi(detail);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.rfiId, tc]);
 
@@ -168,8 +172,8 @@ export default function RfiDetailScreen() {
       setResponseText("");
       setIsOfficial(false);
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSubmittingResponse(false);
     }
@@ -180,8 +184,8 @@ export default function RfiDetailScreen() {
     try {
       await apiJson(`/rfis/${params.rfiId}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setTransitioning(false);
     }
@@ -192,8 +196,8 @@ export default function RfiDetailScreen() {
     try {
       await apiJson(`/rfis/${params.rfiId}`, { method: "PATCH", body: JSON.stringify({ ballInCourtUserId: userId || undefined }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setReassigning(false);
     }
@@ -203,15 +207,15 @@ export default function RfiDetailScreen() {
     try {
       await apiJson(`/rfis/${params.rfiId}`, { method: "PATCH", body: JSON.stringify({ [field]: value }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
   if (!rfi) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -307,7 +311,7 @@ export default function RfiDetailScreen() {
             </select>
           </span>
         </div>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
           <p className="whitespace-pre-wrap">{rfi.question}</p>

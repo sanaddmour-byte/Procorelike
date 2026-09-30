@@ -1,6 +1,9 @@
 "use client";
 
 import { DrawingViewer, type MarkupCoords, type MarkupPin } from "@/components/DrawingViewer";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { DrawingCompareView } from "@/components/DrawingCompareView";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
@@ -43,6 +46,7 @@ interface RfiRef {
 export default function DrawingDetailScreen() {
   const t = useTranslations("Drawings");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; drawingId: string }>();
@@ -89,8 +93,8 @@ export default function DrawingDetailScreen() {
       } else {
         setReferencingRfis([]);
       }
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.drawingId, tc]);
 
@@ -110,10 +114,10 @@ export default function DrawingDetailScreen() {
     }
     apiJson<{ downloadUrl: string }>(`/attachments/${currentRevision.attachmentId}/download`)
       .then((res) => setPdfUrl(res.downloadUrl))
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
     apiJson<MarkupPin[]>(`/drawings/revisions/${currentRevision.id}/markups`)
       .then(setMarkups)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [currentRevision, tc]);
 
   async function handleUploadRevision(e: FormEvent): Promise<void> {
@@ -136,8 +140,8 @@ export default function DrawingDetailScreen() {
       setFile(null);
       setShowForm(false);
       await loadAll();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setUploading(false);
     }
@@ -156,8 +160,8 @@ export default function DrawingDetailScreen() {
         apiJson<{ downloadUrl: string }>(`/attachments/${overlay.attachmentId}/download`),
       ]);
       setCompareUrls({ base: baseRes.downloadUrl, overlay: overlayRes.downloadUrl });
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCompareBusy(false);
     }
@@ -172,8 +176,8 @@ export default function DrawingDetailScreen() {
         body: JSON.stringify({ coords, note }),
       });
       setMarkups((prev) => [...prev, created]);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -181,7 +185,7 @@ export default function DrawingDetailScreen() {
     return (
       <>
         <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
-          {error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}
+          {error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}
         </main>
       </>
     );
@@ -197,7 +201,7 @@ export default function DrawingDetailScreen() {
           {drawing.sheetNumber} — {drawing.title}
         </h1>
         <p className="mb-4 text-sm text-navy-600">{drawing.discipline}</p>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <section className="mb-6">
           <h2 className="mb-2 text-lg font-medium">{t("viewer")}</h2>

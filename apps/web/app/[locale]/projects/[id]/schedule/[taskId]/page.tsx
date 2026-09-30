@@ -1,6 +1,9 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { SCHEDULE_TASK_STATUS_TRANSITIONS, type ScheduleTaskStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -37,6 +40,7 @@ function statusLabel(status: ScheduleTaskStatus, t: (key: string) => string): st
 export default function ScheduleTaskDetailScreen() {
   const t = useTranslations("Schedule");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; taskId: string }>();
@@ -54,8 +58,8 @@ export default function ScheduleTaskDetailScreen() {
       const detail = rows.find((r) => r.id === params.taskId) ?? null;
       setTask(detail);
       if (detail) setPercentComplete(detail.percentComplete);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.id, params.taskId, tc]);
 
@@ -78,8 +82,8 @@ export default function ScheduleTaskDetailScreen() {
     try {
       await apiJson(`/schedule-tasks/${params.taskId}`, { method: "PATCH", body: JSON.stringify({ percentComplete }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSavingPercent(false);
     }
@@ -90,8 +94,8 @@ export default function ScheduleTaskDetailScreen() {
     try {
       await apiJson(`/schedule-tasks/${params.taskId}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setTransitioning(false);
     }
@@ -100,7 +104,7 @@ export default function ScheduleTaskDetailScreen() {
   if (!task) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -116,7 +120,7 @@ export default function ScheduleTaskDetailScreen() {
         <p className="mb-4 text-sm text-navy-600">
           {statusLabel(task.status, t)} · {task.startDate.slice(0, 10)} – {task.endDate.slice(0, 10)} · {companyName(task.assignedCompanyId)}
         </p>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         {task.description && (
           <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

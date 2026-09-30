@@ -1,8 +1,10 @@
 "use client";
 
 import { FilterBar } from "@/components/ui/FilterBar";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { errorMessage } from "@/lib/error-message";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { apiJson, ApiClientError } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { PROJECT_ROLES } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -32,6 +34,7 @@ type Tab = "people" | "companies";
 
 export default function DirectoryPage() {
   const t = useTranslations("Directory");
+  const te = useTranslations("Errors");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
@@ -68,11 +71,11 @@ export default function DirectoryPage() {
 
     apiJson<Member[]>(`/projects/${params.id}/members`)
       .then(setMembers)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
 
     apiJson<DirectoryCompany[]>(`/projects/${params.id}/directory-companies`)
       .then(setCompanies)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
 
     // Opportunistic admin probe: this endpoint is directory:admin-gated,
     // so success/failure tells us whether to show admin-only actions
@@ -105,8 +108,8 @@ export default function DirectoryPage() {
           : prev,
       );
       setEditingPhonesFor(null);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setProfileSaving(false);
     }
@@ -125,7 +128,7 @@ export default function DirectoryPage() {
       setInviteLink(`${origin}/${locale}/accept-invite?token=${result.inviteToken}`);
       setInviteEmail("");
     } catch (err) {
-      setInviteError(err instanceof ApiClientError ? err.code : tc("errorGeneric"));
+      setInviteError(errorMessage(err, te));
     } finally {
       setInviteSubmitting(false);
     }
@@ -165,7 +168,7 @@ export default function DirectoryPage() {
             ) : undefined
           }
         />
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="mb-4 flex gap-1 border-b-3 border-ink">
           <button

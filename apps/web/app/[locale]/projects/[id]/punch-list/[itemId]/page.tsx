@@ -1,6 +1,7 @@
 "use client";
 
 import { AttachmentList } from "@/components/AttachmentList";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { LocationPicker } from "@/components/ui/LocationPicker";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { errorMessage } from "@/lib/error-message";
@@ -75,7 +76,7 @@ export default function PunchItemDetailPage() {
   function load(): void {
     apiJson<PunchItemDetail>(`/punch-items/${params.itemId}`)
       .then(setItem)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(load, [params.itemId, tc]);
@@ -172,7 +173,7 @@ export default function PunchItemDetailPage() {
           {t("back")}
         </Link>
         {!item && !error && <p className="mt-4">{tc("loading")}</p>}
-        {error && <p className="mt-4 text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {item && (
           <>
             <h1 className="mb-1 mt-2 text-2xl font-extrabold tracking-tight text-navy-900">{item.number}</h1>

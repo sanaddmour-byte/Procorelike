@@ -1,6 +1,7 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useProjectCurrency } from "@/lib/use-project-currency";
 import { formatMoney } from "@siteops/shared";
@@ -46,6 +47,7 @@ function statusKey(status: PaymentApplicationDetail["status"]): string {
 export default function PaymentApplicationDetailPage() {
   const t = useTranslations("Billing");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; paymentApplicationId: string }>();
@@ -86,7 +88,7 @@ export default function PaymentApplicationDetailPage() {
       router.replace(`/${locale}/login`);
       return;
     }
-    load().catch(() => setError(tc("errorGeneric")));
+    load().catch((err) => setError(errorMessage(err, te)));
   }, [router, locale, params.paymentApplicationId]);
 
   async function handleSaveLines(): Promise<void> {
@@ -96,8 +98,8 @@ export default function PaymentApplicationDetailPage() {
       const lines = commitmentLineItems.map((li) => ({ sovLineId: li.id, pctCompleteThisPeriod: Number(pctInputs[li.id] || 0) }));
       await apiJson(`/payment-applications/${params.paymentApplicationId}/lines`, { method: "PUT", body: JSON.stringify({ lines }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -109,8 +111,8 @@ export default function PaymentApplicationDetailPage() {
     try {
       await apiJson(`/payment-applications/${params.paymentApplicationId}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }

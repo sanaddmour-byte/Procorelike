@@ -1,6 +1,8 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
@@ -126,6 +128,7 @@ const CHANGE_ORDER_STATUS_TONE: Record<ChangeOrder["status"], StatusTone> = {
 export default function ChangeOrdersPage() {
   const t = useTranslations("ChangeManagement");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -173,7 +176,7 @@ export default function ChangeOrdersPage() {
       router.replace(`/${locale}/login`);
       return;
     }
-    loadEvents().catch(() => setError(tc("errorGeneric")));
+    loadEvents().catch((err) => setError(errorMessage(err, te)));
     apiJson<CostCode[]>(`/projects/${params.id}/cost-codes`).then(setCostCodes).catch(() => undefined);
     apiJson<BudgetLineItem[]>(`/budget-line-items?projectId=${params.id}`).then(setBudgetLineItems).catch(() => undefined);
     apiJson<Commitment[]>(`/commitments?projectId=${params.id}`).then(setCommitments).catch(() => undefined);
@@ -197,8 +200,8 @@ export default function ChangeOrdersPage() {
       setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
       setSelectedIds(new Set());
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBulkSubmitting(false);
     }
@@ -230,8 +233,8 @@ export default function ChangeOrdersPage() {
       setEventReason("other");
       setShowEventForm(false);
       await loadEvents();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -242,8 +245,8 @@ export default function ChangeOrdersPage() {
     try {
       await apiJson(`/change-events/${changeEventId}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
       await loadEvents();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -263,8 +266,8 @@ export default function ChangeOrdersPage() {
       setPcoTimeImpact("");
       setPcoFormFor(null);
       await loadEvents();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -293,8 +296,8 @@ export default function ChangeOrdersPage() {
       setCoTimeImpact("0");
       setShowCoForm(false);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -327,7 +330,7 @@ export default function ChangeOrdersPage() {
     <>
       <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <section className="mb-8">
           <div className="mb-3 flex items-center justify-between">

@@ -1,6 +1,7 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { errorMessage } from "@/lib/error-message";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useProjectCurrency } from "@/lib/use-project-currency";
@@ -63,6 +64,7 @@ function reasonKey(reason: ChangeReason): string {
 export default function ChangeOrderDetailPage() {
   const t = useTranslations("ChangeManagement");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; changeOrderId: string }>();
@@ -80,7 +82,7 @@ export default function ChangeOrderDetailPage() {
         setCo(c);
         setError(null);
       })
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -97,8 +99,8 @@ export default function ChangeOrderDetailPage() {
     try {
       await apiJson(`/change-orders/${params.changeOrderId}/${action}`, { method: "POST" });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }

@@ -1,7 +1,9 @@
 "use client";
 
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ApiClientError, apiJson } from "@/lib/api-client";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { errorMessage } from "@/lib/error-message";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
@@ -25,6 +27,7 @@ interface AttachmentRecord {
 
 export default function PhotosPage() {
   const t = useTranslations("Photos");
+  const te = useTranslations("Errors");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
@@ -38,7 +41,7 @@ export default function PhotosPage() {
   function load(): void {
     apiJson<Photo[]>(`/photos?projectId=${params.id}`)
       .then(setPhotos)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -92,7 +95,7 @@ export default function PhotosPage() {
 
       load();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+      setError(errorMessage(err, te));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -121,7 +124,7 @@ export default function PhotosPage() {
             </label>
           }
         />
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!photos && !error && <p>{tc("loading")}</p>}
         {photos && photos.length === 0 && <p>{t("empty")}</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

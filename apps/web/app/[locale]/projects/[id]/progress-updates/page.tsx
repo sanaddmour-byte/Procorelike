@@ -1,6 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/ui/PageHeader";
+import { errorMessage } from "@/lib/error-message";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
@@ -25,6 +26,7 @@ interface ScheduleTaskLite {
 export default function ProgressUpdatesPage() {
   const t = useTranslations("ProgressUpdates");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -38,7 +40,7 @@ export default function ProgressUpdatesPage() {
   function load(): void {
     apiJson<ProgressUpdate[]>(`/schedule-progress-updates?projectId=${params.id}`)
       .then(setUpdates)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -56,8 +58,8 @@ export default function ProgressUpdatesPage() {
     try {
       await apiJson(`/schedule-progress-updates/${id}/accept`, { method: "POST" });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -70,8 +72,8 @@ export default function ProgressUpdatesPage() {
       setRejectingId(null);
       setRejectionReason("");
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 

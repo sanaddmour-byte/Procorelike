@@ -1,6 +1,7 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -32,6 +33,7 @@ interface Meeting {
 export default function MeetingDetailPage() {
   const t = useTranslations("Meetings");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; meetingId: string }>();
@@ -47,7 +49,7 @@ export default function MeetingDetailPage() {
   function load(): void {
     apiJson<MeetingDetail>(`/meetings/${params.meetingId}`)
       .then(setMeeting)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -72,8 +74,8 @@ export default function MeetingDetailPage() {
       });
       setNewItemDescription("");
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setAdding(false);
     }
@@ -84,8 +86,8 @@ export default function MeetingDetailPage() {
     try {
       await apiJson(`/meeting-items/${itemId}`, { method: "PATCH", body: JSON.stringify({ toStatus: "closed" }) });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusyItemId(null);
     }
@@ -98,8 +100,8 @@ export default function MeetingDetailPage() {
     try {
       await apiJson(`/meeting-items/${itemId}/carry-forward`, { method: "POST", body: JSON.stringify({ toMeetingId }) });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusyItemId(null);
     }
@@ -110,8 +112,8 @@ export default function MeetingDetailPage() {
     try {
       await apiJson(`/meeting-items/${itemId}/convert-to-punch-item`, { method: "POST" });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusyItemId(null);
     }

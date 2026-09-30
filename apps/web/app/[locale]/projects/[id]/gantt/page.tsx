@@ -1,6 +1,7 @@
 "use client";
 
 import { ImpactPreviewModal, buildImpactRows, type ImpactRow } from "@/components/gantt/ImpactPreviewModal";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { ScheduleImportForm } from "@/components/gantt/ScheduleImportForm";
 import { TaskGrid, type TaskGridHandle } from "@/components/gantt/TaskGrid";
 import { Timeline, type TimelineHandle } from "@/components/gantt/Timeline";
@@ -326,7 +327,7 @@ export default function GanttPage() {
         )}
 
         {loading && <p>{tc("loading")}</p>}
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {editError && <p className="mb-3 text-sm text-maroon-700">{editError}</p>}
 
         {!loading && !error && (!data || showImportForm) && <ScheduleImportForm projectId={params.id} onImported={load} />}

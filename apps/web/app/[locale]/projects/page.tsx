@@ -1,6 +1,8 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
@@ -17,6 +19,7 @@ interface Project {
 export default function ProjectsPage() {
   const t = useTranslations("Projects");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
 
@@ -30,7 +33,7 @@ export default function ProjectsPage() {
     }
     apiJson<Project[]>("/projects")
       .then(setProjects)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [router, locale, tc]);
 
   return (
@@ -43,7 +46,7 @@ export default function ProjectsPage() {
             {t("manageCompanyLogo")}
           </Link>
         </div>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!projects && !error && <p>{tc("loading")}</p>}
         {projects && projects.length === 0 && <p>{t("empty")}</p>}
         <ul className="flex flex-col gap-4">

@@ -1,6 +1,9 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useProjectCurrency } from "@/lib/use-project-currency";
 import { formatMoney, type BidInvitationStatus, type BidPackageStatus, type BidStatus } from "@siteops/shared";
@@ -50,6 +53,7 @@ const NEXT_STATUS: Record<BidPackageStatus, BidPackageStatus[]> = {
 export default function BidPackageDetailPage() {
   const t = useTranslations("Bidding");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; bidPackageId: string }>();
@@ -70,8 +74,8 @@ export default function BidPackageDetailPage() {
     try {
       const data = await apiJson<BidPackageDetail>(`/bid-packages/${params.bidPackageId}`);
       setDetail(data);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.bidPackageId, tc]);
 
@@ -107,8 +111,8 @@ export default function BidPackageDetailPage() {
     try {
       await apiJson(`/bid-packages/${params.bidPackageId}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -120,8 +124,8 @@ export default function BidPackageDetailPage() {
     try {
       await apiJson(`/bid-packages/${params.bidPackageId}/invite`, { method: "POST", body: JSON.stringify({ companyId: inviteCompanyId }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -138,8 +142,8 @@ export default function BidPackageDetailPage() {
       setBidAmount("");
       setBidExclusions("");
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -150,8 +154,8 @@ export default function BidPackageDetailPage() {
     try {
       await apiJson(`/bids/${bidId}/award`, { method: "POST", body: JSON.stringify({ createCommitment }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -160,7 +164,7 @@ export default function BidPackageDetailPage() {
   if (!detail) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -177,7 +181,7 @@ export default function BidPackageDetailPage() {
           </h1>
           <span className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(detail.status)}</span>
         </div>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         {NEXT_STATUS[detail.status].length > 0 && (
           <div className="mb-6 flex gap-2">

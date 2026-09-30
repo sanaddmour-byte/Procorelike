@@ -1,6 +1,9 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { TM_TICKET_STATUS_TRANSITIONS, type TmTicketStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -61,6 +64,7 @@ function statusLabel(status: TmTicketStatus, t: (key: string) => string): string
 export default function TmTicketDetailScreen() {
   const t = useTranslations("TmTickets");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; ticketId: string }>();
@@ -75,8 +79,8 @@ export default function TmTicketDetailScreen() {
     try {
       const detail = await apiJson<TmTicketDetail>(`/tm-tickets/${params.ticketId}`);
       setTicket(detail);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.ticketId, tc]);
 
@@ -102,8 +106,8 @@ export default function TmTicketDetailScreen() {
       });
       setRejectionReason("");
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setTransitioning(false);
     }
@@ -112,7 +116,7 @@ export default function TmTicketDetailScreen() {
   if (!ticket) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -134,7 +138,7 @@ export default function TmTicketDetailScreen() {
           <span className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{statusLabel(ticket.status, t)}</span>
         </div>
         <p className="mb-4 text-sm text-navy-600">{ticket.workDate.slice(0, 10)}</p>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
           <p className="whitespace-pre-wrap">{ticket.description}</p>

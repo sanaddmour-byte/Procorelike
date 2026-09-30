@@ -1,6 +1,8 @@
 "use client";
 
 import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
@@ -37,6 +39,7 @@ const STATUS_TONE: Record<PunchItem["status"], StatusTone> = {
 export default function PunchListPage() {
   const t = useTranslations("PunchList");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -72,8 +75,8 @@ export default function PunchListPage() {
       setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
       setSelectedIds(new Set());
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBulkSending(false);
     }
@@ -125,7 +128,7 @@ export default function PunchListPage() {
           }
         />
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <SavedViewsBar
           projectId={params.id}

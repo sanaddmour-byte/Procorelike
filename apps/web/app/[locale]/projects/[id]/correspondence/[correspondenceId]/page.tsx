@@ -1,6 +1,9 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { SignatureBadge } from "@/components/SignatureBadge";
 import { SignaturePad } from "@/components/SignaturePad";
 import { apiJson } from "@/lib/api-client";
@@ -50,6 +53,7 @@ function typeLabel(type: CorrespondenceType, t: (key: string) => string): string
 export default function CorrespondenceDetailScreen() {
   const t = useTranslations("Correspondence");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; correspondenceId: string }>();
@@ -71,8 +75,8 @@ export default function CorrespondenceDetailScreen() {
       if (detail && detail.status !== "draft") {
         apiJson<EsignatureVerification>(`/correspondence/${params.correspondenceId}/signature`).then(setSignature).catch(() => undefined);
       }
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.id, params.correspondenceId, tc]);
 
@@ -108,8 +112,8 @@ export default function CorrespondenceDetailScreen() {
       setSignatureName("");
       setSignatureImage(null);
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setTransitioning(false);
     }
@@ -118,7 +122,7 @@ export default function CorrespondenceDetailScreen() {
   if (!item) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -157,7 +161,7 @@ export default function CorrespondenceDetailScreen() {
           {item.responseRequiredBy && ` · ${t("responseRequiredBy")}: ${item.responseRequiredBy.slice(0, 10)}`}
           {item.senderSignatureName && ` · ${t("signedBy")}: ${item.senderSignatureName}`}
         </p>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
           <p className="whitespace-pre-wrap">{item.body}</p>

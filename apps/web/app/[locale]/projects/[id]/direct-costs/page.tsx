@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
@@ -40,6 +42,7 @@ const STATUS_TONE: Record<DirectCostStatus, StatusTone> = {
 export default function DirectCostsPage() {
   const t = useTranslations("DirectCosts");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -97,8 +100,8 @@ export default function DirectCostsPage() {
       setIncurredDate("");
       setShowForm(false);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSaving(false);
     }
@@ -109,8 +112,8 @@ export default function DirectCostsPage() {
     try {
       await apiJson(`/direct-costs/${id}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setTransitioningId(null);
     }
@@ -219,7 +222,7 @@ export default function DirectCostsPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <SavedViewsBar
           projectId={params.id}

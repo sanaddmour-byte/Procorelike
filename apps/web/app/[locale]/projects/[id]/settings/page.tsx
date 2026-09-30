@@ -1,6 +1,7 @@
 "use client";
 
 import { ActionPlanTemplatesSection } from "@/components/ActionPlanTemplatesSection";
+import { errorMessage } from "@/lib/error-message";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { WorkflowRulesSection } from "@/components/WorkflowRulesSection";
 import { apiJson, ApiClientError } from "@/lib/api-client";
@@ -32,6 +33,7 @@ export default function ProjectSettingsPage() {
   const t = useTranslations("ProjectSettings");
   const tm = useTranslations("Modules");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -107,8 +109,8 @@ export default function ProjectSettingsPage() {
       });
       setGeneralSaved(true);
       setTimeout(() => setGeneralSaved(false), 4000);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSavingGeneral(false);
     }
@@ -119,8 +121,8 @@ export default function ProjectSettingsPage() {
       await navigator.clipboard.writeText(inboundEmailAddress);
       setAddressCopied(true);
       setTimeout(() => setAddressCopied(false), 4000);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -145,8 +147,8 @@ export default function ProjectSettingsPage() {
       setNewOptions("");
       setNewRequired(false);
       loadDefinitions(selectedModule);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreatingField(false);
     }
@@ -156,8 +158,8 @@ export default function ProjectSettingsPage() {
     try {
       await apiJson(`/custom-field-definitions/${definitionId}?projectId=${params.id}`, { method: "DELETE" });
       loadDefinitions(selectedModule);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
