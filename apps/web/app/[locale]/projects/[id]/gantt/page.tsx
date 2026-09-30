@@ -233,11 +233,11 @@ export default function GanttPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-[1600px] px-4 py-8">
+      <main className="mx-auto max-w-[1600px] px-0 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-y-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           {data && !showImportForm && (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm text-navy-600">
                 {t("versionLabel")} {data.version.versionNo} · {data.version.dataDate.slice(0, 10)}
               </span>

@@ -109,10 +109,10 @@ export function AppShell({ projectId, children }: { projectId: string; children:
         )}
 
         <BottomNav projectId={projectId} onMore={() => setMobileOpen(true)} />
-        <main className="min-w-0 flex-1 px-3 py-2 pb-[calc(var(--bottom-nav-h,0px)+1rem)] sm:px-6 sm:py-6">
+        <div className="min-w-0 flex-1 px-3 py-2 pb-[calc(var(--bottom-nav-h,0px)+1rem)] sm:px-6 sm:py-6">
           <SyncStatus />
           {children}
-        </main>
+        </div>
       </div>
     </div>
   );

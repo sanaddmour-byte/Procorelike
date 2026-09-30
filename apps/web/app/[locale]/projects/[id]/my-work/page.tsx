@@ -56,7 +56,7 @@ export default function MyWorkPage() {
   const base = `/${locale}/projects/${params.id}`;
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-3">
+    <main className="mx-auto flex max-w-3xl flex-col gap-3">
       <h1 className="text-xl font-bold">{t("title")}</h1>
 
       {error && (
@@ -118,6 +118,6 @@ export default function MyWorkPage() {
             </section>
           );
         })}
-    </div>
+    </main>
   );
 }

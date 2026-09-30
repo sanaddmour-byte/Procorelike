@@ -118,6 +118,18 @@ body {
     [role="button"] {
       min-width: var(--hit-min);
     }
+    /* Plain text links used as "Back to ..." and inline navigation, and rows that wrap a checkbox: full-height targets (audit A1). */
+    main a.underline,
+    main label:has(> input[type="checkbox"]),
+    main label:has(> input[type="radio"]) {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--hit-min);
+    }
+    main label:has(> input[type="checkbox"]),
+    main label:has(> input[type="radio"]) {
+      gap: 0.5rem;
+    }
     input[type="checkbox"],
     input[type="radio"] {
       width: 1.5rem;

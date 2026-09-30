@@ -510,7 +510,7 @@ export const Timeline = forwardRef<TimelineHandle, TimelineProps>(function Timel
     <div
       ref={scrollRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-x-auto overflow-y-hidden"
+      className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden"
       style={{ height: totalHeight }}
     >
       <div style={{ width: Math.max(totalWidth, viewportWidth), height: totalHeight, position: "relative" }}>

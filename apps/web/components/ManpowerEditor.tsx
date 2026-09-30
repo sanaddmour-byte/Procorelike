@@ -40,6 +40,17 @@ export function ManpowerEditor({ projectId, logId, rows, locked, onChange }: Pro
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Same crew as last time is the common case: preselect the last company + trade used on this project (plan E4 / D7).
+  useEffect(() => {
+    try {
+      const last = JSON.parse(window.localStorage.getItem(`siteops.manpowerLast:${projectId}`) ?? "null") as { companyId?: string; tradeId?: string } | null;
+      if (last?.companyId) setCompanyId(last.companyId);
+      if (last?.tradeId) setTradeId(last.tradeId);
+    } catch {
+      // convenience only
+    }
+  }, [projectId]);
+
   useEffect(() => {
     // Companies come from the project members: the /companies lookup needs budget access, which a superintendent does not have.
     cachedJson<{ companyId: string | null; companyName: string | null }[]>(`/projects/${projectId}/members`)
@@ -147,6 +158,11 @@ export function ManpowerEditor({ projectId, logId, rows, locked, onChange }: Pro
               type="button"
               disabled={busy || !companyId || !tradeId}
               onClick={() => {
+                try {
+                  window.localStorage.setItem(`siteops.manpowerLast:${projectId}`, JSON.stringify({ companyId, tradeId }));
+                } catch {
+                  // convenience only
+                }
                 void save([...rows, { id: "", companyId, tradeId, headcount, hours: "8" }]).then(() => setHeadcount(1));
               }}
               className="hit-task flex-1 rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 font-bold text-white disabled:opacity-50"

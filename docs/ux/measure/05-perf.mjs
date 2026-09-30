@@ -88,7 +88,7 @@ const ACTIONS = [
   ["tap list row -> detail (route change)", `/en/projects/${P}/punch-list`, async (p) => { await p.locator("[role=row][tabindex='0']").first().waitFor(); await p.locator("[role=row][tabindex='0']").first().click(); }],
   ["type in list search (per keystroke, first char)", `/en/projects/${P}/punch-list`, async (p) => { await p.locator('input[type="search"]').click(); await p.evaluate(() => { window.__t0 = null; window.__fb = null; }); await p.keyboard.type("p"); }],
   ["status filter change (server refetch)", `/en/projects/${P}/punch-list`, async (p) => { await p.evaluate(() => { window.__t0 = performance.now(); window.__fb = null; }); await p.locator("main select").first().selectOption({ index: 1 }); }],
-  ["Columns menu", `/en/projects/${P}/punch-list`, async (p) => p.locator('button[aria-haspopup="true"]').first().click()],
+  ["Columns menu", `/en/projects/${P}/punch-list`, async (p) => { const b = p.locator('button[aria-haspopup="true"]').first(); if (await b.count()) await b.click(); }],
   ["New punch item (route change)", `/en/projects/${P}/punch-list`, async (p) => p.locator('a[href$="/punch-list/new"]').click()],
   ["Create punch item (submit)", `/en/projects/${P}/punch-list/new`, async (p) => { await p.locator("textarea").fill("latency probe"); await p.evaluate(() => { window.__t0 = null; window.__fb = null; }); await p.locator('form button[type="submit"]').click(); }],
 ];

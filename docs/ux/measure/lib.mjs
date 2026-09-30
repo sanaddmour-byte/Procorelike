@@ -12,8 +12,8 @@ export const { chromium } = require("@playwright/test");
 export const WEB = process.env.WEB_URL ?? "http://localhost:3000";
 export const API = process.env.API_URL ?? "http://localhost:4000";
 export const PASSWORD = "ChangeMe123!";
-export const SHOTS = path.join(ROOT, "docs/ux/screenshots");
-export const DATA = path.join(ROOT, "docs/ux/data");
+export const SHOTS = process.env.UX_SHOTS_DIR ?? path.join(ROOT, "docs/ux/screenshots");
+export const DATA = process.env.UX_DATA_DIR ?? path.join(ROOT, "docs/ux/data");
 fs.mkdirSync(SHOTS, { recursive: true });
 fs.mkdirSync(DATA, { recursive: true });
 
