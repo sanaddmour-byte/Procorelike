@@ -113,10 +113,40 @@ async function openAndMigrate(): Promise<SQLite.SQLiteDatabase> {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS punch_item_photos (
+      id TEXT PRIMARY KEY NOT NULL,
+      punch_item_id TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      uri TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      mime TEXT NOT NULL,
+      uploaded INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS request_queue (
+      id TEXT PRIMARY KEY NOT NULL,
+      project_id TEXT NOT NULL,
+      dedupe_key TEXT,
+      method TEXT NOT NULL,
+      path TEXT NOT NULL,
+      body TEXT,
+      label TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS sync_meta (
       key TEXT PRIMARY KEY NOT NULL,
       value TEXT
     );
   `);
+  // CREATE TABLE IF NOT EXISTS never alters an existing table, so columns added after first install are added here.
+  await ensureColumn(db, "punch_items", "assignee_user_id", "TEXT");
+  await ensureColumn(db, "punch_items", "location_id", "TEXT");
   return db;
+}
+
+async function ensureColumn(db: SQLite.SQLiteDatabase, table: string, column: string, type: string): Promise<void> {
+  const columns = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
+  if (!columns.some((c) => c.name === column)) await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
 }

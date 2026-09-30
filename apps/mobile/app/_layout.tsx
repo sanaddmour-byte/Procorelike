@@ -9,10 +9,11 @@ import {
 import * as Notifications from "expo-notifications";
 import { Stack, useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Text, TextInput } from "react-native";
+import { I18nManager, Text, TextInput } from "react-native";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/lib/auth-context";
 import { entityPath, type NotificationEntityData } from "@/lib/push-notifications";
+import { i18n } from "@/lib/i18n";
 import { colors, fonts } from "@/lib/theme";
 
 /** Tapping a push notification (from background or a cold start) navigates straight to the RFI/Submittal/Punch Item/Change Order it's about, the same entity a tap on the web NotificationBell's matching row would open. */
@@ -48,6 +49,17 @@ function applyGlobalFont(): void {
   TextInputAny.defaultProps = TextInputAny.defaultProps ?? {};
   TextInputAny.defaultProps.style = [{ fontFamily: fonts.regular }, TextInputAny.defaultProps.style];
 }
+
+/**
+ * Mirrors the whole layout for Arabic (plan M5). React Native reads the direction once at launch, so the first launch
+ * after the device language changes flips it and the next start shows the mirrored layout.
+ */
+function applyLayoutDirection(): void {
+  const wantsRtl = i18n.locale.startsWith("ar");
+  I18nManager.allowRTL(true);
+  if (I18nManager.isRTL !== wantsRtl) I18nManager.forceRTL(wantsRtl);
+}
+applyLayoutDirection();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({

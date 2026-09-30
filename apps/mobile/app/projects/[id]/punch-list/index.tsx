@@ -1,4 +1,5 @@
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
@@ -47,11 +48,14 @@ export default function PunchListScreen() {
         options={{
           title: i18n.t("punchList.title"),
           headerRight: () => (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ProjectSwitcher projectId={id} />
             <Link href={`/projects/${id}/punch-list/new`} asChild>
               <Pressable>
                 <Text style={styles.headerButton}>{i18n.t("punchList.newButton")}</Text>
               </Pressable>
             </Link>
+            </View>
           ),
         }}
       />

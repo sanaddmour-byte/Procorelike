@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { getDailyLog, updateDailyLogNotes, type LocalDailyLog } from "@/lib/db/daily-log-repo";
+import { ManpowerEditor } from "@/components/ManpowerEditor";
 import { i18n } from "@/lib/i18n";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
@@ -13,7 +14,7 @@ interface ConflictInfo {
 
 export default function DailyLogDetailScreen() {
   useRequireAuth();
-  const { logId } = useLocalSearchParams<{ id: string; logId: string }>();
+  const { id, logId } = useLocalSearchParams<{ id: string; logId: string }>();
 
   const [log, setLog] = useState<LocalDailyLog | null>(null);
   const [notes, setNotes] = useState("");
@@ -89,6 +90,7 @@ export default function DailyLogDetailScreen() {
         placeholder={i18n.t("dailyLog.notesPlaceholder")}
       />
       {saving && <ActivityIndicator style={{ marginTop: 8 }} />}
+      {log.syncStatus === "synced" && !log.lockedAt && <ManpowerEditor projectId={id} logId={logId} />}
     </ScrollView>
   );
 }

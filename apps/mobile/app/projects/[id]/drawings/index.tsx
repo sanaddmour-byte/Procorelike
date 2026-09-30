@@ -1,4 +1,5 @@
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { apiJson } from "@/lib/api-client";
@@ -34,7 +35,7 @@ export default function MobileDrawingsListScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: i18n.t("drawings.title") }} />
+      <Stack.Screen options={{ title: i18n.t("drawings.title"), headerRight: () => <ProjectSwitcher projectId={id} /> }} />
       {error && <Text style={styles.error}>{i18n.t("common.errorGeneric")}</Text>}
       {!drawings && !error && <Text style={styles.empty}>{i18n.t("common.loading")}</Text>}
       {drawings && drawings.length === 0 && <Text style={styles.empty}>{i18n.t("drawings.empty")}</Text>}

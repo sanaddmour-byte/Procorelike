@@ -48,7 +48,11 @@ export async function listOutbox(projectId?: string): Promise<OutboxEntry[]> {
 
 export async function outboxCount(projectId?: string): Promise<number> {
   const entries = await listOutbox(projectId);
-  return entries.length;
+  if (!projectId) return entries.length;
+  const db = await getDb();
+  const queued = await db.getFirstAsync<{ n: number }>("SELECT COUNT(*) AS n FROM request_queue WHERE project_id = ?", [projectId]);
+  const photos = await db.getFirstAsync<{ n: number }>("SELECT COUNT(*) AS n FROM punch_item_photos WHERE project_id = ? AND uploaded = 0", [projectId]);
+  return entries.length + (queued?.n ?? 0) + (photos?.n ?? 0);
 }
 
 export async function getLastSyncedAt(): Promise<string | null> {
