@@ -89,6 +89,15 @@ function RowLink({ href, children }: { href?: string; children: ReactNode }) {
   );
 }
 
+export interface DataTableGroupOption<T> {
+  key: string;
+  label: string;
+  /** Which group a row belongs to: `id` orders/identifies the group, `label` is what the header shows. */
+  get: (row: T) => { id: string; label: string };
+}
+
+type ListItem<T> = { kind: "row"; row: T } | { kind: "header"; id: string; label: string; count: number; collapsed: boolean };
+
 interface RowSelectionHandlers<T> {
   isSelected: (row: T) => boolean;
   toggle: (row: T) => void;
@@ -96,6 +105,8 @@ interface RowSelectionHandlers<T> {
 
 interface RowProps<T> {
   rows: T[];
+  items?: ListItem<T>[];
+  onToggleGroup?: (id: string) => void;
   columns: DataTableColumn<T>[];
   onRowClick?: (row: T) => void;
   rowHref?: (row: T) => string;
@@ -105,9 +116,26 @@ interface RowProps<T> {
   roles?: Map<string, NonNullable<DataTableColumn<T>["mobile"]>>;
 }
 
-function DataTableRow<T>({ index, style, rows, columns, onRowClick, rowHref, gridTemplate, selection, compact, roles }: RowComponentProps<RowProps<T>>) {
+function DataTableRow<T>({ index, style, rows, items, onToggleGroup, columns, onRowClick, rowHref, gridTemplate, selection, compact, roles }: RowComponentProps<RowProps<T>>) {
   const tc = useTranslations("Common");
-  const row = rows[index];
+  const item = items ? items[index] : undefined;
+  if (item?.kind === "header") {
+    return (
+      <div style={style} role="row" className="flex items-center border-b border-navy-100 bg-navy-50 px-3">
+        <button
+          type="button"
+          aria-expanded={!item.collapsed}
+          onClick={() => onToggleGroup?.(item.id)}
+          className="flex min-h-hit w-full items-center gap-2 text-start text-sm font-bold text-navy-900"
+        >
+          <span aria-hidden="true" className="inline-block w-4 text-center rtl:rotate-180">{item.collapsed ? "▸" : "▾"}</span>
+          <span dir="auto" className="min-w-0 flex-1 truncate">{item.label}</span>
+          <span className="shrink-0 rounded-full bg-white px-2 text-xs font-semibold text-navy-700">{item.count}</span>
+        </button>
+      </div>
+    );
+  }
+  const row = item ? item.row : rows[index];
   if (!row) return null;
   if (compact && roles) {
     const by = (r: string) => columns.filter((c) => roles.get(c.key) === r);
@@ -230,6 +258,8 @@ interface Props<T> {
   emptyAction?: ReactNode;
   rowHeight?: number;
   maxHeight?: number;
+  /** Group-by options (plan B2). Adds a "Group by" control; groups collapse, counts show, and the choice is remembered per `storageKey`. Grouping is over the rows on the current page. */
+  groups?: DataTableGroupOption<T>[];
   /**
    * Opts a column's sort into server-driven mode: clicking a header calls
    * `onServerSortChange(key)` instead of sorting `rows` locally, and the
@@ -314,6 +344,7 @@ export function DataTable<T>({
   emptyAction,
   rowHeight = 40,
   maxHeight = 600,
+  groups,
   serverSort,
   onServerSortChange,
   pagination,
@@ -326,6 +357,30 @@ export function DataTable<T>({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => new Set());
   const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const [groupKey, setGroupKey] = useState("");
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
+  const groupStore = storageKey ? `siteops.group.${storageKey}` : null;
+
+  useEffect(() => {
+    if (!groupStore || !groups?.length) return;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(groupStore) ?? "null") as { by?: string; collapsed?: string[] } | null;
+      if (saved?.by && groups.some((g) => g.key === saved.by)) setGroupKey(saved.by);
+      if (saved?.collapsed) setCollapsedGroups(new Set(saved.collapsed));
+    } catch {
+      // convenience only
+    }
+    // groups is rebuilt every render by callers; the stored view is read once per table.
+  }, [groupStore]);
+
+  function persistGroups(by: string, collapsed: Set<string>): void {
+    if (!groupStore) return;
+    try {
+      window.localStorage.setItem(groupStore, JSON.stringify({ by, collapsed: [...collapsed] }));
+    } catch {
+      // convenience only
+    }
+  }
 
   useEffect(() => {
     if (storageKey) setHiddenColumns(loadHiddenColumns(storageKey));
@@ -367,6 +422,38 @@ export function DataTable<T>({
     });
     return withValues.map((w) => w.row);
   }, [rows, sortKey, sortDir, columns, onServerSortChange]);
+
+  const activeGroup = groups?.find((g) => g.key === groupKey);
+  const items = useMemo<ListItem<T>[] | undefined>(() => {
+    if (!activeGroup) return undefined;
+    const order: string[] = [];
+    const byId = new Map<string, { label: string; rows: T[] }>();
+    for (const row of sortedRows) {
+      const g = activeGroup.get(row);
+      if (!byId.has(g.id)) {
+        byId.set(g.id, { label: g.label, rows: [] });
+        order.push(g.id);
+      }
+      byId.get(g.id)!.rows.push(row);
+    }
+    order.sort();
+    const out: ListItem<T>[] = [];
+    for (const id of order) {
+      const g = byId.get(id)!;
+      const collapsed = collapsedGroups.has(id);
+      out.push({ kind: "header", id, label: g.label, count: g.rows.length, collapsed });
+      if (!collapsed) for (const row of g.rows) out.push({ kind: "row", row });
+    }
+    return out;
+  }, [activeGroup, sortedRows, collapsedGroups]);
+
+  function toggleGroup(id: string): void {
+    const next = new Set(collapsedGroups);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setCollapsedGroups(next);
+    persistGroups(groupKey, next);
+  }
 
   function handleSort(col: DataTableColumn<T>): void {
     if (!col.sortValue) return;
@@ -453,6 +540,44 @@ export function DataTable<T>({
           )}
         </div>
       )}
+      {groups && groups.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border-b-3 border-ink bg-cream px-3 py-1.5">
+          <label className="flex min-w-0 flex-1 items-center gap-2 text-xs font-semibold text-navy-700">
+            <span className="shrink-0">{tc("groupBy")}</span>
+            <select
+              aria-label={tc("groupBy")}
+              value={groupKey}
+              onChange={(e) => {
+                setGroupKey(e.target.value);
+                persistGroups(e.target.value, collapsedGroups);
+              }}
+              className="min-h-hit min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
+            >
+              <option value="">{tc("groupNone")}</option>
+              {groups.map((g) => (
+                <option key={g.key} value={g.key}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {activeGroup && items && (
+            <button
+              type="button"
+              onClick={() => {
+                const headers = items.filter((i): i is Extract<ListItem<T>, { kind: "header" }> => i.kind === "header");
+                const allCollapsed = headers.every((h) => h.collapsed);
+                const next = allCollapsed ? new Set<string>() : new Set(sortedRows.map((r) => activeGroup.get(r).id));
+                setCollapsedGroups(next);
+                persistGroups(groupKey, next);
+              }}
+              className="min-h-hit rounded-lg border-2 border-ink bg-white px-3 text-xs font-semibold text-navy-800"
+            >
+              {items.every((i) => i.kind !== "header" || i.collapsed) ? tc("expandAll") : tc("collapseAll")}
+            </button>
+          )}
+        </div>
+      )}
       <div role="table" aria-rowcount={(pagination?.total ?? rows.length) + 1} className="overflow-x-auto">
         <div style={{ minWidth }}>
           {compact ? (
@@ -526,10 +651,12 @@ export function DataTable<T>({
           )}
           <List<RowProps<T>>
             rowComponent={DataTableRow}
-            rowCount={sortedRows.length}
-            rowHeight={effRowHeight}
+            rowCount={items ? items.length : sortedRows.length}
+            rowHeight={items ? (index: number) => (items[index]?.kind === "header" ? Math.max(44, coarse ? 48 : 44) : effRowHeight) : effRowHeight}
             rowProps={{
               rows: sortedRows,
+              items,
+              onToggleGroup: toggleGroup,
               columns: visibleColumns,
               onRowClick,
               rowHref,
@@ -538,7 +665,7 @@ export function DataTable<T>({
               roles,
               selection: selection ? { isSelected: (row: T) => selection.selectedIds.has(selection.getRowId(row)), toggle: toggleRowSelected } : undefined,
             }}
-            style={{ height: Math.min(maxHeight, sortedRows.length * effRowHeight) }}
+            style={{ height: Math.min(maxHeight, items ? items.reduce((h, i) => h + (i.kind === "header" ? Math.max(44, coarse ? 48 : 44) : effRowHeight), 0) : sortedRows.length * effRowHeight) }}
           />
         </div>
       </div>

@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { DUE_BUCKET_ORDER, dueBucketOf } from "@/lib/due-bucket";
 import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -42,6 +43,7 @@ function statusLabel(status: Rfi["status"], t: (key: string) => string): string 
 export default function RfisPage() {
   const t = useTranslations("Rfis");
   const tc = useTranslations("Common");
+  const tw = useTranslations("MyWork");
   const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
@@ -307,6 +309,10 @@ export default function RfisPage() {
 
         <DataTable<Rfi>
           storageKey="rfis"
+          groups={[
+            { key: "status", label: t("status"), get: (r) => ({ id: r.status, label: statusLabel(r.status, t) }) },
+            { key: "due", label: tw("due"), get: (r) => { const b = dueBucketOf(r.dueDate); return { id: DUE_BUCKET_ORDER[b], label: tw(b) }; } },
+          ]}
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

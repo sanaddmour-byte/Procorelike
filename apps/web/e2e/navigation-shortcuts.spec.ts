@@ -114,3 +114,21 @@ test("bulk assign can set a due date on the selected snags (B9)", async ({ page,
   const items = await (await request.get(`http://localhost:4000/punch-items?projectId=${id}&pageSize=100`, { headers: { authorization: `Bearer ${token}` } })).json();
   expect(items.some((i: { dueDate: string | null }) => i.dueDate?.startsWith("2030-01-1"))).toBe(true);
 });
+
+test("the punch list can be grouped, groups collapse, and the choice survives a reload (B2)", async ({ page, request }) => {
+  const { id } = await ammanId(request);
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill(EMAIL);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/en\/projects$/);
+  await page.goto(`/en/projects/${id}/punch-list`);
+  await page.getByLabel("Group by").selectOption("status");
+  const headers = page.locator("[role=row] button[aria-expanded]");
+  await expect(headers.first()).toBeVisible();
+  await headers.first().click();
+  await expect(headers.first()).toHaveAttribute("aria-expanded", "false");
+  await page.reload();
+  await expect(page.getByLabel("Group by")).toHaveValue("status");
+  await expect(page.locator("[role=row] button[aria-expanded]").first()).toHaveAttribute("aria-expanded", "false");
+});

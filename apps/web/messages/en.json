@@ -48,7 +48,11 @@
     "copied": "Copied!",
     "sortBy": "Sort by",
     "sortDirection": "Reverse sort order",
-    "mine": "Mine"
+    "mine": "Mine",
+    "groupBy": "Group by",
+    "groupNone": "No grouping",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
   },
   "Login": {
     "title": "Sign in to SiteOps",

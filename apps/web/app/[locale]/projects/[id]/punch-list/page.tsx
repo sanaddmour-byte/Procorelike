@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { DUE_BUCKET_ORDER, dueBucketOf } from "@/lib/due-bucket";
 import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -26,6 +27,7 @@ interface PunchItem {
   priority: "low" | "medium" | "high";
   status: "open" | "ready_for_review" | "not_accepted" | "in_dispute" | "approved" | "closed";
   needsReview: boolean;
+  dueDate?: string | null;
 }
 
 const STATUS_TONE: Record<PunchItem["status"], StatusTone> = {
@@ -41,6 +43,7 @@ export default function PunchListPage() {
   const t = useTranslations("PunchList");
   const tc = useTranslations("Common");
   const te = useTranslations("Errors");
+  const tw = useTranslations("MyWork");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -178,6 +181,11 @@ export default function PunchListPage() {
 
         <DataTable<PunchItem>
           storageKey="punch-list"
+          groups={[
+            { key: "status", label: t("status"), get: (i) => ({ id: i.status, label: statusLabel(i.status) }) },
+            { key: "due", label: tw("due"), get: (i) => { const b = dueBucketOf(i.dueDate); return { id: DUE_BUCKET_ORDER[b], label: tw(b) }; } },
+            { key: "priority", label: t("priority"), get: (i) => ({ id: { high: "0", medium: "1", low: "2" }[i.priority], label: t({ high: "priorityHigh", medium: "priorityMedium", low: "priorityLow" }[i.priority]) }) },
+          ]}
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}

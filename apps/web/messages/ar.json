@@ -48,7 +48,11 @@
     "copied": "تم النسخ!",
     "sortBy": "ترتيب حسب",
     "sortDirection": "عكس الترتيب",
-    "mine": "لي"
+    "mine": "لي",
+    "groupBy": "تجميع حسب",
+    "groupNone": "بدون تجميع",
+    "expandAll": "توسيع الكل",
+    "collapseAll": "طيّ الكل"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
