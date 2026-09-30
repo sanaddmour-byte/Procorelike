@@ -54,12 +54,17 @@ export default function DashboardPage() {
 
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mine, setMine] = useState<{ overdue: number; today: number; total: number } | null>(null);
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
+    // Personal first (plan E11): what is mine and late, before the project-wide rollup.
+    apiJson<{ dueBucket: string }[]>(`/projects/${params.id}/my-work`)
+      .then((items) => setMine({ overdue: items.filter((i) => i.dueBucket === "overdue").length, today: items.filter((i) => i.dueBucket === "today").length, total: items.length }))
+      .catch(() => undefined);
     apiJson<Dashboard>(`/projects/${params.id}/dashboard`)
       .then(setDashboard)
       .catch((err) => setError(errorMessage(err, te)));
@@ -74,6 +79,15 @@ export default function DashboardPage() {
 
         {dashboard && (
           <div className="flex flex-col gap-6">
+            {mine && mine.total > 0 && (
+              <a
+                href={`/${locale}/projects/${params.id}/my-work`}
+                className="flex items-center justify-between gap-3 rounded-xl border-3 border-ink bg-orange-100 p-4 font-semibold text-navy-900"
+              >
+                <span>{t("mineSummary", { overdue: mine.overdue, today: mine.today })}</span>
+                <span aria-hidden="true">›</span>
+              </a>
+            )}
             <section>
               <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("actionRequiredTitle")}</h2>
               {dashboard.actionRequired.length === 0 ? (

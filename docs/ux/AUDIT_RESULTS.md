@@ -53,7 +53,7 @@ Notes that matter:
 | Punch list rows above the fold | 9 | 8 | **Not improved.** Cards are 60 px and show status; the shorter header did not translate into more rows. RFIs went 8 → 6. Reported as measured. |
 | Dark-mode identical-to-light | 0 | 0 | — |
 
-Other regressions I found **while testing** and fixed: two nested `<main>` landmarks on every project page; a projects-list page that lost its side gutter after a padding pass; a silent `/companies` permission failure that left the daily-log company picker empty for a superintendent; a Gantt toolbar and Permissions grid that pushed the page wider than the phone.
+Other regressions I found **while testing** and fixed (latest: English record titles truncated at the wrong end in Arabic lists — now `dir="auto"`): two nested `<main>` landmarks on every project page; a projects-list page that lost its side gutter after a padding pass; a silent `/companies` permission failure that left the daily-log company picker empty for a superintendent; a Gantt toolbar and Permissions grid that pushed the page wider than the phone.
 
 ## 4. Performance (Measured local · Emulated mid-phone)
 
@@ -79,6 +79,7 @@ Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms 
 | G1 glove mode | **Done** (toggle in the avatar menu) | `PrefsApplier` |
 | B5 previous / next through the list you came from | **Done** (punch list + RFI detail; list order kept in sessionStorage) | `RecordNav`, `use-server-table.ts` |
 | C3 list state in the URL (Back restores search/filter/sort/page) | **Done** for every server-driven list | `use-server-table.ts` |
+| E11 dashboard opens with "My Work: N overdue · N due today" linking to My Work | **Done** | `dashboard/page.tsx` |
 | C5 search opens with quick actions (create snag / daily log / My Work) and recent records; already full-text across modules | **Done** | `GlobalSearch` |
 | C4 "Recently opened" on My Work (snags, RFIs, drawings; device-local) | **Done** | `lib/recents.ts` |
 | C4 deep link survives the login wall · list rows are real links (open in new tab / long-press) on punch list, RFIs, drawings | **Done** | `ReturnTo`, `DataTable` `rowHref` |
@@ -91,7 +92,7 @@ Eight existing E2E tests failed after the UI changes and I updated them. Six wer
 
 ## 6. Not built (backlog, in plan order)
 
-B2 grouping engine · E2 punch-list grouping and swipe actions · E7 drawings search-first · E8 photos thumbnails · E11 dashboard personal actions · E12/E13 polish and clipped-control verification · offline queue for record types other than snags and RFI answers · bulk distribution · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
+B2 grouping engine · E2 punch-list grouping and swipe actions · E7 drawings search-first · E8 photos thumbnails · E12/E13 polish and clipped-control verification · offline queue for record types other than snags and RFI answers · bulk distribution · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
 
 **Mobile app (Expo), M1–M5:** not started. It cannot be run in this environment, so any mobile change would be unmeasured; new dependencies (`expo-image-picker`, `expo-haptics`, a dictation module) need your explicit yes first.
 

@@ -641,7 +641,8 @@
     "budgetRevised": "المعدّلة",
     "budgetProjected": "المتوقعة",
     "budgetVariance": "الفرق",
-    "changeOrders": "أوامر التغيير"
+    "changeOrders": "أوامر التغيير",
+    "mineSummary": "مهامي: {overdue} متأخرة · {today} تستحق اليوم"
   },
   "Meetings": {
     "title": "الاجتماعات",

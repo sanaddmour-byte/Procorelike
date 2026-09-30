@@ -641,7 +641,8 @@
     "budgetRevised": "Revised",
     "budgetProjected": "Projected",
     "budgetVariance": "Variance",
-    "changeOrders": "Change Orders"
+    "changeOrders": "Change Orders",
+    "mineSummary": "My Work: {overdue} overdue · {today} due today"
   },
   "Meetings": {
     "title": "Meetings",
