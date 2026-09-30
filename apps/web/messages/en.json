@@ -47,7 +47,8 @@
     "copy": "Copy",
     "copied": "Copied!",
     "sortBy": "Sort by",
-    "sortDirection": "Reverse sort order"
+    "sortDirection": "Reverse sort order",
+    "mine": "Mine"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -1456,5 +1457,10 @@
     "title": "Assign {count, plural, one {# snag} other {# snags}}",
     "person": "Choose a person",
     "apply": "{count, plural, one {Assign # snag} other {Assign # snags}}"
+  },
+  "RecordNav": {
+    "label": "Records in this list",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

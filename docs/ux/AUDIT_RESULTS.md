@@ -59,7 +59,9 @@ Other regressions I found **while testing** and fixed: two nested `<main>` landm
 
 Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms local, 15–260 ms emulated). JS transferred per screen grew by 5–7 KB (170 → 177 KB on the punch list).
 
-**One number got worse and I have not fixed it:** on the emulated phone, Largest Contentful Paint on the punch list is **2.96 s (was 0.59 s)**, RFIs 2.85 s (was 0.59 s); the dashboard is unchanged (2.32 → 2.34 s). First Contentful Paint is roughly unchanged (0.59 → 0.63 s). Probable cause (a hypothesis, not tested): before, the paint that counted as LCP was the "Loading…" text; now loading shows skeleton bars with no text, so LCP is the first real content, which waits on 8–10 API calls at 150 ms RTT. Either way, the lists render their real content later than the Stage 1 figure suggests is "fast". Reducing the number of chained requests per screen is in the backlog.
+**Update (after a follow-up fix):** the first list load was being held back by the 300 ms *search* debounce even when nothing had been typed. Fixing that (`use-server-table.ts`) roughly halves local LCP (punch list 624 → 308 ms, RFIs 616 → 340 ms) but only trims the emulated-phone figure (2.96 → 2.57 s); the rest is the chain of serial round trips at 150 ms RTT. Raw runs: `data/after/perf.json` (now) and `data/after/perf-before-debounce-fix.json`. The paragraph below describes the state before that fix.
+
+**One number got worse and I have not fully fixed it:** on the emulated phone, Largest Contentful Paint on the punch list is **2.96 s (was 0.59 s)**, RFIs 2.85 s (was 0.59 s); the dashboard is unchanged (2.32 → 2.34 s). First Contentful Paint is roughly unchanged (0.59 → 0.63 s). Probable cause (a hypothesis, not tested): before, the paint that counted as LCP was the "Loading…" text; now loading shows skeleton bars with no text, so LCP is the first real content, which waits on 8–10 API calls at 150 ms RTT. Either way, the lists render their real content later than the Stage 1 figure suggests is "fast". Reducing the number of chained requests per screen is in the backlog.
 
 ## 5. What shipped, by plan item
 
@@ -75,15 +77,19 @@ Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms 
 | E1 location · E3 close-out · E4 manpower · E5 My Work | **Done** | `LocationPicker`, snag detail, `ManpowerEditor`, `my-work/page.tsx` |
 | E9 permissions layout · E10 Gantt overflow | **Done** | see §3 |
 | G1 glove mode | **Done** (toggle in the avatar menu) | `PrefsApplier` |
+| B5 previous / next through the list you came from | **Done** (punch list + RFI detail; list order kept in sessionStorage) | `RecordNav`, `use-server-table.ts` |
+| C3 list state in the URL (Back restores search/filter/sort/page) | **Done** for every server-driven list | `use-server-table.ts` |
+| C4 deep link survives the login wall | **Done** | `ReturnTo` |
+| E2/E6 "Mine" one-tap preset (punch list, RFIs) | **Done** | `FilterBar` presets |
 | G2 interaction-count tests | **Done** — 10 Playwright tests (EN+AR) enforcing budgets for T3, T4, T7, T9 and the offline queue; existing 12 E2E tests updated for the new UI | `apps/web/e2e/field-taps.spec.ts` |
 
-Test state at the end: web typecheck, lint and unit tests pass; **22 of 22** Playwright tests pass against the production build; the API test file for bulk actions passes (6 tests, including 2 new). I did **not** re-run the complete API test suite in this stretch.
+Test state at the end: web typecheck, lint and unit tests pass; **25 of 25** Playwright tests pass against the production build; the API test file for bulk actions passes (6 tests, including 2 new). I did **not** re-run the complete API test suite in this stretch.
 
 Eight existing E2E tests failed after the UI changes and I updated them. Six were caused by this work's intentional changes (search boxes now have an accessible name that substring-matches "Title/Subject/Description"; Priority is three chips instead of a select; Log out is inside the avatar menu; the signed-out landing is `/login`; the snag status buttons are labelled by status). Two were already stale from earlier phases, not from this work: correspondence has needed a typed signature to send since Phase 12, and the RFI status text is split across elements. I updated all of them rather than leave them red.
 
 ## 6. Not built (backlog, in plan order)
 
-B2 grouping engine · B5 record header with previous/next · C3 back-stack and scroll/URL-state restore · C4 rows as links, recents, deep-link-after-login · C5 command palette and phone search · E2 punch-list filters/group/swipe · E6 RFI "mine" preset · E7 drawings search-first · E8 photos thumbnails · E11 dashboard personal actions · E12/E13 polish and clipped-control verification · offline queue for record types other than snags · bulk due-date/distribution UI · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
+B2 grouping engine · C4 rows as real links and recents · C5 command palette and phone search · E2 punch-list grouping and swipe actions · E7 drawings search-first · E8 photos thumbnails · E11 dashboard personal actions · E12/E13 polish and clipped-control verification · offline queue for record types other than snags · bulk due-date/distribution UI · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
 
 **Mobile app (Expo), M1–M5:** not started. It cannot be run in this environment, so any mobile change would be unmeasured; new dependencies (`expo-image-picker`, `expo-haptics`, a dictation module) need your explicit yes first.
 

@@ -47,7 +47,8 @@
     "copy": "نسخ",
     "copied": "تم النسخ!",
     "sortBy": "ترتيب حسب",
-    "sortDirection": "عكس الترتيب"
+    "sortDirection": "عكس الترتيب",
+    "mine": "لي"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
@@ -1456,5 +1457,10 @@
     "title": "إسناد {count, plural, one {ملاحظة واحدة} other {# ملاحظات}}",
     "person": "اختر شخصاً",
     "apply": "{count, plural, one {إسناد ملاحظة واحدة} other {إسناد # ملاحظات}}"
+  },
+  "RecordNav": {
+    "label": "السجلات في هذه القائمة",
+    "previous": "السابق",
+    "next": "التالي"
   }
 }

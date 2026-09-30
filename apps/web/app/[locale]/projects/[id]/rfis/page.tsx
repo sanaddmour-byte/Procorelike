@@ -272,6 +272,7 @@ export default function RfisPage() {
         />
 
         <FilterBar
+          presets={loadStoredAuth() ? [{ key: "mine", label: tc("mine"), filters: { assigneeUserId: loadStoredAuth()!.user.id } }] : []}
           searchValue={serverTable.search}
           onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}

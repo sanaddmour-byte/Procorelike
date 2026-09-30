@@ -2,6 +2,7 @@
 
 import { AttachmentList } from "@/components/AttachmentList";
 import { errorMessage } from "@/lib/error-message";
+import { RecordNav } from "@/components/RecordNav";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
@@ -224,6 +225,7 @@ export default function RfiDetailScreen() {
     <>
       <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <RecordNav basePath="/rfis" currentId={params.rfiId} projectId={params.id} segment="rfis" />
           <Link href={`/${locale}/projects/${params.id}/rfis`} className="inline-block text-sm text-navy-600 underline">
             {t("back")}
           </Link>

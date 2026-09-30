@@ -1,6 +1,7 @@
 "use client";
 
 import { AttachmentList } from "@/components/AttachmentList";
+import { RecordNav } from "@/components/RecordNav";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LocationPicker } from "@/components/ui/LocationPicker";
 import { loadStoredAuth } from "@/lib/auth-storage";
@@ -169,6 +170,7 @@ export default function PunchItemDetailPage() {
   return (
     <>
       <main className="mx-auto max-w-lg px-4 py-6 pb-32 md:pb-8">
+        <RecordNav basePath="/punch-items" currentId={params.itemId} projectId={params.id} segment="punch-list" />
         <Link href={backHref} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>

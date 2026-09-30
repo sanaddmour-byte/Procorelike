@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { ApiClientError, apiJson } from "@/lib/api-client";
+import { takeReturnTo } from "@/components/ReturnTo";
 import { saveStoredAuth, type StoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -32,7 +33,7 @@ export default function LoginPage() {
         body: JSON.stringify(body),
       });
       saveStoredAuth(data);
-      router.replace(`/${locale}/projects`);
+      router.replace((takeReturnTo(locale) ?? `/${locale}/projects`) as never);
     } catch (err) {
       if (err instanceof ApiClientError) {
         if (err.code === "totp_required") {
