@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingState } from "@/components/ui/LoadingState";
 import { Header } from "@/components/Header";
 import { errorMessage } from "@/lib/error-message";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -165,7 +166,7 @@ export default function CompaniesPage() {
         <h1 className="mb-2 mt-2 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         <p className="mb-4 text-sm text-navy-600">{t("intro")}</p>
         {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
-        {!companies && !error && <p>{tc("loading")}</p>}
+        {!companies && !error && <LoadingState rows={4} label={tc("loading")} />}
         {companies && companies.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
         <ul className="flex flex-col gap-4">
           {companies?.map((c) => (

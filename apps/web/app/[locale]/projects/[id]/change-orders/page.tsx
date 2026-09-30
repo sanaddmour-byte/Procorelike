@@ -2,7 +2,9 @@
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { errorMessage } from "@/lib/error-message";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
@@ -159,6 +161,7 @@ export default function ChangeOrdersPage() {
   const [coTargetId, setCoTargetId] = useState("");
   const [coCostImpact, setCoCostImpact] = useState("");
   const [coTimeImpact, setCoTimeImpact] = useState("0");
+  const [tab, setTab] = useState<"events" | "orders">("orders");
   const [saving, setSaving] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmBulkSubmit, setConfirmBulkSubmit] = useState(false);
@@ -332,7 +335,24 @@ export default function ChangeOrdersPage() {
         <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
-        <section className="mb-8">
+        <div role="tablist" aria-label={t("title")} className="mb-4 flex gap-2">
+          {(["orders", "events"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              id={`co-tab-${k}`}
+              aria-selected={tab === k}
+              aria-controls={`co-panel-${k}`}
+              onClick={() => setTab(k)}
+              className={`min-h-hit rounded-lg border-3 border-ink px-4 py-2 text-sm font-semibold ${tab === k ? "bg-navy-800 text-white" : "bg-white text-navy-800"}`}
+            >
+              {k === "events" ? t("changeEvents") : t("changeOrders")}
+            </button>
+          ))}
+        </div>
+
+        <section id="co-panel-events" role="tabpanel" aria-labelledby="co-tab-events" hidden={tab !== "events"} className="mb-8">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-navy-900">{t("changeEvents")}</h2>
             <button onClick={() => setShowEventForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-1.5 text-sm text-white">
@@ -370,20 +390,14 @@ export default function ChangeOrdersPage() {
             </form>
           )}
 
-          {!events && <p>{tc("loading")}</p>}
-          {events && events.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
+          {!events && <LoadingState rows={3} label={tc("loading")} />}
+          {events && events.length === 0 && <EmptyState title={t("empty")} />}
           <ul className="flex flex-col gap-3">
             {events?.map((ev) => (
               <li key={ev.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
                 <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                   <span className="font-bold text-navy-900">{ev.title}</span>
-                  <span
-                    className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${
-                      ev.status === "void" ? "bg-maroon-100 text-maroon-800" : ev.status === "incorporated" ? "bg-orange-100 text-navy-800" : "bg-navy-100 text-navy-800"
-                    }`}
-                  >
-                    {t(changeEventStatusKey(ev.status))}
-                  </span>
+                  <StatusBadge tone={ev.status === "void" ? "danger" : ev.status === "incorporated" ? "success" : "neutral"} label={t(changeEventStatusKey(ev.status))} />
                 </div>
                 {ev.description && <p className="mb-2 text-sm text-navy-600">{ev.description}</p>}
                 <p className="mb-2 text-xs text-navy-600">{t("reason")}: {t(reasonKey(ev.reason))}</p>
@@ -432,7 +446,7 @@ export default function ChangeOrdersPage() {
           </ul>
         </section>
 
-        <section>
+        <section id="co-panel-orders" role="tabpanel" aria-labelledby="co-tab-orders" hidden={tab !== "orders"}>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-navy-900">{t("changeOrders")}</h2>
             <div className="flex flex-wrap gap-2">

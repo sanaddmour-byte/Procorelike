@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ActionPlanTemplatesSection } from "@/components/ActionPlanTemplatesSection";
 import { errorMessage } from "@/lib/error-message";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -251,7 +252,7 @@ export default function ProjectSettingsPage() {
           </select>
         </label>
 
-        {!definitions && <p className="text-sm text-navy-600">{tc("loading")}</p>}
+        {!definitions && <LoadingState rows={3} label={tc("loading")} />}
         {definitions && definitions.length === 0 && <p className="mb-3 text-sm text-navy-600">{t("noFields")}</p>}
         {definitions && definitions.length > 0 && (
           <ul className="mb-4 flex flex-col gap-2">

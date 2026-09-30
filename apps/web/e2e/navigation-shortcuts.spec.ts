@@ -171,3 +171,18 @@ test("photos are grouped by day with lazy thumbnails instead of raw ids (E8)", a
   await expect(day.locator("h2 bdi")).toHaveText(/^\d{4}-\d{2}-\d{2}$|—/);
   expect(await day.locator("div.aspect-square").count()).toBeGreaterThan(0);
 });
+
+test("change events and change orders live on separate tabs (E12)", async ({ page, request }) => {
+  const { id } = await ammanId(request);
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill(EMAIL);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/en\/projects$/);
+  await page.goto(`/en/projects/${id}/change-orders`);
+  await expect(page.getByRole("tab", { name: "Change orders" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tabpanel", { name: "Change events" })).toBeHidden();
+  await page.getByRole("tab", { name: "Change events" }).click();
+  await expect(page.getByRole("tabpanel", { name: "Change events" })).toBeVisible();
+  await expect(page.getByRole("tabpanel", { name: "Change orders" })).toBeHidden();
+});
