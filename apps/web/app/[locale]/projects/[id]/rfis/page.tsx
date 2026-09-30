@@ -14,7 +14,7 @@ import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, type FormEvent } from "react";
 
 interface Rfi {
@@ -46,7 +46,8 @@ export default function RfisPage() {
 
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const searchParams = useSearchParams();
+  const [showForm, setShowForm] = useState(searchParams.get("new") === "1");
   const [subject, setSubject] = useState("");
   const [question, setQuestion] = useState("");
   const [ballInCourtUserId, setBallInCourtUserId] = useState("");
@@ -166,7 +167,7 @@ export default function RfisPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={

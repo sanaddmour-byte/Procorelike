@@ -124,10 +124,12 @@ export function GlobalSearch({ projectId }: { projectId?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full max-w-xs items-center justify-between gap-2 rounded-lg border-2 border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white/80 hover:bg-white/20"
+        aria-label={t("searchTitle")}
+        className="flex items-center justify-center gap-2 rounded-lg border-2 border-white/30 bg-white/10 text-sm text-white hover:bg-white/20 sm:w-full sm:max-w-xs sm:justify-between sm:px-3"
       >
-        <span>{t("searchPlaceholder")}</span>
-        <kbd className="rounded border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold">⌘K</kbd>
+        <span aria-hidden="true" className="text-lg sm:hidden">🔍</span>
+        <span className="hidden sm:inline">{t("searchPlaceholder")}</span>
+        <kbd className="hidden rounded border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold sm:inline">⌘K</kbd>
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title={t("searchTitle")} wide>

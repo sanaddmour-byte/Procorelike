@@ -69,14 +69,14 @@ export function ProjectSelector({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative w-full">
       <button
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex max-w-[220px] items-center gap-1.5 rounded-lg border-2 border-white/30 bg-white/10 px-2.5 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
+        className="flex w-full items-center justify-between gap-1.5 rounded-lg border-2 border-white/30 bg-white/10 px-2.5 text-sm font-semibold text-white hover:bg-white/20 sm:max-w-[220px]"
       >
         <span className="truncate">{current?.name ?? t("selectProject")}</span>
         <span aria-hidden="true" className="text-xs">
@@ -99,7 +99,7 @@ export function ProjectSelector({ projectId }: { projectId: string }) {
                 role="option"
                 aria-selected={p.id === projectId}
                 onClick={() => switchTo(p.id)}
-                className={`block w-full truncate px-3 py-1.5 text-start ${p.id === projectId ? "bg-maroon-50 font-semibold text-maroon-700" : "text-navy-800 hover:bg-navy-50"}`}
+                className={`hit-task block w-full truncate px-3 text-start ${p.id === projectId ? "bg-maroon-50 font-semibold text-maroon-700" : "text-navy-800 hover:bg-navy-50"}`}
               >
                 {p.name}
               </button>

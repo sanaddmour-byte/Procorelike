@@ -36,7 +36,7 @@ export default function ProjectsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-2xl px-0 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <Link href={`/${locale}/companies`} className="text-sm font-semibold text-navy-700 underline">
@@ -53,12 +53,17 @@ export default function ProjectsPage() {
               <div className="p-4">
                 <div className="text-lg font-bold text-navy-900">{p.name}</div>
                 {p.address && <div className="text-sm text-navy-600">{p.address}</div>}
-                <Link
-                  href={`/${locale}/projects/${p.id}/directory`}
-                  className="mt-3 inline-block rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive"
-                >
-                  {t("viewDirectory")}
-                </Link>
+                <div className="mt-3 flex flex-wrap gap-gap-hit">
+                  <Link
+                    href={`/${locale}/projects/${p.id}/my-work`}
+                    className="hit-task inline-flex items-center rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-5 font-bold text-white brutal-interactive"
+                  >
+                    {t("open")}
+                  </Link>
+                  <Link href={`/${locale}/projects/${p.id}/directory`} className="hit-task inline-flex items-center rounded-lg border-3 border-ink bg-white px-4 font-semibold text-navy-900">
+                    {t("viewDirectory")}
+                  </Link>
+                </div>
               </div>
             </li>
           ))}

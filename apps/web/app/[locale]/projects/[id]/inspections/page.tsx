@@ -13,7 +13,7 @@ import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
 interface ChecklistTemplate {
@@ -47,7 +47,8 @@ export default function InspectionsPage() {
 
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const searchParams = useSearchParams();
+  const [showForm, setShowForm] = useState(searchParams.get("new") === "1");
   const [templateId, setTemplateId] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [creating, setCreating] = useState(false);
@@ -110,7 +111,7 @@ export default function InspectionsPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
