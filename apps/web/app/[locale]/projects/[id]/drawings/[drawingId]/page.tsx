@@ -11,6 +11,7 @@ import { uploadAttachment } from "@/lib/upload";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { pushRecent } from "@/lib/recents";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 interface Drawing {
@@ -97,6 +98,10 @@ export default function DrawingDetailScreen() {
       setError(errorMessage(err, te));
     }
   }, [params.drawingId, tc]);
+
+  useEffect(() => {
+    if (drawing) pushRecent(params.id, { kind: "drawing", id: params.drawingId, label: `${drawing.sheetNumber} — ${drawing.title}`, href: `/${locale}/projects/${params.id}/drawings/${params.drawingId}` });
+  }, [drawing?.id]);
 
   useEffect(() => {
     if (!loadStoredAuth()) {

@@ -67,3 +67,19 @@ test("list rows are real links, so open-in-new-tab and long-press work (C4)", as
   const [popup] = await Promise.all([page.context().waitForEvent("page"), link.click({ modifiers: ["Control"] })]);
   await expect(popup).toHaveURL(/\/rfis\/[0-9a-f-]{36}$/);
 });
+
+test("records I opened appear under Recently opened on My Work (C4)", async ({ page, request }) => {
+  const { id } = await ammanId(request);
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill(EMAIL);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/en\/projects$/);
+  await page.goto(`/en/projects/${id}/rfis`);
+  await page.locator("[role=row][tabindex='0']").first().click();
+  await expect(page).toHaveURL(/rfis\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.goto(`/en/projects/${id}/my-work`);
+  const recent = page.getByRole("region", { name: "Recently opened" });
+  await expect(recent.getByRole("link").first()).toContainText("RFI");
+});

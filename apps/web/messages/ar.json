@@ -1441,7 +1441,8 @@
     "module_submittals": "مستند",
     "module_corrective_actions": "إجراء سلامة",
     "count": "{count, plural, one {# عنصر} two {عنصران} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
-    "due": "الاستحقاق"
+    "due": "الاستحقاق",
+    "recent": "فُتحت مؤخراً"
   },
   "Sync": {
     "offline": "أنت غير متصل. تُحفظ الملاحظات الجديدة على هذا الجهاز وتُرسل عند عودة الاتصال.",

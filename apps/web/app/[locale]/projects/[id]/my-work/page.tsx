@@ -9,6 +9,7 @@ import { useEnumLabel } from "@/lib/use-enum-label";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { getRecents, type Recent } from "@/lib/recents";
 import { useCallback, useEffect, useState } from "react";
 
 type Bucket = "overdue" | "today" | "week" | "later" | "none";
@@ -37,6 +38,8 @@ export default function MyWorkPage() {
   const params = useParams<{ id: string }>();
   const [items, setItems] = useState<WorkItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recents, setRecents] = useState<Recent[]>([]);
+  useEffect(() => setRecents(getRecents(params.id)), [params.id]);
 
   const load = useCallback(() => {
     setError(null);
@@ -118,6 +121,21 @@ export default function MyWorkPage() {
             </section>
           );
         })}
+      {recents.length > 0 && (
+        <section aria-label={t("recent")}>
+          <h2 className="py-1 text-sm font-bold uppercase tracking-wide">{t("recent")}</h2>
+          <ul className="flex flex-col gap-2">
+            {recents.map((r) => (
+              <li key={`${r.kind}-${r.id}`}>
+                <Link href={r.href as never} className="flex min-h-hit items-center gap-2 rounded-lg border-3 border-ink bg-white px-3 py-2 text-sm font-semibold">
+                  <span aria-hidden="true">{r.kind === "punch" ? "📷" : r.kind === "rfi" ? "❓" : "📐"}</span>
+                  <span className="min-w-0 flex-1 truncate">{r.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

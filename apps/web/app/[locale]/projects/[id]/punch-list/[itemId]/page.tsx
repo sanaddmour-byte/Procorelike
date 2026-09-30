@@ -13,6 +13,7 @@ import { PUNCH_ITEM_STATUS_TRANSITIONS, type FieldConflict } from "@siteops/shar
 import { useLocale, useTranslations } from "next-intl";
 import Link, { type LinkProps } from "next/link";
 import { useParams } from "next/navigation";
+import { pushRecent } from "@/lib/recents";
 import { useEffect, useState } from "react";
 
 type PunchStatus = "open" | "ready_for_review" | "not_accepted" | "in_dispute" | "approved" | "closed";
@@ -70,6 +71,9 @@ export default function PunchItemDetailPage() {
   const params = useParams<{ id: string; itemId: string }>();
 
   const [item, setItem] = useState<PunchItemDetail | null>(null);
+  useEffect(() => {
+    if (item) pushRecent(params.id, { kind: "punch", id: params.itemId, label: `${item.number} — ${item.description}`, href: `/${locale}/projects/${params.id}/punch-list/${params.itemId}` });
+  }, [item?.id]);
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

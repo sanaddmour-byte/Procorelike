@@ -15,6 +15,7 @@ import { RFI_STATUS_TRANSITIONS, type RfiStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { pushRecent } from "@/lib/recents";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 interface Drawing {
@@ -121,6 +122,10 @@ export default function RfiDetailScreen() {
       setError(errorMessage(err, te));
     }
   }, [params.rfiId, tc]);
+
+  useEffect(() => {
+    if (rfi) pushRecent(params.id, { kind: "rfi", id: params.rfiId, label: `${rfi.number} — ${rfi.subject}`, href: `/${locale}/projects/${params.id}/rfis/${params.rfiId}` });
+  }, [rfi?.id]);
 
   useEffect(() => {
     if (!loadStoredAuth()) {
