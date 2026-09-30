@@ -132,3 +132,28 @@ test("the punch list can be grouped, groups collapse, and the choice survives a 
   await expect(page.getByLabel("Group by")).toHaveValue("status");
   await expect(page.locator("[role=row] button[aria-expanded]").first()).toHaveAttribute("aria-expanded", "false");
 });
+
+test("swiping a snag card reveals Assign to me, which assigns it (E2)", async ({ page, request }) => {
+  const { id, token } = await ammanId(request);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill(EMAIL);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/en\/projects$/);
+  const me = await page.evaluate(() => JSON.parse(localStorage.getItem("siteops.auth") ?? "{}").user.id as string);
+  const count = async (): Promise<number> => (await (await request.get(`http://localhost:4000/punch-items?projectId=${id}&assigneeUserId=${me}&pageSize=100`, { headers: { authorization: `Bearer ${token}` } })).json()).length;
+  const before = await count();
+  await page.goto(`/en/projects/${id}/punch-list`);
+  const row = page.locator("[role=row][tabindex='0']").nth(2);
+  const box = (await row.boundingBox())!;
+  await page.mouse.move(box.x + box.width - 20, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 40, box.y + box.height / 2, { steps: 6 });
+  await page.mouse.up();
+  const action = page.getByRole("button", { name: "Assign to me" });
+  await expect(action).toBeVisible();
+  await action.click();
+  await expect.poll(count).toBeGreaterThanOrEqual(before);
+  await expect(action).toBeHidden();
+});

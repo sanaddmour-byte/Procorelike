@@ -1449,7 +1449,8 @@
     "module_corrective_actions": "Safety action",
     "count": "{count, plural, one {# item} other {# items}}",
     "due": "Due",
-    "recent": "Recently opened"
+    "recent": "Recently opened",
+    "assignMe": "Assign to me"
   },
   "Sync": {
     "offline": "You're offline. New snags are saved on this device and sent when you're back.",

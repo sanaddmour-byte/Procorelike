@@ -181,6 +181,16 @@ export default function PunchListPage() {
 
         <DataTable<PunchItem>
           storageKey="punch-list"
+          swipeAction={{
+            label: tw("assignMe"),
+            getId: (i) => i.id,
+            onAction: async (i) => {
+              const me = loadStoredAuth()?.user.id;
+              if (!me) return;
+              await apiJson("/punch-items/bulk-update", { method: "POST", body: JSON.stringify({ ids: [i.id], assigneeUserId: me }) }).catch((e) => setError(errorMessage(e, te)));
+              serverTable.reload();
+            },
+          }}
           groups={[
             { key: "status", label: t("status"), get: (i) => ({ id: i.status, label: statusLabel(i.status) }) },
             { key: "due", label: tw("due"), get: (i) => { const b = dueBucketOf(i.dueDate); return { id: DUE_BUCKET_ORDER[b], label: tw(b) }; } },

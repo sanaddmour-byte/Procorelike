@@ -78,6 +78,7 @@ function RowLink({ href, children }: { href?: string; children: ReactNode }) {
   return (
     <a
       href={href}
+      draggable={false}
       className="block text-inherit no-underline"
       onClick={(e) => {
         if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) e.preventDefault();
@@ -103,7 +104,16 @@ interface RowSelectionHandlers<T> {
   toggle: (row: T) => void;
 }
 
+export interface DataTableSwipeAction<T> {
+  label: string;
+  getId: (row: T) => string;
+  onAction: (row: T) => void | Promise<void>;
+}
+
 interface RowProps<T> {
+  swipe?: DataTableSwipeAction<T>;
+  swipeOpenId?: string | null;
+  onSwipeOpen?: (id: string | null) => void;
   rows: T[];
   items?: ListItem<T>[];
   onToggleGroup?: (id: string) => void;
@@ -116,8 +126,10 @@ interface RowProps<T> {
   roles?: Map<string, NonNullable<DataTableColumn<T>["mobile"]>>;
 }
 
-function DataTableRow<T>({ index, style, rows, items, onToggleGroup, columns, onRowClick, rowHref, gridTemplate, selection, compact, roles }: RowComponentProps<RowProps<T>>) {
+function DataTableRow<T>({ index, style, swipe, swipeOpenId, onSwipeOpen, rows, items, onToggleGroup, columns, onRowClick, rowHref, gridTemplate, selection, compact, roles }: RowComponentProps<RowProps<T>>) {
   const tc = useTranslations("Common");
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swipedRecently = useRef(false);
   const item = items ? items[index] : undefined;
   if (item?.kind === "header") {
     return (
@@ -139,10 +151,36 @@ function DataTableRow<T>({ index, style, rows, items, onToggleGroup, columns, on
   if (!row) return null;
   if (compact && roles) {
     const by = (r: string) => columns.filter((c) => roles.get(c.key) === r);
+    const swipeId = swipe ? swipe.getId(row) : null;
+    const swipeOpen = swipeId !== null && swipeOpenId === swipeId;
+    const rtl = typeof document !== "undefined" && document.dir === "rtl";
     return (
       <div
-        style={{ ...style, gridTemplateColumns: selection ? "48px 1fr" : "1fr" }}
-        onClick={() => onRowClick?.(row)}
+        style={{ ...style, gridTemplateColumns: selection ? "48px 1fr" : "1fr", touchAction: swipe ? "pan-y" : undefined }}
+        onPointerDown={swipe ? (e) => { swipeStart.current = { x: e.clientX, y: e.clientY }; } : undefined}
+        onPointerUp={
+          swipe
+            ? (e) => {
+                const st = swipeStart.current;
+                swipeStart.current = null;
+                if (!st) return;
+                const dx = e.clientX - st.x;
+                const dy = Math.abs(e.clientY - st.y);
+                const towardEnd = rtl ? dx > 60 : dx < -60;
+                const towardStart = rtl ? dx < -60 : dx > 60;
+                if (dy < 30 && (towardEnd || towardStart)) {
+                  swipedRecently.current = true;
+                  setTimeout(() => (swipedRecently.current = false), 400);
+                  onSwipeOpen?.(towardEnd ? swipeId : null);
+                }
+              }
+            : undefined
+        }
+        onClick={() => {
+          if (swipedRecently.current) return;
+          if (swipeOpen) return;
+          onRowClick?.(row);
+        }}
         onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
         role="row"
         tabIndex={onRowClick ? 0 : undefined}
@@ -180,6 +218,18 @@ function DataTableRow<T>({ index, style, rows, items, onToggleGroup, columns, on
           </div>
           </RowLink>
         </div>
+        {swipeOpen && swipe && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void Promise.resolve(swipe.onAction(row)).finally(() => onSwipeOpen?.(null));
+            }}
+            className="absolute inset-y-0 end-0 z-10 flex w-32 items-center justify-center bg-maroon-700 px-2 text-sm font-bold text-white"
+          >
+            {swipe.label}
+          </button>
+        )}
       </div>
     );
   }
@@ -260,6 +310,8 @@ interface Props<T> {
   maxHeight?: number;
   /** Group-by options (plan B2). Adds a "Group by" control; groups collapse, counts show, and the choice is remembered per `storageKey`. Grouping is over the rows on the current page. */
   groups?: DataTableGroupOption<T>[];
+  /** Phone-only: swiping a card toward the end reveals one action button (plan E2). */
+  swipeAction?: DataTableSwipeAction<T>;
   /**
    * Opts a column's sort into server-driven mode: clicking a header calls
    * `onServerSortChange(key)` instead of sorting `rows` locally, and the
@@ -345,6 +397,7 @@ export function DataTable<T>({
   rowHeight = 40,
   maxHeight = 600,
   groups,
+  swipeAction,
   serverSort,
   onServerSortChange,
   pagination,
@@ -357,6 +410,7 @@ export function DataTable<T>({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => new Set());
   const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null);
   const [groupKey, setGroupKey] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
   const groupStore = storageKey ? `siteops.group.${storageKey}` : null;
@@ -655,6 +709,9 @@ export function DataTable<T>({
             rowHeight={items ? (index: number) => (items[index]?.kind === "header" ? Math.max(44, coarse ? 48 : 44) : effRowHeight) : effRowHeight}
             rowProps={{
               rows: sortedRows,
+              swipe: swipeAction,
+              swipeOpenId,
+              onSwipeOpen: setSwipeOpenId,
               items,
               onToggleGroup: toggleGroup,
               columns: visibleColumns,
