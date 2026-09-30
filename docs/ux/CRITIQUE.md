@@ -133,3 +133,7 @@ Only T3 and T9 pass. Mobile **[static]** is faster where it exists (T1 5 taps, T
 **Not evidenced / to verify before Stage 3:** mobile behaviour on a real device (all **[static]** items), Arabic font rendering, true network latency, and back-stack/scroll restoration (inferred from absence of any restoration code and single-page redirects, not directly measured).
 
 *Stopping here. Stage 3 (REMEDIATION_PLAN.md) begins only after approval.*
+
+## Erratum (found during Stage 4)
+
+§5 failure 4 ("No loading state on 15 of 20 lists") rested on a faulty detector — see the erratum in `AUDIT_EVIDENCE.md`. `DataTable` lists already show a skeleton. The remaining, verified loading gaps are pages with bespoke loading text (dashboard, detail screens). The Feedback & state score is unchanged in spirit (offline, raw error codes, misleading empty results, missing retry remain) but I would move it from 3 to 4.

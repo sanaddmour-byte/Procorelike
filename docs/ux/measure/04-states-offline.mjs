@@ -38,7 +38,7 @@ async function snapshot(page, file) {
     return {
       full,
       text: full.slice(0, 220),
-      spinner: !!document.querySelector('[role=progressbar],.animate-spin,[aria-busy="true"],[class*=skeleton]'),
+      spinner: !!document.querySelector('[role=progressbar],[role=status],.animate-spin,.animate-pulse,[aria-busy="true"],[class*=skeleton]'),
       buttons: [...(m ?? document.body).querySelectorAll("button,a")].map((b) => b.innerText.trim()).filter(Boolean).slice(0, 12),
     };
   });

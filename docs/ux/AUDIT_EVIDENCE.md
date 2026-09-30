@@ -757,3 +757,7 @@ Mobile (static): punch items, daily logs and inspections are read from and writt
 | `measure/08-build-docs.mjs` | Generates this file and TASK_BENCHMARKS.md |
 | `data/*.json` | Raw results |
 
+
+## Erratum (found during Stage 4)
+
+§10 reported "loading indicator absent on 15 of 20 screens". That is a **measurement error**: `DataTable` already renders a skeleton (`LoadingState`, `role=status`, `animate-pulse`) while rows load — see `screenshots/state-loading__punch-list.png` — and the Stage 1 detector only looked for `animate-spin`, `role=progressbar` or the word “Loading”. The skeleton is present wherever `DataTable` is used; the screens that genuinely lack one are those with bespoke loading text (e.g. dashboard: a bare “Loading…” paragraph). `04-states-offline.mjs` now detects `role=status`/`animate-pulse`, and the Stage 4 re-measurement replaces the §10 loading column. CRITIQUE §5 item 4 and plan item B6 are corrected accordingly (`CRITIQUE.md` erratum).
