@@ -83,3 +83,34 @@ test("records I opened appear under Recently opened on My Work (C4)", async ({ p
   const recent = page.getByRole("region", { name: "Recently opened" });
   await expect(recent.getByRole("link").first()).toContainText("RFI");
 });
+
+test("search opens with quick actions before anything is typed (C5)", async ({ page, request }) => {
+  const { id } = await ammanId(request);
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill(EMAIL);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/en\/projects$/);
+  await page.goto(`/en/projects/${id}/my-work`);
+  await page.getByRole("button", { name: "Search", exact: false }).first().click();
+  await page.getByRole("button", { name: /Snag \(photo first\)/ }).click();
+  await expect(page).toHaveURL(/punch-list\/new$/);
+});
+
+test("bulk assign can set a due date on the selected snags (B9)", async ({ page, request }) => {
+  const { id, token } = await ammanId(request);
+  await page.goto("/en/login");
+  await page.getByLabel("Email").fill(EMAIL);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/en\/projects$/);
+  await page.goto(`/en/projects/${id}/punch-list`);
+  await page.locator('[role=row] input[type="checkbox"]').first().check();
+  await page.getByRole("button", { name: "Assign to…" }).click();
+  await page.locator('[role=dialog] input[type="date"]').fill("2030-01-15");
+  const done = page.waitForResponse((r) => r.url().includes("/punch-items/bulk-update") && r.status() === 200);
+  await page.locator("[role=dialog] button").filter({ hasText: /^Assign \d+/ }).click();
+  await done;
+  const items = await (await request.get(`http://localhost:4000/punch-items?projectId=${id}&pageSize=100`, { headers: { authorization: `Bearer ${token}` } })).json();
+  expect(items.some((i: { dueDate: string | null }) => i.dueDate?.startsWith("2030-01-1"))).toBe(true);
+});

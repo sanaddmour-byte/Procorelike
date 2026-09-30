@@ -1,6 +1,7 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { getRecents, type Recent } from "@/lib/recents";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -40,6 +41,9 @@ function saveRecent(query: string): void {
  */
 export function GlobalSearch({ projectId }: { projectId?: string }) {
   const t = useTranslations("Shell");
+  const tcs = useTranslations("CreateSheet");
+  const tbn = useTranslations("BottomNav");
+  const [recentRecords, setRecentRecords] = useState<Recent[]>([]);
   const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -64,12 +68,13 @@ export function GlobalSearch({ projectId }: { projectId?: string }) {
   useEffect(() => {
     if (open) {
       setRecent(loadRecent());
+      setRecentRecords(projectId ? getRecents(projectId) : []);
       setTimeout(() => inputRef.current?.focus(), 0);
     } else {
       setQuery("");
       setResults(null);
     }
-  }, [open]);
+  }, [open, projectId]);
 
   const runSearch = useCallback(
     (q: string) => {
@@ -147,6 +152,33 @@ export function GlobalSearch({ projectId }: { projectId?: string }) {
           aria-expanded={Boolean(results?.length)}
           aria-controls="search-results-list"
         />
+
+        {!query && projectId && (
+          <div className="mt-3">
+            <p className="mb-1 text-xs font-semibold uppercase text-navy-400">{t("quickActions")}</p>
+            <ul className="flex flex-col gap-1">
+              {[
+                { href: `/${locale}/projects/${projectId}/punch-list/new`, label: `📷 ${tcs("snag")}` },
+                { href: `/${locale}/projects/${projectId}/daily-log/new`, label: `📋 ${tcs("dailyLog")}` },
+                { href: `/${locale}/projects/${projectId}/my-work`, label: `📥 ${tbn("myWork")}` },
+              ].map((a) => (
+                <li key={a.href}>
+                  <button type="button" onClick={() => { setOpen(false); router.push(a.href as never); }} className="hit-task w-full rounded px-2 text-start text-sm font-semibold text-navy-900 hover:bg-navy-50">
+                    {a.label}
+                  </button>
+                </li>
+              ))}
+              {recentRecords.slice(0, 4).map((r) => (
+                <li key={`${r.kind}-${r.id}`}>
+                  <button type="button" onClick={() => { setOpen(false); router.push(r.href as never); }} className="hit-task w-full truncate rounded px-2 text-start text-sm text-navy-700 hover:bg-navy-50">
+                    <span aria-hidden="true">🕘 </span>
+                    {r.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {!query && recent.length > 0 && (
           <div className="mt-3">

@@ -28,6 +28,7 @@ export function BulkAssign({ projectId, ids, onDone }: Props) {
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [userId, setUserId] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,16 +38,21 @@ export function BulkAssign({ projectId, ids, onDone }: Props) {
 
   async function apply(): Promise<void> {
     const m = members.find((x) => x.userId === userId);
-    if (!m) return;
+    if (!m && !dueDate) return;
     setBusy(true);
     setError(null);
     try {
       const results = await apiJson<{ ok: boolean }[]>("/punch-items/bulk-update", {
         method: "POST",
-        body: JSON.stringify({ ids, assigneeUserId: m.userId, ...(m.companyId ? { assigneeCompanyId: m.companyId } : {}) }),
+        body: JSON.stringify({
+          ids,
+          ...(m ? { assigneeUserId: m.userId, ...(m.companyId ? { assigneeCompanyId: m.companyId } : {}) } : {}),
+          ...(dueDate ? { dueDate: new Date(`${dueDate}T12:00:00`).toISOString() } : {}),
+        }),
       });
       setOpen(false);
       setUserId("");
+      setDueDate("");
       onDone({ failed: results.filter((r) => !r.ok).length, total: results.length });
     } catch (err) {
       setError(errorMessage(err, te));
@@ -71,12 +77,16 @@ export function BulkAssign({ projectId, ids, onDone }: Props) {
               </option>
             ))}
           </select>
+          <label className="flex flex-col gap-1 text-sm">
+            {t("dueDate")}
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="hit-task rounded-lg border-3 border-ink bg-white px-2" />
+          </label>
           {error && (
             <p role="alert" className="text-sm text-maroon-700">
               {error}
             </p>
           )}
-          <button type="button" disabled={!userId || busy} onClick={() => void apply()} className="hit-task rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 font-bold text-white disabled:opacity-50">
+          <button type="button" disabled={(!userId && !dueDate) || busy} onClick={() => void apply()} className="hit-task rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 font-bold text-white disabled:opacity-50">
             {t("apply", { count: ids.length })}
           </button>
         </div>

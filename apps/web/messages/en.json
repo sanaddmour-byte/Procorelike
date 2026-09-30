@@ -1286,7 +1286,8 @@
     "searchCategory_drawing": "Drawings",
     "searchCategory_daily_log": "Daily Logs",
     "searchCategory_schedule_task": "Schedule",
-    "searchCategory_person": "People"
+    "searchCategory_person": "People",
+    "quickActions": "Quick actions & recent"
   },
   "Notifications": {
     "title": "Notifications",
@@ -1457,7 +1458,8 @@
     "action": "Assign to…",
     "title": "Assign {count, plural, one {# snag} other {# snags}}",
     "person": "Choose a person",
-    "apply": "{count, plural, one {Assign # snag} other {Assign # snags}}"
+    "apply": "{count, plural, one {Assign # snag} other {Assign # snags}}",
+    "dueDate": "Due date (optional)"
   },
   "RecordNav": {
     "label": "Records in this list",

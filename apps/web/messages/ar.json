@@ -1286,7 +1286,8 @@
     "searchCategory_drawing": "المخططات",
     "searchCategory_daily_log": "السجلات اليومية",
     "searchCategory_schedule_task": "الجدول الزمني",
-    "searchCategory_person": "الأشخاص"
+    "searchCategory_person": "الأشخاص",
+    "quickActions": "إجراءات سريعة وآخر ما فتحته"
   },
   "Notifications": {
     "title": "الإشعارات",
@@ -1457,7 +1458,8 @@
     "action": "إسناد إلى…",
     "title": "إسناد {count, plural, one {ملاحظة واحدة} other {# ملاحظات}}",
     "person": "اختر شخصاً",
-    "apply": "{count, plural, one {إسناد ملاحظة واحدة} other {إسناد # ملاحظات}}"
+    "apply": "{count, plural, one {إسناد ملاحظة واحدة} other {إسناد # ملاحظات}}",
+    "dueDate": "تاريخ الاستحقاق (اختياري)"
   },
   "RecordNav": {
     "label": "السجلات في هذه القائمة",
