@@ -10,9 +10,9 @@ import { createDbClient } from "./client";
  * projects, cost codes, spec sections, and trades that script created by
  * name/email rather than creating them again.
  *
- * Every "attachment" here points at a placeholder storage key with no real
- * file behind it -- good enough to browse titles/lists/detail pages, but
- * "download" on any of these will 404 until real files are uploaded.
+ * Documents, drawing revisions and photos point at `demo/*` storage keys.
+ * Run `pnpm --filter @siteops/api exec tsx src/scripts/demo-files.ts` afterwards
+ * to put a real sample PDF/PNG behind them (needs the API's S3_* variables).
  */
 
 async function main(): Promise<void> {
@@ -74,14 +74,29 @@ async function main(): Promise<void> {
     return id;
   };
 
-  console.warn("Creating placeholder attachments for documents/drawings/photos...");
-  const [buildingAttachment] = await sql`
+  // Each attachment uses the owner type the API's download route recognises (a made-up owner type is
+  // rejected with 400) and a stable `demo/` storage key. The files themselves are uploaded by
+  // `apps/api/src/scripts/demo-files.ts`, which needs a reachable S3-compatible bucket.
+  console.warn("Creating demo attachments for documents/drawings/photos...");
+  const [documentAttachment] = await sql`
     insert into attachments (owner_type, owner_id, project_id, storage_key, filename, mime, size, uploaded_by)
-    values ('demo_placeholder', ${buildingId}, ${buildingId}, 'demo/placeholder.pdf', 'placeholder.pdf', 'application/pdf', 1024, ${sara})
+    values ('document', ${buildingId}, ${buildingId}, 'demo/sample-document.pdf', 'sample-document.pdf', 'application/pdf', 1024, ${sara})
     returning id
   `;
-  if (!buildingAttachment) throw new Error("attachment insert failed");
-  const attachmentId = buildingAttachment.id as string;
+  const [drawingAttachment] = await sql`
+    insert into attachments (owner_type, owner_id, project_id, storage_key, filename, mime, size, uploaded_by)
+    values ('drawing_revision', ${buildingId}, ${buildingId}, 'demo/sample-drawing.pdf', 'sample-drawing.pdf', 'application/pdf', 1024, ${sara})
+    returning id
+  `;
+  const [photoAttachment] = await sql`
+    insert into attachments (owner_type, owner_id, project_id, storage_key, filename, mime, size, uploaded_by)
+    values ('photo', ${buildingId}, ${buildingId}, 'demo/sample-photo.png', 'sample-photo.png', 'image/png', 1024, ${yousef})
+    returning id
+  `;
+  if (!documentAttachment || !drawingAttachment || !photoAttachment) throw new Error("attachment insert failed");
+  const documentAttachmentId = documentAttachment.id as string;
+  const drawingAttachmentId = drawingAttachment.id as string;
+  const photoAttachmentId = photoAttachment.id as string;
 
   console.warn("Seeding RFIs...");
   const rfiData: [string, string, string, string, string, string | null][] = [
@@ -218,7 +233,7 @@ async function main(): Promise<void> {
   for (const [title, folderId] of docTitles) {
     await sql`
       insert into documents (project_id, folder_id, title, current_attachment_id, created_by)
-      values (${buildingId}, ${folderId}, ${title}, ${attachmentId}, ${sara})
+      values (${buildingId}, ${folderId}, ${title}, ${documentAttachmentId}, ${sara})
     `;
   }
 
@@ -239,7 +254,7 @@ async function main(): Promise<void> {
     if (!drawing) continue;
     const [revision] = await sql`
       insert into drawing_revisions (drawing_id, revision_code, attachment_id, issued_date, created_by)
-      values (${drawing.id}, 'Rev 2', ${attachmentId}, now() - interval '30 days', ${sara})
+      values (${drawing.id}, 'Rev 2', ${drawingAttachmentId}, now() - interval '30 days', ${sara})
       returning id
     `;
     if (revision) await sql`update drawings set current_revision_id = ${revision.id} where id = ${drawing.id}`;
@@ -250,7 +265,7 @@ async function main(): Promise<void> {
   for (let i = 1; i <= 6; i += 1) {
     await sql`
       insert into photos (project_id, album_id, attachment_id, taken_at, uploaded_by)
-      values (${buildingId}, ${album?.id ?? null}, ${attachmentId}, now() - interval '${sql.unsafe(String(i * 5))} days', ${yousef})
+      values (${buildingId}, ${album?.id ?? null}, ${photoAttachmentId}, now() - interval '${sql.unsafe(String(i * 5))} days', ${yousef})
     `;
   }
 
