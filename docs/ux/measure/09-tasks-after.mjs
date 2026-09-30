@@ -48,13 +48,10 @@ const drawerLink = (page, seg) => page.locator(`[role=dialog] a[href$="/${seg}"]
 // ---- T1 + T2: create a snag with photo + location + assignee; then the next one at the same location ----
 {
   const { ctx, page, t } = await coldOpen("T1 create snag with photo + location + assignee");
-  await t.tap(fab(page), "+ Capture");
-  await t.tap(sheetItem(page, "snag"), "Snag (photo first)");
+  await t.tap(page.getByRole("link", { name: T("MyWork.newSnag"), exact: true }), "New snag (My Work)");
   await page.waitForURL(/punch-list\/new/);
   await t.upload('input[type="file"][capture]', photo, "Take photo");
-  await t.tap(page.getByRole("button", { name: T("Field.locationSelect") }), "Location");
-  const firstLoc = page.locator("[role=dialog] ul li button").nth(1);
-  await t.tap(firstLoc, "choose location");
+  await t.tap(page.getByRole("group", { name: T("Field.locationQuick") }).getByRole("button").first(), "Location (quick chip)");
   await t.tap(page.getByRole("button", { name: T("Field.assignMe"), exact: true }), "Assignee: Me");
   await page.screenshot({ path: path.join(SHOTS, `after-task1-form-${loc}.png`) });
   await t.tap(page.getByRole("button", { name: T("Field.saveAndAddAnother") }), "Save & add another");

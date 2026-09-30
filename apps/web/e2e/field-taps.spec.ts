@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 
 /**
@@ -39,6 +41,20 @@ for (const locale of ["en", "ar"] as const) {
       await signedInReturningUser(page);
       await expect(page.locator("main li a").first()).toBeVisible();
       expect(taps).toBeLessThanOrEqual(2);
+    });
+
+    test("T1 create a snag with photo, location and assignee in <= 6 taps", async ({ page }) => {
+      const field = (JSON.parse(readFileSync(join(__dirname, "..", "messages", `${locale}.json`), "utf8")) as { Field: Record<string, string> }).Field;
+      await signedInReturningUser(page);
+      await tap(() => page.locator('main a[href$="/punch-list/new"]').first().click()); // New snag
+      await page.waitForURL(/punch-list\/new$/);
+      const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+      await tap(() => page.locator('input[type="file"][capture]').first().setInputFiles({ name: "snag.png", mimeType: "image/png", buffer: png }), 2); // photo
+      await tap(() => page.locator('[role=group] button[aria-pressed]').first().click()); // location quick chip
+      await tap(() => page.getByRole("button", { name: field.assignMe, exact: true }).click()); // assignee: me
+      await tap(() => page.getByRole("button", { name: field.saveAndAddAnother }).click());
+      await expect(page.getByRole("status").first()).toBeVisible();
+      expect(taps).toBeLessThanOrEqual(6);
     });
 
     test("T3 raise an inspection request in <= 6 taps", async ({ page }) => {

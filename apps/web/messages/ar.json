@@ -1370,6 +1370,7 @@
   "Field": {
     "saveAndAddAnother": "حفظ وإضافة آخر",
     "cancel": "إلغاء",
+    "locationQuick": "مواقع سريعة",
     "locationLabel": "الموقع",
     "locationSelect": "اختر الموقع",
     "locationNone": "بدون موقع",
@@ -1435,6 +1436,7 @@
     "incident": "حادث سلامة"
   },
   "MyWork": {
+    "newSnag": "ملاحظة جديدة",
     "title": "مهامي",
     "empty": "لا شيء مكلّف به. ممتاز.",
     "emptyAction": "إنشاء ملاحظة",

@@ -1370,6 +1370,7 @@
   "Field": {
     "saveAndAddAnother": "Save & add another",
     "cancel": "Cancel",
+    "locationQuick": "Quick locations",
     "locationLabel": "Location",
     "locationSelect": "Select location",
     "locationNone": "No location",
@@ -1435,6 +1436,7 @@
     "incident": "Safety incident"
   },
   "MyWork": {
+    "newSnag": "New snag",
     "title": "My Work",
     "empty": "Nothing is assigned to you. Nice.",
     "emptyAction": "Create a snag",

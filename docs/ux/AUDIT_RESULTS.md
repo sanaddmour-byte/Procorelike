@@ -21,7 +21,7 @@ English and Arabic gave identical tap counts and outcomes for every task.
 
 | Task | Target taps | Before (EN / AR) | After (EN / AR) | Completable before → after |
 |---|---|---|---|---|
-| T1 Create a snag with photo, location, assignee | ≤ 6 | 8 partial / 8 partial | **8** / **8** | no → **yes** — **still over budget by 2** |
+| T1 Create a snag with photo, location, assignee | ≤ 6 | 8 partial / 8 partial | **6** / **6** | no → **yes** — within budget (was 8; see note) |
 | T2 Next snag, same location | ≤ 4 | 4 partial | **3** | no → yes (location + assignee carry over) |
 | T3 Raise a work-inspection request | ≤ 6 | 5 | **3** | yes → yes |
 | T4 Find a drawing by sheet number | ≤ 4 | 5 | **3** | yes → yes |
@@ -33,7 +33,7 @@ English and Arabic gave identical tap counts and outcomes for every task.
 | T10 Bulk-assign snags to one person | ≤ 8 | 4 partial (no assignment possible) | **7** | no → **yes** |
 
 Notes that matter:
-- **T1 misses its budget.** Photo (2) + location (2) + "Me" (1) + open FAB and sheet (2) + save (1) = 8. Same-as-last defaults only help from the second snag onward (T2 = 3). Getting to 6 needs a design decision (e.g. capture-first from a long-press on the FAB, or optional location on first save) that the plan did not include; I did not invent one.
+- **T1 is now within budget (6).** It was 8: open FAB and sheet (2) + photo (2) + location (2) + "Me" (1) + save (1). Two changes cut 2 taps: a one-tap **New snag** button on My Work (replaces FAB + sheet), and one-tap **location chips** in the form (your last four locations, or the top-level areas the first time) instead of opening the picker and choosing. Now: New snag (1) + photo (2) + location chip (1) + Me (1) + save (1) = 6, in English and Arabic (`data/after/tasks-after-*.json`, enforced by the T1 test in `field-taps.spec.ts`). The full location picker is still there for deeper locations. These were my design calls, not in the original plan; say if you prefer another route.
 - **T5 first use = 8** because a company and a trade are two native selects. The crew is remembered per project afterwards (repeat = 4).
 - **T10** selected every snag on the page in one action (42 in the audit data — the page size is 50), not 10; the count of taps does not grow with the number of rows.
 - Before-numbers for tasks that were "partial" are taps to the furthest point reachable, so they are **not comparable** with the after-numbers of a completed task. The "Completable" column is the honest comparison.
@@ -59,9 +59,10 @@ Other regressions I found **while testing** and fixed (latest: English record ti
 
 Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms local, 15–260 ms emulated). JS transferred per screen grew by 5–7 KB (170 → 177 KB on the punch list).
 
-**Update (after a follow-up fix):** the first list load was being held back by the 300 ms *search* debounce even when nothing had been typed. Fixing that (`use-server-table.ts`) roughly halves local LCP (punch list 624 → 308 ms, RFIs 616 → 340 ms) but only trims the emulated-phone figure (2.96 → 2.57 s); the rest is the chain of serial round trips at 150 ms RTT. Raw runs: `data/after/perf.json` (now) and `data/after/perf-before-debounce-fix.json`. The paragraph below describes the state before that fix.
+**Update (after a follow-up fix):** the first list load was being held back by the 300 ms *search* debounce even when nothing had been typed. Fixing that (`use-server-table.ts`) roughly halves local LCP (punch list 624 → 308 ms, RFIs 616 → 340 ms) but only trims the emulated-phone figure (2.96 → 2.57 s); the rest was assumed to be a chain of serial round trips at 150 ms RTT (corrected below). Raw runs: `data/after/perf.json` (now) and `data/after/perf-before-debounce-fix.json`. The paragraph below describes the state before that fix.
 
-**One number got worse and I have not fully fixed it:** on the emulated phone, Largest Contentful Paint on the punch list is **2.96 s (was 0.59 s)**, RFIs 2.85 s (was 0.59 s); the dashboard is unchanged (2.32 → 2.34 s). First Contentful Paint is roughly unchanged (0.59 → 0.63 s). Probable cause (a hypothesis, not tested): before, the paint that counted as LCP was the "Loading…" text; now loading shows skeleton bars with no text, so LCP is the first real content, which waits on 8–10 API calls at 150 ms RTT. Either way, the lists render their real content later than the Stage 1 figure suggests is "fast". Reducing the number of chained requests per screen is in the backlog.
+**One number got worse and I have not fully fixed it:** on the emulated phone, Largest Contentful Paint on the punch list is **2.96 s (was 0.59 s)**, RFIs 2.85 s (was 0.59 s); the dashboard is unchanged (2.32 → 2.34 s). First Contentful Paint is roughly unchanged (0.59 → 0.63 s). Probable cause (a hypothesis, not tested): before, the paint that counted as LCP was the "Loading…" text; now loading shows skeleton bars with no text, so LCP is the first real content, which waits on 8–10 API calls at 150 ms RTT. Either way, the lists render their real content later than the Stage 1 figure suggests is "fast". 
+**Follow-up finding (measured, `measure/10-requests.mjs`):** the request-chain hypothesis is **wrong**. A cold punch-list load issues its API calls in parallel (list, saved views, notification count, projects) within about 60 ms of each other locally. On the emulated phone, LCP (2.57 s) lands at the end of the last long task (2.66 s, total blocking time 416 ms): the delay is JavaScript download and hydration under 4× CPU throttling, not API round trips. Fixing it means splitting the 177 KB of JS (route-level code splitting of the table, sheet and search components), which I did not do. LCP on the emulated phone therefore stays at about 2.6 s; local is 0.3 s.
 
 ## 5. What shipped, by plan item
 
@@ -71,7 +72,7 @@ Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms 
 | B1 photo-first capture · B3 assignee · B4 dictation · B7 drafts | **Done** | `CaptureButton`, `VoiceField`, `FormShell`, `lib/drafts.ts` |
 | B6 error / loading states | **Done** — 48 pages use one error box with Retry; offline says "No connection", not "Something went wrong" | `ErrorState`, `LoadingState`, `lib/error-message.ts` |
 | B8 compact rows · saved-views bar | **Done** | `DataTable`, `SavedViewsBar`, `FilterBar` |
-| B9 bulk operations | **Partly** — assign and due date (API + UI + tests). Bulk distribution: not built. | `BulkAssign`, `POST /punch-items/bulk-update` |
+| B9 bulk operations | **Done** — assign, due date and add-to-distribution (API + UI + tests) | `BulkAssign`, `POST /punch-items/bulk-update` |
 | C1 bottom nav · C2 last project · create sheet | **Done** | `BottomNav`, `CreateSheet`, `lib/last-project.ts` |
 | D1 service worker · D2 outbox · D3 truthful failures | **Done for snags and RFI answers** (a generic JSON-write queue exists, so more record types are a small change); service worker caches the shell and visited pages (production only). Other record types are **not** queued offline. | `public/sw.js`, `lib/outbox.ts`, `SyncStatus` |
 | E1 location · E3 close-out · E4 manpower · E5 My Work | **Done** | `LocationPicker`, snag detail, `ManpowerEditor`, `my-work/page.tsx` |
@@ -84,17 +85,27 @@ Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms 
 | C4 "Recently opened" on My Work (snags, RFIs, drawings; device-local) | **Done** | `lib/recents.ts` |
 | C4 deep link survives the login wall · list rows are real links (open in new tab / long-press) on punch list, RFIs, drawings | **Done** | `ReturnTo`, `DataTable` `rowHref` |
 | E2/E6 "Mine" one-tap preset (punch list, RFIs) | **Done** | `FilterBar` presets |
-| G2 interaction-count tests | **Done** — 10 Playwright tests (EN+AR) enforcing budgets for T3, T4, T7, T9 and the offline queue; existing 12 E2E tests updated for the new UI | `apps/web/e2e/field-taps.spec.ts` |
+| B2 grouping (group-by, collapsible groups, choice remembered) · E2 swipe-to-assign on snag cards | **Done** (punch list) | `DataTable` `groups` / `swipeAction` |
+| E7 drawings search-first (search focused on open, recent sheets) | **Done** | `drawings/page.tsx`, `FilterBar` |
+| E8 photos grouped by day with lazy thumbnails (not raw ids) | **Done** structure; thumbnail bytes need the S3 stand-in, which was not running, so I verified layout only | `LazyThumb`, `photos/page.tsx` |
+| E12 change events / orders on tabs; shared loading/empty/status components on change orders, companies, settings | **Done** | `change-orders/page.tsx` |
+| E13 clipped controls | **Verified** — overflow sweep reports none (§3) | `data/after/overflow.json` |
+| G2 interaction-count tests | **Done** — 12 Playwright tests (EN+AR) enforcing budgets for T1, T3, T4, T7, T9 and the offline queue; existing 12 E2E tests updated for the new UI | `apps/web/e2e/field-taps.spec.ts` |
 
-Test state at the end: web typecheck, lint and unit tests pass; **30 of 30** Playwright tests pass (one earlier full run had a single failure in the safety-incident test that passed in isolation twice and in the next full run; I treat it as a flake, not proof it can't recur) against the production build; the API test file for bulk actions passes (6 tests, including 2 new). I did **not** re-run the complete API test suite in this stretch.
+Test state at the end: typecheck and lint pass in all five packages; unit tests pass (shared 200, web 32, mobile 4, db 1); the full API suite passes (258 tests); **36 of 36** Playwright tests pass against the production build (one earlier run had a single failure in the safety-incident test that passed on rerun; I treat it as a flake, not proof it cannot recur). Sandbox services (Postgres, API) were restarted by the environment once during this stretch; results above are from after the restart.
 
 Eight existing E2E tests failed after the UI changes and I updated them. Six were caused by this work's intentional changes (search boxes now have an accessible name that substring-matches "Title/Subject/Description"; Priority is three chips instead of a select; Log out is inside the avatar menu; the signed-out landing is `/login`; the snag status buttons are labelled by status). Two were already stale from earlier phases, not from this work: correspondence has needed a typed signature to send since Phase 12, and the RFI status text is split across elements. I updated all of them rather than leave them red.
 
 ## 6. Not built (backlog, in plan order)
 
-B2 grouping engine · E2 punch-list grouping and swipe actions · E7 drawings search-first · E8 photos thumbnails · E12/E13 polish and clipped-control verification · offline queue for record types other than snags and RFI answers · bulk distribution · reduce request count per screen (LCP, §4) · remaining contrast failures and the 18 small targets (§3).
+offline queue for record types other than snags and RFI answers (web) · route-level code splitting to bring emulated-phone LCP down (§4) · remaining contrast failures and the 18 small targets (§3) · the production S3 bucket for the drawings viewer (you asked me to leave it out).
 
-**Mobile app (Expo), M1–M5:** not started. It cannot be run in this environment, so any mobile change would be unmeasured; new dependencies (`expo-image-picker`, `expo-haptics`, a dictation module) need your explicit yes first.
+**Mobile app (Expo), M1–M5:** built, **unmeasured and never run on a device or emulator** (none is available here). Checked by typecheck, lint and 4 unit tests only.
+- M1 New snag: location, assignee and camera photo (`expo-image-picker`), offline-first; photos upload after the snag syncs.
+- M2 RFI respond (queued when offline). M3 daily-log manpower (editor appears once the log has synced; queued when offline).
+- M4 project switcher that keeps the screen type (`switchProjectPath`, unit-tested). M5 `I18nManager` RTL, which takes effect on the next app launch after the language changes.
+- Added `expo-image-picker`, `expo-haptics`; `app.json` camera permission text. Voice dictation on mobile: not built (no module added).
+- Risks to check on a device: SQLite migration adding two columns to `punch_items`, the camera permission prompt, RTL mirroring of the custom screens, and the sync upload of photos.
 
 ## 7. Deviations and known issues
 

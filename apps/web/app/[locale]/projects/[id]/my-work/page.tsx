@@ -60,7 +60,12 @@ export default function MyWorkPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-3">
-      <h1 className="text-xl font-bold">{t("title")}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-bold">{t("title")}</h1>
+        <Link href={`${base}/punch-list/new`} className="inline-flex min-h-hit items-center rounded-lg border-3 border-ink bg-maroon-700 px-4 text-sm font-semibold text-white">
+          {t("newSnag")}
+        </Link>
+      </div>
 
       {error && (
         <div role="alert" className="flex flex-col gap-2 rounded-lg border-3 border-ink bg-white p-3">

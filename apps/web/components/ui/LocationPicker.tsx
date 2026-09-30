@@ -61,6 +61,25 @@ interface Props {
  * added on the spot -- under the currently selected one, or as a new top-level location -- so a snag never waits on
  * an administrator.
  */
+const RECENT_LIMIT = 4;
+
+function readRecentLocationIds(projectId: string): string[] {
+  try {
+    return JSON.parse(window.localStorage.getItem(`siteops.recentLocations:${projectId}`) ?? "[]") as string[];
+  } catch {
+    return [];
+  }
+}
+
+function rememberLocation(projectId: string, id: string): void {
+  try {
+    const next = [id, ...readRecentLocationIds(projectId).filter((x) => x !== id)].slice(0, RECENT_LIMIT);
+    window.localStorage.setItem(`siteops.recentLocations:${projectId}`, JSON.stringify(next));
+  } catch {
+    // convenience only
+  }
+}
+
 export function LocationPicker({ projectId, value, onChange }: Props) {
   const t = useTranslations("Field");
   const { locations, add } = useLocations(projectId);
@@ -72,7 +91,16 @@ export function LocationPicker({ projectId, value, onChange }: Props) {
     return (needle ? locations.filter((l) => l.path.toLowerCase().includes(needle)) : locations).slice(0, 200);
   }, [locations, q]);
 
+  const [recentIds, setRecentIds] = useState<string[]>([]);
+  useEffect(() => setRecentIds(readRecentLocationIds(projectId)), [projectId, open]);
+  // One-tap shortcuts (plan T1): the locations used last, or the top-level areas the first time.
+  const quick = useMemo(() => {
+    const recent = recentIds.map((id) => locations.find((l) => l.id === id)).filter((l): l is LocationOption => Boolean(l));
+    return (recent.length > 0 ? recent : locations.filter((l) => l.parentId === null)).slice(0, RECENT_LIMIT);
+  }, [locations, recentIds]);
+
   function pick(id: string | undefined): void {
+    if (id) rememberLocation(projectId, id);
     onChange(id);
     setOpen(false);
     setQ("");
@@ -94,6 +122,21 @@ export function LocationPicker({ projectId, value, onChange }: Props) {
         <span className="truncate">{current ? current.path : t("locationSelect")}</span>
         <span aria-hidden="true">▾</span>
       </button>
+      {quick.length > 0 && (
+        <div role="group" aria-label={t("locationQuick")} className="flex flex-wrap gap-2">
+          {quick.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => pick(l.id)}
+              aria-pressed={l.id === value}
+              className={`hit-task max-w-full truncate rounded-full border-3 border-ink px-4 text-sm font-semibold ${l.id === value ? "bg-navy-800 text-white" : "bg-white text-navy-900"}`}
+            >
+              {l.name}
+            </button>
+          ))}
+        </div>
+      )}
       <Modal open={open} onClose={() => setOpen(false)} title={t("locationLabel")} sheet>
         <input
           type="search"
