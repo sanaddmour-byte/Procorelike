@@ -35,7 +35,7 @@ export default function NewDailyLogPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-lg px-4 py-8">
+      <main className="mx-auto max-w-lg px-0 py-2 sm:px-4 sm:py-8">
         <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-navy-900">{t("createTitle")}</h1>
         <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">

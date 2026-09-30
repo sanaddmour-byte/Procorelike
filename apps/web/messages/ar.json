@@ -45,7 +45,9 @@
     "delete": "حذف",
     "exportAllCsv": "تصدير الكل (CSV)",
     "copy": "نسخ",
-    "copied": "تم النسخ!"
+    "copied": "تم النسخ!",
+    "sortBy": "ترتيب حسب",
+    "sortDirection": "عكس الترتيب"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
@@ -60,7 +62,8 @@
     "title": "مشاريعك",
     "empty": "لم يتم تعيينك على أي مشروع بعد.",
     "viewDirectory": "عرض الدليل",
-    "manageCompanyLogo": "إدارة شعار الشركة"
+    "manageCompanyLogo": "إدارة شعار الشركة",
+    "open": "فتح المشروع"
   },
   "Companies": {
     "title": "هوية الشركة البصرية",
@@ -137,7 +140,8 @@
     "bidding": "المناقصات",
     "estimating": "التقدير",
     "settings": "الإعدادات",
-    "analytics": "التحليلات"
+    "analytics": "التحليلات",
+    "myWork": "مهامي"
   },
   "DailyLog": {
     "title": "سجلات الأعمال اليومية",
@@ -214,7 +218,8 @@
   "SavedViews": {
     "saveView": "حفظ العرض",
     "viewNamePlaceholder": "اسم العرض",
-    "deleteView": "حذف العرض \"{name}\""
+    "deleteView": "حذف العرض \"{name}\"",
+    "views": "العروض المحفوظة"
   },
   "Photos": {
     "title": "الصور",
@@ -1349,5 +1354,88 @@
     "completed": "مكتمل",
     "in_review": "قيد المراجعة",
     "pending_approval": "بانتظار الموافقة"
+  },
+  "Field": {
+    "saveAndAddAnother": "حفظ وإضافة آخر",
+    "cancel": "إلغاء",
+    "locationLabel": "الموقع",
+    "locationSelect": "اختر الموقع",
+    "locationNone": "بدون موقع",
+    "locationSearch": "ابحث عن موقع أو أضفه…",
+    "locationAddChild": "إضافة «{name}» ضمن {parent}",
+    "locationAddRoot": "إضافة «{name}» كموقع رئيسي جديد",
+    "locationSame": "نفس الموقع السابق",
+    "takePhoto": "التقاط صورة",
+    "addPhoto": "إضافة صورة",
+    "removePhoto": "إزالة الصورة",
+    "photos": "الصور",
+    "dictate": "إملاء صوتي",
+    "dictateStop": "إيقاف الإملاء",
+    "draftRestored": "تمت استعادة ما لم تحفظه.",
+    "assignee": "المكلّف",
+    "assignMe": "أنا",
+    "unassigned": "غير معيّن",
+    "trade": "المهنة",
+    "noTrade": "بدون مهنة",
+    "savedToDevice": "تم الحفظ على هذا الجهاز وسيُرسل عند عودة الاتصال.",
+    "photoOnlyDescription": "ملاحظة بالصورة",
+    "close": "إغلاق",
+    "moreOptions": "خيارات إضافية",
+    "savedNumber": "تم حفظ {number}. جاهز للتالي.",
+    "required": "مطلوب",
+    "closeOut": "إغلاق",
+    "sendForReview": "إرسال للمراجعة",
+    "approve": "اعتماد",
+    "reopen": "إعادة فتح",
+    "notAccepted": "غير مقبول",
+    "inDispute": "محل نزاع",
+    "stoppedAt": "توقّف عند «{status}» — فقط المعتمد النهائي يمكنه المتابعة.",
+    "details": "التفاصيل",
+    "addPhotos": "الصور",
+    "locationUnset": "غير محدد",
+    "due": "الاستحقاق",
+    "gloveMode": "وضع القفازات (أزرار وخط أكبر)"
+  },
+  "Errors": {
+    "offline": "لا يوجد اتصال. تم حفظ ما أدخلته على هذا الجهاز — أعد المحاولة عند توفر الشبكة.",
+    "sessionExpired": "انتهت الجلسة. سجّل الدخول مجددًا؛ ما أدخلته محفوظ.",
+    "forbidden": "ليست لديك صلاحية لهذا الإجراء.",
+    "notFound": "هذا السجل لم يعد موجودًا.",
+    "conflict": "عدّل شخص آخر هذا السجل. أعد التحميل لرؤية نسخته.",
+    "server": "حدثت مشكلة في الخادم. ما أدخلته محفوظ — أعد المحاولة.",
+    "invalid": "بعض الحقول تحتاج إلى مراجعة. تحقق من النموذج وأعد المحاولة.",
+    "generic": "حدث خطأ ما. أعد المحاولة."
+  },
+  "BottomNav": {
+    "label": "التنقل الرئيسي",
+    "myWork": "مهامي",
+    "capture": "التقاط",
+    "project": "المشروع",
+    "drawings": "المخططات",
+    "more": "المزيد"
+  },
+  "CreateSheet": {
+    "title": "إنشاء",
+    "snag": "ملاحظة (بالصورة أولًا)",
+    "dailyLog": "سجل يومي",
+    "rfi": "طلب معلومات",
+    "inspection": "تفتيش",
+    "incident": "حادث سلامة"
+  },
+  "MyWork": {
+    "title": "مهامي",
+    "empty": "لا شيء مكلّف به. ممتاز.",
+    "emptyAction": "إنشاء ملاحظة",
+    "overdue": "متأخر",
+    "today": "يستحق اليوم",
+    "week": "هذا الأسبوع",
+    "later": "لاحقًا",
+    "none": "بدون تاريخ استحقاق",
+    "module_punch_list": "ملاحظة",
+    "module_rfis": "طلب معلومات",
+    "module_submittals": "مستند",
+    "module_corrective_actions": "إجراء سلامة",
+    "count": "{count, plural, one {# عنصر} two {عنصران} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+    "due": "الاستحقاق"
   }
 }

@@ -45,7 +45,9 @@
     "delete": "Delete",
     "exportAllCsv": "Export All (CSV)",
     "copy": "Copy",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "sortBy": "Sort by",
+    "sortDirection": "Reverse sort order"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -60,7 +62,8 @@
     "title": "Your projects",
     "empty": "You are not assigned to any projects yet.",
     "viewDirectory": "View directory",
-    "manageCompanyLogo": "Manage company logo"
+    "manageCompanyLogo": "Manage company logo",
+    "open": "Open project"
   },
   "Companies": {
     "title": "Company branding",
@@ -137,7 +140,8 @@
     "bidding": "Bidding",
     "estimating": "Estimating",
     "settings": "Settings",
-    "analytics": "Analytics"
+    "analytics": "Analytics",
+    "myWork": "My Work"
   },
   "DailyLog": {
     "title": "Daily Logs",
@@ -214,7 +218,8 @@
   "SavedViews": {
     "saveView": "Save view",
     "viewNamePlaceholder": "View name",
-    "deleteView": "Delete view \"{name}\""
+    "deleteView": "Delete view \"{name}\"",
+    "views": "Saved views"
   },
   "Photos": {
     "title": "Photos",
@@ -1349,5 +1354,88 @@
     "completed": "Completed",
     "in_review": "In review",
     "pending_approval": "Pending approval"
+  },
+  "Field": {
+    "saveAndAddAnother": "Save & add another",
+    "cancel": "Cancel",
+    "locationLabel": "Location",
+    "locationSelect": "Select location",
+    "locationNone": "No location",
+    "locationSearch": "Search or add a location…",
+    "locationAddChild": "Add “{name}” under {parent}",
+    "locationAddRoot": "Add “{name}” as a new top-level location",
+    "locationSame": "Same as last",
+    "takePhoto": "Take photo",
+    "addPhoto": "Add photo",
+    "removePhoto": "Remove photo",
+    "photos": "Photos",
+    "dictate": "Dictate",
+    "dictateStop": "Stop dictation",
+    "draftRestored": "Restored your unsaved entry.",
+    "assignee": "Assignee",
+    "assignMe": "Me",
+    "unassigned": "Unassigned",
+    "trade": "Trade",
+    "noTrade": "No trade",
+    "savedToDevice": "Saved on this device. It will send when you are back online.",
+    "photoOnlyDescription": "Photo snag",
+    "close": "Close",
+    "moreOptions": "More options",
+    "savedNumber": "Saved {number}. Ready for the next one.",
+    "required": "Required",
+    "closeOut": "Close out",
+    "sendForReview": "Send for review",
+    "approve": "Approve",
+    "reopen": "Reopen",
+    "notAccepted": "Not accepted",
+    "inDispute": "In dispute",
+    "stoppedAt": "Stopped at “{status}” — only the final approver can go further.",
+    "details": "Details",
+    "addPhotos": "Photos",
+    "locationUnset": "Not set",
+    "due": "Due",
+    "gloveMode": "Glove mode (larger targets and text)"
+  },
+  "Errors": {
+    "offline": "No connection. Your entry is kept on this device — try again when you have signal.",
+    "sessionExpired": "Your session ended. Sign in again; your entry is kept.",
+    "forbidden": "You don't have permission to do that.",
+    "notFound": "That record no longer exists.",
+    "conflict": "Someone else changed this record. Reload to see their version.",
+    "server": "The server had a problem. Your entry is kept — try again.",
+    "invalid": "Some fields need attention. Check the form and try again.",
+    "generic": "Something went wrong. Try again."
+  },
+  "BottomNav": {
+    "label": "Main navigation",
+    "myWork": "My Work",
+    "capture": "Capture",
+    "project": "Project",
+    "drawings": "Drawings",
+    "more": "More"
+  },
+  "CreateSheet": {
+    "title": "Create",
+    "snag": "Snag (photo first)",
+    "dailyLog": "Daily log",
+    "rfi": "RFI",
+    "inspection": "Inspection",
+    "incident": "Safety incident"
+  },
+  "MyWork": {
+    "title": "My Work",
+    "empty": "Nothing is assigned to you. Nice.",
+    "emptyAction": "Create a snag",
+    "overdue": "Overdue",
+    "today": "Due today",
+    "week": "This week",
+    "later": "Later",
+    "none": "No due date",
+    "module_punch_list": "Snag",
+    "module_rfis": "RFI",
+    "module_submittals": "Submittal",
+    "module_corrective_actions": "Safety action",
+    "count": "{count, plural, one {# item} other {# items}}",
+    "due": "Due"
   }
 }
