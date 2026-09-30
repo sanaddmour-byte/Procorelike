@@ -9,6 +9,7 @@ import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useEnumLabel } from "@/lib/use-enum-label";
 
 type ActionRequiredType = "rfi_overdue" | "submittal_in_review" | "schedule_task_delayed" | "change_order_pending_approval";
 
@@ -40,6 +41,7 @@ const ACTION_LABEL_KEYS: Record<ActionRequiredType, string> = {
 };
 
 export default function DashboardPage() {
+  const enumLabel = useEnumLabel();
   const t = useTranslations("Dashboard");
   const tc = useTranslations("Common");
   const router = useRouter();
@@ -117,7 +119,7 @@ export default function DashboardPage() {
                     <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("punchList")}</h3>
                     <div className="flex flex-wrap gap-6">
                       {Object.entries(dashboard.punchList.byStatus).map(([status, count]) => (
-                        <Tile key={status} label={status} value={count} />
+                        <Tile key={status} label={enumLabel(status)} value={count} />
                       ))}
                     </div>
                   </div>
@@ -145,7 +147,7 @@ export default function DashboardPage() {
                     <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("changeOrders")}</h3>
                     <div className="flex flex-wrap gap-6">
                       {Object.entries(dashboard.changeOrders.byStatus).map(([status, count]) => (
-                        <Tile key={status} label={status} value={count} />
+                        <Tile key={status} label={enumLabel(status)} value={count} />
                       ))}
                     </div>
                   </div>

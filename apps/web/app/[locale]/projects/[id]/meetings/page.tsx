@@ -9,6 +9,7 @@ import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { formatDateTime } from "@/lib/format";
 
 interface Meeting {
   id: string;
@@ -61,7 +62,7 @@ export default function MeetingsPage() {
 
   const columns: DataTableColumn<Meeting>[] = [
     { key: "title", header: t("titleField"), render: (m) => m.title, sortValue: (m) => m.title },
-    { key: "occurredAt", header: t("occurredAt"), render: (m) => new Date(m.occurredAt).toLocaleString(), sortValue: (m) => m.occurredAt, width: "220px" },
+    { key: "occurredAt", header: t("occurredAt"), render: (m) => formatDateTime(m.occurredAt), sortValue: (m) => m.occurredAt, width: "220px" },
   ];
 
   return (

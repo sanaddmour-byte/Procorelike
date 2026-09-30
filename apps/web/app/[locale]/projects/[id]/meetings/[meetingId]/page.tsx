@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { formatDateTime } from "@/lib/format";
 
 type MeetingItemStatus = "open" | "closed" | "converted";
 
@@ -140,7 +141,7 @@ export default function MeetingDetailPage() {
         {meeting && (
           <>
             <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{meeting.title}</h1>
-            <p className="mb-4 text-sm text-navy-600">{new Date(meeting.occurredAt).toLocaleString()}</p>
+            <p className="mb-4 text-sm text-navy-600">{formatDateTime(meeting.occurredAt)}</p>
 
             <h2 className="mb-2 text-lg font-bold text-navy-900">{t("actionItems")}</h2>
             <form onSubmit={(e) => void handleAddItem(e)} className="mb-4 flex gap-2">

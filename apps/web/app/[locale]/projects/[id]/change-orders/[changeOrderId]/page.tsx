@@ -10,6 +10,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatDateTime } from "@/lib/format";
 
 interface ApprovalEntry {
   userId: string;
@@ -183,7 +184,7 @@ export default function ChangeOrderDetailPage() {
               <ul className="mb-4 flex flex-col gap-2">
                 {co.approvalChain.map((a, i) => (
                   <li key={i} className="rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3 text-sm">
-                    {a.role} — {new Date(a.approvedAt).toLocaleString()}
+                    {a.role} — {formatDateTime(a.approvedAt)}
                   </li>
                 ))}
               </ul>

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link, { type LinkProps } from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/format";
 
 interface ManpowerRow {
   id: string;
@@ -88,7 +89,7 @@ export default function DailyLogDetailPage() {
         {log && (
           <>
             <div className="mb-4 mt-2 flex items-center justify-between">
-              <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{log.logDate}</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{formatDate(log.logDate)}</h1>
               <span
                 className={`rounded px-2 py-0.5 text-xs ${
                   log.lockedAt ? "bg-navy-900 text-white" : "bg-orange-100 text-navy-800"

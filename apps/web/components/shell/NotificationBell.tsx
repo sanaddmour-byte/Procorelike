@@ -4,6 +4,7 @@ import { apiJson } from "@/lib/api-client";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { formatDateTime } from "@/lib/format";
 
 interface NotificationPayload {
   projectId: string;
@@ -142,7 +143,7 @@ export function NotificationBell() {
                 className={`block w-full border-b border-navy-50 px-3 py-2 text-start last:border-0 hover:bg-orange-50 ${n.readAt ? "text-navy-600" : "font-semibold text-navy-900"}`}
               >
                 <span className="block truncate">{n.payload.summary}</span>
-                <span className="block text-[11px] font-normal text-navy-400">{new Date(n.createdAt).toLocaleString(locale)}</span>
+                <span className="block text-[11px] font-normal text-navy-400">{formatDateTime(n.createdAt)}</span>
               </button>
             ))}
           </div>

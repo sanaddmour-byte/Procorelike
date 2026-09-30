@@ -10,6 +10,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { formatDate } from "@/lib/format";
 
 interface DailyLog {
   id: string;
@@ -47,7 +48,7 @@ export default function DailyLogListPage() {
   }, [logs, search]);
 
   const columns: DataTableColumn<DailyLog>[] = [
-    { key: "date", header: t("date"), render: (log) => log.logDate, sortValue: (log) => log.logDate, width: "140px" },
+    { key: "date", header: t("date"), render: (log) => formatDate(log.logDate), sortValue: (log) => log.logDate, width: "140px" },
     { key: "notes", header: t("notes"), render: (log) => log.notes ?? "" },
     {
       key: "status",
