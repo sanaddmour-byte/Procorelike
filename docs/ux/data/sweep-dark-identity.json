@@ -1,0 +1,290 @@
+[
+  {
+    "shot": "login__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "projects__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "companies__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "dashboard__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "analytics__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "daily-log__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "daily-log-detail__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "daily-log-new__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "inspections__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "inspection-detail__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "punch-list__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "punch-new__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "punch-detail__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "photos__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "safety__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "tm-tickets__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "documents__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "drawings__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "drawing-detail__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "transmittals__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "rfis__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "rfi-detail__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "submittals__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "submittal-detail__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "correspondence__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "meetings__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "budget__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "commitments__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "change-orders__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "billing__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "schedule__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "gantt__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "lookahead__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "directory__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "permissions__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "settings__en-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "login__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "projects__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "companies__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "dashboard__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "analytics__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "daily-log__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "daily-log-detail__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "daily-log-new__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "inspections__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "inspection-detail__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "punch-list__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "punch-new__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "punch-detail__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "photos__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "safety__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "tm-tickets__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "documents__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "drawings__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "drawing-detail__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "transmittals__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "rfis__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "rfi-detail__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "submittals__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "submittal-detail__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "correspondence__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "meetings__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "budget__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "commitments__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "change-orders__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "billing__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "schedule__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "gantt__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "lookahead__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "directory__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "permissions__ar-390-dark",
+    "identicalToLight": true
+  },
+  {
+    "shot": "settings__ar-390-dark",
+    "identicalToLight": true
+  }
+]

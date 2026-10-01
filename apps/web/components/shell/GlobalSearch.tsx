@@ -1,6 +1,7 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { getRecents, type Recent } from "@/lib/recents";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -40,6 +41,9 @@ function saveRecent(query: string): void {
  */
 export function GlobalSearch({ projectId }: { projectId?: string }) {
   const t = useTranslations("Shell");
+  const tcs = useTranslations("CreateSheet");
+  const tbn = useTranslations("BottomNav");
+  const [recentRecords, setRecentRecords] = useState<Recent[]>([]);
   const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -64,12 +68,13 @@ export function GlobalSearch({ projectId }: { projectId?: string }) {
   useEffect(() => {
     if (open) {
       setRecent(loadRecent());
+      setRecentRecords(projectId ? getRecents(projectId) : []);
       setTimeout(() => inputRef.current?.focus(), 0);
     } else {
       setQuery("");
       setResults(null);
     }
-  }, [open]);
+  }, [open, projectId]);
 
   const runSearch = useCallback(
     (q: string) => {
@@ -124,10 +129,12 @@ export function GlobalSearch({ projectId }: { projectId?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full max-w-xs items-center justify-between gap-2 rounded-lg border-2 border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white/80 hover:bg-white/20"
+        aria-label={t("searchTitle")}
+        className="flex items-center justify-center gap-2 rounded-lg border-2 border-white/30 bg-white/10 text-sm text-white hover:bg-white/20 sm:w-full sm:max-w-xs sm:justify-between sm:px-3"
       >
-        <span>{t("searchPlaceholder")}</span>
-        <kbd className="rounded border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold">⌘K</kbd>
+        <span aria-hidden="true" className="text-lg sm:hidden">🔍</span>
+        <span className="hidden sm:inline">{t("searchPlaceholder")}</span>
+        <kbd className="hidden rounded border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold sm:inline">⌘K</kbd>
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title={t("searchTitle")} wide>
@@ -145,6 +152,33 @@ export function GlobalSearch({ projectId }: { projectId?: string }) {
           aria-expanded={Boolean(results?.length)}
           aria-controls="search-results-list"
         />
+
+        {!query && projectId && (
+          <div className="mt-3">
+            <p className="mb-1 text-xs font-semibold uppercase text-navy-400">{t("quickActions")}</p>
+            <ul className="flex flex-col gap-1">
+              {[
+                { href: `/${locale}/projects/${projectId}/punch-list/new`, label: `📷 ${tcs("snag")}` },
+                { href: `/${locale}/projects/${projectId}/daily-log/new`, label: `📋 ${tcs("dailyLog")}` },
+                { href: `/${locale}/projects/${projectId}/my-work`, label: `📥 ${tbn("myWork")}` },
+              ].map((a) => (
+                <li key={a.href}>
+                  <button type="button" onClick={() => { setOpen(false); router.push(a.href as never); }} className="hit-task w-full rounded px-2 text-start text-sm font-semibold text-navy-900 hover:bg-navy-50">
+                    {a.label}
+                  </button>
+                </li>
+              ))}
+              {recentRecords.slice(0, 4).map((r) => (
+                <li key={`${r.kind}-${r.id}`}>
+                  <button type="button" onClick={() => { setOpen(false); router.push(r.href as never); }} className="hit-task w-full truncate rounded px-2 text-start text-sm text-navy-700 hover:bg-navy-50">
+                    <span aria-hidden="true">🕘 </span>
+                    {r.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {!query && recent.length > 0 && (
           <div className="mt-3">

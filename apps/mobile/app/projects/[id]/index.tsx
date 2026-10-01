@@ -1,4 +1,5 @@
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
 import { i18n } from "@/lib/i18n";
@@ -33,7 +34,7 @@ export default function ProjectHomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: i18n.t("projects.title") }} />
+      <Stack.Screen options={{ title: i18n.t("projects.title"), headerRight: () => <ProjectSwitcher projectId={id} /> }} />
       <SyncStatusBar projectId={id} />
       <View style={styles.links}>
         {links.map((link, i) => (

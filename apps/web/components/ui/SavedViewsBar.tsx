@@ -65,6 +65,7 @@ function fromStoredState(stored: StoredViewState): TableViewState {
 export function SavedViewsBar({ projectId, module, currentState, onApply }: Props) {
   const t = useTranslations("SavedViews");
   const tc = useTranslations("Common");
+  const [open, setOpen] = useState(false);
   const [views, setViews] = useState<SavedViewRow[]>([]);
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -109,9 +110,21 @@ export function SavedViewsBar({ projectId, module, currentState, onApply }: Prop
   }
 
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
+    <div className="mb-2">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="hit-task flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-3 text-sm font-bold text-navy-900"
+      >
+        {t("views")}
+        {views.length > 0 && <span className="rounded-full bg-navy-900 px-2 text-xs text-white">{views.length}</span>}
+        <span aria-hidden="true">{open ? "▴" : "▾"}</span>
+      </button>
+      {open && (
+    <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3">
       {views.map((view) => (
-        <span key={view.id} className="inline-flex items-center gap-1 rounded-full border-2 border-ink bg-navy-100 ps-3 pe-1 py-1 text-xs font-semibold text-navy-800">
+        <span key={view.id} className="inline-flex items-center gap-1 rounded-full border-2 border-ink bg-navy-100 ps-3 pe-1 text-sm font-semibold text-navy-900">
           <button type="button" onClick={() => onApply(fromStoredState(view.filters))}>
             {view.name}
           </button>
@@ -119,7 +132,7 @@ export function SavedViewsBar({ projectId, module, currentState, onApply }: Prop
             type="button"
             onClick={() => void handleDelete(view.id)}
             aria-label={t("deleteView", { name: view.name })}
-            className="rounded-full px-1 text-navy-500 hover:bg-navy-200 hover:text-navy-800"
+            className="rounded-full px-1 text-navy-700 hover:bg-navy-200"
           >
             ✕
           </button>
@@ -130,19 +143,21 @@ export function SavedViewsBar({ projectId, module, currentState, onApply }: Prop
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder={t("viewNamePlaceholder")}
-          className="min-w-[140px] rounded-lg border-2 border-ink px-2 py-1 text-xs"
+          className="min-w-[140px] flex-1 rounded-lg border-2 border-ink px-2 text-sm"
           aria-label={t("viewNamePlaceholder")}
         />
         <button
           type="button"
           onClick={() => void handleSave()}
           disabled={saving || !newName.trim()}
-          className="whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-400 to-orange-600 brutal-interactive px-2.5 py-1 text-xs font-bold text-ink disabled:opacity-50"
+          className="whitespace-nowrap rounded-lg border-2 border-ink bg-gradient-to-b from-orange-300 to-orange-400 brutal-interactive px-3 text-sm font-bold text-ink disabled:opacity-50"
         >
           {t("saveView")}
         </button>
       </div>
       {error && <p className="w-full text-xs text-maroon-700">{tc("errorGeneric")}</p>}
+    </div>
+      )}
     </div>
   );
 }

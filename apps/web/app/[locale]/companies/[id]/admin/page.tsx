@@ -1,6 +1,8 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { WEBHOOK_EVENT_TYPES, type WebhookEventType } from "@siteops/shared";
@@ -37,6 +39,7 @@ interface WebhookDelivery {
 export default function CompanyAdminPage() {
   const t = useTranslations("AdminConsole");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -59,10 +62,10 @@ export default function CompanyAdminPage() {
   function load(): void {
     apiJson<ApiKey[]>(`/admin/companies/${params.id}/api-keys`)
       .then(setApiKeys)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
     apiJson<WebhookSubscription[]>(`/admin/companies/${params.id}/webhooks`)
       .then(setWebhooks)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -84,8 +87,8 @@ export default function CompanyAdminPage() {
       setNewKeyPlaintext(created.plaintext);
       setKeyName("");
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -96,8 +99,8 @@ export default function CompanyAdminPage() {
     try {
       await apiJson(`/admin/companies/${params.id}/api-keys/${keyId}/revoke`, { method: "POST" });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -119,8 +122,8 @@ export default function CompanyAdminPage() {
       setWebhookUrl("");
       setWebhookEventTypes([]);
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -131,8 +134,8 @@ export default function CompanyAdminPage() {
     try {
       await apiJson(`/admin/companies/${params.id}/webhooks/${subscriptionId}`, { method: "DELETE" });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -143,21 +146,21 @@ export default function CompanyAdminPage() {
     try {
       const rows = await apiJson<WebhookDelivery[]>(`/admin/webhooks/${subscriptionId}/deliveries`);
       setDeliveries(rows);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-3 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/companies`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}
         </Link>
         <h1 className="mb-2 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         <p className="mb-6 text-sm text-navy-600">{t("intro")}</p>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         {/* API Keys */}
         <section className="mb-8 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

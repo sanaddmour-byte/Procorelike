@@ -1,4 +1,4 @@
-import { assignPermissionTemplateSchema, createProjectSchema, updateProjectSettingsSchema } from "@siteops/shared";
+import { assignPermissionTemplateSchema, createLocationSchema, createProjectSchema, updateProjectSettingsSchema } from "@siteops/shared";
 import { Router, type Request, type Response, type NextFunction } from "express";
 import type { Database } from "@siteops/db";
 import type { Env } from "../env";
@@ -12,6 +12,7 @@ import { listDirectoryCompanies, listProjectCompanies, listProjectCostCodes, lis
 import { getProjectDashboard } from "../services/dashboard.service";
 import { getProjectAnalytics } from "../services/analytics.service";
 import { loadPermissionContext } from "../services/permission.service";
+import * as fieldLookup from "../services/field-lookup.service";
 import { getEntityHistory, isHistoryEntityType } from "../services/entity-history.service";
 
 export function projectsRouter(appDb: Database, env: Env): Router {
@@ -110,6 +111,58 @@ export function projectsRouter(appDb: Database, env: Env): Router {
       const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
       const dashboard = await getProjectDashboard(appDb, authUser.id, ctx, projectId);
       res.json(dashboard);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/:id/locations", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = paramAsString(req.params.id);
+      if (!projectId) throw new Error("missing :id param");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      res.json(await fieldLookup.listLocations(appDb, authUser.id, ctx, projectId));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/:id/locations", validateBody(createLocationSchema), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = paramAsString(req.params.id);
+      if (!projectId) throw new Error("missing :id param");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      res.status(201).json(await fieldLookup.createLocation(appDb, authUser.id, ctx, projectId, req.body));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/:id/trades", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = paramAsString(req.params.id);
+      if (!projectId) throw new Error("missing :id param");
+      await loadPermissionContext(appDb, authUser.id, projectId);
+      res.json(await fieldLookup.listTrades(appDb, authUser.id));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/:id/my-work", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authUser = req.authUser;
+      if (!authUser) throw new Error("requireAuth did not populate req.authUser");
+      const projectId = paramAsString(req.params.id);
+      if (!projectId) throw new Error("missing :id param");
+      const ctx = await loadPermissionContext(appDb, authUser.id, projectId);
+      res.json(await fieldLookup.getMyWork(appDb, authUser.id, ctx, projectId));
     } catch (err) {
       next(err);
     }

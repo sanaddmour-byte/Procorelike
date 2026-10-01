@@ -26,19 +26,19 @@ test("creates a punch item and moves it through its status lifecycle", async ({ 
 
   const description = `E2E punch item ${Date.now()}`;
   await page.getByRole("link", { name: "New punch item" }).click();
-  await page.getByLabel("Description").fill(description);
-  await page.getByLabel("Priority").selectOption("high");
+  await page.getByLabel("Description", { exact: true }).fill(description);
+  await page.getByRole("button", { name: "High", exact: true }).click();
   await page.getByRole("button", { name: "Create" }).click();
 
   await expect(page).toHaveURL(/\/punch-list\/.+/);
   await expect(page.getByText(description)).toBeVisible();
   await expect(page.getByText("Open", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "Move to: Ready for review" }).click();
-  await expect(page.getByText("Ready for review", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Ready for review", exact: true }).click();
+  await expect(page.getByText("Ready for review", { exact: true }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: "Move to: Approved" }).click();
-  await expect(page.getByText("Approved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Approved", exact: true }).click();
+  await expect(page.getByText("Approved", { exact: true }).first()).toBeVisible();
 
   await page.getByRole("link", { name: "Back to punch list" }).click();
   await expect(page.getByText(description)).toBeVisible();

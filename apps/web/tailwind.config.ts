@@ -28,6 +28,9 @@ const config: Config = {
           900: "#080f1c",
         },
       },
+      minHeight: { hit: "var(--hit-min)", task: "var(--hit-task)" },
+      minWidth: { hit: "var(--hit-min)", task: "var(--hit-task)" },
+      spacing: { hit: "var(--hit-min)", "gap-hit": "var(--gap-hit)" },
       fontFamily: {
         sans: ["var(--font-poppins)", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif"],
       },

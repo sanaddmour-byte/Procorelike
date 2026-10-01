@@ -1,6 +1,8 @@
 "use client";
 
 import { PageHeader } from "@/components/ui/PageHeader";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { MODULES, PERMISSION_LEVELS, type Module, type PermissionLevel } from "@siteops/shared";
@@ -33,6 +35,7 @@ function emptyLevels(): Partial<Record<Module, PermissionLevel>> {
 export default function PermissionsPage() {
   const t = useTranslations("Permissions");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -69,7 +72,7 @@ export default function PermissionsPage() {
         setTemplates(list);
         setTemplateDrafts(Object.fromEntries(list.map((tpl) => [tpl.id, tpl.levels])));
       })
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
 
     apiJson<MemberPermissions[]>(`/projects/${params.id}/member-permissions`)
       .then(setMembers)
@@ -93,8 +96,8 @@ export default function PermissionsPage() {
       setNewTemplateName("");
       setNewTemplateLevels(emptyLevels());
       reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreating(false);
     }
@@ -108,8 +111,8 @@ export default function PermissionsPage() {
         body: JSON.stringify({ projectId: params.id, levels: templateDrafts[templateId] }),
       });
       reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSavingTemplateId(null);
     }
@@ -134,8 +137,8 @@ export default function PermissionsPage() {
         body: JSON.stringify({ permissionTemplateId: permissionTemplateId || null }),
       });
       reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -148,8 +151,8 @@ export default function PermissionsPage() {
         body: JSON.stringify({ userId, projectId: params.id, module: draft.module, level: draft.level }),
       });
       reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -160,21 +163,21 @@ export default function PermissionsPage() {
         body: JSON.stringify({ userId, projectId: params.id, module }),
       });
       reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto min-w-0 max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/projects`} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
         <div className="mt-2">
           <PageHeader title={t("title")} />
         </div>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {forbidden && <p className="text-navy-600">{t("forbidden")}</p>}
 
         {!forbidden && (
@@ -191,9 +194,9 @@ export default function PermissionsPage() {
                         {t("deleteTemplate")}
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 sm:grid-cols-3">
                       {MODULES.map((module) => (
-                        <label key={module} className="flex items-center justify-between gap-2 text-xs">
+                        <label key={module} className="flex min-w-0 items-center justify-between gap-2 text-xs">
                           <span className="text-navy-700">{module}</span>
                           <select
                             value={templateDrafts[tpl.id]?.[module] ?? "none"}
@@ -203,7 +206,7 @@ export default function PermissionsPage() {
                                 [tpl.id]: { ...prev[tpl.id], [module]: e.target.value as PermissionLevel },
                               }))
                             }
-                            className="rounded border-2 border-ink px-1 py-0.5 text-xs"
+                            className="max-w-[60%] rounded border-2 border-ink px-1 py-0.5 text-xs"
                           >
                             {PERMISSION_LEVELS.map((lvl) => (
                               <option key={lvl} value={lvl}>
@@ -236,14 +239,14 @@ export default function PermissionsPage() {
                   onChange={(e) => setNewTemplateName(e.target.value)}
                   className="mb-3 w-full rounded-lg border-2 border-ink px-2 py-1 text-sm"
                 />
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 sm:grid-cols-3">
                   {MODULES.map((module) => (
-                    <label key={module} className="flex items-center justify-between gap-2 text-xs">
+                    <label key={module} className="flex min-w-0 items-center justify-between gap-2 text-xs">
                       <span className="text-navy-700">{module}</span>
                       <select
                         value={newTemplateLevels[module] ?? "none"}
                         onChange={(e) => setNewTemplateLevels((prev) => ({ ...prev, [module]: e.target.value as PermissionLevel }))}
-                        className="rounded border-2 border-ink px-1 py-0.5 text-xs"
+                        className="max-w-[60%] rounded border-2 border-ink px-1 py-0.5 text-xs"
                       >
                         {PERMISSION_LEVELS.map((lvl) => (
                           <option key={lvl} value={lvl}>
@@ -269,7 +272,7 @@ export default function PermissionsPage() {
               {!members && <p>{tc("loading")}</p>}
               <ul className="flex flex-col gap-4">
                 {members?.map((m) => (
-                  <li key={m.userId} className="rounded-xl border-3 border-ink bg-white p-4 shadow-brutal">
+                  <li key={m.userId} className="min-w-0 rounded-xl border-3 border-ink bg-white p-3 shadow-brutal sm:p-4">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <span className="font-bold text-navy-900">{m.name}</span>{" "}
@@ -282,7 +285,7 @@ export default function PermissionsPage() {
                         <select
                           value={m.permissionTemplateId ?? ""}
                           onChange={(e) => void handleAssignTemplate(m.userId, e.target.value)}
-                          className="rounded border-2 border-ink px-1 py-0.5 text-xs"
+                          className="max-w-[60%] rounded border-2 border-ink px-1 py-0.5 text-xs"
                         >
                           <option value="">{t("noTemplate")}</option>
                           {templates?.map((tpl) => (

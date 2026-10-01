@@ -1,0 +1,49 @@
+{
+  "pages": 60,
+  "sidebarEntries": 31,
+  "orphans": [
+    "/accept-invite"
+  ],
+  "shellOnly": [
+    "/",
+    "/projects/[id]/analytics",
+    "/projects/[id]/budget",
+    "/projects/[id]/daily-log",
+    "/projects/[id]/direct-costs",
+    "/projects/[id]/documents",
+    "/projects/[id]/gantt",
+    "/projects/[id]/lookahead",
+    "/projects/[id]/permissions",
+    "/projects/[id]/photos",
+    "/projects/[id]/prequalification",
+    "/projects/[id]/prime-contract",
+    "/projects/[id]/progress-updates",
+    "/projects/[id]/punch-list",
+    "/projects/[id]/settings"
+  ],
+  "deadEnds": [
+    "/projects/[id]/daily-log/[logId]",
+    "/projects/[id]/punch-list/[itemId]"
+  ],
+  "detailNoSibling": [
+    "/projects/[id]/bidding/[bidPackageId]",
+    "/projects/[id]/billing/[paymentApplicationId]",
+    "/projects/[id]/change-orders/[changeOrderId]",
+    "/projects/[id]/commitments/[commitmentId]",
+    "/projects/[id]/correspondence/[correspondenceId]",
+    "/projects/[id]/daily-log/[logId]",
+    "/projects/[id]/drawings/[drawingId]",
+    "/projects/[id]/estimating/[estimateId]",
+    "/projects/[id]/inspections/[inspectionId]",
+    "/projects/[id]/meetings/[meetingId]",
+    "/projects/[id]/punch-list/[itemId]",
+    "/projects/[id]/rfis/[rfiId]",
+    "/projects/[id]/safety/[incidentId]",
+    "/projects/[id]/schedule/[taskId]",
+    "/projects/[id]/specifications/[specSectionId]",
+    "/projects/[id]/submittals/[submittalId]",
+    "/projects/[id]/tm-tickets/[ticketId]",
+    "/projects/[id]/transmittals/[transmittalId]"
+  ],
+  "unresolvedCount": 4
+}

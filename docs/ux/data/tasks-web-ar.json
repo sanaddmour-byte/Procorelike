@@ -1,0 +1,531 @@
+[
+  {
+    "task": "T1 create snag with photo + location + assignee",
+    "taps": 8,
+    "chars": 38,
+    "machineMs": 2513,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "project card -> project shell (lands on Directory)",
+        "t": 5
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 103
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "sidebar: punch-list",
+        "t": 199
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "New punch item",
+        "t": 397
+      },
+      {
+        "n": 5,
+        "kind": "focus",
+        "what": "description (focus)",
+        "t": 494,
+        "chars": 38
+      },
+      {
+        "n": 6,
+        "kind": "tap",
+        "what": "Create",
+        "t": 826
+      },
+      {
+        "n": 7,
+        "kind": "tap",
+        "what": "Upload photo (open file picker)",
+        "t": 926
+      },
+      {
+        "n": 8,
+        "kind": "tap",
+        "what": "Upload photo (choose file)",
+        "t": 926
+      }
+    ],
+    "locale": "ar",
+    "completed": false,
+    "partial": "snag created with description + photo (after creation); assignee and location impossible",
+    "unmet": [
+      "assignee: the create form and the detail page have no assignee control (the only person select is \"Final approver\"); the API create schema does accept assigneeUserId/assigneeCompanyId",
+      "location: the create form has no location field and the item detail page does not show or edit `locationId`",
+      "photo could only be attached AFTER creating (separate screen, +2 taps)",
+      "offline: web has no offline queue (see AUDIT_EVIDENCE §11)"
+    ],
+    "screenChanges": 5,
+    "modelledSeconds": 29.8
+  },
+  {
+    "task": "T2 next snag, same location",
+    "taps": 4,
+    "chars": 29,
+    "machineMs": 303,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "Back to punch list",
+        "t": 5
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "New punch item",
+        "t": 69
+      },
+      {
+        "n": 3,
+        "kind": "focus",
+        "what": "description (focus)",
+        "t": 156,
+        "chars": 29
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "Create",
+        "t": 215
+      }
+    ],
+    "locale": "ar",
+    "completed": false,
+    "partial": "second snag created in 4 taps, but location cannot be set or carried over; no assignee control exists",
+    "unmet": [
+      "same location: no location field on web",
+      "no state is carried from the previous snag (form is blank)"
+    ],
+    "modelledSeconds": 18.1
+  },
+  {
+    "task": "T3 raise work inspection request",
+    "taps": 5,
+    "chars": 0,
+    "machineMs": 1838,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "project card -> project shell (lands on Directory)",
+        "t": 5
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 108
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "sidebar: inspections",
+        "t": 219
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "New inspection",
+        "t": 378
+      },
+      {
+        "n": 5,
+        "kind": "tap",
+        "what": "Create (default template, no date)",
+        "t": 595
+      }
+    ],
+    "locale": "ar",
+    "completed": true,
+    "partial": "inspection created from the default template; no location, no note/description, no assignee/inspector field on the create form",
+    "unmet": [
+      "location of work not capturable at request time"
+    ],
+    "screenChanges": 4,
+    "urlAfter": "http://localhost:3000/ar/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/inspections",
+    "modelledSeconds": 11.6
+  },
+  {
+    "task": "T4 find drawing by sheet number",
+    "taps": 5,
+    "chars": 5,
+    "machineMs": 2826,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "project card -> project shell (lands on Directory)",
+        "t": 9
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 111
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "sidebar: drawings",
+        "t": 213
+      },
+      {
+        "n": 4,
+        "kind": "focus",
+        "what": "search sheet number (focus)",
+        "t": 382,
+        "chars": 5
+      },
+      {
+        "n": 5,
+        "kind": "tap",
+        "what": "open drawing row",
+        "t": 1262
+      }
+    ],
+    "locale": "ar",
+    "completed": true,
+    "screenChanges": 4,
+    "modelledSeconds": 14.4
+  },
+  {
+    "task": "T5 open today's daily log and add manpower",
+    "taps": 4,
+    "chars": 0,
+    "machineMs": 1347,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "project card -> project shell (lands on Directory)",
+        "t": 5
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 102
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "sidebar: daily-log",
+        "t": 204
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "open the most recent daily log (today's)",
+        "t": 379
+      }
+    ],
+    "locale": "ar",
+    "completed": false,
+    "partial": "daily log opened; there is nowhere to add manpower on the detail screen",
+    "unmet": [
+      "manpower entry: no UI on daily-log detail or on /daily-log/new (API tables exist: daily_log_manpower)"
+    ],
+    "controlsOnDetail": [
+      "textarea",
+      "حفظ",
+      "إرسال وإقفال"
+    ],
+    "screenChanges": 4,
+    "modelledSeconds": 10.1
+  },
+  {
+    "task": "T6 answer an RFI assigned to me",
+    "taps": 8,
+    "chars": 52,
+    "machineMs": 3577,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "project card -> project shell (lands on Directory)",
+        "t": 15
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 103
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "sidebar: rfis",
+        "t": 208
+      },
+      {
+        "n": 4,
+        "kind": "focus",
+        "what": "filter: ball in court = me (select open)",
+        "t": 410
+      },
+      {
+        "n": 5,
+        "kind": "tap",
+        "what": "filter: ball in court = me (choose option)",
+        "t": 456
+      },
+      {
+        "n": 6,
+        "kind": "tap",
+        "what": "open first RFI in my court",
+        "t": 1666
+      },
+      {
+        "n": 7,
+        "kind": "focus",
+        "what": "response text (focus)",
+        "t": 1827,
+        "chars": 52
+      },
+      {
+        "n": 8,
+        "kind": "tap",
+        "what": "Add response",
+        "t": 2045
+      }
+    ],
+    "locale": "ar",
+    "completed": true,
+    "partial": "answered online; offline create-and-sync is not supported on web",
+    "unmet": [
+      "offline: cannot answer without network"
+    ],
+    "screenChanges": 5,
+    "modelledSeconds": 35.8
+  },
+  {
+    "task": "T7 all my items due today across modules",
+    "taps": 9,
+    "chars": 0,
+    "machineMs": 3132,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "project card -> project shell (lands on Directory)",
+        "t": 12
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 137
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "sidebar: dashboard",
+        "t": 248
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 2018
+      },
+      {
+        "n": 5,
+        "kind": "tap",
+        "what": "sidebar: rfis",
+        "t": 2076
+      },
+      {
+        "n": 6,
+        "kind": "focus",
+        "what": "RFIs: ball in court = me (select open)",
+        "t": 2172
+      },
+      {
+        "n": 7,
+        "kind": "tap",
+        "what": "RFIs: ball in court = me (choose option)",
+        "t": 2190
+      },
+      {
+        "n": 8,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 2997
+      },
+      {
+        "n": 9,
+        "kind": "tap",
+        "what": "sidebar: punch-list",
+        "t": 3061
+      }
+    ],
+    "locale": "ar",
+    "completed": false,
+    "partial": "no cross-module 'assigned to me / due today' screen exists; best case reaches RFIs (filterable by ball-in-court) and stops -- punch list has no assignee filter, and 30+ other modules have no personal filter",
+    "unmet": [
+      "cross-module personal list",
+      "due-today filter",
+      "punch list assignee filter"
+    ],
+    "dashboardHasPersonalOrDueTodaySection": false,
+    "punchListFilterSelects": [
+      "الحالة|مفتوحة|جاهزة للمراجعة|غير مقبولة|قيد النزاع|معتمدة|مغلقة"
+    ],
+    "screenChanges": 6,
+    "modelledSeconds": 19.3
+  },
+  {
+    "task": "T8 close out snag with after-photo",
+    "taps": 9,
+    "chars": 0,
+    "machineMs": 5876,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "project card -> project shell (lands on Directory)",
+        "t": 10
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 148
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "sidebar: punch-list",
+        "t": 248
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "open snag",
+        "t": 1306
+      },
+      {
+        "n": 5,
+        "kind": "tap",
+        "what": "Upload 'after' photo (open file picker)",
+        "t": 1351
+      },
+      {
+        "n": 6,
+        "kind": "tap",
+        "what": "Upload 'after' photo (choose file)",
+        "t": 1351
+      },
+      {
+        "n": 7,
+        "kind": "tap",
+        "what": "status: نقل إلى: جاهزة للمراجعة",
+        "t": 2916
+      },
+      {
+        "n": 8,
+        "kind": "tap",
+        "what": "status: نقل إلى: معتمدة",
+        "t": 3860
+      },
+      {
+        "n": 9,
+        "kind": "tap",
+        "what": "status: نقل إلى: مغلقة",
+        "t": 4816
+      }
+    ],
+    "locale": "ar",
+    "completed": true,
+    "transitionsTaken": [
+      "نقل إلى: جاهزة للمراجعة",
+      "نقل إلى: معتمدة",
+      "نقل إلى: مغلقة"
+    ],
+    "headerAfter": "العودة إلى قائمة الملاحظات | PI-0001 |  | Cracked tile at lobby entrance (audit) |  | الحالة: | مغلقة | · المعتمد النهائي:",
+    "screenChanges": 4,
+    "modelledSeconds": 19.7
+  },
+  {
+    "task": "T9 switch project, same screen type",
+    "taps": 2,
+    "chars": 0,
+    "machineMs": 742,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "open project selector",
+        "t": 16
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "choose other project",
+        "t": 80
+      }
+    ],
+    "locale": "ar",
+    "completed": true,
+    "before": "http://localhost:3000/ar/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/punch-list",
+    "after": "http://localhost:3000/ar/projects/1c008274-440e-4159-b573-07e180410097/punch-list",
+    "screenChanges": 2,
+    "modelledSeconds": 5.1
+  },
+  {
+    "task": "T10 bulk assign 10 snags to one subcontractor",
+    "taps": 4,
+    "chars": 0,
+    "machineMs": 3079,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "project card -> project shell (lands on Directory)",
+        "t": 11
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "hamburger (open navigation)",
+        "t": 149
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "sidebar: punch-list",
+        "t": 241
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "open snag (looking for an assignee control)",
+        "t": 2076
+      }
+    ],
+    "locale": "ar",
+    "completed": false,
+    "bulkBarOffers": [],
+    "detailControls": [
+      "select:· المعتمد النهائي:",
+      "input:رفع صورة",
+      "button:السجل"
+    ],
+    "selectLabels": [
+      "الحالة:"
+    ],
+    "note": "no assignment is possible at all: the multi-select bar only offers status transitions and the detail page has no assignee control, so 10-snag reassignment cannot be measured; taps shown are those needed to establish that",
+    "screenChanges": 4,
+    "modelledSeconds": 11.9
+  }
+]

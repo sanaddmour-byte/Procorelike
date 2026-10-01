@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
@@ -30,6 +32,7 @@ interface Commitment {
 export default function CommitmentsPage() {
   const t = useTranslations("Commitments");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -88,8 +91,8 @@ export default function CommitmentsPage() {
       setTitle("");
       setShowForm(false);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreating(false);
     }
@@ -112,7 +115,7 @@ export default function CommitmentsPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
@@ -160,7 +163,7 @@ export default function CommitmentsPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <SavedViewsBar
           projectId={params.id}

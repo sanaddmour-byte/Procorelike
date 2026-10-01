@@ -1,6 +1,9 @@
 "use client";
 
 import { AttachmentList } from "@/components/AttachmentList";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
@@ -134,6 +137,7 @@ const RESPONSE_CODES: SubmittalResponseCode[] = ["approved", "approved_as_noted"
 export default function SubmittalDetailScreen() {
   const t = useTranslations("Submittals");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; submittalId: string }>();
@@ -154,8 +158,8 @@ export default function SubmittalDetailScreen() {
     try {
       const detail = await apiJson<SubmittalDetail>(`/submittals/${params.submittalId}`);
       setSubmittal(detail);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.submittalId, tc]);
 
@@ -184,8 +188,8 @@ export default function SubmittalDetailScreen() {
     try {
       await apiJson(`/submittals/${params.submittalId}`, { method: "PATCH", body: JSON.stringify({ ballInCourtUserId: userId }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setReassigning(false);
     }
@@ -195,8 +199,8 @@ export default function SubmittalDetailScreen() {
     try {
       await apiJson(`/submittals/${params.submittalId}`, { method: "PATCH", body: JSON.stringify({ submittalType }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -205,8 +209,8 @@ export default function SubmittalDetailScreen() {
     try {
       await apiJson(`/submittals/${params.submittalId}/packages`, { method: "POST" });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -238,8 +242,8 @@ export default function SubmittalDetailScreen() {
       setReviewers([{ reviewerUserId: "", sequenceOrder: 1, isParallel: false }]);
       setRevisionFormPackageId(null);
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -251,8 +255,8 @@ export default function SubmittalDetailScreen() {
     try {
       await apiJson(`/submittals/revisions/${revisionId}/reviews`, { method: "POST", body: JSON.stringify({ responseCode }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -263,8 +267,8 @@ export default function SubmittalDetailScreen() {
     try {
       await apiJson(`/submittals/${params.submittalId}/close`, { method: "POST" });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -273,14 +277,14 @@ export default function SubmittalDetailScreen() {
   if (!submittal) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
 
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Link href={`/${locale}/projects/${params.id}/submittals`} className="inline-block text-sm text-navy-600 underline">
             {t("back")}
@@ -380,7 +384,7 @@ export default function SubmittalDetailScreen() {
             </span>
           )}
         </div>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="mb-6">
           <h3 className="mb-1.5 text-sm font-semibold text-navy-800">{t("distribution")}</h3>

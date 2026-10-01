@@ -9,6 +9,10 @@
     "newArchEnabled": true,
     "ios": { "supportsTablet": true },
     "android": {},
-    "plugins": ["expo-router", "expo-notifications"]
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      ["expo-image-picker", { "cameraPermission": "SiteOps uses the camera to attach photos to snags." }]
+    ]
   }
 }

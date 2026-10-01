@@ -18,25 +18,221 @@ export interface DataTableColumn<T> {
   align?: "start" | "end";
   /** Set false to keep an identifying column always visible, excluded from the "Columns" show/hide menu. Defaults to true; only takes effect when the table's `storageKey` prop is set. */
   hideable?: boolean;
+  /**
+   * How this column appears in the phone "card row" layout (plan B1): `id` (bold, first line, left), `title` (first line, fills the width),
+   * `badge` (second line, first), `meta` (second line, joined with " · "), `hide` (omitted on phones). When no column sets it, roles are
+   * derived: column 0 = id, column 1 = title, a column whose key contains "status" = badge, up to two further columns = meta.
+   */
+  mobile?: "id" | "title" | "badge" | "meta" | "hide";
 }
+
+function mobileRoles<T>(columns: DataTableColumn<T>[]): Map<string, NonNullable<DataTableColumn<T>["mobile"]>> {
+  const roles = new Map<string, NonNullable<DataTableColumn<T>["mobile"]>>();
+  if (columns.some((c) => c.mobile)) {
+    for (const c of columns) roles.set(c.key, c.mobile ?? "hide");
+    return roles;
+  }
+  let metaLeft = 2;
+  columns.forEach((c, i) => {
+    if (/status/i.test(c.key) && !roles.size) roles.set(c.key, "badge");
+    else if (i === 0) roles.set(c.key, columns.length > 1 ? "id" : "title");
+    else if (i === 1) roles.set(c.key, "title");
+    else if (/status/i.test(c.key)) roles.set(c.key, "badge");
+    else if (metaLeft > 0) {
+      roles.set(c.key, "meta");
+      metaLeft -= 1;
+    } else roles.set(c.key, "hide");
+  });
+  return roles;
+}
+
+function useCoarsePointer(): boolean {
+  const [coarse, setCoarse] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const update = (): void => setCoarse(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return coarse;
+}
+
+/** True below the `sm` breakpoint (640 px): the table becomes a list of tappable cards. */
+function useCompact(): boolean {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = (): void => setCompact(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return compact;
+}
+
+
+/** Anchor that turns a row's main cell into a real link: plain taps stay client-side (the row handler navigates), modified clicks and long-press use the browser's own link behaviour. */
+function RowLink({ href, children }: { href?: string; children: ReactNode }) {
+  if (!href) return <>{children}</>;
+  return (
+    <a
+      href={href}
+      draggable={false}
+      className="block text-inherit no-underline"
+      onClick={(e) => {
+        if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) e.preventDefault();
+        else e.stopPropagation();
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+export interface DataTableGroupOption<T> {
+  key: string;
+  label: string;
+  /** Which group a row belongs to: `id` orders/identifies the group, `label` is what the header shows. */
+  get: (row: T) => { id: string; label: string };
+}
+
+type ListItem<T> = { kind: "row"; row: T } | { kind: "header"; id: string; label: string; count: number; collapsed: boolean };
 
 interface RowSelectionHandlers<T> {
   isSelected: (row: T) => boolean;
   toggle: (row: T) => void;
 }
 
-interface RowProps<T> {
-  rows: T[];
-  columns: DataTableColumn<T>[];
-  onRowClick?: (row: T) => void;
-  gridTemplate: string;
-  selection?: RowSelectionHandlers<T>;
+export interface DataTableSwipeAction<T> {
+  label: string;
+  getId: (row: T) => string;
+  onAction: (row: T) => void | Promise<void>;
 }
 
-function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate, selection }: RowComponentProps<RowProps<T>>) {
+interface RowProps<T> {
+  swipe?: DataTableSwipeAction<T>;
+  swipeOpenId?: string | null;
+  onSwipeOpen?: (id: string | null) => void;
+  rows: T[];
+  items?: ListItem<T>[];
+  onToggleGroup?: (id: string) => void;
+  columns: DataTableColumn<T>[];
+  onRowClick?: (row: T) => void;
+  rowHref?: (row: T) => string;
+  gridTemplate: string;
+  selection?: RowSelectionHandlers<T>;
+  compact?: boolean;
+  roles?: Map<string, NonNullable<DataTableColumn<T>["mobile"]>>;
+}
+
+function DataTableRow<T>({ index, style, swipe, swipeOpenId, onSwipeOpen, rows, items, onToggleGroup, columns, onRowClick, rowHref, gridTemplate, selection, compact, roles }: RowComponentProps<RowProps<T>>) {
   const tc = useTranslations("Common");
-  const row = rows[index];
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swipedRecently = useRef(false);
+  const item = items ? items[index] : undefined;
+  if (item?.kind === "header") {
+    return (
+      <div style={style} role="row" className="flex items-center border-b border-navy-100 bg-navy-50 px-3">
+        <button
+          type="button"
+          aria-expanded={!item.collapsed}
+          onClick={() => onToggleGroup?.(item.id)}
+          className="flex min-h-hit w-full items-center gap-2 text-start text-sm font-bold text-navy-900"
+        >
+          <span aria-hidden="true" className="inline-block w-4 text-center rtl:rotate-180">{item.collapsed ? "▸" : "▾"}</span>
+          <span dir="auto" className="min-w-0 flex-1 truncate">{item.label}</span>
+          <span className="shrink-0 rounded-full bg-white px-2 text-xs font-semibold text-navy-700">{item.count}</span>
+        </button>
+      </div>
+    );
+  }
+  const row = item ? item.row : rows[index];
   if (!row) return null;
+  if (compact && roles) {
+    const by = (r: string) => columns.filter((c) => roles.get(c.key) === r);
+    const swipeId = swipe ? swipe.getId(row) : null;
+    const swipeOpen = swipeId !== null && swipeOpenId === swipeId;
+    const rtl = typeof document !== "undefined" && document.dir === "rtl";
+    return (
+      <div
+        style={{ ...style, gridTemplateColumns: selection ? "48px 1fr" : "1fr", touchAction: swipe ? "pan-y" : undefined }}
+        onPointerDown={swipe ? (e) => { swipeStart.current = { x: e.clientX, y: e.clientY }; } : undefined}
+        onPointerUp={
+          swipe
+            ? (e) => {
+                const st = swipeStart.current;
+                swipeStart.current = null;
+                if (!st) return;
+                const dx = e.clientX - st.x;
+                const dy = Math.abs(e.clientY - st.y);
+                const towardEnd = rtl ? dx > 60 : dx < -60;
+                const towardStart = rtl ? dx < -60 : dx > 60;
+                if (dy < 30 && (towardEnd || towardStart)) {
+                  swipedRecently.current = true;
+                  setTimeout(() => (swipedRecently.current = false), 400);
+                  onSwipeOpen?.(towardEnd ? swipeId : null);
+                }
+              }
+            : undefined
+        }
+        onClick={() => {
+          if (swipedRecently.current) return;
+          if (swipeOpen) return;
+          onRowClick?.(row);
+        }}
+        onKeyDown={onRowClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRowClick(row); } } : undefined}
+        role="row"
+        tabIndex={onRowClick ? 0 : undefined}
+        className={`grid items-center border-b border-navy-100 pe-3 text-sm ${selection ? "ps-0" : "ps-3"} ${onRowClick ? "cursor-pointer active:bg-orange-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-maroon-700" : ""} ${index % 2 === 1 ? "bg-cream/50" : "bg-white"}`}
+      >
+        {selection && (
+          <label role="cell" className="hit-label relative z-10" onClick={(e) => e.stopPropagation()}>
+            <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} />
+          </label>
+        )}
+        <div role="cell" className="min-w-0">
+          <RowLink href={rowHref?.(row)}>
+          <div className="flex items-baseline gap-2">
+            {by("id").map((c) => (
+              <span key={c.key} className="shrink-0 font-bold text-navy-900"><bdi dir="ltr">{c.render(row)}</bdi></span>
+            ))}
+            <span dir="auto" className="min-w-0 flex-1 truncate text-start font-medium text-navy-900">
+              {by("title").map((c) => (
+                <span key={c.key}>{c.render(row)}</span>
+              ))}
+            </span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-navy-700">
+            {by("badge").map((c) => (
+              <span key={c.key} className="shrink-0">{c.render(row)}</span>
+            ))}
+            <span className="min-w-0 flex-1 truncate">
+              {by("meta").map((c, i) => (
+                <span key={c.key}>
+                  {i > 0 && " · "}
+                  {c.render(row)}
+                </span>
+              ))}
+            </span>
+          </div>
+          </RowLink>
+        </div>
+        {swipeOpen && swipe && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void Promise.resolve(swipe.onAction(row)).finally(() => onSwipeOpen?.(null));
+            }}
+            className="absolute inset-y-0 end-0 z-10 flex w-32 items-center justify-center bg-maroon-700 px-2 text-sm font-bold text-white"
+          >
+            {swipe.label}
+          </button>
+        )}
+      </div>
+    );
+  }
   return (
     <div
       style={{ ...style, gridTemplateColumns: gridTemplate }}
@@ -58,13 +254,13 @@ function DataTableRow<T>({ index, style, rows, columns, onRowClick, gridTemplate
       } ${index % 2 === 1 ? "bg-cream/50" : "bg-white"}`}
     >
       {selection && (
-        <div role="cell" className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-          <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} className="h-4 w-4" />
-        </div>
+        <label role="cell" className="hit-label relative z-10" onClick={(e) => e.stopPropagation()}>
+          <input type="checkbox" checked={selection.isSelected(row)} onChange={() => selection.toggle(row)} aria-label={tc("selectRow")} />
+        </label>
       )}
-      {columns.map((col) => (
+      {columns.map((col, ci) => (
         <div key={col.key} role="cell" className={`truncate ${col.align === "end" ? "text-end" : ""}`}>
-          {col.render(row)}
+          <RowLink href={ci === 0 ? rowHref?.(row) : undefined}>{col.render(row)}</RowLink>
         </div>
       ))}
     </div>
@@ -105,11 +301,17 @@ interface Props<T> {
   error?: string | null;
   onRetry?: () => void;
   onRowClick?: (row: T) => void;
+  /** Optional real URL per row: an invisible link sits over the row so long-press and "open in new tab" work (plan C4). */
+  rowHref?: (row: T) => string;
   emptyTitle: string;
   emptyDescription?: string;
   emptyAction?: ReactNode;
   rowHeight?: number;
   maxHeight?: number;
+  /** Group-by options (plan B2). Adds a "Group by" control; groups collapse, counts show, and the choice is remembered per `storageKey`. Grouping is over the rows on the current page. */
+  groups?: DataTableGroupOption<T>[];
+  /** Phone-only: swiping a card toward the end reveals one action button (plan E2). */
+  swipeAction?: DataTableSwipeAction<T>;
   /**
    * Opts a column's sort into server-driven mode: clicking a header calls
    * `onServerSortChange(key)` instead of sorting `rows` locally, and the
@@ -188,11 +390,14 @@ export function DataTable<T>({
   error,
   onRetry,
   onRowClick,
+  rowHref,
   emptyTitle,
   emptyDescription,
   emptyAction,
   rowHeight = 40,
   maxHeight = 600,
+  groups,
+  swipeAction,
   serverSort,
   onServerSortChange,
   pagination,
@@ -205,6 +410,31 @@ export function DataTable<T>({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => new Set());
   const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null);
+  const [groupKey, setGroupKey] = useState("");
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
+  const groupStore = storageKey ? `siteops.group.${storageKey}` : null;
+
+  useEffect(() => {
+    if (!groupStore || !groups?.length) return;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(groupStore) ?? "null") as { by?: string; collapsed?: string[] } | null;
+      if (saved?.by && groups.some((g) => g.key === saved.by)) setGroupKey(saved.by);
+      if (saved?.collapsed) setCollapsedGroups(new Set(saved.collapsed));
+    } catch {
+      // convenience only
+    }
+    // groups is rebuilt every render by callers; the stored view is read once per table.
+  }, [groupStore]);
+
+  function persistGroups(by: string, collapsed: Set<string>): void {
+    if (!groupStore) return;
+    try {
+      window.localStorage.setItem(groupStore, JSON.stringify({ by, collapsed: [...collapsed] }));
+    } catch {
+      // convenience only
+    }
+  }
 
   useEffect(() => {
     if (storageKey) setHiddenColumns(loadHiddenColumns(storageKey));
@@ -225,7 +455,11 @@ export function DataTable<T>({
     saveHiddenColumns(storageKey, next);
   }
 
-  const gridTemplate = [selection ? "36px" : null, ...visibleColumns.map((c) => c.width ?? "1fr")].filter((track): track is string => track !== null).join(" ");
+  const gridTemplate = [selection ? "48px" : null, ...visibleColumns.map((c) => c.width ?? "1fr")].filter((track): track is string => track !== null).join(" ");
+  const compact = useCompact();
+  const coarse = useCoarsePointer();
+  const roles = useMemo(() => mobileRoles(visibleColumns), [visibleColumns]);
+  const effRowHeight = compact ? 60 : coarse ? Math.max(rowHeight, 48) : rowHeight;
   const activeSortKey = onServerSortChange ? (serverSort?.key ?? null) : sortKey;
   const activeSortDir = onServerSortChange ? (serverSort?.direction ?? "asc") : sortDir;
 
@@ -242,6 +476,38 @@ export function DataTable<T>({
     });
     return withValues.map((w) => w.row);
   }, [rows, sortKey, sortDir, columns, onServerSortChange]);
+
+  const activeGroup = groups?.find((g) => g.key === groupKey);
+  const items = useMemo<ListItem<T>[] | undefined>(() => {
+    if (!activeGroup) return undefined;
+    const order: string[] = [];
+    const byId = new Map<string, { label: string; rows: T[] }>();
+    for (const row of sortedRows) {
+      const g = activeGroup.get(row);
+      if (!byId.has(g.id)) {
+        byId.set(g.id, { label: g.label, rows: [] });
+        order.push(g.id);
+      }
+      byId.get(g.id)!.rows.push(row);
+    }
+    order.sort();
+    const out: ListItem<T>[] = [];
+    for (const id of order) {
+      const g = byId.get(id)!;
+      const collapsed = collapsedGroups.has(id);
+      out.push({ kind: "header", id, label: g.label, count: g.rows.length, collapsed });
+      if (!collapsed) for (const row of g.rows) out.push({ kind: "row", row });
+    }
+    return out;
+  }, [activeGroup, sortedRows, collapsedGroups]);
+
+  function toggleGroup(id: string): void {
+    const next = new Set(collapsedGroups);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setCollapsedGroups(next);
+    persistGroups(groupKey, next);
+  }
 
   function handleSort(col: DataTableColumn<T>): void {
     if (!col.sortValue) return;
@@ -292,12 +558,12 @@ export function DataTable<T>({
   if (!rows) return <LoadingState rows={6} />;
   if (rows.length === 0) return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
 
-  const minWidth = minTableWidth(visibleColumns as DataTableColumn<unknown>[]) + (selection ? 48 : 0);
+  const minWidth = compact ? 0 : minTableWidth(visibleColumns as DataTableColumn<unknown>[]) + (selection ? 48 : 0);
   const pageCount = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize)) : null;
 
   return (
     <div className="overflow-hidden rounded-xl border-3 border-ink shadow-brutal-sm">
-      {storageKey && (
+      {storageKey && !compact && (
         <div className="relative flex items-center justify-end border-b-3 border-ink bg-cream px-3 py-1.5">
           <button
             type="button"
@@ -317,8 +583,8 @@ export function DataTable<T>({
                   const hidden = hiddenColumns.has(col.key);
                   const locked = col.hideable === false;
                   return (
-                    <label key={col.key} className={`flex items-center gap-2 rounded px-2 py-1 text-sm ${locked ? "opacity-50" : "cursor-pointer hover:bg-navy-50"}`}>
-                      <input type="checkbox" checked={!hidden} disabled={locked} onChange={() => toggleColumn(col.key)} className="h-4 w-4" />
+                    <label key={col.key} className={`flex min-h-hit items-center gap-2 rounded px-2 text-sm ${locked ? "opacity-50" : "cursor-pointer hover:bg-navy-50"}`}>
+                      <input type="checkbox" checked={!hidden} disabled={locked} onChange={() => toggleColumn(col.key)} />
                       {col.header}
                     </label>
                   );
@@ -328,8 +594,86 @@ export function DataTable<T>({
           )}
         </div>
       )}
+      {groups && groups.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border-b-3 border-ink bg-cream px-3 py-1.5">
+          <label className="flex min-w-0 flex-1 items-center gap-2 text-xs font-semibold text-navy-700">
+            <span className="shrink-0">{tc("groupBy")}</span>
+            <select
+              aria-label={tc("groupBy")}
+              value={groupKey}
+              onChange={(e) => {
+                setGroupKey(e.target.value);
+                persistGroups(e.target.value, collapsedGroups);
+              }}
+              className="min-h-hit min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
+            >
+              <option value="">{tc("groupNone")}</option>
+              {groups.map((g) => (
+                <option key={g.key} value={g.key}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {activeGroup && items && (
+            <button
+              type="button"
+              onClick={() => {
+                const headers = items.filter((i): i is Extract<ListItem<T>, { kind: "header" }> => i.kind === "header");
+                const allCollapsed = headers.every((h) => h.collapsed);
+                const next = allCollapsed ? new Set<string>() : new Set(sortedRows.map((r) => activeGroup.get(r).id));
+                setCollapsedGroups(next);
+                persistGroups(groupKey, next);
+              }}
+              className="min-h-hit rounded-lg border-2 border-ink bg-white px-3 text-xs font-semibold text-navy-800"
+            >
+              {items.every((i) => i.kind !== "header" || i.collapsed) ? tc("expandAll") : tc("collapseAll")}
+            </button>
+          )}
+        </div>
+      )}
       <div role="table" aria-rowcount={(pagination?.total ?? rows.length) + 1} className="overflow-x-auto">
         <div style={{ minWidth }}>
+          {compact ? (
+            <div role="row" className="flex items-center gap-2 border-b-3 border-ink bg-cream pe-2 text-sm font-semibold text-navy-800">
+              {selection ? (
+                <label className="hit-label" role="columnheader">
+                  <input ref={selectAllRef} type="checkbox" checked={allOnPageSelected} onChange={toggleSelectAllOnPage} aria-label={tc("selectAllRows")} />
+                </label>
+              ) : (
+                <span className="ps-3" />
+              )}
+              <span className="text-xs text-navy-700">{tc("sortBy")}</span>
+              <select
+                aria-label={tc("sortBy")}
+                value={activeSortKey ?? ""}
+                onChange={(e) => {
+                  const col = visibleColumns.find((c) => c.key === e.target.value);
+                  if (col) handleSort(col);
+                }}
+                className="min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-2 text-sm"
+              >
+                {!activeSortKey && <option value="" />}
+                {visibleColumns.filter((c) => c.sortValue).map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.header}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                aria-label={tc("sortDirection")}
+                disabled={!activeSortKey}
+                onClick={() => {
+                  const col = visibleColumns.find((c) => c.key === activeSortKey);
+                  if (col) handleSort(col);
+                }}
+                className="rounded-lg border-2 border-ink bg-white px-3 text-sm disabled:opacity-40"
+              >
+                {activeSortDir === "asc" ? "▲" : "▼"}
+              </button>
+            </div>
+          ) : (
           <div role="row" className="grid items-center gap-3 border-b-3 border-ink bg-cream px-3 text-xs font-semibold text-navy-800" style={{ gridTemplateColumns: gridTemplate, height: 36 }}>
             {selection && (
               <div role="columnheader" className="flex items-center justify-center">
@@ -339,7 +683,7 @@ export function DataTable<T>({
                   checked={allOnPageSelected}
                   onChange={toggleSelectAllOnPage}
                   aria-label={tc("selectAllRows")}
-                  className="h-4 w-4"
+                 
                 />
               </div>
             )}
@@ -358,18 +702,27 @@ export function DataTable<T>({
               </button>
             ))}
           </div>
+          )}
           <List<RowProps<T>>
             rowComponent={DataTableRow}
-            rowCount={sortedRows.length}
-            rowHeight={rowHeight}
+            rowCount={items ? items.length : sortedRows.length}
+            rowHeight={items ? (index: number) => (items[index]?.kind === "header" ? Math.max(44, coarse ? 48 : 44) : effRowHeight) : effRowHeight}
             rowProps={{
               rows: sortedRows,
+              swipe: swipeAction,
+              swipeOpenId,
+              onSwipeOpen: setSwipeOpenId,
+              items,
+              onToggleGroup: toggleGroup,
               columns: visibleColumns,
               onRowClick,
+              rowHref,
               gridTemplate,
+              compact,
+              roles,
               selection: selection ? { isSelected: (row: T) => selection.selectedIds.has(selection.getRowId(row)), toggle: toggleRowSelected } : undefined,
             }}
-            style={{ height: Math.min(maxHeight, sortedRows.length * rowHeight) }}
+            style={{ height: Math.min(maxHeight, items ? items.reduce((h, i) => h + (i.kind === "header" ? Math.max(44, coarse ? 48 : 44) : effRowHeight), 0) : sortedRows.length * effRowHeight) }}
           />
         </div>
       </div>
@@ -380,7 +733,7 @@ export function DataTable<T>({
             onClick={() => pagination.onPageChange(pagination.page - 1)}
             disabled={pagination.page <= 1}
             aria-label={tc("previousPage")}
-            className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            className="rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
           >
             &#8249;
           </button>
@@ -390,7 +743,7 @@ export function DataTable<T>({
             onClick={() => pagination.onPageChange(pagination.page + 1)}
             disabled={pagination.page >= pageCount}
             aria-label={tc("nextPage")}
-            className="rounded-lg border-2 border-ink bg-white px-2.5 py-1 text-sm font-semibold text-navy-800 disabled:opacity-40"
+            className="rounded-lg border-2 border-ink bg-white px-4 text-base font-semibold text-navy-900 disabled:opacity-40"
           >
             &#8250;
           </button>

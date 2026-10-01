@@ -4,6 +4,7 @@ import { apiJson } from "@/lib/api-client";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { formatDateTime } from "@/lib/format";
 
 interface NotificationPayload {
   projectId: string;
@@ -111,7 +112,7 @@ export function NotificationBell() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t("title")}
-        className="relative flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10"
+        className="relative flex items-center justify-center rounded-full text-xl text-white hover:bg-white/10"
       >
         <span aria-hidden="true">🔔</span>
         {unreadCount > 0 && (
@@ -121,11 +122,11 @@ export function NotificationBell() {
         )}
       </button>
       {open && (
-        <div role="menu" className="absolute end-0 top-full z-40 mt-1 w-80 rounded-lg border-3 border-ink bg-white text-sm shadow-brutal-lg">
+        <div role="menu" className="absolute end-0 top-full z-40 mt-1 w-[min(20rem,calc(100vw-1rem))] rounded-lg border-3 border-ink bg-white text-sm shadow-brutal-lg">
           <div className="flex items-center justify-between border-b border-navy-100 px-3 py-2">
             <p className="font-semibold text-navy-900">{t("title")}</p>
             {unreadCount > 0 && (
-              <button type="button" onClick={() => void handleMarkAllRead()} className="text-xs font-semibold text-navy-600 hover:underline">
+              <button type="button" onClick={() => void handleMarkAllRead()} className="text-sm font-semibold text-navy-700 hover:underline">
                 {t("markAllRead")}
               </button>
             )}
@@ -142,7 +143,7 @@ export function NotificationBell() {
                 className={`block w-full border-b border-navy-50 px-3 py-2 text-start last:border-0 hover:bg-orange-50 ${n.readAt ? "text-navy-600" : "font-semibold text-navy-900"}`}
               >
                 <span className="block truncate">{n.payload.summary}</span>
-                <span className="block text-[11px] font-normal text-navy-400">{new Date(n.createdAt).toLocaleString(locale)}</span>
+                <span className="block text-xs font-normal text-navy-600">{formatDateTime(n.createdAt)}</span>
               </button>
             ))}
           </div>

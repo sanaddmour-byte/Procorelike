@@ -4,7 +4,18 @@ interface FilterDef {
   options: { value: string; label: string }[];
 }
 
+interface PresetDef {
+  key: string;
+  label: string;
+  /** Filter values this preset sets; pressing it again clears them. */
+  filters: Record<string, string>;
+}
+
 interface Props {
+  /** Focus the search box on load (drawings: search-first landing). */
+  autoFocusSearch?: boolean;
+  /** One-tap shortcuts such as "Mine" -- a chip that toggles a whole filter combination (plan E2/E6). */
+  presets?: PresetDef[];
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
@@ -20,17 +31,46 @@ interface Props {
  * shows once something is actually set, so it isn't dead chrome on an
  * unfiltered list.
  */
-export function FilterBar({ searchValue, onSearchChange, searchPlaceholder = "Search…", filters = [], activeFilters, onFilterChange, onClearAll, clearAllLabel = "Clear all" }: Props) {
+export function FilterBar({ autoFocusSearch = false, presets = [], searchValue, onSearchChange, searchPlaceholder = "Search…", filters = [], activeFilters, onFilterChange, onClearAll, clearAllLabel = "Clear all" }: Props) {
   const hasActiveFilters = Boolean(searchValue) || Object.values(activeFilters).some(Boolean);
+
+  const activeChips = [
+    ...(searchValue ? [{ key: "__search", label: `“${searchValue}”`, clear: () => onSearchChange("") }] : []),
+    ...filters.flatMap((f) => {
+      const v = activeFilters[f.key];
+      if (!v) return [];
+      const opt = f.options.find((o) => o.value === v);
+      return [{ key: f.key, label: `${f.label}: ${opt?.label ?? v}`, clear: () => onFilterChange(f.key, "") }];
+    }),
+  ];
 
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2">
+      {presets.length > 0 && (
+        <div className="flex w-full flex-wrap gap-2" role="group">
+          {presets.map((preset) => {
+            const on = Object.entries(preset.filters).every(([k, v]) => activeFilters[k] === v);
+            return (
+              <button
+                key={preset.key}
+                type="button"
+                aria-pressed={on}
+                onClick={() => Object.entries(preset.filters).forEach(([k, v]) => onFilterChange(k, on ? "" : v))}
+                className={`min-h-hit rounded-full border-3 border-ink px-4 text-sm font-bold ${on ? "bg-navy-900 text-white" : "bg-white text-navy-900"}`}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
       <input
+        autoFocus={autoFocusSearch}
         type="search"
         value={searchValue}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={searchPlaceholder}
-        className="min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 py-1.5 text-sm"
+        className="min-w-[180px] flex-1 rounded-lg border-3 border-ink px-3 text-base"
         aria-label={searchPlaceholder}
       />
       {filters.map((filter) => (
@@ -38,7 +78,7 @@ export function FilterBar({ searchValue, onSearchChange, searchPlaceholder = "Se
           key={filter.key}
           value={activeFilters[filter.key] ?? ""}
           onChange={(e) => onFilterChange(filter.key, e.target.value)}
-          className="rounded-lg border-3 border-ink px-2 py-1.5 text-sm"
+          className="rounded-lg border-3 border-ink px-2 text-base"
           aria-label={filter.label}
         >
           <option value="">{filter.label}</option>
@@ -50,9 +90,21 @@ export function FilterBar({ searchValue, onSearchChange, searchPlaceholder = "Se
         </select>
       ))}
       {hasActiveFilters && (
-        <button type="button" onClick={onClearAll} className="whitespace-nowrap text-sm font-semibold text-maroon-700 underline">
-          {clearAllLabel}
-        </button>
+        <ul className="flex w-full flex-wrap items-center gap-2" aria-label="Active filters">
+          {activeChips.map((chip) => (
+            <li key={chip.key}>
+              <button type="button" onClick={chip.clear} className="inline-flex items-center gap-2 rounded-full border-2 border-ink bg-navy-900 px-3 text-sm font-semibold text-white">
+                {chip.label}
+                <span aria-hidden="true">✕</span>
+              </button>
+            </li>
+          ))}
+          <li>
+            <button type="button" onClick={onClearAll} className="whitespace-nowrap px-2 text-sm font-semibold text-maroon-700 underline">
+              {clearAllLabel}
+            </button>
+          </li>
+        </ul>
       )}
     </div>
   );

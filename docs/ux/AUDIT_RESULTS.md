@@ -1,0 +1,147 @@
+# Audit results — after remediation (Stage 4 · Fix)
+
+> Companion to [`TASK_BENCHMARKS.md`](./TASK_BENCHMARKS.md) and [`AUDIT_EVIDENCE.md`](./AUDIT_EVIDENCE.md) (Stage 1, "before"), [`CRITIQUE.md`](./CRITIQUE.md) (Stage 2) and [`REMEDIATION_PLAN.md`](./REMEDIATION_PLAN.md) (Stage 3).
+> **Read this first:** Stage 4 is **partly complete**. Everything below labelled *Measured* was run against a production build (`next build && next start`) of `apps/web`, the Express API and the same seeded PostgreSQL snapshot as Stage 1, with the same scripts and rules. What was **not** built or **not** measured is listed explicitly in §6 and §7 — nothing there is estimated or implied.
+
+## 1. What "measured" means here
+
+| Label | Meaning |
+|---|---|
+| **Measured** | Executed by a scripted Chromium session, 390 × 844, DPR 2, touch, cold open, DB restored to the pristine snapshot before each run. Scripts: `docs/ux/measure/09-tasks-after.mjs` (tasks), `03-sweep.mjs metrics`, `04b-offline-all.mjs`, `05-perf.mjs`, `07-overflow.mjs`. Raw output: `docs/ux/data/after/*.json`. |
+| **Modelled** | Human time = `1.0 s × taps + 1.2 s × screen changes + 0.35 s × characters + machine time` (keystroke-level estimate, **not** measured with people). |
+| **Emulated** | CDP CPU ×4 + 150 ms RTT / 1.6 Mbps throttling. Not a real device. |
+| **Not performed** | Anything needing a physical phone, gloves, sunlight, or a real signal drop. See §8. |
+
+Tap rule (unchanged from Stage 1): tap / long-press / swipe / field focus = 1; native `<select>` = 2; file picker = 2; typing counts characters, not taps.
+**Returning user:** the tasks below assume the app remembers the last project (as a phone that has been used once does), so it opens on **My Work**. A first-ever launch costs **+1 tap** (Open project).
+
+## 2. The ten field tasks — before / after (Measured, web)
+
+English and Arabic gave identical tap counts and outcomes for every task.
+
+| Task | Target taps | Before (EN / AR) | After (EN / AR) | Completable before → after |
+|---|---|---|---|---|
+| T1 Create a snag with photo, location, assignee | ≤ 6 | 8 partial / 8 partial | **6** / **6** | no → **yes** — within budget (was 8; see note) |
+| T2 Next snag, same location | ≤ 4 | 4 partial | **3** | no → yes (location + assignee carry over) |
+| T3 Raise a work-inspection request | ≤ 6 | 5 | **3** | yes → yes |
+| T4 Find a drawing by sheet number | ≤ 4 | 5 | **3** | yes → yes |
+| T5 Open today's daily log and add manpower | ≤ 5 | 4 partial (nowhere to add manpower) | **8** first use · **4** repeat use | no → yes; first use is over budget, repeat use within it |
+| T6 Answer an RFI assigned to me | ≤ 4 | 8 | **3** | yes → yes |
+| T7 Everything assigned to me, due today, across modules | ≤ 2 | 9 partial (no such screen) | **0** (landing screen) | no → yes |
+| T8 Close out a snag with an "after" photo | ≤ 5 | 9 | **4** | yes → yes |
+| T9 Switch project, land on the same screen type | ≤ 3 | 2 | **2** | yes → yes (unchanged) |
+| T10 Bulk-assign snags to one person | ≤ 8 | 4 partial (no assignment possible) | **7** | no → **yes** |
+
+Notes that matter:
+- **T1 is now within budget (6).** It was 8: open FAB and sheet (2) + photo (2) + location (2) + "Me" (1) + save (1). Two changes cut 2 taps: a one-tap **New snag** button on My Work (replaces FAB + sheet), and one-tap **location chips** in the form (your last four locations, or the top-level areas the first time) instead of opening the picker and choosing. Now: New snag (1) + photo (2) + location chip (1) + Me (1) + save (1) = 6, in English and Arabic (`data/after/tasks-after-*.json`, enforced by the T1 test in `field-taps.spec.ts`). The full location picker is still there for deeper locations. These were my design calls, not in the original plan; say if you prefer another route.
+- **T5 first use = 8** because a company and a trade are two native selects. The crew is remembered per project afterwards (repeat = 4).
+- **T10** selected every snag on the page in one action (42 in the audit data — the page size is 50), not 10; the count of taps does not grow with the number of rows.
+- Before-numbers for tasks that were "partial" are taps to the furthest point reachable, so they are **not comparable** with the after-numbers of a completed task. The "Completable" column is the honest comparison.
+- Machine times after are 0.1–4.9 s on localhost (T8 is the slowest because it uploads a photo and walks the status chain); modelled human times are in `docs/ux/data/after/tasks-after-*.json`. Neither is a field measurement.
+
+## 3. Sweeps re-run (Measured)
+
+| Sweep | Before | After | Remaining |
+|---|---|---|---|
+| Horizontal overflow at 360/390 px, EN+AR, 36 screens (144 combinations) | **34** overflow | **0** | none |
+| Touch targets < 44 × 44 px (390 px, per language) | **917** of 925 | **14** of 1057 (10 visible + 4 hidden 1×1 file inputs whose label is a full-size button) | Settings checkboxes (24 px, inside larger labels) and the company-page controls — listed in `after/sweep-metrics.json` |
+| Text contrast failures (WCAG AA, sampled) | 106 of 1068 | **28** of 1333 (EN) · 26 of 1378 (AR) | I inspected every one: they are disabled controls (WCAG exempts them: pagination ‹ ›, Add row, ▲, Upload logo, New folder, Link drawing) or a mis-sampled badge ("Current", 1.07 — the badge is white on navy-900 in the source). I found no genuine failure left, but the sampler still counts them |
+| Screens that go **blank** when a request fails offline | **6** of 36 | **0** | — |
+| Screens stuck on a spinner / "Loading" with no error offline | 0 | 0 | — |
+| Offline: screens that show an error with a Retry button | 15 | 22 | — |
+| Header height (px) | 97 | **57** | — |
+| Punch list rows above the fold | 9 | 8 | **Not improved.** Cards are 60 px and show status; the shorter header did not translate into more rows. RFIs went 8 → 6. Reported as measured. |
+| Dark-mode identical-to-light | 0 | 0 | — |
+
+Other regressions I found **while testing** and fixed (latest: English record titles truncated at the wrong end in Arabic lists — now `dir="auto"`): two nested `<main>` landmarks on every project page; a projects-list page that lost its side gutter after a padding pass; a silent `/companies` permission failure that left the daily-log company picker empty for a superintendent; a Gantt toolbar and Permissions grid that pushed the page wider than the phone.
+
+## 4. Performance (Measured local · Emulated mid-phone)
+
+Interaction latency to first feedback is unchanged within noise (≈ 10–50 ms local, 15–260 ms emulated). JS transferred per screen grew by 5–7 KB (170 → 177 KB on the punch list).
+
+**Update (after a follow-up fix):** the first list load was being held back by the 300 ms *search* debounce even when nothing had been typed. Fixing that (`use-server-table.ts`) roughly halves local LCP (punch list 624 → 308 ms, RFIs 616 → 340 ms) but only trims the emulated-phone figure (2.96 → 2.57 s); the rest was assumed to be a chain of serial round trips at 150 ms RTT (corrected below). Raw runs: `data/after/perf.json` (now) and `data/after/perf-before-debounce-fix.json`. The paragraph below describes the state before that fix.
+
+**One number got worse and I have not fully fixed it:** on the emulated phone, Largest Contentful Paint on the punch list is **2.96 s (was 0.59 s)**, RFIs 2.85 s (was 0.59 s); the dashboard is unchanged (2.32 → 2.34 s). First Contentful Paint is roughly unchanged (0.59 → 0.63 s). Probable cause (a hypothesis, not tested): before, the paint that counted as LCP was the "Loading…" text; now loading shows skeleton bars with no text, so LCP is the first real content, which waits on 8–10 API calls at 150 ms RTT. Either way, the lists render their real content later than the Stage 1 figure suggests is "fast". 
+**Follow-up finding (measured, `measure/10-requests.mjs`):** the request-chain hypothesis is **wrong**. A cold punch-list load issues its API calls in parallel (list, saved views, notification count, projects) within about 60 ms of each other locally. On the emulated phone, LCP (2.57 s) lands at the end of the last long task (2.66 s, total blocking time 416 ms): the delay is JavaScript download and hydration under 4× CPU throttling, not API round trips. I then checked whether code splitting would help: the production build reports 136 kB first-load JS for the punch list, of which 103 kB is the shared React/Next runtime and the route itself is 6 kB, so splitting the app's own components could save little (I estimate 10–15 kB, unmeasured) and I did not do it. Getting materially below 2.6 s on a 4×-throttled CPU would need less client rendering (e.g. server-rendering the list shell), which is a larger change than this pass. LCP on the emulated phone therefore stays at about 2.6 s; local is 0.3 s.
+
+## 5. What shipped, by plan item
+
+| Plan item | Status | Where |
+|---|---|---|
+| A1 targets / glove mode / A2 contrast / A3 formats | **Done** (residuals in §3) | `globals.css`, `tailwind.config.ts`, `lib/format.ts` (+tests), `Ltr`, `use-enum-label` |
+| B1 photo-first capture · B3 assignee · B4 dictation · B7 drafts | **Done** | `CaptureButton`, `VoiceField`, `FormShell`, `lib/drafts.ts` |
+| B6 error / loading states | **Done** — 48 pages use one error box with Retry; offline says "No connection", not "Something went wrong" | `ErrorState`, `LoadingState`, `lib/error-message.ts` |
+| B8 compact rows · saved-views bar | **Done** | `DataTable`, `SavedViewsBar`, `FilterBar` |
+| B9 bulk operations | **Done** — assign, due date and add-to-distribution (API + UI + tests) | `BulkAssign`, `POST /punch-items/bulk-update` |
+| C1 bottom nav · C2 last project · create sheet | **Done** | `BottomNav`, `CreateSheet`, `lib/last-project.ts` |
+| D1 service worker · D2 outbox · D3 truthful failures | **Done for snags and RFI answers** (a generic JSON-write queue exists, so more record types are a small change); service worker caches the shell and visited pages (production only). Other record types are **not** queued offline. | `public/sw.js`, `lib/outbox.ts`, `SyncStatus` |
+| E1 location · E3 close-out · E4 manpower · E5 My Work | **Done** | `LocationPicker`, snag detail, `ManpowerEditor`, `my-work/page.tsx` |
+| E9 permissions layout · E10 Gantt overflow | **Done** | see §3 |
+| G1 glove mode | **Done** (toggle in the avatar menu) | `PrefsApplier` |
+| B5 previous / next through the list you came from | **Done** (punch list + RFI detail; list order kept in sessionStorage) | `RecordNav`, `use-server-table.ts` |
+| C3 list state in the URL (Back restores search/filter/sort/page) | **Done** for every server-driven list | `use-server-table.ts` |
+| E11 dashboard opens with "My Work: N overdue · N due today" linking to My Work | **Done** | `dashboard/page.tsx` |
+| C5 search opens with quick actions (create snag / daily log / My Work) and recent records; already full-text across modules | **Done** | `GlobalSearch` |
+| C4 "Recently opened" on My Work (snags, RFIs, drawings; device-local) | **Done** | `lib/recents.ts` |
+| C4 deep link survives the login wall · list rows are real links (open in new tab / long-press) on punch list, RFIs, drawings | **Done** | `ReturnTo`, `DataTable` `rowHref` |
+| E2/E6 "Mine" one-tap preset (punch list, RFIs) | **Done** | `FilterBar` presets |
+| B2 grouping (group-by, collapsible groups, choice remembered) · E2 swipe-to-assign on snag cards | **Done** (punch list) | `DataTable` `groups` / `swipeAction` |
+| E7 drawings search-first (search focused on open, recent sheets) | **Done** | `drawings/page.tsx`, `FilterBar` |
+| E8 photos grouped by day with lazy thumbnails (not raw ids) | **Done** structure; thumbnail bytes need the S3 stand-in, which was not running, so I verified layout only | `LazyThumb`, `photos/page.tsx` |
+| E12 change events / orders on tabs; shared loading/empty/status components on change orders, companies, settings | **Done** | `change-orders/page.tsx` |
+| E13 clipped controls | **Verified** — overflow sweep reports none (§3) | `data/after/overflow.json` |
+| G2 interaction-count tests | **Done** — 12 Playwright tests (EN+AR) enforcing budgets for T1, T3, T4, T7, T9 and the offline queue; existing 12 E2E tests updated for the new UI | `apps/web/e2e/field-taps.spec.ts` |
+
+Test state at the end: typecheck and lint pass in all five packages; unit tests pass (shared 200, web 32, mobile 4, db 1); the full API suite passes (258 tests); **36 of 36** Playwright tests pass against the production build (one earlier run had a single failure in the safety-incident test that passed on rerun; I treat it as a flake, not proof it cannot recur). Sandbox services (Postgres, API) were restarted by the environment once during this stretch; results above are from after the restart.
+
+Eight existing E2E tests failed after the UI changes and I updated them. Six were caused by this work's intentional changes (search boxes now have an accessible name that substring-matches "Title/Subject/Description"; Priority is three chips instead of a select; Log out is inside the avatar menu; the signed-out landing is `/login`; the snag status buttons are labelled by status). Two were already stale from earlier phases, not from this work: correspondence has needed a typed signature to send since Phase 12, and the RFI status text is split across elements. I updated all of them rather than leave them red.
+
+## 6. Not built (backlog, in plan order)
+
+offline queue for record types other than snags and RFI answers (web) · server-rendering list shells to bring emulated-phone LCP down (§4) · remaining contrast failures and the 18 small targets (§3) · the production S3 bucket for the drawings viewer (you asked me to leave it out).
+
+**Mobile app (Expo), M1–M5:** built, **unmeasured and never run on a device or emulator** (none is available here). Checked by typecheck, lint and 4 unit tests only.
+- M1 New snag: location, assignee and camera photo (`expo-image-picker`), offline-first; photos upload after the snag syncs.
+- M2 RFI respond (queued when offline). M3 daily-log manpower (editor appears once the log has synced; queued when offline).
+- M4 project switcher that keeps the screen type (`switchProjectPath`, unit-tested). M5 `I18nManager` RTL, which takes effect on the next app launch after the language changes.
+- Added `expo-image-picker`, `expo-haptics`; `app.json` camera permission text. Voice dictation on mobile: not built (no module added).
+- Risks to check on a device: SQLite migration adding two columns to `punch_items`, the camera permission prompt, RTL mirroring of the custom screens, and the sync upload of photos.
+
+## 7. Deviations and known issues
+
+- The language toggle is in the avatar menu on phones (visible in the header on desktop) — a deviation from the plan's default; say if you want it back in the header.
+- Western digits and `YYYY-MM-DD` dates in both languages (plan defaults).
+- `POST /projects` returned a 500 (RLS `42501`) in the audit environment; not investigated. It does not affect the field tasks above.
+- The local S3 stand-in stopped at its background time limit, so photo upload and the drawings viewer do not work in this sandbox until it is restarted. The task timings were taken while it was running. **Production still needs a real S3 bucket** for the viewer.
+- The dev server was used while building; every number in this document comes from the production build.
+
+## 8. Field-simulation checklist (Not performed)
+
+Nothing below was done by me; these need a person with a phone. Please run them, or tell me the results and I will record them.
+
+| Step | Status |
+|---|---|
+| Glove test (thick work gloves, glove mode on/off): create a snag, use the bottom nav and the create sheet | **Not performed** |
+| Sunlight test (outdoors, max brightness): read status badges, contrast on cards and My Work | **Not performed** |
+| One-handed thumb reach: FAB, Save & add another, bulk-assign bar | **Not performed** |
+| Real signal loss (airplane mode mid-form, then reconnect): snag queued, banner shown, sent on reconnect, photos intact | **Not performed** on a device (simulated with the browser's offline switch in the E2E test) |
+| Phone camera capture (`<input capture>`) on iOS Safari and Android Chrome | **Not performed** (file input simulated) |
+| Voice dictation in English and Arabic on device | **Not performed** (Web Speech API availability varies by browser) |
+| Screen reader pass (VoiceOver / TalkBack) on My Work and the snag form | **Not performed** |
+| Arabic review by a native reader (wording of the new strings) | **Not performed** |
+
+## 9. Screenshot pairs
+
+Before: `docs/ux/screenshots/<screen>__<lang>-390-light.png` (Stage 1). After: `docs/ux/screenshots/after/<screen>__<lang>-390-light.png` (same names, 36 screens × EN/AR), plus task shots `after/after-task1-form-*`, `after-task7-mywork-*`, `after-task8-done-*`. Good pairs to open first: `punch-list`, `punch-new`, `daily-log-detail`, `rfis`, `dashboard`, `permissions`, `gantt`.
+
+## 10. Reproducing
+
+```
+bash docs/ux/measure/reset-db.sh          # restore the audit snapshot
+pnpm --filter @siteops/web build && pnpm --filter @siteops/web start
+export UX_DATA_DIR=docs/ux/data/after UX_SHOTS_DIR=docs/ux/screenshots/after
+node docs/ux/measure/09-tasks-after.mjs en   # and ar
+node docs/ux/measure/07-overflow.mjs ; node docs/ux/measure/03-sweep.mjs metrics
+node docs/ux/measure/04b-offline-all.mjs ; node docs/ux/measure/05-perf.mjs
+pnpm --filter @siteops/web exec playwright test
+```

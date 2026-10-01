@@ -3,6 +3,9 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { PrefsApplier } from "@/components/PrefsApplier";
+import { ReturnTo } from "@/components/ReturnTo";
+import { ServiceWorker } from "@/components/ServiceWorker";
 import "../globals.css";
 
 export function generateStaticParams(): { locale: string }[] {
@@ -26,6 +29,9 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir}>
       <body>
+        <PrefsApplier />
+        <ServiceWorker />
+        <ReturnTo />
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
       </body>
     </html>

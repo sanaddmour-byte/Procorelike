@@ -1,6 +1,8 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { PersonnelPicker } from "@/components/PersonnelPicker";
 import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -107,6 +109,7 @@ const STATUS_TONE: Record<Submittal["status"], StatusTone> = {
 export default function SubmittalsPage() {
   const t = useTranslations("Submittals");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -164,8 +167,8 @@ export default function SubmittalsPage() {
       setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
       setSelectedIds(new Set());
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBulkClosing(false);
     }
@@ -213,8 +216,8 @@ export default function SubmittalsPage() {
       setDistributionUserIds([]);
       setShowForm(false);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreating(false);
     }
@@ -248,7 +251,7 @@ export default function SubmittalsPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
@@ -356,7 +359,7 @@ export default function SubmittalsPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <SavedViewsBar
           projectId={params.id}

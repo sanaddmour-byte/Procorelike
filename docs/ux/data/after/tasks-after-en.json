@@ -1,0 +1,419 @@
+[
+  {
+    "task": "T1 create snag with photo + location + assignee",
+    "taps": 8,
+    "chars": 0,
+    "machineMs": 714,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "+ Capture",
+        "t": 39
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "Snag (photo first)",
+        "t": 135
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "Take photo (open file picker)",
+        "t": 237
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "Take photo (choose file)",
+        "t": 237
+      },
+      {
+        "n": 5,
+        "kind": "tap",
+        "what": "Location",
+        "t": 293
+      },
+      {
+        "n": 6,
+        "kind": "tap",
+        "what": "choose location",
+        "t": 355
+      },
+      {
+        "n": 7,
+        "kind": "tap",
+        "what": "Assignee: Me",
+        "t": 399
+      },
+      {
+        "n": 8,
+        "kind": "tap",
+        "what": "Save & add another",
+        "t": 572
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "screenChanges": 3,
+    "modelledSeconds": 12.3,
+    "note": "photo, location and assignee captured in one form; assignee 'Me' chip",
+    "noticeAfter": "☰\nAmman Heights Residential Tower\n▾\n🔍\n🔔\n2\nSH\n📥\nMy Work\n+\n🏗️\nProject\n📐\nDrawings\n☰\nMore\nNew punch item\n\nSaved PI-0001"
+  },
+  {
+    "task": "T2 next snag, same location",
+    "taps": 3,
+    "chars": 0,
+    "machineMs": 1584,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "Take photo (open file picker)",
+        "t": 0
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "Take photo (choose file)",
+        "t": 0
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "Save & add another",
+        "t": 20
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "screenChanges": 1,
+    "modelledSeconds": 5.8,
+    "note": "location and assignee carry over ('Save & add another' keeps them)"
+  },
+  {
+    "task": "T3 raise work inspection request",
+    "taps": 3,
+    "chars": 0,
+    "machineMs": 1887,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "+ Capture",
+        "t": 37
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "Inspection",
+        "t": 87
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "Create (default template)",
+        "t": 343
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "screenChanges": 3,
+    "urlAfter": "http://localhost:3000/en/projects/ad3c8b15-1097-4813-bf2d-16977828c34c/inspections?new=1",
+    "modelledSeconds": 8.5
+  },
+  {
+    "task": "T4 find drawing by sheet number",
+    "taps": 3,
+    "chars": 5,
+    "machineMs": 1794,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "bottom nav: Drawings",
+        "t": 37
+      },
+      {
+        "n": 2,
+        "kind": "focus",
+        "what": "search sheet number (focus)",
+        "t": 121,
+        "chars": 5
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "open drawing",
+        "t": 527
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "screenChanges": 3,
+    "modelledSeconds": 10.1
+  },
+  {
+    "task": "T5 open today's daily log and add manpower (first use)",
+    "taps": 8,
+    "chars": 0,
+    "machineMs": 1748,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "More",
+        "t": 42
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "Daily Logs",
+        "t": 158
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "open today's log",
+        "t": 349
+      },
+      {
+        "n": 4,
+        "kind": "focus",
+        "what": "Company (select open)",
+        "t": 462
+      },
+      {
+        "n": 5,
+        "kind": "tap",
+        "what": "Company (choose option)",
+        "t": 478
+      },
+      {
+        "n": 6,
+        "kind": "focus",
+        "what": "Trade (select open)",
+        "t": 486
+      },
+      {
+        "n": 7,
+        "kind": "tap",
+        "what": "Trade (choose option)",
+        "t": 502
+      },
+      {
+        "n": 8,
+        "kind": "tap",
+        "what": "Add row",
+        "t": 508
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "screenChanges": 4,
+    "modelledSeconds": 14.5,
+    "note": "first use: company and trade chosen"
+  },
+  {
+    "task": "T5 open today's daily log and add manpower (repeat use)",
+    "taps": 4,
+    "chars": 0,
+    "machineMs": 2453,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "More",
+        "t": 39
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "Daily Logs",
+        "t": 151
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "open today's log",
+        "t": 298
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "Add row (crew remembered)",
+        "t": 1205
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "screenChanges": 4,
+    "modelledSeconds": 11.3,
+    "note": "repeat use: last company + trade preselected"
+  },
+  {
+    "task": "T6 answer an RFI assigned to me",
+    "taps": 3,
+    "chars": 52,
+    "machineMs": 1874,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "RFI row on My Work",
+        "t": 34
+      },
+      {
+        "n": 2,
+        "kind": "focus",
+        "what": "response text (focus)",
+        "t": 268,
+        "chars": 52
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "Add response",
+        "t": 326
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "screenChanges": 3,
+    "modelledSeconds": 26.7
+  },
+  {
+    "task": "T7 all my items due today across modules",
+    "taps": 0,
+    "chars": 0,
+    "machineMs": 133,
+    "steps": [],
+    "locale": "en",
+    "completed": true,
+    "screenChanges": 1,
+    "modulesShown": [
+      "Snag",
+      "RFI"
+    ],
+    "itemsShown": 17,
+    "modelledSeconds": 1.3
+  },
+  {
+    "task": "T8 close out snag with after-photo",
+    "taps": 4,
+    "chars": 0,
+    "machineMs": 4890,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "snag row on My Work",
+        "t": 38
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "'After' photo (open file picker)",
+        "t": 108
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "'After' photo (choose file)",
+        "t": 108
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "Close out",
+        "t": 1705
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "headerAfter": "Back to punch list | PL-021 |  | Cracked tile -- unit 400 |  | Closed | Due: 2026-09-30 | Location | Tower A › Level 1 | ▾ | Assignee | Me | Unassigned | Sara Haddad | Omar Nassar | Lina Kanaan | Khalid Zu'bi | Yousef Amer | Rana Odeh | Fadi Salameh | Huda Masri | Ziad Btoush | Karim Abu-Ghazaleh | Final approver | Unassigned | Sara Haddad | Omar Nas",
+    "screenChanges": 2,
+    "modelledSeconds": 11.3
+  },
+  {
+    "task": "T9 switch project, same screen type",
+    "taps": 2,
+    "chars": 0,
+    "machineMs": 740,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "open project selector",
+        "t": 30
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "choose other project",
+        "t": 69
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "after": "http://localhost:3000/en/projects/1c008274-440e-4159-b573-07e180410097/punch-list",
+    "screenChanges": 2,
+    "modelledSeconds": 5.1
+  },
+  {
+    "task": "T10 bulk assign snags to one person",
+    "taps": 7,
+    "chars": 0,
+    "machineMs": 3267,
+    "steps": [
+      {
+        "n": 1,
+        "kind": "tap",
+        "what": "More",
+        "t": 31
+      },
+      {
+        "n": 2,
+        "kind": "tap",
+        "what": "Punch List",
+        "t": 107
+      },
+      {
+        "n": 3,
+        "kind": "tap",
+        "what": "select all on page",
+        "t": 1065
+      },
+      {
+        "n": 4,
+        "kind": "tap",
+        "what": "Assign to…",
+        "t": 1133
+      },
+      {
+        "n": 5,
+        "kind": "focus",
+        "what": "person (select open)",
+        "t": 1165
+      },
+      {
+        "n": 6,
+        "kind": "tap",
+        "what": "person (choose option)",
+        "t": 1203
+      },
+      {
+        "n": 7,
+        "kind": "tap",
+        "what": "Apply",
+        "t": 1210
+      }
+    ],
+    "locale": "en",
+    "completed": true,
+    "snagsSelected": "42",
+    "screenChanges": 3,
+    "modelledSeconds": 13.9
+  }
+]

@@ -1,6 +1,9 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useProjectCurrency } from "@/lib/use-project-currency";
 import { formatMoney, type EstimateStatus } from "@siteops/shared";
@@ -38,6 +41,7 @@ interface EstimateDetail {
 export default function EstimateDetailPage() {
   const t = useTranslations("Estimating");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; estimateId: string }>();
@@ -59,8 +63,8 @@ export default function EstimateDetailPage() {
     try {
       const data = await apiJson<EstimateDetail>(`/estimates/${params.estimateId}`);
       setDetail(data);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.estimateId, tc]);
 
@@ -96,8 +100,8 @@ export default function EstimateDetailPage() {
       setUnit("");
       setUnitCost("");
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -108,8 +112,8 @@ export default function EstimateDetailPage() {
     try {
       await apiJson(`/estimates/${params.estimateId}/finalize`, { method: "POST" });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -120,8 +124,8 @@ export default function EstimateDetailPage() {
     try {
       await apiJson(`/estimates/${params.estimateId}/convert-to-budget`, { method: "POST" });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -130,7 +134,7 @@ export default function EstimateDetailPage() {
   if (!detail) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -139,7 +143,7 @@ export default function EstimateDetailPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/projects/${params.id}/estimating`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}
         </Link>
@@ -149,7 +153,7 @@ export default function EstimateDetailPage() {
           </h1>
           <span className="rounded bg-orange-100 px-2 py-0.5 text-xs text-navy-800">{detail.status === "draft" ? t("statusDraft") : t("statusFinal")}</span>
         </div>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         {editable && (
           <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">

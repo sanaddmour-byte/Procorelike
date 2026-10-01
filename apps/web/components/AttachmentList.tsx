@@ -31,9 +31,12 @@ interface Props {
   errorLabel: string;
   accept?: string;
   imageMode?: boolean;
+  /** Open the rear camera directly on phones (plan B8). */
+  capture?: boolean;
+  onUploaded?: () => void;
 }
 
-export function AttachmentList({ projectId, ownerType, ownerId, heading, emptyLabel, uploadLabel, uploadingLabel, errorLabel, accept, imageMode }: Props) {
+export function AttachmentList({ projectId, ownerType, ownerId, heading, emptyLabel, uploadLabel, uploadingLabel, errorLabel, accept, imageMode, capture, onUploaded }: Props) {
   const [attachments, setAttachments] = useState<AttachmentRow[] | null>(null);
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
@@ -63,6 +66,8 @@ export function AttachmentList({ projectId, ownerType, ownerId, heading, emptyLa
     try {
       await uploadAttachment({ projectId, ownerType, ownerId, file });
       load();
+      if ("vibrate" in navigator) navigator.vibrate?.(30);
+      onUploaded?.();
     } catch {
       setError(true);
     } finally {
@@ -83,12 +88,13 @@ export function AttachmentList({ projectId, ownerType, ownerId, heading, emptyLa
     <div>
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-navy-800">{heading}</h3>
-        <label className="cursor-pointer rounded-lg border-3 border-ink px-2.5 py-1 text-xs font-semibold text-navy-800">
+        <label className="hit-task inline-flex cursor-pointer items-center rounded-lg border-3 border-ink bg-white px-4 text-sm font-bold text-navy-900 brutal-interactive">
           {uploading ? uploadingLabel : uploadLabel}
           <input
             type="file"
             accept={accept}
-            className="hidden"
+            capture={capture ? "environment" : undefined}
+            className="sr-only"
             disabled={uploading}
             onChange={(e) => {
               const file = e.target.files?.[0];

@@ -1,3 +1,5 @@
+import { uploadPendingPunchPhotos } from "./photo-upload";
+import { flushRequestQueue } from "./request-queue";
 import type { FieldConflict } from "@siteops/shared";
 import { apiJson } from "../api-client";
 import {
@@ -62,6 +64,8 @@ export async function syncProject(projectId: string): Promise<SyncResult> {
 
   try {
     for (const entityType of ENTITY_TYPES) await pushOutbox(projectId, entityType, result);
+    await flushRequestQueue(projectId);
+    await uploadPendingPunchPhotos(projectId);
     for (const entityType of ENTITY_TYPES) await pullEntity(projectId, entityType, result);
     await setLastSyncedAt(new Date().toISOString());
   } catch {
@@ -80,7 +84,23 @@ async function buildPushData(entityType: SyncEntityType, localId: string): Promi
   if (entityType === "punch_item") {
     const item = await getPunchItem(localId);
     const base = await getPunchItemBaseSnapshot(localId);
-    return { baseRevision: item?.baseRevision ?? null, base, data: { description: item?.description ?? "" } };
+    // The creation fields are only sent while the item has never reached the server; afterwards the server owns them and
+    // resending them would turn every later description edit into a spurious three-way conflict.
+    const neverSynced = item?.baseRevision == null;
+    return {
+      baseRevision: item?.baseRevision ?? null,
+      base,
+      data: {
+        description: item?.description ?? "",
+        ...(neverSynced && item
+          ? {
+              priority: item.priority,
+              ...(item.assigneeUserId ? { assigneeUserId: item.assigneeUserId } : {}),
+              ...(item.locationId ? { locationId: item.locationId } : {}),
+            }
+          : {}),
+      },
+    };
   }
   if (entityType === "schedule_progress_update") {
     const update = await getLocalProgressUpdate(localId);

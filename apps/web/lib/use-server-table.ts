@@ -47,6 +47,22 @@ export function useServerTable<T>({ basePath, projectId, pageSize = 50, defaultS
   const [total, setTotal] = useState(0);
   const [error, setError] = useState(false);
 
+  // The view (search / filters / sort / page) lives in the URL so Back from a record returns to the same list, and a
+  // list link can be shared (plan C3). `ready` is set once the URL has been read, so the first load uses it.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("q")) setSearch(q.get("q")!);
+    const f: Record<string, string> = {};
+    q.forEach((v, k) => {
+      if (k.startsWith("f_") && v) f[k.slice(2)] = v;
+    });
+    if (Object.keys(f).length) setFiltersState(f);
+    if (q.get("sort")) setSort({ key: q.get("sort")!, direction: q.get("dir") === "desc" ? "desc" : "asc" });
+    if (Number(q.get("page")) > 1) setPage(Number(q.get("page")));
+    setReady(true);
+  }, []);
+
   const requestIdRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -69,6 +85,13 @@ export function useServerTable<T>({ basePath, projectId, pageSize = 50, defaultS
           if (!res.ok) throw new ApiClientError(res.status, "list_failed");
           const body = (await res.json()) as T[];
           setRows(body);
+          // Remember the list order so a record can offer Previous / Next (plan B5) without another request.
+          try {
+            const ids = (body as unknown as { id?: string }[]).map((r) => r.id).filter(Boolean);
+            if (ids.length) window.sessionStorage.setItem(`siteops.siblings:${basePath}`, JSON.stringify(ids));
+          } catch {
+            // convenience only
+          }
           setTotal(Number(res.headers.get("X-Total-Count") ?? body.length));
           setError(false);
         })
@@ -80,16 +103,32 @@ export function useServerTable<T>({ basePath, projectId, pageSize = 50, defaultS
     [basePath, projectId, pageSize],
   );
 
-  // Debounce search only -- filter/sort/page changes trigger a refetch immediately, since
-  // those are discrete clicks rather than a stream of keystrokes.
+  // Debounce search keystrokes only. The first load and discrete filter/sort/page changes fire immediately:
+  // waiting out the search debounce there delayed every list's first paint by SEARCH_DEBOUNCE_MS (measured).
+  const lastSearchRef = useRef<string | null>(null);
   useEffect(() => {
+    if (!ready) return;
+    // Mirror the view into the URL without adding a history entry.
+    const q = new URLSearchParams();
+    if (search) q.set("q", search);
+    for (const [k, v] of Object.entries(filters)) if (v) q.set(`f_${k}`, v);
+    if (sort && (sort.key !== defaultSort?.key || sort.direction !== defaultSort?.direction)) {
+      q.set("sort", sort.key);
+      q.set("dir", sort.direction);
+    }
+    if (page > 1) q.set("page", String(page));
+    const qs = q.toString();
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => load({ search, filters, sort, page }), SEARCH_DEBOUNCE_MS);
+    const searchChanged = lastSearchRef.current !== null && lastSearchRef.current !== search;
+    lastSearchRef.current = search;
+    if (searchChanged) debounceRef.current = setTimeout(() => load({ search, filters, sort, page }), SEARCH_DEBOUNCE_MS);
+    else load({ search, filters, sort, page });
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
     // `load` intentionally omitted: it's stable for a given basePath/projectId/pageSize, and this project's ESLint config has no react-hooks plugin to flag it either way.
-  }, [search, filters, sort, page]);
+  }, [ready, search, filters, sort, page]);
 
   function handleSearchChange(value: string): void {
     setSearch(value);

@@ -3,6 +3,8 @@
 import { clearStoredAuth, loadStoredAuth } from "@/lib/auth-storage";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { loadPrefs, savePrefs } from "@/lib/prefs";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 function initials(name: string): string {
@@ -18,6 +20,9 @@ export function UserMenu() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const auth = loadStoredAuth();
+  const tf = useTranslations("Field");
+  const [glove, setGlove] = useState(false);
+  useEffect(() => setGlove(loadPrefs().glove), []);
 
   useEffect(() => {
     if (!open) return;
@@ -64,16 +69,33 @@ export function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={auth.user.name}
-        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/40 bg-gradient-to-b from-orange-400 to-orange-600 text-xs font-bold text-white"
+        className="flex items-center justify-center rounded-full border-2 border-white/40 bg-gradient-to-b from-orange-300 to-orange-400 text-sm font-bold text-ink"
       >
         {initials(auth.user.name)}
       </button>
       {open && (
-        <div ref={menuRef} role="menu" onKeyDown={handleMenuKeyDown} className="absolute end-0 top-full z-40 mt-1 w-56 rounded-lg border-3 border-ink bg-white py-1 text-sm shadow-brutal-lg">
+        <div ref={menuRef} role="menu" onKeyDown={handleMenuKeyDown} className="absolute end-0 top-full z-40 mt-1 w-64 rounded-lg border-3 border-ink bg-white py-1 text-sm shadow-brutal-lg">
           <div className="border-b border-navy-100 px-3 py-2">
             <p className="truncate font-semibold text-navy-900">{auth.user.name}</p>
             <p className="truncate text-xs text-navy-500">{auth.user.email}</p>
           </div>
+          <div className="border-b border-navy-100 px-3 py-2 sm:hidden">
+            <LanguageToggle />
+          </div>
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={glove}
+            onClick={() => {
+              const next = !glove;
+              setGlove(next);
+              savePrefs({ ...loadPrefs(), glove: next });
+            }}
+            className="flex w-full items-center justify-between px-3 py-2 text-start text-navy-900 hover:bg-orange-50"
+          >
+            <span>{tf("gloveMode")}</span>
+            <span aria-hidden="true" className={`rounded-full border-2 border-ink px-2 text-xs font-bold ${glove ? "bg-navy-900 text-white" : "bg-white"}`}>{glove ? "ON" : "OFF"}</span>
+          </button>
           <button
             type="button"
             role="menuitem"
@@ -81,7 +103,7 @@ export function UserMenu() {
               closeAndRefocus();
               handleLogout();
             }}
-            className="block w-full px-3 py-2 text-start text-maroon-700 hover:bg-maroon-50"
+            className="block w-full border-t border-navy-100 px-3 py-2 text-start text-maroon-700 hover:bg-maroon-50"
           >
             {t("logout")}
           </button>

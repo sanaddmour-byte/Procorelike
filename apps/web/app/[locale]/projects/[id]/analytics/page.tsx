@@ -91,7 +91,7 @@ export default function ProjectAnalyticsPage() {
 
   if (forbidden) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader title={t("title")} />
         <p className="text-navy-600">{t("forbidden")}</p>
       </main>
@@ -99,7 +99,7 @@ export default function ProjectAnalyticsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    <main className="mx-auto max-w-5xl px-0 py-2 sm:px-4 sm:py-8">
       <PageHeader title={t("title")} description={t("intro")} />
       {error && <p className="mb-4 text-maroon-700">{error}</p>}
       {!analytics && !error && <p className="text-sm text-navy-600">{tc("loading")}</p>}

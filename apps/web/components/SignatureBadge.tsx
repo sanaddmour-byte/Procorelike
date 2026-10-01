@@ -1,4 +1,5 @@
 import type { EsignatureVerification } from "@siteops/shared";
+import { formatDateTime } from "@/lib/format";
 
 /**
  * Shows what an e-signature actually proves: not just "someone typed a
@@ -31,7 +32,7 @@ export function SignatureBadge({
       <p className="font-semibold">{verification.verified ? `✓ ${verifiedLabel}` : `⚠ ${unverifiedLabel}`}</p>
       <p>
         {signedByLabel}: {verification.signerName}
-        {verification.signedAt && ` · ${new Date(verification.signedAt).toLocaleString()}`}
+        {verification.signedAt && ` · ${formatDateTime(verification.signedAt)}`}
       </p>
       {verification.contentHash && (
         <p className="font-mono text-[11px] text-navy-500">

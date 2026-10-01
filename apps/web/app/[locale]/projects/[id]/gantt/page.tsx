@@ -1,6 +1,7 @@
 "use client";
 
 import { ImpactPreviewModal, buildImpactRows, type ImpactRow } from "@/components/gantt/ImpactPreviewModal";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { ScheduleImportForm } from "@/components/gantt/ScheduleImportForm";
 import { TaskGrid, type TaskGridHandle } from "@/components/gantt/TaskGrid";
 import { Timeline, type TimelineHandle } from "@/components/gantt/Timeline";
@@ -232,11 +233,11 @@ export default function GanttPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-[1600px] px-4 py-8">
+      <main className="mx-auto max-w-[1600px] px-0 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-y-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           {data && !showImportForm && (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm text-navy-600">
                 {t("versionLabel")} {data.version.versionNo} · {data.version.dataDate.slice(0, 10)}
               </span>
@@ -326,7 +327,7 @@ export default function GanttPage() {
         )}
 
         {loading && <p>{tc("loading")}</p>}
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {editError && <p className="mb-3 text-sm text-maroon-700">{editError}</p>}
 
         {!loading && !error && (!data || showImportForm) && <ScheduleImportForm projectId={params.id} onImported={load} />}

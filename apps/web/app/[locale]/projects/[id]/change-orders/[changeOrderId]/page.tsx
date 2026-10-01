@@ -1,6 +1,7 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { errorMessage } from "@/lib/error-message";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useProjectCurrency } from "@/lib/use-project-currency";
@@ -10,6 +11,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatDateTime } from "@/lib/format";
 
 interface ApprovalEntry {
   userId: string;
@@ -62,6 +64,7 @@ function reasonKey(reason: ChangeReason): string {
 export default function ChangeOrderDetailPage() {
   const t = useTranslations("ChangeManagement");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; changeOrderId: string }>();
@@ -79,7 +82,7 @@ export default function ChangeOrderDetailPage() {
         setCo(c);
         setError(null);
       })
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -96,8 +99,8 @@ export default function ChangeOrderDetailPage() {
     try {
       await apiJson(`/change-orders/${params.changeOrderId}/${action}`, { method: "POST" });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -106,7 +109,7 @@ export default function ChangeOrderDetailPage() {
   if (!co && !error) {
     return (
       <>
-        <main className="mx-auto max-w-2xl px-4 py-8">
+        <main className="mx-auto max-w-2xl px-0 py-2 sm:px-4 sm:py-8">
           <p>{tc("loading")}</p>
         </main>
       </>
@@ -115,7 +118,7 @@ export default function ChangeOrderDetailPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-2xl px-0 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <Link href={`/${locale}/projects/${params.id}/change-orders`} className="inline-block text-sm text-maroon-700 underline">
             {t("back")}
@@ -183,7 +186,7 @@ export default function ChangeOrderDetailPage() {
               <ul className="mb-4 flex flex-col gap-2">
                 {co.approvalChain.map((a, i) => (
                   <li key={i} className="rounded-lg border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-3 text-sm">
-                    {a.role} — {new Date(a.approvedAt).toLocaleString()}
+                    {a.role} — {formatDateTime(a.approvedAt)}
                   </li>
                 ))}
               </ul>

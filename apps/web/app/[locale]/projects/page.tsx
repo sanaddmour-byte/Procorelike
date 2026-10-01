@@ -1,6 +1,8 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
@@ -17,6 +19,7 @@ interface Project {
 export default function ProjectsPage() {
   const t = useTranslations("Projects");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
 
@@ -30,20 +33,20 @@ export default function ProjectsPage() {
     }
     apiJson<Project[]>("/projects")
       .then(setProjects)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [router, locale, tc]);
 
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-2xl px-3 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
           <Link href={`/${locale}/companies`} className="text-sm font-semibold text-navy-700 underline">
             {t("manageCompanyLogo")}
           </Link>
         </div>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!projects && !error && <p>{tc("loading")}</p>}
         {projects && projects.length === 0 && <p>{t("empty")}</p>}
         <ul className="flex flex-col gap-4">
@@ -53,12 +56,17 @@ export default function ProjectsPage() {
               <div className="p-4">
                 <div className="text-lg font-bold text-navy-900">{p.name}</div>
                 {p.address && <div className="text-sm text-navy-600">{p.address}</div>}
-                <Link
-                  href={`/${locale}/projects/${p.id}/directory`}
-                  className="mt-3 inline-block rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-3 py-1.5 text-sm font-semibold text-white brutal-interactive"
-                >
-                  {t("viewDirectory")}
-                </Link>
+                <div className="mt-3 flex flex-wrap gap-gap-hit">
+                  <Link
+                    href={`/${locale}/projects/${p.id}/my-work`}
+                    className="hit-task inline-flex items-center rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 px-5 font-bold text-white brutal-interactive"
+                  >
+                    {t("open")}
+                  </Link>
+                  <Link href={`/${locale}/projects/${p.id}/directory`} className="hit-task inline-flex items-center rounded-lg border-3 border-ink bg-white px-4 font-semibold text-navy-900">
+                    {t("viewDirectory")}
+                  </Link>
+                </div>
               </div>
             </li>
           ))}

@@ -1,6 +1,8 @@
 "use client";
 
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ActionPlanTemplatesSection } from "@/components/ActionPlanTemplatesSection";
+import { errorMessage } from "@/lib/error-message";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { WorkflowRulesSection } from "@/components/WorkflowRulesSection";
 import { apiJson, ApiClientError } from "@/lib/api-client";
@@ -32,6 +34,7 @@ export default function ProjectSettingsPage() {
   const t = useTranslations("ProjectSettings");
   const tm = useTranslations("Modules");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -107,8 +110,8 @@ export default function ProjectSettingsPage() {
       });
       setGeneralSaved(true);
       setTimeout(() => setGeneralSaved(false), 4000);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSavingGeneral(false);
     }
@@ -119,8 +122,8 @@ export default function ProjectSettingsPage() {
       await navigator.clipboard.writeText(inboundEmailAddress);
       setAddressCopied(true);
       setTimeout(() => setAddressCopied(false), 4000);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -145,8 +148,8 @@ export default function ProjectSettingsPage() {
       setNewOptions("");
       setNewRequired(false);
       loadDefinitions(selectedModule);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreatingField(false);
     }
@@ -156,14 +159,14 @@ export default function ProjectSettingsPage() {
     try {
       await apiJson(`/custom-field-definitions/${definitionId}?projectId=${params.id}`, { method: "DELETE" });
       loadDefinitions(selectedModule);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
   if (forbidden) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader title={t("title")} />
         <p className="text-navy-600">{t("forbidden")}</p>
       </main>
@@ -171,7 +174,7 @@ export default function ProjectSettingsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
       <PageHeader title={t("title")} description={t("intro")} />
       {error && <p className="mb-4 text-maroon-700">{error}</p>}
 
@@ -249,7 +252,7 @@ export default function ProjectSettingsPage() {
           </select>
         </label>
 
-        {!definitions && <p className="text-sm text-navy-600">{tc("loading")}</p>}
+        {!definitions && <LoadingState rows={3} label={tc("loading")} />}
         {definitions && definitions.length === 0 && <p className="mb-3 text-sm text-navy-600">{t("noFields")}</p>}
         {definitions && definitions.length > 0 && (
           <ul className="mb-4 flex flex-col gap-2">

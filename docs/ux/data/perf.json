@@ -1,0 +1,634 @@
+{
+  "N": 5,
+  "load": {
+    "local": {
+      "punch-list": {
+        "median": {
+          "fcp": 132,
+          "lcp": 132,
+          "dcl": 111.6,
+          "load": 217.9,
+          "tbt": 0,
+          "lastLongTaskEnd": 172.3,
+          "idleMs": 1084,
+          "jsKB": 170.1,
+          "totalKB": 263.8,
+          "jsCount": 18,
+          "apiCalls": 8
+        },
+        "runs": [
+          {
+            "fcp": 152,
+            "lcp": 152,
+            "dcl": 137.60000000009313,
+            "load": 240.10000000009313,
+            "tbt": 0,
+            "lastLongTaskEnd": 194.70000000018626,
+            "idleMs": 1116,
+            "jsKB": 170.1,
+            "totalKB": 263.8,
+            "jsCount": 18,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 132,
+            "lcp": 132,
+            "dcl": 217.60000000009313,
+            "load": 217.89999999990687,
+            "tbt": 0,
+            "lastLongTaskEnd": 186.1999999997206,
+            "idleMs": 1084,
+            "jsKB": 170.1,
+            "totalKB": 263.8,
+            "jsCount": 18,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 132,
+            "lcp": 132,
+            "dcl": 63.89999999990687,
+            "load": 204.29999999981374,
+            "tbt": 0,
+            "lastLongTaskEnd": 172.29999999981374,
+            "idleMs": 1076,
+            "jsKB": 170.1,
+            "totalKB": 262.9,
+            "jsCount": 18,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 136,
+            "lcp": 136,
+            "dcl": 102.90000000037253,
+            "load": 224.20000000018626,
+            "tbt": 0,
+            "lastLongTaskEnd": 172.10000000009313,
+            "idleMs": 1106,
+            "jsKB": 170.1,
+            "totalKB": 263.8,
+            "jsCount": 18,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 124,
+            "lcp": 124,
+            "dcl": 111.60000000009313,
+            "load": 202,
+            "tbt": 0,
+            "lastLongTaskEnd": 164.10000000009313,
+            "idleMs": 1064,
+            "jsKB": 170.1,
+            "totalKB": 262.9,
+            "jsCount": 18,
+            "apiCalls": 8
+          }
+        ]
+      },
+      "rfis": {
+        "median": {
+          "fcp": 136,
+          "lcp": 136,
+          "dcl": 112.3,
+          "load": 197.1,
+          "tbt": 0,
+          "lastLongTaskEnd": 166.7,
+          "idleMs": 1071,
+          "jsKB": 175.7,
+          "totalKB": 249.5,
+          "jsCount": 19,
+          "apiCalls": 10
+        },
+        "runs": [
+          {
+            "fcp": 120,
+            "lcp": 120,
+            "dcl": 110.3000000002794,
+            "load": 188.3000000002794,
+            "tbt": 0,
+            "lastLongTaskEnd": 0,
+            "idleMs": 1054,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          },
+          {
+            "fcp": 136,
+            "lcp": 136,
+            "dcl": 112.89999999990687,
+            "load": 199.89999999990687,
+            "tbt": 0,
+            "lastLongTaskEnd": 187.5,
+            "idleMs": 1071,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          },
+          {
+            "fcp": 124,
+            "lcp": 124,
+            "dcl": 103.90000000037253,
+            "load": 179.70000000018626,
+            "tbt": 0,
+            "lastLongTaskEnd": 166.70000000018626,
+            "idleMs": 1049,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          },
+          {
+            "fcp": 148,
+            "lcp": 148,
+            "dcl": 129.3000000002794,
+            "load": 244.5,
+            "tbt": 0,
+            "lastLongTaskEnd": 192.60000000009313,
+            "idleMs": 1139,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          },
+          {
+            "fcp": 136,
+            "lcp": 136,
+            "dcl": 112.3000000002794,
+            "load": 197.10000000009313,
+            "tbt": 0,
+            "lastLongTaskEnd": 0,
+            "idleMs": 1077,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          }
+        ]
+      },
+      "dashboard": {
+        "median": {
+          "fcp": 128,
+          "lcp": 276,
+          "dcl": 112.4,
+          "load": 200.4,
+          "tbt": 0,
+          "lastLongTaskEnd": 151.3,
+          "idleMs": 825,
+          "jsKB": 158.9,
+          "totalKB": 231.6,
+          "jsCount": 15,
+          "apiCalls": 8
+        },
+        "runs": [
+          {
+            "fcp": 136,
+            "lcp": 276,
+            "dcl": 112.39999999990687,
+            "load": 200.39999999990687,
+            "tbt": 0,
+            "lastLongTaskEnd": 166.29999999981374,
+            "idleMs": 825,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 108,
+            "lcp": 264,
+            "dcl": 45.09999999962747,
+            "load": 197.1999999997206,
+            "tbt": 0,
+            "lastLongTaskEnd": 152.09999999962747,
+            "idleMs": 803,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 128,
+            "lcp": 332,
+            "dcl": 129.60000000009313,
+            "load": 202.20000000018626,
+            "tbt": 0,
+            "lastLongTaskEnd": 0,
+            "idleMs": 826,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 136,
+            "lcp": 276,
+            "dcl": 124.5,
+            "load": 208.5,
+            "tbt": 0,
+            "lastLongTaskEnd": 114,
+            "idleMs": 844,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 108,
+            "lcp": 268,
+            "dcl": 91.3000000002794,
+            "load": 193.8000000002794,
+            "tbt": 0,
+            "lastLongTaskEnd": 151.3000000002794,
+            "idleMs": 814,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          }
+        ]
+      }
+    },
+    "emulated-mid-phone": {
+      "punch-list": {
+        "median": {
+          "fcp": 588,
+          "lcp": 588,
+          "dcl": 588.9,
+          "load": 1801.8,
+          "tbt": 406,
+          "lastLongTaskEnd": 2788.7,
+          "idleMs": 3210,
+          "jsKB": 170.1,
+          "totalKB": 263.8,
+          "jsCount": 18,
+          "apiCalls": 8
+        },
+        "runs": [
+          {
+            "fcp": 588,
+            "lcp": 588,
+            "dcl": 585.5,
+            "load": 1786.5999999996275,
+            "tbt": 374,
+            "lastLongTaskEnd": 2772.5,
+            "idleMs": 3202,
+            "jsKB": 170.1,
+            "totalKB": 263.8,
+            "jsCount": 18,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 588,
+            "lcp": 588,
+            "dcl": 588.8999999999069,
+            "load": 1815.2999999998137,
+            "tbt": 411,
+            "lastLongTaskEnd": 2888.7999999998137,
+            "idleMs": 3263,
+            "jsKB": 170.1,
+            "totalKB": 263.8,
+            "jsCount": 18,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 608,
+            "lcp": 608,
+            "dcl": 619,
+            "load": 1788.1000000000931,
+            "tbt": 358,
+            "lastLongTaskEnd": 2756,
+            "idleMs": 3175,
+            "jsKB": 170.1,
+            "totalKB": 263.8,
+            "jsCount": 18,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 560,
+            "lcp": 560,
+            "dcl": 562.7000000001863,
+            "load": 1801.8000000002794,
+            "tbt": 406,
+            "lastLongTaskEnd": 2813.5,
+            "idleMs": 3253,
+            "jsKB": 170.1,
+            "totalKB": 263.8,
+            "jsCount": 18,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 592,
+            "lcp": 592,
+            "dcl": 594.5,
+            "load": 1821.8000000002794,
+            "tbt": 425,
+            "lastLongTaskEnd": 2788.7000000001863,
+            "idleMs": 3210,
+            "jsKB": 170.1,
+            "totalKB": 263.8,
+            "jsCount": 18,
+            "apiCalls": 8
+          }
+        ]
+      },
+      "rfis": {
+        "median": {
+          "fcp": 592,
+          "lcp": 592,
+          "dcl": 587.6,
+          "load": 1822.9,
+          "tbt": 396,
+          "lastLongTaskEnd": 2670.8,
+          "idleMs": 3087,
+          "jsKB": 175.7,
+          "totalKB": 249.5,
+          "jsCount": 19,
+          "apiCalls": 10
+        },
+        "runs": [
+          {
+            "fcp": 620,
+            "lcp": 620,
+            "dcl": 641.1000000000931,
+            "load": 1813.2000000001863,
+            "tbt": 396,
+            "lastLongTaskEnd": 2670.7999999998137,
+            "idleMs": 3087,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          },
+          {
+            "fcp": 592,
+            "lcp": 592,
+            "dcl": 587.6000000000931,
+            "load": 1949.8999999999069,
+            "tbt": 631,
+            "lastLongTaskEnd": 2951.600000000093,
+            "idleMs": 3370,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          },
+          {
+            "fcp": 604,
+            "lcp": 604,
+            "dcl": 601.8999999999069,
+            "load": 1819.6000000000931,
+            "tbt": 359,
+            "lastLongTaskEnd": 2646.5,
+            "idleMs": 3083,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          },
+          {
+            "fcp": 580,
+            "lcp": 580,
+            "dcl": 586.7000000001863,
+            "load": 1822.8999999999069,
+            "tbt": 386,
+            "lastLongTaskEnd": 2632.100000000093,
+            "idleMs": 3064,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          },
+          {
+            "fcp": 568,
+            "lcp": 568,
+            "dcl": 573.7000000001863,
+            "load": 1861.7999999998137,
+            "tbt": 430,
+            "lastLongTaskEnd": 2775.7000000001863,
+            "idleMs": 3215,
+            "jsKB": 175.7,
+            "totalKB": 249.5,
+            "jsCount": 19,
+            "apiCalls": 10
+          }
+        ]
+      },
+      "dashboard": {
+        "median": {
+          "fcp": 536,
+          "lcp": 2324,
+          "dcl": 541.9,
+          "load": 1791.6,
+          "tbt": 392,
+          "lastLongTaskEnd": 2266.6,
+          "idleMs": 3014,
+          "jsKB": 158.9,
+          "totalKB": 231.6,
+          "jsCount": 15,
+          "apiCalls": 8
+        },
+        "runs": [
+          {
+            "fcp": 548,
+            "lcp": 2324,
+            "dcl": 551,
+            "load": 1791.6000000000931,
+            "tbt": 392,
+            "lastLongTaskEnd": 2266.600000000093,
+            "idleMs": 3014,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 536,
+            "lcp": 2228,
+            "dcl": 541.8999999999069,
+            "load": 1718.3999999999069,
+            "tbt": 335,
+            "lastLongTaskEnd": 2211.899999999907,
+            "idleMs": 2914,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 536,
+            "lcp": 2436,
+            "dcl": 538.8999999999069,
+            "load": 1896.5999999996275,
+            "tbt": 461,
+            "lastLongTaskEnd": 2375.2999999998137,
+            "idleMs": 3126,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 564,
+            "lcp": 2260,
+            "dcl": 572.3999999999069,
+            "load": 1748.8999999999069,
+            "tbt": 334,
+            "lastLongTaskEnd": 2202.100000000093,
+            "idleMs": 2943,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          },
+          {
+            "fcp": 516,
+            "lcp": 2544,
+            "dcl": 520.0999999996275,
+            "load": 1884.3999999999069,
+            "tbt": 533,
+            "lastLongTaskEnd": 2527.0999999996275,
+            "idleMs": 3230,
+            "jsKB": 158.9,
+            "totalKB": 231.6,
+            "jsCount": 15,
+            "apiCalls": 8
+          }
+        ]
+      }
+    }
+  },
+  "lat": {
+    "local": {
+      "open navigation drawer (hamburger)": {
+        "firstFeedbackMedianMs": 22,
+        "firstFeedbackWorstMs": 29,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 101,
+        "maxEventDurMs": 48
+      },
+      "open project selector": {
+        "firstFeedbackMedianMs": 3,
+        "firstFeedbackWorstMs": 3,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 68,
+        "maxEventDurMs": 24
+      },
+      "sidebar link -> RFIs (route change)": {
+        "firstFeedbackMedianMs": 9,
+        "firstFeedbackWorstMs": 11,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 541,
+        "maxEventDurMs": 40
+      },
+      "tap list row -> detail (route change)": {
+        "firstFeedbackMedianMs": 16,
+        "firstFeedbackWorstMs": 17,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 62,
+        "maxEventDurMs": 16
+      },
+      "type in list search (per keystroke, first char)": {
+        "firstFeedbackMedianMs": 11,
+        "firstFeedbackWorstMs": 11,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 82,
+        "maxEventDurMs": 24
+      },
+      "status filter change (server refetch)": {
+        "firstFeedbackMedianMs": 38,
+        "firstFeedbackWorstMs": 44,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 47,
+        "maxEventDurMs": 0
+      },
+      "Columns menu": {
+        "firstFeedbackMedianMs": 5,
+        "firstFeedbackWorstMs": 7,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 64,
+        "maxEventDurMs": 16
+      },
+      "New punch item (route change)": {
+        "firstFeedbackMedianMs": 25,
+        "firstFeedbackWorstMs": 32,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 70,
+        "maxEventDurMs": 16
+      },
+      "Create punch item (submit)": {
+        "firstFeedbackMedianMs": 5,
+        "firstFeedbackWorstMs": 6,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 89,
+        "maxEventDurMs": 16
+      }
+    },
+    "emulated-mid-phone": {
+      "open navigation drawer (hamburger)": {
+        "firstFeedbackMedianMs": 138,
+        "firstFeedbackWorstMs": 149,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 373,
+        "maxEventDurMs": 200
+      },
+      "open project selector": {
+        "firstFeedbackMedianMs": 22,
+        "firstFeedbackWorstMs": 23,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 226,
+        "maxEventDurMs": 64
+      },
+      "sidebar link -> RFIs (route change)": {
+        "firstFeedbackMedianMs": 45,
+        "firstFeedbackWorstMs": 51,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 998,
+        "maxEventDurMs": 216
+      },
+      "tap list row -> detail (route change)": {
+        "firstFeedbackMedianMs": 195,
+        "firstFeedbackWorstMs": 208,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 224,
+        "maxEventDurMs": 56
+      },
+      "type in list search (per keystroke, first char)": {
+        "firstFeedbackMedianMs": 59,
+        "firstFeedbackWorstMs": 73,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 270,
+        "maxEventDurMs": 48
+      },
+      "status filter change (server refetch)": {
+        "firstFeedbackMedianMs": 172,
+        "firstFeedbackWorstMs": 188,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 185,
+        "maxEventDurMs": 0
+      },
+      "Columns menu": {
+        "firstFeedbackMedianMs": 31,
+        "firstFeedbackWorstMs": 46,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 242,
+        "maxEventDurMs": 88
+      },
+      "New punch item (route change)": {
+        "firstFeedbackMedianMs": 244,
+        "firstFeedbackWorstMs": 260,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 210,
+        "maxEventDurMs": 64
+      },
+      "Create punch item (submit)": {
+        "firstFeedbackMedianMs": 28,
+        "firstFeedbackWorstMs": 38,
+        "noFeedbackRuns": 0,
+        "settledMedianMs": 250,
+        "maxEventDurMs": 80
+      }
+    }
+  },
+  "note": "local = unthrottled, API/DB on localhost (understates real network); emulated-mid-phone = CDP CPU 4x + 150ms RTT 1.6/0.75 Mbps (emulation, not a device)"
+}

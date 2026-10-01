@@ -1,6 +1,9 @@
 "use client";
 
 import { CorrectiveActionsPanel } from "@/components/CorrectiveActionsPanel";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import {
@@ -60,6 +63,7 @@ function statusLabel(status: SafetyIncidentStatus, t: (key: string) => string): 
 export default function SafetyIncidentDetailScreen() {
   const t = useTranslations("Safety");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; incidentId: string }>();
@@ -76,8 +80,8 @@ export default function SafetyIncidentDetailScreen() {
       const rows = await apiJson<SafetyIncidentDetail[]>(`/safety-incidents?projectId=${params.id}`);
       const detail = rows.find((r) => r.id === params.incidentId) ?? null;
       setIncident(detail);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.id, params.incidentId, tc]);
 
@@ -105,8 +109,8 @@ export default function SafetyIncidentDetailScreen() {
       });
       setCorrectiveAction("");
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setTransitioning(false);
     }
@@ -115,7 +119,7 @@ export default function SafetyIncidentDetailScreen() {
   if (!incident) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
@@ -125,7 +129,7 @@ export default function SafetyIncidentDetailScreen() {
 
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/projects/${params.id}/safety`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}
         </Link>
@@ -138,7 +142,7 @@ export default function SafetyIncidentDetailScreen() {
           {incident.occurredAt.slice(0, 16).replace("T", " ")} · {companyName(incident.involvedCompanyId)}
           {incident.injuredPersonName && ` · ${incident.injuredPersonName}`}
         </p>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
           <p className="whitespace-pre-wrap">{incident.description}</p>

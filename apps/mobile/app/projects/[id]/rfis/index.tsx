@@ -1,4 +1,5 @@
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { apiJson } from "@/lib/api-client";
@@ -40,7 +41,7 @@ export default function MobileRfisListScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: i18n.t("rfis.title") }} />
+      <Stack.Screen options={{ title: i18n.t("rfis.title"), headerRight: () => <ProjectSwitcher projectId={id} /> }} />
       {error && <Text style={styles.error}>{i18n.t("common.errorGeneric")}</Text>}
       {!rfis && !error && <Text style={styles.empty}>{i18n.t("common.loading")}</Text>}
       {rfis && rfis.length === 0 && <Text style={styles.empty}>{i18n.t("rfis.empty")}</Text>}

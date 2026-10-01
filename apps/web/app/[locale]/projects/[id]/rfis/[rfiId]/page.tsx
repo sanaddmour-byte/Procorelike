@@ -1,6 +1,10 @@
 "use client";
 
 import { AttachmentList } from "@/components/AttachmentList";
+import { errorMessage } from "@/lib/error-message";
+import { RecordNav } from "@/components/RecordNav";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { PdfViewerModal } from "@/components/PdfViewerModal";
 import { RecordLinks, type RecordLinkTargetConfig } from "@/components/RecordLinks";
 import { RecordHistory } from "@/components/ui/RecordHistory";
@@ -11,6 +15,8 @@ import { RFI_STATUS_TRANSITIONS, type RfiStatus } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { enqueueRequest, isOfflineError } from "@/lib/outbox";
+import { pushRecent } from "@/lib/recents";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 interface Drawing {
@@ -91,6 +97,7 @@ function transitionLabel(from: RfiStatus, to: RfiStatus, t: (key: string) => str
 export default function RfiDetailScreen() {
   const t = useTranslations("Rfis");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; rfiId: string }>();
@@ -101,6 +108,7 @@ export default function RfiDetailScreen() {
   const [specSections, setSpecSections] = useState<SpecSection[]>([]);
   const [linkedComments, setLinkedComments] = useState<LinkedComment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
   const [isOfficial, setIsOfficial] = useState(false);
   const [submittingResponse, setSubmittingResponse] = useState(false);
@@ -112,10 +120,14 @@ export default function RfiDetailScreen() {
     try {
       const detail = await apiJson<RfiDetail>(`/rfis/${params.rfiId}`);
       setRfi(detail);
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }, [params.rfiId, tc]);
+
+  useEffect(() => {
+    if (rfi) pushRecent(params.id, { kind: "rfi", id: params.rfiId, label: `${rfi.number} — ${rfi.subject}`, href: `/${locale}/projects/${params.id}/rfis/${params.rfiId}` });
+  }, [rfi?.id]);
 
   useEffect(() => {
     if (!loadStoredAuth()) {
@@ -161,15 +173,22 @@ export default function RfiDetailScreen() {
     e.preventDefault();
     setSubmittingResponse(true);
     try {
-      await apiJson(`/rfis/${params.rfiId}/responses`, {
-        method: "POST",
-        body: JSON.stringify({ responseText, isOfficial }),
-      });
+      try {
+        await apiJson(`/rfis/${params.rfiId}/responses`, {
+          method: "POST",
+          body: JSON.stringify({ responseText, isOfficial }),
+        });
+      } catch (err) {
+        if (!isOfflineError(err)) throw err;
+        // No connection: keep the answer on the device and send it later (plan D2).
+        await enqueueRequest(params.id, { method: "POST", path: `/rfis/${params.rfiId}/responses`, body: { responseText, isOfficial }, label: `${t("answerQueued")} ${rfi?.number ?? ""}` });
+        setNotice(t("answerQueued"));
+      }
       setResponseText("");
       setIsOfficial(false);
-      await load();
-    } catch {
-      setError(tc("errorGeneric"));
+      await load().catch(() => undefined);
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSubmittingResponse(false);
     }
@@ -180,8 +199,8 @@ export default function RfiDetailScreen() {
     try {
       await apiJson(`/rfis/${params.rfiId}/transition`, { method: "POST", body: JSON.stringify({ toStatus }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setTransitioning(false);
     }
@@ -192,8 +211,8 @@ export default function RfiDetailScreen() {
     try {
       await apiJson(`/rfis/${params.rfiId}`, { method: "PATCH", body: JSON.stringify({ ballInCourtUserId: userId || undefined }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setReassigning(false);
     }
@@ -203,23 +222,24 @@ export default function RfiDetailScreen() {
     try {
       await apiJson(`/rfis/${params.rfiId}`, { method: "PATCH", body: JSON.stringify({ [field]: value }) });
       await load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
   if (!rfi) {
     return (
       <>
-        <main className="mx-auto max-w-3xl px-4 py-8">{error ? <p className="text-maroon-700">{error}</p> : <p>{tc("loading")}</p>}</main>
+        <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">{error ? <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} /> : <LoadingState label={tc("loading")} />}</main>
       </>
     );
   }
 
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <RecordNav basePath="/rfis" currentId={params.rfiId} projectId={params.id} segment="rfis" />
           <Link href={`/${locale}/projects/${params.id}/rfis`} className="inline-block text-sm text-navy-600 underline">
             {t("back")}
           </Link>
@@ -307,7 +327,12 @@ export default function RfiDetailScreen() {
             </select>
           </span>
         </div>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {notice && (
+          <p role="status" className="mb-3 rounded-lg border-3 border-ink bg-green-50 px-3 py-2 text-sm font-semibold text-navy-900">
+            {notice}
+          </p>
+        )}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="mb-6 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-4">
           <p className="whitespace-pre-wrap">{rfi.question}</p>

@@ -1,6 +1,8 @@
 "use client";
 
 import { PageHeader } from "@/components/ui/PageHeader";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
@@ -9,6 +11,7 @@ import { formatMoney } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useEnumLabel } from "@/lib/use-enum-label";
 
 type ActionRequiredType = "rfi_overdue" | "submittal_in_review" | "schedule_task_delayed" | "change_order_pending_approval";
 
@@ -40,8 +43,10 @@ const ACTION_LABEL_KEYS: Record<ActionRequiredType, string> = {
 };
 
 export default function DashboardPage() {
+  const enumLabel = useEnumLabel();
   const t = useTranslations("Dashboard");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -49,26 +54,40 @@ export default function DashboardPage() {
 
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mine, setMine] = useState<{ overdue: number; today: number; total: number } | null>(null);
 
   useEffect(() => {
     if (!loadStoredAuth()) {
       router.replace(`/${locale}/login`);
       return;
     }
+    // Personal first (plan E11): what is mine and late, before the project-wide rollup.
+    apiJson<{ dueBucket: string }[]>(`/projects/${params.id}/my-work`)
+      .then((items) => setMine({ overdue: items.filter((i) => i.dueBucket === "overdue").length, today: items.filter((i) => i.dueBucket === "today").length, total: items.length }))
+      .catch(() => undefined);
     apiJson<Dashboard>(`/projects/${params.id}/dashboard`)
       .then(setDashboard)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [router, locale, params.id, tc]);
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader title={t("title")} />
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!dashboard && !error && <p>{tc("loading")}</p>}
 
         {dashboard && (
           <div className="flex flex-col gap-6">
+            {mine && mine.total > 0 && (
+              <a
+                href={`/${locale}/projects/${params.id}/my-work`}
+                className="flex items-center justify-between gap-3 rounded-xl border-3 border-ink bg-orange-100 p-4 font-semibold text-navy-900"
+              >
+                <span>{t("mineSummary", { overdue: mine.overdue, today: mine.today })}</span>
+                <span aria-hidden="true">›</span>
+              </a>
+            )}
             <section>
               <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("actionRequiredTitle")}</h2>
               {dashboard.actionRequired.length === 0 ? (
@@ -117,7 +136,7 @@ export default function DashboardPage() {
                     <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("punchList")}</h3>
                     <div className="flex flex-wrap gap-6">
                       {Object.entries(dashboard.punchList.byStatus).map(([status, count]) => (
-                        <Tile key={status} label={status} value={count} />
+                        <Tile key={status} label={enumLabel(status)} value={count} />
                       ))}
                     </div>
                   </div>
@@ -145,7 +164,7 @@ export default function DashboardPage() {
                     <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy-700">{t("changeOrders")}</h3>
                     <div className="flex flex-wrap gap-6">
                       {Object.entries(dashboard.changeOrders.byStatus).map(([status, count]) => (
-                        <Tile key={status} label={status} value={count} />
+                        <Tile key={status} label={enumLabel(status)} value={count} />
                       ))}
                     </div>
                   </div>

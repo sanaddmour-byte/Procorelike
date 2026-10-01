@@ -45,7 +45,14 @@
     "delete": "حذف",
     "exportAllCsv": "تصدير الكل (CSV)",
     "copy": "نسخ",
-    "copied": "تم النسخ!"
+    "copied": "تم النسخ!",
+    "sortBy": "ترتيب حسب",
+    "sortDirection": "عكس الترتيب",
+    "mine": "لي",
+    "groupBy": "تجميع حسب",
+    "groupNone": "بدون تجميع",
+    "expandAll": "توسيع الكل",
+    "collapseAll": "طيّ الكل"
   },
   "Login": {
     "title": "تسجيل الدخول إلى سايت أوبس",
@@ -60,7 +67,8 @@
     "title": "مشاريعك",
     "empty": "لم يتم تعيينك على أي مشروع بعد.",
     "viewDirectory": "عرض الدليل",
-    "manageCompanyLogo": "إدارة شعار الشركة"
+    "manageCompanyLogo": "إدارة شعار الشركة",
+    "open": "فتح المشروع"
   },
   "Companies": {
     "title": "هوية الشركة البصرية",
@@ -137,7 +145,8 @@
     "bidding": "المناقصات",
     "estimating": "التقدير",
     "settings": "الإعدادات",
-    "analytics": "التحليلات"
+    "analytics": "التحليلات",
+    "myWork": "مهامي"
   },
   "DailyLog": {
     "title": "سجلات الأعمال اليومية",
@@ -164,7 +173,11 @@
     "reopenButton": "إعادة فتح",
     "editForbidden": "يمكنك فقط تعديل سجل يومي أنشأته أنت، ما لم يكن لديك صلاحية المسؤول.",
     "logLocked": "هذا السجل اليومي مقفل. أعد فتحه قبل التعديل.",
-    "back": "العودة إلى السجلات اليومية"
+    "back": "العودة إلى السجلات اليومية",
+    "fewer": "أقل",
+    "more": "أكثر",
+    "removeRow": "حذف",
+    "manpowerTotal": "{count, plural, one {شخص واحد في الموقع} other {# أشخاص في الموقع}}"
   },
   "PunchList": {
     "title": "قائمة الملاحظات",
@@ -214,7 +227,8 @@
   "SavedViews": {
     "saveView": "حفظ العرض",
     "viewNamePlaceholder": "اسم العرض",
-    "deleteView": "حذف العرض \"{name}\""
+    "deleteView": "حذف العرض \"{name}\"",
+    "views": "العروض المحفوظة"
   },
   "Photos": {
     "title": "الصور",
@@ -348,7 +362,8 @@
     "files": "الملفات",
     "noFiles": "لم يتم إرفاق ملفات بعد.",
     "uploadFile": "رفع ملف",
-    "uploading": "جارٍ الرفع…"
+    "uploading": "جارٍ الرفع…",
+    "answerQueued": "حُفظ على هذا الجهاز وسيُرسل عند عودة الاتصال."
   },
   "Submittals": {
     "title": "المستندات الفنية",
@@ -615,10 +630,10 @@
     "title": "لوحة المعلومات",
     "actionRequiredTitle": "يتطلب إجراءً",
     "allClear": "لا شيء يتطلب انتباهك الآن.",
-    "actionRfiOverdue": "{count} طلبات معلومات متأخرة",
-    "actionSubmittalInReview": "{count} مستندات معتمدة بانتظار المراجعة",
-    "actionScheduleTaskDelayed": "{count} مهام في الجدول الزمني متأخرة",
-    "actionChangeOrderPendingApproval": "{count} أوامر تغيير بانتظار الموافقة",
+    "actionRfiOverdue": "{count, plural, one {طلب معلومات متأخر} two {طلبا معلومات متأخران} few {# طلبات معلومات متأخرة} many {# طلب معلومات متأخر} other {# طلب معلومات متأخر}}",
+    "actionSubmittalInReview": "{count, plural, one {مستند بانتظار المراجعة} two {مستندان بانتظار المراجعة} few {# مستندات بانتظار المراجعة} many {# مستندًا بانتظار المراجعة} other {# مستند بانتظار المراجعة}}",
+    "actionScheduleTaskDelayed": "{count, plural, one {مهمة متأخرة في الجدول} two {مهمتان متأخرتان في الجدول} few {# مهام متأخرة في الجدول} many {# مهمة متأخرة في الجدول} other {# مهمة متأخرة في الجدول}}",
+    "actionChangeOrderPendingApproval": "{count, plural, one {أمر تغيير بانتظار الموافقة} two {أمرا تغيير بانتظار الموافقة} few {# أوامر تغيير بانتظار الموافقة} many {# أمر تغيير بانتظار الموافقة} other {# أمر تغيير بانتظار الموافقة}}",
     "review": "مراجعة",
     "kpisTitle": "المؤشرات الرئيسية",
     "rfis": "طلبات المعلومات",
@@ -630,7 +645,8 @@
     "budgetRevised": "المعدّلة",
     "budgetProjected": "المتوقعة",
     "budgetVariance": "الفرق",
-    "changeOrders": "أوامر التغيير"
+    "changeOrders": "أوامر التغيير",
+    "mineSummary": "مهامي: {overdue} متأخرة · {today} تستحق اليوم"
   },
   "Meetings": {
     "title": "الاجتماعات",
@@ -1276,7 +1292,8 @@
     "searchCategory_drawing": "المخططات",
     "searchCategory_daily_log": "السجلات اليومية",
     "searchCategory_schedule_task": "الجدول الزمني",
-    "searchCategory_person": "الأشخاص"
+    "searchCategory_person": "الأشخاص",
+    "quickActions": "إجراءات سريعة وآخر ما فتحته"
   },
   "Notifications": {
     "title": "الإشعارات",
@@ -1328,5 +1345,135 @@
     "dueInDaysPlaceholder": "الاستحقاق خلال (أيام)",
     "dueInDays": "الاستحقاق خلال {days} أيام",
     "addItem": "إضافة بند"
+  },
+  "Enums": {
+    "open": "مفتوح",
+    "closed": "مغلق",
+    "ready_for_review": "جاهز للمراجعة",
+    "not_accepted": "غير مقبول",
+    "in_dispute": "محل نزاع",
+    "approved": "معتمد",
+    "draft": "مسودة",
+    "submitted": "مقدَّم",
+    "pending": "قيد الانتظار",
+    "rejected": "مرفوض",
+    "answered": "تمت الإجابة",
+    "in_progress": "قيد التنفيذ",
+    "not_started": "لم تبدأ",
+    "complete": "مكتملة",
+    "delayed": "متأخرة",
+    "scheduled": "مجدولة",
+    "completed": "مكتمل",
+    "in_review": "قيد المراجعة",
+    "pending_approval": "بانتظار الموافقة"
+  },
+  "Field": {
+    "saveAndAddAnother": "حفظ وإضافة آخر",
+    "cancel": "إلغاء",
+    "locationQuick": "مواقع سريعة",
+    "locationLabel": "الموقع",
+    "locationSelect": "اختر الموقع",
+    "locationNone": "بدون موقع",
+    "locationSearch": "ابحث عن موقع أو أضفه…",
+    "locationAddChild": "إضافة «{name}» ضمن {parent}",
+    "locationAddRoot": "إضافة «{name}» كموقع رئيسي جديد",
+    "locationSame": "نفس الموقع السابق",
+    "takePhoto": "التقاط صورة",
+    "addPhoto": "إضافة صورة",
+    "removePhoto": "إزالة الصورة",
+    "photos": "الصور",
+    "dictate": "إملاء صوتي",
+    "dictateStop": "إيقاف الإملاء",
+    "draftRestored": "تمت استعادة ما لم تحفظه.",
+    "assignee": "المكلّف",
+    "assignMe": "أنا",
+    "unassigned": "غير معيّن",
+    "trade": "المهنة",
+    "noTrade": "بدون مهنة",
+    "savedToDevice": "تم الحفظ على هذا الجهاز وسيُرسل عند عودة الاتصال.",
+    "photoOnlyDescription": "ملاحظة بالصورة",
+    "close": "إغلاق",
+    "moreOptions": "خيارات إضافية",
+    "savedNumber": "تم حفظ {number}. جاهز للتالي.",
+    "required": "مطلوب",
+    "closeOut": "إغلاق",
+    "sendForReview": "إرسال للمراجعة",
+    "approve": "اعتماد",
+    "reopen": "إعادة فتح",
+    "notAccepted": "غير مقبول",
+    "inDispute": "محل نزاع",
+    "stoppedAt": "توقّف عند «{status}» — فقط المعتمد النهائي يمكنه المتابعة.",
+    "details": "التفاصيل",
+    "addPhotos": "الصور",
+    "locationUnset": "غير محدد",
+    "due": "الاستحقاق",
+    "gloveMode": "وضع القفازات (أزرار وخط أكبر)"
+  },
+  "Errors": {
+    "offline": "لا يوجد اتصال. تم حفظ ما أدخلته على هذا الجهاز — أعد المحاولة عند توفر الشبكة.",
+    "sessionExpired": "انتهت الجلسة. سجّل الدخول مجددًا؛ ما أدخلته محفوظ.",
+    "forbidden": "ليست لديك صلاحية لهذا الإجراء.",
+    "notFound": "هذا السجل لم يعد موجودًا.",
+    "conflict": "عدّل شخص آخر هذا السجل. أعد التحميل لرؤية نسخته.",
+    "server": "حدثت مشكلة في الخادم. ما أدخلته محفوظ — أعد المحاولة.",
+    "invalid": "بعض الحقول تحتاج إلى مراجعة. تحقق من النموذج وأعد المحاولة.",
+    "generic": "حدث خطأ ما. أعد المحاولة."
+  },
+  "BottomNav": {
+    "label": "التنقل الرئيسي",
+    "myWork": "مهامي",
+    "capture": "التقاط",
+    "project": "المشروع",
+    "drawings": "المخططات",
+    "more": "المزيد"
+  },
+  "CreateSheet": {
+    "title": "إنشاء",
+    "snag": "ملاحظة (بالصورة أولًا)",
+    "dailyLog": "سجل يومي",
+    "rfi": "طلب معلومات",
+    "inspection": "تفتيش",
+    "incident": "حادث سلامة"
+  },
+  "MyWork": {
+    "newSnag": "ملاحظة جديدة",
+    "title": "مهامي",
+    "empty": "لا شيء مكلّف به. ممتاز.",
+    "emptyAction": "إنشاء ملاحظة",
+    "overdue": "متأخر",
+    "today": "يستحق اليوم",
+    "week": "هذا الأسبوع",
+    "later": "لاحقًا",
+    "none": "بدون تاريخ استحقاق",
+    "module_punch_list": "ملاحظة",
+    "module_rfis": "طلب معلومات",
+    "module_submittals": "مستند",
+    "module_corrective_actions": "إجراء سلامة",
+    "count": "{count, plural, one {# عنصر} two {عنصران} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+    "due": "الاستحقاق",
+    "recent": "فُتحت مؤخراً",
+    "assignMe": "إسناد لي"
+  },
+  "Sync": {
+    "offline": "أنت غير متصل. تُحفظ الملاحظات الجديدة على هذا الجهاز وتُرسل عند عودة الاتصال.",
+    "waiting": "{count, plural, one {عنصر واحد بانتظار الإرسال} other {# عناصر بانتظار الإرسال}}",
+    "syncing": "{count, plural, one {جارٍ إرسال عنصر…} other {جارٍ إرسال # عناصر…}}",
+    "failedItem": "لم يُرسل: {title}",
+    "retry": "أعد المحاولة",
+    "discard": "تجاهل",
+    "queued": "حُفظ على هذا الجهاز وسيُرسل عند عودة الاتصال."
+  },
+  "BulkAssign": {
+    "action": "إسناد إلى…",
+    "title": "إسناد {count, plural, one {ملاحظة واحدة} other {# ملاحظات}}",
+    "person": "اختر شخصاً",
+    "apply": "{count, plural, one {إسناد ملاحظة واحدة} other {إسناد # ملاحظات}}",
+    "dueDate": "تاريخ الاستحقاق (اختياري)",
+    "notify": "إشعار آخرين (اختياري)"
+  },
+  "RecordNav": {
+    "label": "السجلات في هذه القائمة",
+    "previous": "السابق",
+    "next": "التالي"
   }
 }

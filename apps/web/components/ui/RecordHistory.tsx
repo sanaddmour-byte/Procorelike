@@ -1,8 +1,9 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { formatDateTime } from "@/lib/format";
 
 interface AuditLogEntry {
   id: string;
@@ -26,7 +27,6 @@ function actionLabel(action: string, t: (key: string) => string): string {
 /** A per-record change history, expandable rather than always visible — most records are read a lot more often than their history is checked. */
 export function RecordHistory({ projectId, entityType, entityId }: Props) {
   const t = useTranslations("RecordHistory");
-  const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
   const [entries, setEntries] = useState<AuditLogEntry[] | null>(null);
 
@@ -54,7 +54,7 @@ export function RecordHistory({ projectId, entityType, entityId }: Props) {
             <ul className="flex flex-col gap-1">
               {entries.map((entry) => (
                 <li key={entry.id} className="text-xs text-navy-700">
-                  {new Date(entry.createdAt).toLocaleString(locale)} — {actionLabel(entry.action, t)}
+                  {formatDateTime(entry.createdAt)} — {actionLabel(entry.action, t)}
                 </li>
               ))}
             </ul>

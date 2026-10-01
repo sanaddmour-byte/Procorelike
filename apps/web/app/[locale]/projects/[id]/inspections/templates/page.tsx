@@ -1,6 +1,8 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { ChecklistResponseType } from "@siteops/shared";
 import { useLocale, useTranslations } from "next-intl";
@@ -23,6 +25,7 @@ const RESPONSE_TYPES: ChecklistResponseType[] = ["pass_fail", "na", "numeric", "
 export default function ChecklistTemplatesPage() {
   const t = useTranslations("Inspections");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -37,7 +40,7 @@ export default function ChecklistTemplatesPage() {
   function load(): void {
     apiJson<ChecklistTemplate[]>(`/checklist-templates?projectId=${params.id}`)
       .then(setTemplates)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -76,8 +79,8 @@ export default function ChecklistTemplatesPage() {
       setItems([{ prompt: "", responseType: "pass_fail", order: 1 }]);
       setShowForm(false);
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreating(false);
     }
@@ -85,7 +88,7 @@ export default function ChecklistTemplatesPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("manageTemplates")}</h1>
           <button onClick={() => setShowForm((s) => !s)} className="rounded-lg border-3 border-ink bg-gradient-to-b from-maroon-600 to-maroon-800 brutal-interactive px-3 py-2 text-sm text-white">
@@ -136,7 +139,7 @@ export default function ChecklistTemplatesPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!templates && !error && <p>{tc("loading")}</p>}
         {templates && templates.length === 0 && <p className="text-navy-600">{t("noTemplates")}</p>}
         <ul className="flex flex-col gap-2">

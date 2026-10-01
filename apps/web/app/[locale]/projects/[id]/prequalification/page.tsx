@@ -1,6 +1,8 @@
 "use client";
 
 import { ErrorState } from "@/components/ui/ErrorState";
+import { errorMessage } from "@/lib/error-message";
+
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SavedViewsBar } from "@/components/ui/SavedViewsBar";
@@ -52,6 +54,7 @@ const STATUS_TONE: Record<PrequalificationStatus, StatusTone> = {
 export default function PrequalificationPage() {
   const t = useTranslations("Prequalification");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -106,8 +109,8 @@ export default function PrequalificationPage() {
       await apiJson("/prequalifications", { method: "POST", body: JSON.stringify({ projectId: params.id, companyId }) });
       setShowForm(false);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setInviting(false);
     }
@@ -128,8 +131,8 @@ export default function PrequalificationPage() {
         }),
       });
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusyId(null);
     }
@@ -148,8 +151,8 @@ export default function PrequalificationPage() {
         }),
       });
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusyId(null);
     }
@@ -160,7 +163,7 @@ export default function PrequalificationPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
@@ -191,7 +194,7 @@ export default function PrequalificationPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <SavedViewsBar
           projectId={params.id}

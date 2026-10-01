@@ -17,6 +17,7 @@ import {
   Gavel,
   HelpCircle,
   Image as ImageIcon,
+  Inbox,
   KeyRound,
   LayoutDashboard,
   ListChecks,
@@ -56,6 +57,7 @@ const NAV_GROUPS: NavGroup[] = [
     key: "project",
     groupLabelKey: "groupProject",
     items: [
+      { key: "my-work", labelKey: "myWork", segment: "my-work", icon: Inbox },
       { key: "dashboard", labelKey: "dashboard", segment: "dashboard", icon: LayoutDashboard },
       { key: "analytics", labelKey: "analytics", segment: "analytics", icon: BarChart3 },
     ],
@@ -138,7 +140,7 @@ export function ProjectSidebar({ projectId, collapsed, onNavigate }: Props) {
     <nav aria-label={tShell("projectNavigation")} className="flex h-full flex-col gap-4 overflow-y-auto px-2 py-3">
       {NAV_GROUPS.map((group) => (
         <div key={group.key}>
-          {!collapsed && <p className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-navy-400">{tShell(group.groupLabelKey)}</p>}
+          {!collapsed && <p className="mb-1 px-2 text-xs font-bold uppercase tracking-wider text-navy-700">{tShell(group.groupLabelKey)}</p>}
           <ul className="flex flex-col gap-0.5">
             {group.items.map((item) => {
               const href = `/${locale}/projects/${projectId}/${item.segment}`;
@@ -150,7 +152,7 @@ export function ProjectSidebar({ projectId, collapsed, onNavigate }: Props) {
                     href={href}
                     onClick={onNavigate}
                     title={collapsed ? t(item.labelKey) : undefined}
-                    className={`flex items-center gap-2 truncate rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
+                    className={`flex min-h-hit items-center gap-2 truncate rounded-md px-2 py-1.5 text-base font-medium transition-colors md:min-h-0 md:text-sm ${
                       collapsed ? "justify-center" : ""
                     } ${active ? "bg-maroon-50 text-maroon-700" : "text-navy-700 hover:bg-navy-50 hover:text-navy-900"}`}
                   >

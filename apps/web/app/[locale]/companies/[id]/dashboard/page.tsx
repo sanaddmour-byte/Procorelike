@@ -1,6 +1,8 @@
 "use client";
 
 import { Header } from "@/components/Header";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { formatMoney } from "@siteops/shared";
@@ -50,6 +52,7 @@ interface CompanyProjectDashboard {
 export default function CompanyDashboardPage() {
   const t = useTranslations("CompanyDashboard");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -65,19 +68,19 @@ export default function CompanyDashboardPage() {
     }
     apiJson<CompanyProjectDashboard[]>(`/admin/companies/${params.id}/dashboard`)
       .then(setRows)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [router, locale, params.id, tc]);
 
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-3 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/companies`} className="mb-4 inline-block text-sm text-navy-600 underline">
           {t("back")}
         </Link>
         <h1 className="mb-2 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         <p className="mb-6 text-sm text-navy-600">{t("intro")}</p>
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!rows && !error && <p>{tc("loading")}</p>}
         {rows && rows.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
 

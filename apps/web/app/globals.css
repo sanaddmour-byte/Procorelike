@@ -10,6 +10,14 @@
 
 :root {
   color-scheme: light;
+  /* Field-ergonomics tokens (plan A1). 48 px is the floor for any control, 56 px for the actions in the
+     D1 task list, 8 px between neighbours. Glove mode multiplies by ~1.25 and steps the type scale up. */
+  --hit-min: 48px;
+  --hit-task: 56px;
+  --gap-hit: 8px;
+  --type-step: 0px;
+  /* Placeholder / secondary text: >= 7:1 on white and cream (plan A2). */
+  --ph: #3f4d6e;
   --font-poppins: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -24,6 +32,17 @@
  * Arabic-safe system font stack untouched -- same split this file has
  * used since Phase 1, just with Poppins slotted in on the Latin side.
  */
+html {
+  font-size: calc(16px + var(--type-step));
+}
+
+html[data-glove="on"] {
+  --hit-min: 60px;
+  --hit-task: 70px;
+  --gap-hit: 10px;
+  --type-step: 1px;
+}
+
 body {
   font-family: var(--font-poppins);
   /* A warm cream field, not a visible material gradient -- the earlier
@@ -77,7 +96,52 @@ body {
 
   input::placeholder,
   textarea::placeholder {
-    color: #6f88b8;
+    color: var(--ph);
+    opacity: 1;
+  }
+
+  /* Touch devices and phone-width viewports: every control meets the hit-target floor (plan A1). One rule
+     here replaces per-component sizing on ~35 screens. Inline text links are exempt (WCAG 2.5.8 inline
+     exception); checkboxes/radios get a 24 px box inside a 48 px label hit area (see .hit-label). */
+  @media (pointer: coarse), (max-width: 767px) {
+    button,
+    select,
+    summary,
+    [role="button"],
+    [role="tab"],
+    [role="option"],
+    [role="menuitem"],
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]) {
+      min-height: var(--hit-min);
+    }
+    button,
+    [role="button"] {
+      min-width: var(--hit-min);
+    }
+    /* Plain text links used as "Back to ..." and inline navigation, and rows that wrap a checkbox: full-height targets (audit A1). */
+    main a.underline,
+    main a[class*="border-3"]:not(.flex):not(.block):not(.grid):not(.inline-flex),
+    main a[class*="border-2"]:not(.flex):not(.block):not(.grid):not(.inline-flex),
+    main label:has(> input[type="checkbox"]),
+    main label:has(> input[type="radio"]) {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--hit-min);
+    }
+    main label:has(> input[type="checkbox"]),
+    main label:has(> input[type="radio"]) {
+      gap: 0.5rem;
+    }
+    /* A visible file chooser is a target too (the camera/photo buttons are label-wrapped and already full size). */
+    main input[type="file"]:not(.sr-only) {
+      min-height: var(--hit-min);
+      padding-block: 0.5rem;
+    }
+    input[type="checkbox"],
+    input[type="radio"] {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
   }
 
   /* One visible keyboard-focus ring, applied app-wide, so it doesn't
@@ -99,6 +163,16 @@ body {
 }
 
 @layer components {
+  /* Wraps a checkbox/radio so the tappable area is the full 48 px square, not the 24 px glyph. */
+  .hit-label {
+    @apply inline-flex items-center justify-center;
+    min-width: var(--hit-min);
+    min-height: var(--hit-min);
+  }
+  .hit-task {
+    min-height: var(--hit-task);
+  }
+
   /* Shared surface primitives (names kept from the earlier Neubrutalism/
      Skeuomorphism builds -- see the boxShadow comment in
      tailwind.config.ts for why). A raised panel reads as a subtle paper

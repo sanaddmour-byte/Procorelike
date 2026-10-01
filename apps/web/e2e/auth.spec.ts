@@ -12,8 +12,9 @@ test("logs in and sees scoped projects", async ({ page }) => {
   await expect(page.getByText("Amman Heights Residential Tower")).toBeVisible();
   await expect(page.getByText("Zarqa Wastewater Pipeline Expansion")).toBeVisible();
 
-  await page.getByRole("button", { name: "Log out" }).click();
-  await expect(page).toHaveURL(/\/en\/?$/);
+  await page.getByRole("button", { name: "Sara Haddad" }).click(); // the avatar menu holds Log out
+  await page.getByText("Log out", { exact: true }).click();
+  await expect(page).toHaveURL(/\/en(\/login)?\/?$/);
 });
 
 test("rejects an invalid password", async ({ page }) => {

@@ -1,6 +1,9 @@
 "use client";
 
 import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
+import { BulkAssign } from "@/components/ui/BulkAssign";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
@@ -10,6 +13,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import type { StatusTone } from "@/lib/design/status";
+import { DUE_BUCKET_ORDER, dueBucketOf } from "@/lib/due-bucket";
 import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -23,6 +27,7 @@ interface PunchItem {
   priority: "low" | "medium" | "high";
   status: "open" | "ready_for_review" | "not_accepted" | "in_dispute" | "approved" | "closed";
   needsReview: boolean;
+  dueDate?: string | null;
 }
 
 const STATUS_TONE: Record<PunchItem["status"], StatusTone> = {
@@ -37,6 +42,8 @@ const STATUS_TONE: Record<PunchItem["status"], StatusTone> = {
 export default function PunchListPage() {
   const t = useTranslations("PunchList");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
+  const tw = useTranslations("MyWork");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -72,8 +79,8 @@ export default function PunchListPage() {
       setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
       setSelectedIds(new Set());
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBulkSending(false);
     }
@@ -112,7 +119,7 @@ export default function PunchListPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
@@ -125,7 +132,7 @@ export default function PunchListPage() {
           }
         />
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <SavedViewsBar
           projectId={params.id}
@@ -135,6 +142,7 @@ export default function PunchListPage() {
         />
 
         <FilterBar
+          presets={loadStoredAuth() ? [{ key: "mine", label: tc("mine"), filters: { assigneeUserId: loadStoredAuth()!.user.id } }] : []}
           searchValue={serverTable.search}
           onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
@@ -160,15 +168,40 @@ export default function PunchListPage() {
           >
             {t("bulkSendForReviewAction")}
           </button>
+          <BulkAssign
+            projectId={params.id}
+            ids={[...selectedIds]}
+            onDone={({ failed, total }) => {
+              setError(failed > 0 ? tc("bulkPartialFailure", { failed, total }) : null);
+              setSelectedIds(new Set());
+              serverTable.reload();
+            }}
+          />
         </BulkActionsBar>
 
         <DataTable<PunchItem>
           storageKey="punch-list"
+          swipeAction={{
+            label: tw("assignMe"),
+            getId: (i) => i.id,
+            onAction: async (i) => {
+              const me = loadStoredAuth()?.user.id;
+              if (!me) return;
+              await apiJson("/punch-items/bulk-update", { method: "POST", body: JSON.stringify({ ids: [i.id], assigneeUserId: me }) }).catch((e) => setError(errorMessage(e, te)));
+              serverTable.reload();
+            },
+          }}
+          groups={[
+            { key: "status", label: t("status"), get: (i) => ({ id: i.status, label: statusLabel(i.status) }) },
+            { key: "due", label: tw("due"), get: (i) => { const b = dueBucketOf(i.dueDate); return { id: DUE_BUCKET_ORDER[b], label: tw(b) }; } },
+            { key: "priority", label: t("priority"), get: (i) => ({ id: { high: "0", medium: "1", low: "2" }[i.priority], label: t({ high: "priorityHigh", medium: "priorityMedium", low: "priorityLow" }[i.priority]) }) },
+          ]}
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}
           onRetry={serverTable.reload}
           onRowClick={(item) => router.push(`/${locale}/projects/${params.id}/punch-list/${item.id}`)}
+          rowHref={(item) => `/${locale}/projects/${params.id}/punch-list/${item.id}`}
           emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
           serverSort={serverTable.sort}
           onServerSortChange={serverTable.onServerSortChange}

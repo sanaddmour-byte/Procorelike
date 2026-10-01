@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -56,6 +58,7 @@ const STATUS_TONE: Record<Transmittal["status"], StatusTone> = {
 export default function TransmittalsPage() {
   const t = useTranslations("Transmittals");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -128,8 +131,8 @@ export default function TransmittalsPage() {
       setSelectedUserIds([]);
       setSelectedCompanyIds([]);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setSubmitting(false);
     }
@@ -154,7 +157,7 @@ export default function TransmittalsPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/projects`} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
@@ -170,7 +173,7 @@ export default function TransmittalsPage() {
             </button>
           }
         />
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         {showForm && (
           <form onSubmit={handleCreate} className="mb-6 mt-4 rounded-xl border-3 border-ink bg-cream p-4 shadow-[4px_4px_0_0_#1a1a1a]">

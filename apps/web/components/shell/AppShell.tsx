@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Header } from "../Header";
+import { BottomNav } from "./BottomNav";
 import { ProjectSidebar } from "./ProjectSidebar";
+import { SyncStatus } from "./SyncStatus";
 
 const COLLAPSE_KEY = "siteops.sidebarCollapsed";
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -68,7 +70,7 @@ export function AppShell({ projectId, children }: { projectId: string; children:
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col [--bottom-nav-h:64px] md:[--bottom-nav-h:0px]">
       <Header projectId={projectId} onToggleSidebar={() => setMobileOpen(true)} />
       <div className="flex flex-1">
         <aside className={`hidden shrink-0 border-e-3 border-ink bg-white md:block ${collapsed ? "w-14" : "w-56"} transition-all`}>
@@ -106,7 +108,11 @@ export function AppShell({ projectId, children }: { projectId: string; children:
           </div>
         )}
 
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6">{children}</main>
+        <BottomNav projectId={projectId} onMore={() => setMobileOpen(true)} />
+        <div className="min-w-0 flex-1 px-3 py-2 pb-[calc(var(--bottom-nav-h,0px)+1rem)] sm:px-6 sm:py-6">
+          <SyncStatus />
+          {children}
+        </div>
       </div>
     </div>
   );

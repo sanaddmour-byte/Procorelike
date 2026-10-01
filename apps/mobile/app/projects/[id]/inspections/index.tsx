@@ -1,4 +1,5 @@
 import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SyncStatusBar } from "@/components/SyncStatusBar";
@@ -59,11 +60,14 @@ export default function MobileInspectionsListScreen() {
         options={{
           title: i18n.t("inspections.title"),
           headerRight: () => (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ProjectSwitcher projectId={id} />
             <Link href={`/projects/${id}/inspections/new`} asChild>
               <Pressable>
                 <Text style={styles.headerButton}>{i18n.t("inspections.newButton")}</Text>
               </Pressable>
             </Link>
+            </View>
           ),
         }}
       />

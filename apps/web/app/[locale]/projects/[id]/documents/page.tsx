@@ -1,9 +1,11 @@
 "use client";
 
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { errorMessage } from "@/lib/error-message";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ApiClientError, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useServerTable } from "@/lib/use-server-table";
 import { uploadAttachment } from "@/lib/upload";
@@ -25,6 +27,7 @@ interface DocumentRecord {
 
 export default function DocumentsPage() {
   const t = useTranslations("Documents");
+  const te = useTranslations("Errors");
   const tc = useTranslations("Common");
   const router = useRouter();
   const locale = useLocale();
@@ -43,7 +46,7 @@ export default function DocumentsPage() {
   function loadFolders(): void {
     apiJson<DocumentFolder[]>(`/documents/folders?projectId=${params.id}`)
       .then(setFolders)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -69,8 +72,8 @@ export default function DocumentsPage() {
       });
       setNewFolderName("");
       loadFolders();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -95,7 +98,7 @@ export default function DocumentsPage() {
       });
       serverTable.reload();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+      setError(errorMessage(err, te));
     } finally {
       setUploading(false);
       if (uploadInputRef.current) uploadInputRef.current.value = "";
@@ -118,7 +121,7 @@ export default function DocumentsPage() {
       });
       serverTable.reload();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+      setError(errorMessage(err, te));
     } finally {
       setReplacingId(null);
       if (replaceInputRef.current) replaceInputRef.current.value = "";
@@ -129,8 +132,8 @@ export default function DocumentsPage() {
     try {
       const { downloadUrl } = await apiJson<{ downloadUrl: string }>(`/attachments/${attachmentId}/download`);
       window.open(downloadUrl, "_blank", "noopener,noreferrer");
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     }
   }
 
@@ -168,9 +171,9 @@ export default function DocumentsPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader title={t("title")} />
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
           <aside>

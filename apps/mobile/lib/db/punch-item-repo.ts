@@ -12,6 +12,8 @@ export interface LocalPunchItem {
   priority: "low" | "medium" | "high";
   status: PunchItemStatus;
   dueDate: string | null;
+  assigneeUserId: string | null;
+  locationId: string | null;
   baseRevision: number | null;
   syncStatus: SyncStatus;
   conflictData: unknown | null;
@@ -26,6 +28,8 @@ interface PunchItemRow {
   priority: string;
   status: string;
   due_date: string | null;
+  assignee_user_id: string | null;
+  location_id: string | null;
   base_revision: number | null;
   sync_status: string;
   conflict_data: string | null;
@@ -41,6 +45,8 @@ function fromRow(row: PunchItemRow): LocalPunchItem {
     priority: row.priority as LocalPunchItem["priority"],
     status: row.status as LocalPunchItem["status"],
     dueDate: row.due_date,
+    assigneeUserId: row.assignee_user_id,
+    locationId: row.location_id,
     baseRevision: row.base_revision,
     syncStatus: row.sync_status as SyncStatus,
     conflictData: row.conflict_data ? (JSON.parse(row.conflict_data) as unknown) : null,
@@ -76,14 +82,23 @@ export async function createPunchItem(input: {
   projectId: string;
   description: string;
   priority?: "low" | "medium" | "high";
+  assigneeUserId?: string | null;
+  locationId?: string | null;
+  photos?: { uri: string; filename: string; mime: string }[];
 }): Promise<LocalPunchItem> {
   const db = await getDb();
   const id = Crypto.randomUUID();
   const now = new Date().toISOString();
   await db.runAsync(
-    "INSERT INTO punch_items (id, project_id, description, priority, status, sync_status, updated_at) VALUES (?, ?, ?, ?, 'open', 'pending', ?)",
-    [id, input.projectId, input.description, input.priority ?? "medium", now],
+    "INSERT INTO punch_items (id, project_id, description, priority, assignee_user_id, location_id, status, sync_status, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'open', 'pending', ?)",
+    [id, input.projectId, input.description, input.priority ?? "medium", input.assigneeUserId ?? null, input.locationId ?? null, now],
   );
+  for (const photo of input.photos ?? []) {
+    await db.runAsync(
+      "INSERT INTO punch_item_photos (id, punch_item_id, project_id, uri, filename, mime, uploaded, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?)",
+      [Crypto.randomUUID(), id, input.projectId, photo.uri, photo.filename, photo.mime, now],
+    );
+  }
   await enqueueOutbox("punch_item", id, input.projectId);
   const item = await getPunchItem(id);
   if (!item) throw new Error("Failed to create local punch item");
@@ -188,4 +203,35 @@ export async function upsertPunchItemFromServer(row: {
       now,
     ],
   );
+}
+
+export interface PendingPunchPhoto {
+  id: string;
+  punchItemId: string;
+  projectId: string;
+  uri: string;
+  filename: string;
+  mime: string;
+}
+
+/** Photos captured offline whose punch item has reached the server, so they can be uploaded now. */
+export async function listUploadablePunchPhotos(projectId: string): Promise<PendingPunchPhoto[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{ id: string; punch_item_id: string; project_id: string; uri: string; filename: string; mime: string }>(
+    `SELECT p.* FROM punch_item_photos p JOIN punch_items i ON i.id = p.punch_item_id
+     WHERE p.project_id = ? AND p.uploaded = 0 AND i.sync_status = 'synced'`,
+    [projectId],
+  );
+  return rows.map((r) => ({ id: r.id, punchItemId: r.punch_item_id, projectId: r.project_id, uri: r.uri, filename: r.filename, mime: r.mime }));
+}
+
+export async function markPunchPhotoUploaded(id: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync("UPDATE punch_item_photos SET uploaded = 1 WHERE id = ?", [id]);
+}
+
+export async function countPendingPunchPhotos(projectId: string): Promise<number> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ n: number }>("SELECT COUNT(*) AS n FROM punch_item_photos WHERE project_id = ? AND uploaded = 0", [projectId]);
+  return row?.n ?? 0;
 }

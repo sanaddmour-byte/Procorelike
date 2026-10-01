@@ -1,6 +1,9 @@
 "use client";
 
+import { LoadingState } from "@/components/ui/LoadingState";
 import { Header } from "@/components/Header";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { apiFetch, apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
@@ -135,6 +138,7 @@ function CompanyLogoCard({ company, onUploaded }: { company: Company; onUploaded
 export default function CompaniesPage() {
   const t = useTranslations("Companies");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
 
@@ -149,20 +153,20 @@ export default function CompaniesPage() {
     }
     apiJson<Company[]>("/companies")
       .then(setCompanies)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [router, locale, tc, refreshKey]);
 
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-2xl px-3 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/projects`} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
         <h1 className="mb-2 mt-2 text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         <p className="mb-4 text-sm text-navy-600">{t("intro")}</p>
-        {error && <p className="text-maroon-700">{error}</p>}
-        {!companies && !error && <p>{tc("loading")}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
+        {!companies && !error && <LoadingState rows={4} label={tc("loading")} />}
         {companies && companies.length === 0 && <p className="text-navy-600">{t("empty")}</p>}
         <ul className="flex flex-col gap-4">
           {companies?.map((c) => (

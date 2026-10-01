@@ -1,6 +1,8 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -13,7 +15,7 @@ import { usePdfViewer } from "@/lib/use-pdf-viewer";
 import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
 interface ChecklistTemplate {
@@ -41,13 +43,15 @@ const STATUS_TONE: Record<Inspection["status"], StatusTone> = {
 export default function InspectionsPage() {
   const t = useTranslations("Inspections");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const searchParams = useSearchParams();
+  const [showForm, setShowForm] = useState(searchParams.get("new") === "1");
   const [templateId, setTemplateId] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [creating, setCreating] = useState(false);
@@ -87,8 +91,8 @@ export default function InspectionsPage() {
       setScheduledAt("");
       setShowForm(false);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreating(false);
     }
@@ -110,7 +114,7 @@ export default function InspectionsPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
@@ -165,7 +169,7 @@ export default function InspectionsPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <SavedViewsBar
           projectId={params.id}

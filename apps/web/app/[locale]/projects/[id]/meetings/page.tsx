@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { apiJson } from "@/lib/api-client";
@@ -9,6 +11,7 @@ import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { formatDateTime } from "@/lib/format";
 
 interface Meeting {
   id: string;
@@ -19,6 +22,7 @@ interface Meeting {
 export default function MeetingsPage() {
   const t = useTranslations("Meetings");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -50,8 +54,8 @@ export default function MeetingsPage() {
       setOccurredAt("");
       setShowForm(false);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreating(false);
     }
@@ -61,12 +65,12 @@ export default function MeetingsPage() {
 
   const columns: DataTableColumn<Meeting>[] = [
     { key: "title", header: t("titleField"), render: (m) => m.title, sortValue: (m) => m.title },
-    { key: "occurredAt", header: t("occurredAt"), render: (m) => new Date(m.occurredAt).toLocaleString(), sortValue: (m) => m.occurredAt, width: "220px" },
+    { key: "occurredAt", header: t("occurredAt"), render: (m) => formatDateTime(m.occurredAt), sortValue: (m) => m.occurredAt, width: "220px" },
   ];
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
@@ -92,7 +96,7 @@ export default function MeetingsPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <FilterBar
           searchValue={serverTable.search}

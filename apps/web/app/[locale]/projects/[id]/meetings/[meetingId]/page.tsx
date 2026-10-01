@@ -1,11 +1,13 @@
 "use client";
 
 import { apiJson } from "@/lib/api-client";
+import { errorMessage } from "@/lib/error-message";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { formatDateTime } from "@/lib/format";
 
 type MeetingItemStatus = "open" | "closed" | "converted";
 
@@ -31,6 +33,7 @@ interface Meeting {
 export default function MeetingDetailPage() {
   const t = useTranslations("Meetings");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string; meetingId: string }>();
@@ -46,7 +49,7 @@ export default function MeetingDetailPage() {
   function load(): void {
     apiJson<MeetingDetail>(`/meetings/${params.meetingId}`)
       .then(setMeeting)
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }
 
   useEffect(() => {
@@ -71,8 +74,8 @@ export default function MeetingDetailPage() {
       });
       setNewItemDescription("");
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setAdding(false);
     }
@@ -83,8 +86,8 @@ export default function MeetingDetailPage() {
     try {
       await apiJson(`/meeting-items/${itemId}`, { method: "PATCH", body: JSON.stringify({ toStatus: "closed" }) });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusyItemId(null);
     }
@@ -97,8 +100,8 @@ export default function MeetingDetailPage() {
     try {
       await apiJson(`/meeting-items/${itemId}/carry-forward`, { method: "POST", body: JSON.stringify({ toMeetingId }) });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusyItemId(null);
     }
@@ -109,8 +112,8 @@ export default function MeetingDetailPage() {
     try {
       await apiJson(`/meeting-items/${itemId}/convert-to-punch-item`, { method: "POST" });
       load();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBusyItemId(null);
     }
@@ -123,7 +126,7 @@ export default function MeetingDetailPage() {
   if (!meeting && !error) {
     return (
       <>
-        <main className="mx-auto max-w-2xl px-4 py-8">
+        <main className="mx-auto max-w-2xl px-0 py-2 sm:px-4 sm:py-8">
           <p>{tc("loading")}</p>
         </main>
       </>
@@ -132,7 +135,7 @@ export default function MeetingDetailPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-2xl px-0 py-2 sm:px-4 sm:py-8">
         <Link href={`/${locale}/projects/${params.id}/meetings`} className="mb-4 inline-block text-sm text-maroon-700 underline">
           {t("back")}
         </Link>
@@ -140,7 +143,7 @@ export default function MeetingDetailPage() {
         {meeting && (
           <>
             <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{meeting.title}</h1>
-            <p className="mb-4 text-sm text-navy-600">{new Date(meeting.occurredAt).toLocaleString()}</p>
+            <p className="mb-4 text-sm text-navy-600">{formatDateTime(meeting.occurredAt)}</p>
 
             <h2 className="mb-2 text-lg font-bold text-navy-900">{t("actionItems")}</h2>
             <form onSubmit={(e) => void handleAddItem(e)} className="mb-4 flex gap-2">

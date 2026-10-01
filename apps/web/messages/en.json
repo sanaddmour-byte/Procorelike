@@ -45,7 +45,14 @@
     "delete": "Delete",
     "exportAllCsv": "Export All (CSV)",
     "copy": "Copy",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "sortBy": "Sort by",
+    "sortDirection": "Reverse sort order",
+    "mine": "Mine",
+    "groupBy": "Group by",
+    "groupNone": "No grouping",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
   },
   "Login": {
     "title": "Sign in to SiteOps",
@@ -60,7 +67,8 @@
     "title": "Your projects",
     "empty": "You are not assigned to any projects yet.",
     "viewDirectory": "View directory",
-    "manageCompanyLogo": "Manage company logo"
+    "manageCompanyLogo": "Manage company logo",
+    "open": "Open project"
   },
   "Companies": {
     "title": "Company branding",
@@ -137,7 +145,8 @@
     "bidding": "Bidding",
     "estimating": "Estimating",
     "settings": "Settings",
-    "analytics": "Analytics"
+    "analytics": "Analytics",
+    "myWork": "My Work"
   },
   "DailyLog": {
     "title": "Daily Logs",
@@ -164,7 +173,11 @@
     "reopenButton": "Reopen",
     "editForbidden": "You can only edit a daily log you created, unless you have admin-level access.",
     "logLocked": "This daily log is locked. Reopen it before editing.",
-    "back": "Back to daily logs"
+    "back": "Back to daily logs",
+    "fewer": "Fewer",
+    "more": "More",
+    "removeRow": "Remove",
+    "manpowerTotal": "{count, plural, one {# person on site} other {# people on site}}"
   },
   "PunchList": {
     "title": "Punch List",
@@ -214,7 +227,8 @@
   "SavedViews": {
     "saveView": "Save view",
     "viewNamePlaceholder": "View name",
-    "deleteView": "Delete view \"{name}\""
+    "deleteView": "Delete view \"{name}\"",
+    "views": "Saved views"
   },
   "Photos": {
     "title": "Photos",
@@ -348,7 +362,8 @@
     "files": "Files",
     "noFiles": "No files attached yet.",
     "uploadFile": "Upload file",
-    "uploading": "Uploading…"
+    "uploading": "Uploading…",
+    "answerQueued": "Saved on this device — it will send when you're back online."
   },
   "Submittals": {
     "title": "Submittals",
@@ -615,10 +630,10 @@
     "title": "Dashboard",
     "actionRequiredTitle": "Action required",
     "allClear": "Nothing needs your attention right now.",
-    "actionRfiOverdue": "{count} overdue RFIs",
-    "actionSubmittalInReview": "{count} submittals awaiting review",
-    "actionScheduleTaskDelayed": "{count} delayed schedule tasks",
-    "actionChangeOrderPendingApproval": "{count} change orders awaiting approval",
+    "actionRfiOverdue": "{count, plural, one {# overdue RFI} other {# overdue RFIs}}",
+    "actionSubmittalInReview": "{count, plural, one {# submittal awaiting review} other {# submittals awaiting review}}",
+    "actionScheduleTaskDelayed": "{count, plural, one {# delayed schedule task} other {# delayed schedule tasks}}",
+    "actionChangeOrderPendingApproval": "{count, plural, one {# change order awaiting approval} other {# change orders awaiting approval}}",
     "review": "Review",
     "kpisTitle": "Key metrics",
     "rfis": "RFIs",
@@ -630,7 +645,8 @@
     "budgetRevised": "Revised",
     "budgetProjected": "Projected",
     "budgetVariance": "Variance",
-    "changeOrders": "Change Orders"
+    "changeOrders": "Change Orders",
+    "mineSummary": "My Work: {overdue} overdue · {today} due today"
   },
   "Meetings": {
     "title": "Meetings",
@@ -1276,7 +1292,8 @@
     "searchCategory_drawing": "Drawings",
     "searchCategory_daily_log": "Daily Logs",
     "searchCategory_schedule_task": "Schedule",
-    "searchCategory_person": "People"
+    "searchCategory_person": "People",
+    "quickActions": "Quick actions & recent"
   },
   "Notifications": {
     "title": "Notifications",
@@ -1328,5 +1345,135 @@
     "dueInDaysPlaceholder": "Due in (days)",
     "dueInDays": "due in {days} days",
     "addItem": "Add item"
+  },
+  "Enums": {
+    "open": "Open",
+    "closed": "Closed",
+    "ready_for_review": "Ready for review",
+    "not_accepted": "Not accepted",
+    "in_dispute": "In dispute",
+    "approved": "Approved",
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "pending": "Pending",
+    "rejected": "Rejected",
+    "answered": "Answered",
+    "in_progress": "In progress",
+    "not_started": "Not started",
+    "complete": "Complete",
+    "delayed": "Delayed",
+    "scheduled": "Scheduled",
+    "completed": "Completed",
+    "in_review": "In review",
+    "pending_approval": "Pending approval"
+  },
+  "Field": {
+    "saveAndAddAnother": "Save & add another",
+    "cancel": "Cancel",
+    "locationQuick": "Quick locations",
+    "locationLabel": "Location",
+    "locationSelect": "Select location",
+    "locationNone": "No location",
+    "locationSearch": "Search or add a location…",
+    "locationAddChild": "Add “{name}” under {parent}",
+    "locationAddRoot": "Add “{name}” as a new top-level location",
+    "locationSame": "Same as last",
+    "takePhoto": "Take photo",
+    "addPhoto": "Add photo",
+    "removePhoto": "Remove photo",
+    "photos": "Photos",
+    "dictate": "Dictate",
+    "dictateStop": "Stop dictation",
+    "draftRestored": "Restored your unsaved entry.",
+    "assignee": "Assignee",
+    "assignMe": "Me",
+    "unassigned": "Unassigned",
+    "trade": "Trade",
+    "noTrade": "No trade",
+    "savedToDevice": "Saved on this device. It will send when you are back online.",
+    "photoOnlyDescription": "Photo snag",
+    "close": "Close",
+    "moreOptions": "More options",
+    "savedNumber": "Saved {number}. Ready for the next one.",
+    "required": "Required",
+    "closeOut": "Close out",
+    "sendForReview": "Send for review",
+    "approve": "Approve",
+    "reopen": "Reopen",
+    "notAccepted": "Not accepted",
+    "inDispute": "In dispute",
+    "stoppedAt": "Stopped at “{status}” — only the final approver can go further.",
+    "details": "Details",
+    "addPhotos": "Photos",
+    "locationUnset": "Not set",
+    "due": "Due",
+    "gloveMode": "Glove mode (larger targets and text)"
+  },
+  "Errors": {
+    "offline": "No connection. Your entry is kept on this device — try again when you have signal.",
+    "sessionExpired": "Your session ended. Sign in again; your entry is kept.",
+    "forbidden": "You don't have permission to do that.",
+    "notFound": "That record no longer exists.",
+    "conflict": "Someone else changed this record. Reload to see their version.",
+    "server": "The server had a problem. Your entry is kept — try again.",
+    "invalid": "Some fields need attention. Check the form and try again.",
+    "generic": "Something went wrong. Try again."
+  },
+  "BottomNav": {
+    "label": "Main navigation",
+    "myWork": "My Work",
+    "capture": "Capture",
+    "project": "Project",
+    "drawings": "Drawings",
+    "more": "More"
+  },
+  "CreateSheet": {
+    "title": "Create",
+    "snag": "Snag (photo first)",
+    "dailyLog": "Daily log",
+    "rfi": "RFI",
+    "inspection": "Inspection",
+    "incident": "Safety incident"
+  },
+  "MyWork": {
+    "newSnag": "New snag",
+    "title": "My Work",
+    "empty": "Nothing is assigned to you. Nice.",
+    "emptyAction": "Create a snag",
+    "overdue": "Overdue",
+    "today": "Due today",
+    "week": "This week",
+    "later": "Later",
+    "none": "No due date",
+    "module_punch_list": "Snag",
+    "module_rfis": "RFI",
+    "module_submittals": "Submittal",
+    "module_corrective_actions": "Safety action",
+    "count": "{count, plural, one {# item} other {# items}}",
+    "due": "Due",
+    "recent": "Recently opened",
+    "assignMe": "Assign to me"
+  },
+  "Sync": {
+    "offline": "You're offline. New snags are saved on this device and sent when you're back.",
+    "waiting": "{count, plural, one {# item waiting to send} other {# items waiting to send}}",
+    "syncing": "{count, plural, one {Sending # item…} other {Sending # items…}}",
+    "failedItem": "Not sent: {title}",
+    "retry": "Try again",
+    "discard": "Discard",
+    "queued": "Saved on this device. It will send when you're back online."
+  },
+  "BulkAssign": {
+    "action": "Assign to…",
+    "title": "Assign {count, plural, one {# snag} other {# snags}}",
+    "person": "Choose a person",
+    "apply": "{count, plural, one {Assign # snag} other {Assign # snags}}",
+    "dueDate": "Due date (optional)",
+    "notify": "Also notify (optional)"
+  },
+  "RecordNav": {
+    "label": "Records in this list",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

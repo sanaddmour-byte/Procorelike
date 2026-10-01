@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -10,6 +12,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { formatDate } from "@/lib/format";
 
 interface DailyLog {
   id: string;
@@ -21,6 +24,7 @@ interface DailyLog {
 export default function DailyLogListPage() {
   const t = useTranslations("DailyLog");
   const tc = useTranslations("Common");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
@@ -36,7 +40,7 @@ export default function DailyLogListPage() {
     }
     apiJson<DailyLog[]>(`/daily-logs?projectId=${params.id}`)
       .then((data) => setLogs(data.sort((a, b) => (a.logDate < b.logDate ? 1 : -1))))
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [router, locale, params.id, tc]);
 
   const filteredLogs = useMemo(() => {
@@ -47,7 +51,7 @@ export default function DailyLogListPage() {
   }, [logs, search]);
 
   const columns: DataTableColumn<DailyLog>[] = [
-    { key: "date", header: t("date"), render: (log) => log.logDate, sortValue: (log) => log.logDate, width: "140px" },
+    { key: "date", header: t("date"), render: (log) => formatDate(log.logDate), sortValue: (log) => log.logDate, width: "140px" },
     { key: "notes", header: t("notes"), render: (log) => log.notes ?? "" },
     {
       key: "status",
@@ -59,7 +63,7 @@ export default function DailyLogListPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
@@ -71,7 +75,7 @@ export default function DailyLogListPage() {
             </Link>
           }
         />
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <FilterBar
           searchValue={search}

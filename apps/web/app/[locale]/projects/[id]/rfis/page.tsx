@@ -1,6 +1,8 @@
 "use client";
 
 import { PdfViewerModal } from "@/components/PdfViewerModal";
+import { errorMessage } from "@/lib/error-message";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { PersonnelPicker } from "@/components/PersonnelPicker";
 import { BulkActionsBar } from "@/components/ui/BulkActionsBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -12,9 +14,10 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiJson, downloadFile } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { usePdfViewer } from "@/lib/use-pdf-viewer";
+import { DUE_BUCKET_ORDER, dueBucketOf } from "@/lib/due-bucket";
 import { useServerTable } from "@/lib/use-server-table";
 import { useLocale, useTranslations } from "next-intl";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, type FormEvent } from "react";
 
 interface Rfi {
@@ -40,13 +43,16 @@ function statusLabel(status: Rfi["status"], t: (key: string) => string): string 
 export default function RfisPage() {
   const t = useTranslations("Rfis");
   const tc = useTranslations("Common");
+  const tw = useTranslations("MyWork");
+  const te = useTranslations("Errors");
   const router = useRouter();
   const locale = useLocale();
   const params = useParams<{ id: string }>();
 
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const searchParams = useSearchParams();
+  const [showForm, setShowForm] = useState(searchParams.get("new") === "1");
   const [subject, setSubject] = useState("");
   const [question, setQuestion] = useState("");
   const [ballInCourtUserId, setBallInCourtUserId] = useState("");
@@ -89,8 +95,8 @@ export default function RfisPage() {
       setError(failed > 0 ? tc("bulkPartialFailure", { failed, total: results.length }) : null);
       setSelectedIds(new Set());
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setBulkClosing(false);
     }
@@ -157,8 +163,8 @@ export default function RfisPage() {
       setDistributionUserIds([]);
       setShowForm(false);
       serverTable.reload();
-    } catch {
-      setError(tc("errorGeneric"));
+    } catch (err) {
+      setError(errorMessage(err, te));
     } finally {
       setCreating(false);
     }
@@ -166,7 +172,7 @@ export default function RfisPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
         <PageHeader
           title={t("title")}
           actions={
@@ -258,7 +264,7 @@ export default function RfisPage() {
           </form>
         )}
 
-        {error && <p className="text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
 
         <SavedViewsBar
           projectId={params.id}
@@ -268,6 +274,7 @@ export default function RfisPage() {
         />
 
         <FilterBar
+          presets={loadStoredAuth() ? [{ key: "mine", label: tc("mine"), filters: { assigneeUserId: loadStoredAuth()!.user.id } }] : []}
           searchValue={serverTable.search}
           onSearchChange={serverTable.onSearchChange}
           searchPlaceholder={t("searchPlaceholder")}
@@ -302,11 +309,16 @@ export default function RfisPage() {
 
         <DataTable<Rfi>
           storageKey="rfis"
+          groups={[
+            { key: "status", label: t("status"), get: (r) => ({ id: r.status, label: statusLabel(r.status, t) }) },
+            { key: "due", label: tw("due"), get: (r) => { const b = dueBucketOf(r.dueDate); return { id: DUE_BUCKET_ORDER[b], label: tw(b) }; } },
+          ]}
           columns={columns}
           rows={serverTable.rows}
           error={serverTable.error ? tc("errorGeneric") : null}
           onRetry={serverTable.reload}
           onRowClick={(rfi) => router.push(`/${locale}/projects/${params.id}/rfis/${rfi.id}`)}
+          rowHref={(rfi) => `/${locale}/projects/${params.id}/rfis/${rfi.id}`}
           emptyTitle={hasActiveQuery ? t("noResults") : t("empty")}
           serverSort={serverTable.sort}
           onServerSortChange={serverTable.onServerSortChange}

@@ -1,10 +1,14 @@
 "use client";
 
-import { ApiClientError, apiJson } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
+import { ManpowerEditor } from "@/components/ManpowerEditor";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { errorMessage } from "@/lib/error-message";
 import { useLocale, useTranslations } from "next-intl";
 import Link, { type LinkProps } from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/format";
 
 interface ManpowerRow {
   id: string;
@@ -25,6 +29,7 @@ interface DailyLogDetail {
 
 export default function DailyLogDetailPage() {
   const t = useTranslations("DailyLog");
+  const te = useTranslations("Errors");
   const tc = useTranslations("Common");
   const locale = useLocale();
   const params = useParams<{ id: string; logId: string }>();
@@ -40,7 +45,7 @@ export default function DailyLogDetailPage() {
         setLog(data);
         setNotes(data.notes ?? "");
       })
-      .catch(() => setError(tc("errorGeneric")));
+      .catch((err) => setError(errorMessage(err, te)));
   }, [params.logId, tc]);
 
   async function saveNotes(): Promise<void> {
@@ -53,7 +58,7 @@ export default function DailyLogDetailPage() {
       });
       setLog((prev) => (prev ? { ...prev, ...updated } : updated));
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -69,7 +74,7 @@ export default function DailyLogDetailPage() {
       });
       setLog((prev) => (prev ? { ...prev, ...updated } : updated));
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.code : "unknown_error");
+      setError(errorMessage(err, te));
     } finally {
       setBusy(false);
     }
@@ -79,16 +84,16 @@ export default function DailyLogDetailPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-lg px-4 py-8">
+      <main className="mx-auto max-w-lg px-0 py-2 sm:px-4 sm:py-8">
         <Link href={backHref} className="text-sm text-navy-700 underline">
           {t("back")}
         </Link>
         {!log && !error && <p className="mt-4">{tc("loading")}</p>}
-        {error && <p className="mt-4 text-maroon-700">{error}</p>}
+        {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {log && (
           <>
             <div className="mb-4 mt-2 flex items-center justify-between">
-              <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{log.logDate}</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{formatDate(log.logDate)}</h1>
               <span
                 className={`rounded px-2 py-0.5 text-xs ${
                   log.lockedAt ? "bg-navy-900 text-white" : "bg-orange-100 text-navy-800"
@@ -141,18 +146,7 @@ export default function DailyLogDetailPage() {
               )}
             </div>
 
-            {log.manpower.length > 0 && (
-              <section className="mt-6">
-                <h2 className="mb-2 text-sm font-medium text-navy-800">{t("manpowerSection")}</h2>
-                <ul className="flex flex-col gap-2">
-                  {log.manpower.map((row) => (
-                    <li key={row.id} className="rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal-sm p-2 text-sm">
-                      {t("headcount")}: {row.headcount} · {t("hours")}: {row.hours}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            <ManpowerEditor projectId={params.id} logId={params.logId} rows={log.manpower} locked={!!log.lockedAt} onChange={(manpower) => setLog((prev) => (prev ? { ...prev, manpower } : prev))} />
           </>
         )}
       </main>
