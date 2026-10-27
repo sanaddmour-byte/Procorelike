@@ -157,6 +157,7 @@ export default function DrawingsPage() {
   return (
     <>
       <main className="mx-auto max-w-4xl px-0 py-2 sm:px-4 sm:py-8">
+        <Image src="/images/drawings-banner.png" alt="" width={1024} height={576} className="mb-4 hidden h-24 w-full rounded-xl border-3 border-ink object-cover sm:block" />
         <PageHeader
           title={t("title")}
           actions={

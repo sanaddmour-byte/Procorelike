@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { ApiClientError, apiJson } from "@/lib/api-client";
 import { takeReturnTo } from "@/components/ReturnTo";
 import { saveStoredAuth, type StoredAuth } from "@/lib/auth-storage";
+import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
@@ -57,6 +58,7 @@ export default function LoginPage() {
     <>
       <Header />
       <main className="mx-auto flex min-h-[calc(100vh-73px)] max-w-sm flex-col justify-center gap-4 px-4">
+        <Image src="/images/login-hero.png" alt="" width={1024} height={576} priority className="h-32 w-full rounded-xl border-3 border-ink object-cover" />
         <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         <form
           onSubmit={(e) => void handleSubmit(e)}
