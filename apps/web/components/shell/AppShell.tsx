@@ -1,6 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { moduleIllustrationFor } from "@/lib/module-illustrations";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Header } from "../Header";
 import { BottomNav } from "./BottomNav";
@@ -20,6 +23,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [ta
  * design brief's "mobile uses a different navigation strategy."
  */
 export function AppShell({ projectId, children }: { projectId: string; children: ReactNode }) {
+  const illustration = moduleIllustrationFor(usePathname());
   const t = useTranslations("Shell");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -111,6 +115,7 @@ export function AppShell({ projectId, children }: { projectId: string; children:
         <BottomNav projectId={projectId} onMore={() => setMobileOpen(true)} />
         <div className="min-w-0 flex-1 px-3 py-2 pb-[calc(var(--bottom-nav-h,0px)+1rem)] sm:px-6 sm:py-6">
           <SyncStatus />
+          {illustration && <Image src={illustration} alt="" width={480} height={268} className="mx-auto mb-3 hidden h-32 w-auto rounded-xl sm:block" />}
           {children}
         </div>
       </div>
