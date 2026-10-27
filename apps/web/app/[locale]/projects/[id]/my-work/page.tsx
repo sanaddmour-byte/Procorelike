@@ -102,7 +102,7 @@ export default function MyWorkPage() {
                   <li key={`${i.module}-${i.id}`}>
                     <Link
                       href={`${base}/${i.segment}/${i.id}`}
-                      className="flex min-h-[60px] items-center gap-3 rounded-lg border-3 border-ink bg-white px-3 py-2"
+                      className="hover-lift flex min-h-[60px] items-center gap-3 rounded-lg border-3 border-ink bg-white px-3 py-2"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 text-xs text-ink/70">

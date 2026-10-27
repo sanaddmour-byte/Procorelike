@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { moduleIllustrationFor } from "./module-illustrations";
+import { moduleIllustration, moduleIllustrationFor } from "./module-illustrations";
 
 describe("moduleIllustrationFor", () => {
   it("maps a list page to its illustration", () => {
@@ -13,5 +13,10 @@ describe("moduleIllustrationFor", () => {
     expect(moduleIllustrationFor("/en/projects/abc/rfis/123")).toBeNull();
     expect(moduleIllustrationFor("/en/projects/abc/settings")).toBeNull();
     expect(moduleIllustrationFor("/en/login")).toBeNull();
+  });
+
+  it("returns a smaller variant for record pages", () => {
+    expect(moduleIllustration("/en/projects/abc/rfis/123")).toEqual({ src: "/images/modules/rfis.png", detail: true });
+    expect(moduleIllustration("/en/projects/abc/rfis")).toEqual({ src: "/images/modules/rfis.png", detail: false });
   });
 });

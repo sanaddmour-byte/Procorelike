@@ -58,11 +58,11 @@ export default function LoginPage() {
     <>
       <Header />
       <main className="mx-auto flex min-h-[calc(100vh-73px)] max-w-sm flex-col justify-center gap-4 px-4">
-        <Image src="/images/login-hero.png" alt="" width={1024} height={576} priority className="h-auto w-full rounded-xl border-3 border-ink" />
+        <div className="illu-hero"><Image src="/images/login-hero.png" alt="" width={1024} height={576} priority className="h-auto w-full rounded-xl border-3 border-ink" /></div>
         <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">{t("title")}</h1>
         <form
           onSubmit={(e) => void handleSubmit(e)}
-          className="flex flex-col gap-4 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-6 shadow-brutal"
+          className="page-enter flex flex-col gap-4 rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream p-6 shadow-brutal"
         >
           <label className="flex flex-col gap-1 text-sm font-semibold text-navy-800">
             {t("email")}

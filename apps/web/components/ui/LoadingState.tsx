@@ -3,7 +3,7 @@ export function LoadingState({ rows = 5, label = "Loading" }: { rows?: number; l
   return (
     <div className="flex flex-col gap-2" role="status" aria-label={label}>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-9 animate-pulse rounded-md bg-navy-100/70" style={{ animationDelay: `${i * 60}ms` }} />
+        <div key={i} className="skeleton-shimmer h-9 animate-pulse rounded-md bg-navy-100/70" style={{ animationDelay: `${i * 60}ms` }} />
       ))}
     </div>
   );

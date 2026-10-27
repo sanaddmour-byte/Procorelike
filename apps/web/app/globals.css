@@ -189,3 +189,60 @@ body {
     @apply shadow-brutal transition-all duration-150 ease-out hover:brightness-[1.02] hover:shadow-brutal-lg active:brightness-[0.98] active:shadow-brutal-inset;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Motion. Everything here is decorative and switched off by the
+   prefers-reduced-motion block at the bottom.
+   ------------------------------------------------------------------------- */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes illu-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-0.6deg); }
+}
+@keyframes illu-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(10px, -6px) scale(1.06); }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+.page-enter { animation: page-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* The page's own sections rise in one after another. */
+.page-enter main > *, .page-enter > section { animation: page-enter 460ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.page-enter main > *:nth-child(1) { animation-delay: 40ms; }
+.page-enter main > *:nth-child(2) { animation-delay: 90ms; }
+.page-enter main > *:nth-child(3) { animation-delay: 140ms; }
+.page-enter main > *:nth-child(4) { animation-delay: 190ms; }
+.page-enter main > *:nth-child(5) { animation-delay: 240ms; }
+.page-enter main > *:nth-child(n + 6) { animation-delay: 290ms; }
+
+.illu-hero { animation: illu-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.illu-hero img { animation: illu-float 6.5s ease-in-out 600ms infinite; will-change: transform; }
+.illu-blob { animation: blob-drift 9s ease-in-out infinite; }
+
+.skeleton-shimmer {
+  background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.65) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Rows and cards respond to the pointer and to a press. */
+.hover-lift { transition: transform 160ms ease-out, box-shadow 160ms ease-out; }
+.hover-lift:hover { transform: translateY(-2px); }
+.hover-lift:active { transform: translateY(0) scale(0.99); }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter, .page-enter main > *, .page-enter > section, .illu-hero, .illu-hero img, .illu-blob, .skeleton-shimmer {
+    animation: none !important;
+  }
+  .hover-lift, .hover-lift:hover, .hover-lift:active { transition: none; transform: none; }
+}

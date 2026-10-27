@@ -35,11 +35,23 @@ const FILE_BY_SEGMENT: Record<string, string> = {
   "progress-updates": SCHEDULE,
 };
 
+export interface ModuleIllustration {
+  src: string;
+  /** True on a record page (one level below the list); the banner is smaller there. */
+  detail: boolean;
+}
+
+/** The illustration for the module a project page belongs to, for list pages and the record pages beneath them. */
+export function moduleIllustration(pathname: string): ModuleIllustration | null {
+  const parts = pathname.split("/").filter(Boolean);
+  // [locale, "projects", projectId, segment, ...record]
+  if (parts.length < 4 || parts[1] !== "projects") return null;
+  const file = FILE_BY_SEGMENT[parts[3] ?? ""];
+  return file ? { src: `/images/modules/${file}.png`, detail: parts.length > 4 } : null;
+}
+
 /** Returns the illustration path for a list-level project page, or null for record pages and pages without one. */
 export function moduleIllustrationFor(pathname: string): string | null {
-  const parts = pathname.split("/").filter(Boolean);
-  // [locale, "projects", projectId, segment] exactly: record pages (one more segment) get no banner.
-  if (parts.length !== 4 || parts[1] !== "projects") return null;
-  const file = FILE_BY_SEGMENT[parts[3] ?? ""];
-  return file ? `/images/modules/${file}.png` : null;
+  const found = moduleIllustration(pathname);
+  return found && !found.detail ? found.src : null;
 }

@@ -6,6 +6,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { apiJson } from "@/lib/api-client";
 import { loadStoredAuth } from "@/lib/auth-storage";
 import { useLocale, useTranslations } from "next-intl";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -49,9 +50,10 @@ export default function ProjectsPage() {
         {error && <ErrorState message={error} retryLabel={tc("retry")} onRetry={() => window.location.reload()} />}
         {!projects && !error && <p>{tc("loading")}</p>}
         {projects && projects.length === 0 && <p>{t("empty")}</p>}
-        <ul className="flex flex-col gap-4">
-          {projects?.map((p) => (
-            <li key={p.id} className="overflow-hidden rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal">
+        <ul className="page-enter flex flex-col gap-4">
+          {projects?.map((p, i) => (
+            <li key={p.id} style={{ animationDelay: `${i * 90}ms` }} className="illu-hero hover-lift overflow-hidden rounded-xl border-3 border-ink bg-gradient-to-b from-white to-cream shadow-brutal">
+              <Image src="/images/login-hero.png" alt="" width={1024} height={576} className="h-28 w-full object-cover object-[50%_72%] sm:h-36" />
               <div className="h-2 bg-orange-500" aria-hidden="true" />
               <div className="p-4">
                 <div className="text-lg font-bold text-navy-900">{p.name}</div>
